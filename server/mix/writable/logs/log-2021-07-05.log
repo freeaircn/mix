@@ -1,0 +1,8 @@
+CRITICAL - 2021-07-05 22:21:37 --> Undefined index: meta_hidden
+#0 D:\www\mix\server\mix\app\Models\MenuModel.php(68): CodeIgniter\Debug\Exceptions->errorHandler(8, 'Undefined index...', 'D:\\www\\mix\\serv...', 68, Array)
+#1 D:\www\mix\server\mix\app\Controllers\Home.php(61): App\Models\MenuModel->getMenus()
+#2 D:\www\mix\server\vendor\codeigniter4\framework\system\CodeIgniter.php(928): App\Controllers\Home->getUserInfo()
+#3 D:\www\mix\server\vendor\codeigniter4\framework\system\CodeIgniter.php(436): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Home))
+#4 D:\www\mix\server\vendor\codeigniter4\framework\system\CodeIgniter.php(336): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#5 D:\www\mix\server\mix\public\index.php(37): CodeIgniter\CodeIgniter->run()
+#6 {main}

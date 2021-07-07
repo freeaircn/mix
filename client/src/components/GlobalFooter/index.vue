@@ -1,0 +1,30 @@
+<!--
+ * @Description:
+ * @Author: freeair
+ * @Date: 2021-06-19 12:28:13
+ * @LastEditors: freeair
+ * @LastEditTime: 2021-06-29 14:26:02
+-->
+<template>
+  <global-footer class="footer custom-render">
+    <template v-slot:links>
+      <!-- <a href="https://www.github.com/vueComponent/pro-layout" target="_blank">Pro Layout</a> -->
+      <a href="https://www.github.com/" target="_blank">Github</a>
+      <!-- <a href="https://www.github.com/sendya/" target="_blank">@Sendya</a> -->
+    </template>
+    <template v-slot:copyright>
+      <a href="#" >Mix</a>
+    </template>
+  </global-footer>
+</template>
+
+<script>
+import { GlobalFooter } from '@ant-design-vue/pro-layout'
+
+export default {
+  name: 'ProGlobalFooter',
+  components: {
+    GlobalFooter
+  }
+}
+</script>

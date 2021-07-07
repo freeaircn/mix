@@ -1,0 +1,39 @@
+CRITICAL - 2021-07-06 21:17:03 --> Undefined variable: result
+#0 D:\www\mix\server\mix\app\Controllers\Home.php(482): CodeIgniter\Debug\Exceptions->errorHandler(8, 'Undefined varia...', 'D:\\www\\mix\\serv...', 482, Array)
+#1 D:\www\mix\server\vendor\codeigniter4\framework\system\CodeIgniter.php(928): App\Controllers\Home->newUser()
+#2 D:\www\mix\server\vendor\codeigniter4\framework\system\CodeIgniter.php(436): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Home))
+#3 D:\www\mix\server\vendor\codeigniter4\framework\system\CodeIgniter.php(336): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#4 D:\www\mix\server\mix\public\index.php(37): CodeIgniter\CodeIgniter->run()
+#5 {main}
+CRITICAL - 2021-07-06 22:20:01 --> Class 'App\Models\Config\Services' not found
+#0 D:\www\mix\server\mix\app\Controllers\Home.php(61): App\Models\MenuModel->getMenus()
+#1 D:\www\mix\server\vendor\codeigniter4\framework\system\CodeIgniter.php(928): App\Controllers\Home->getUserInfo()
+#2 D:\www\mix\server\vendor\codeigniter4\framework\system\CodeIgniter.php(436): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Home))
+#3 D:\www\mix\server\vendor\codeigniter4\framework\system\CodeIgniter.php(336): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#4 D:\www\mix\server\mix\public\index.php(37): CodeIgniter\CodeIgniter->run()
+#5 {main}
+CRITICAL - 2021-07-06 22:22:09 --> Class 'App\Models\Config\Services' not found
+#0 D:\www\mix\server\mix\app\Controllers\Home.php(61): App\Models\MenuModel->getMenus()
+#1 D:\www\mix\server\vendor\codeigniter4\framework\system\CodeIgniter.php(928): App\Controllers\Home->getUserInfo()
+#2 D:\www\mix\server\vendor\codeigniter4\framework\system\CodeIgniter.php(436): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Home))
+#3 D:\www\mix\server\vendor\codeigniter4\framework\system\CodeIgniter.php(336): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#4 D:\www\mix\server\mix\public\index.php(37): CodeIgniter\CodeIgniter->run()
+#5 {main}
+CRITICAL - 2021-07-06 22:23:13 --> Class 'App\Models\App\Config\Services' not found
+#0 D:\www\mix\server\mix\app\Controllers\Home.php(61): App\Models\MenuModel->getMenus()
+#1 D:\www\mix\server\vendor\codeigniter4\framework\system\CodeIgniter.php(928): App\Controllers\Home->getUserInfo()
+#2 D:\www\mix\server\vendor\codeigniter4\framework\system\CodeIgniter.php(436): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Home))
+#3 D:\www\mix\server\vendor\codeigniter4\framework\system\CodeIgniter.php(336): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#4 D:\www\mix\server\mix\public\index.php(37): CodeIgniter\CodeIgniter->run()
+#5 {main}
+CRITICAL - 2021-07-06 22:25:59 --> Access to undeclared static property: App\Libraries\MixUtils::$func_overload
+#0 D:\www\mix\server\mix\app\Config\Services.php(52): App\Libraries\MixUtils->__construct(Object(Config\MixUtils))
+#1 D:\www\mix\server\vendor\codeigniter4\framework\system\Config\BaseService.php(190): Config\Services::mixUtils(Object(Config\MixUtils), false)
+#2 D:\www\mix\server\mix\app\Config\Services.php(45): CodeIgniter\Config\BaseService::getSharedInstance('mixutils', NULL)
+#3 D:\www\mix\server\mix\app\Models\MenuModel.php(89): Config\Services::mixUtils()
+#4 D:\www\mix\server\mix\app\Controllers\Home.php(61): App\Models\MenuModel->getMenus()
+#5 D:\www\mix\server\vendor\codeigniter4\framework\system\CodeIgniter.php(928): App\Controllers\Home->getUserInfo()
+#6 D:\www\mix\server\vendor\codeigniter4\framework\system\CodeIgniter.php(436): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Home))
+#7 D:\www\mix\server\vendor\codeigniter4\framework\system\CodeIgniter.php(336): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#8 D:\www\mix\server\mix\public\index.php(37): CodeIgniter\CodeIgniter->run()
+#9 {main}

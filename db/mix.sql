@@ -1,0 +1,375 @@
+-- phpMyAdmin SQL Dump
+-- version 4.8.5
+-- https://www.phpmyadmin.net/
+--
+-- 主机： 127.0.0.1:3306
+-- 生成日期： 2021-06-27 11:29:12
+-- 服务器版本： 10.3.14-MariaDB
+-- PHP 版本： 7.3.5
+
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+SET AUTOCOMMIT = 0;
+START TRANSACTION;
+SET time_zone = "+00:00";
+
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+
+--
+-- 数据库： `mix`
+--
+CREATE DATABASE IF NOT EXISTS `mix` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+USE `mix`;
+
+--
+-- 表的结构 `app_menu`
+--
+
+DROP TABLE IF EXISTS `app_menu`;
+CREATE TABLE IF NOT EXISTS `app_menu` (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'ID',
+  `type` int(11) UNSIGNED NOT NULL COMMENT '菜单-1，权限-2',
+   `pid` int(11) UNSIGNED NOT NULL COMMENT '上级菜单ID',
+  
+  `name` varchar(63) DEFAULT NULL COMMENT '路由名称',
+  `path` varchar(63) DEFAULT NULL COMMENT '路由Path',
+  `component` varchar(127) DEFAULT NULL COMMENT '组件',
+  `redirect` varchar(127) DEFAULT NULL COMMENT '重定向',
+  `hidden` bit(1) NOT NULL DEFAULT b'0' COMMENT '侧边栏隐藏',
+  `hideChildrenInMenu` bit(1) NOT NULL DEFAULT b'0' COMMENT '强制菜单显示为Item',
+  `meta_hidden` bit(1) NOT NULL DEFAULT b'0' COMMENT '侧边栏隐藏，配合hideChildrenInMenu',
+
+  `title` varchar(31) NOT NULL COMMENT '菜单标题',
+  `icon` varchar(63) DEFAULT NULL COMMENT '图标',
+  `keepAlive` bit(1) NOT NULL DEFAULT b'0' COMMENT '缓存该路由 (开启 multi-tab 是默认值为 true)',
+  `hiddenHeaderContent` bit(1) NOT NULL DEFAULT b'0' COMMENT '隐藏面包屑和页面标题栏',
+  `permission` varchar(63) DEFAULT NULL COMMENT 'antd权限',
+  `target` varchar(63) DEFAULT NULL COMMENT '打开到新窗口',
+  
+  
+  `roles` varchar(255) DEFAULT NULL COMMENT '权限',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE,
+  KEY `key_menu_pid` (`pid`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='路由' ROW_FORMAT=COMPACT;
+
+--
+-- 转存表中的数据 `app_menu`
+--
+
+INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `path`, `component`, `redirect`, `hidden`, `hideChildrenInMenu`, `meta_hidden`, `title`, `icon`, `keepAlive`, `hiddenHeaderContent`, `permission`, `target`, `roles`, `created_at`) VALUES
+(1, 1, 0, 'index', '/', 'BasicLayout', '/dashboard/workplace', b'0', b'0', b'0', '首页', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+
+(2, 1, 1, 'dashboard', '/dashboard', 'RouteView', '/dashboard/workplace', b'0', b'0', b'0', '仪表盘', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(3, 1, 2, 'Workplace', '/dashboard/workplace', 'dashboard/Workplace', '', b'0', b'0', b'0', '工作台', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(4, 1, 2, 'External', 'https://www.baidu.com/', '', '', b'0', b'0', b'0', '外部链接', '', b'0', b'0', '', '_blank', '', '2021-06-27 20:00:00'),
+
+(5, 1, 1, 'form', '/form', 'PageView', '/form/base-form', b'0', b'0', b'0', '表单页', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(6, 1, 5, 'BaseForm', '/form/base-form', 'form/basicForm/index', '', b'0', b'0', b'0', '基础表单', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+
+(7, 1, 1, 'app', '/app', 'RouteView', '/app/role', b'0', b'0', b'0', '应用管理', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(8, 1, 7, 'role', '/app/role', 'app_admin/role/BasicList', '', b'0', b'0', b'0', '用户角色', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(9, 1, 7, 'dept', '/app/dept', 'app_admin/dept/index', '', b'0', b'0', b'0', '部门机构', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(10, 1, 7, 'job', '/app/job', 'app_admin/job/index', '', b'0', b'0', b'0', '工作岗位', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(11, 1, 7, 'title', '/app/title', 'app_admin/title/index', '', b'0', b'0', b'0', '技能职称', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(12, 1, 7, 'politic', '/app/politic', 'app_admin/politic/index', '', b'0', b'0', b'0', '政治面貌', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(13, 1, 7, 'user', '/app/user', 'app_admin/user/Index', '/app/user/list', b'0', b'1', b'0', '注册用户', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(14, 1, 13, 'UserList', '/app/user/list', 'app_admin/user/UserList', '', b'0', b'0', b'1', '用户列表', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(15, 1, 13, 'UserForm', '/app/user/new', 'app_admin/user/UserForm', '', b'0', b'0', b'1', '新加用户', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00');
+
+(15, 1, 1, 'account', '/account', 'RouteView', '/account/settings', b'0', b'0', '个人页', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(16, 1, 15, 'settings', '/account/settings', 'account/settings/Index', '/account/settings/basic', b'0', b'1', '个人设置', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(17, 1, 16, 'BasicSettings', '/account/settings/basic', 'account/settings/BasicSetting', '', b'0', b'0', '基本设置', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(18, 1, 16, 'SecuritySettings', '/account/settings/security', 'account/settings/Security', '', b'0', b'0', '安全设置', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00');
+
+DROP TABLE IF EXISTS `app_role`;
+CREATE TABLE IF NOT EXISTS `app_role` (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'ID',
+  `name` varchar(31) NOT NULL COMMENT '名称',
+  `alias` varchar(63) NOT NULL COMMENT '别名',
+  `status` varchar(31) NOT NULL COMMENT '状态',
+  `description` varchar(127) DEFAULT NULL COMMENT '说明',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='角色表' ROW_FORMAT=COMPACT;
+
+--
+-- 转存表中的数据 `app_role`
+--
+
+INSERT INTO `app_role` (`id`, `name`, `alias`, `status`, `description`, `created_at`, `updated_at`) VALUES
+(1, '管理组', 'admin_group', '1', '具有管理员权限', '2021-06-27 20:00:00', '2021-06-27 20:00:00'),
+(2, '开发组', 'develop_group', '1', '具有开发员的权限', '2021-06-27 20:00:00', '2021-06-27 20:00:00');
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `app_roles_menus`
+--
+
+DROP TABLE IF EXISTS `app_role_menu`;
+CREATE TABLE IF NOT EXISTS `app_role_menu` (
+  `role_id` int(11) UNSIGNED NOT NULL COMMENT '角色ID',
+  `menu_id` int(11) UNSIGNED NOT NULL COMMENT '菜单ID',
+  PRIMARY KEY (`role_id`,`menu_id`) USING BTREE,
+  KEY `fk_roles_menus_ref_role_id` (`role_id`) USING BTREE,
+  KEY `fk_roles_menus_ref_menu_id` (`menu_id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='角色菜单关联' ROW_FORMAT=COMPACT;
+
+--
+-- 转存表中的数据 `app_role_menu`
+--
+
+INSERT INTO `app_role_menu` (`role_id`, `menu_id`) VALUES
+(1, 1);
+
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `app_dept`
+--
+
+DROP TABLE IF EXISTS `app_dept`;
+CREATE TABLE IF NOT EXISTS `app_dept` (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'ID',
+  `name` varchar(63) NOT NULL COMMENT '名称',
+  `pid` int(11) UNSIGNED NOT NULL COMMENT '上级节点',
+  `status` varchar(31) NOT NULL COMMENT '状态',
+  `description` varchar(127) DEFAULT NULL COMMENT '说明',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE,
+  KEY `pid` (`pid`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='部门' ROW_FORMAT=COMPACT;
+
+--
+-- 转存表中的数据 `app_dept`
+--
+
+INSERT INTO `app_dept` (`id`, `name`, `pid`, `status`, `description`, `created_at`, `updated_at`) VALUES
+(1, 'Mix项目', 0, '1', '无', '2021-06-27 20:00:00', '2021-06-27 20:00:00'),
+(2, '开发组', 1, '1', '无', '2021-06-27 20:00:00', '2021-06-27 20:00:00'),
+(3, '测试组', 1, '1', '无', '2021-06-27 20:00:00', '2021-06-27 20:00:00'),
+(4, '开发一组', 2, '1', '无', '2021-06-27 20:00:00', '2021-06-27 20:00:00');
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `app_job`
+--
+
+DROP TABLE IF EXISTS `app_job`;
+CREATE TABLE IF NOT EXISTS `app_job` (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'ID',
+  `name` varchar(63) NOT NULL COMMENT '名称',
+  `status` varchar(31) NOT NULL COMMENT '状态',
+  `description` varchar(127) DEFAULT NULL COMMENT '说明',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='岗位' ROW_FORMAT=COMPACT;
+
+--
+-- 转存表中的数据 `app_job`
+--
+
+INSERT INTO `app_job` (`id`, `name`, `status`, `description`, `created_at`, `updated_at`) VALUES
+(1, '开发员', '1', '无', '2021-06-27 20:00:00', '2021-06-27 20:00:00'),
+(2, '测试员', '1', '无', '2021-06-27 20:00:00', '2021-06-27 20:00:00'),
+(3, '销售员', '1', '无', '2021-06-27 20:00:00', '2021-06-27 20:00:00');
+
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `app_title`
+--
+
+DROP TABLE IF EXISTS `app_title`;
+CREATE TABLE IF NOT EXISTS `app_title` (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'ID',
+  `name` varchar(63) NOT NULL COMMENT '名称',
+  `status` varchar(31) NOT NULL COMMENT '状态',
+  `description` varchar(127) DEFAULT NULL COMMENT '说明',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='职称' ROW_FORMAT=COMPACT;
+
+--
+-- 转存表中的数据 `app_title`
+--
+
+INSERT INTO `app_title` (`id`, `name`, `status`, `description`, `created_at`, `updated_at`) VALUES
+(1, '工程师', '1', '无', '2021-06-27 20:00:00', '2021-06-27 20:00:00'),
+(2, '助理工程师', '1', '无', '2021-06-27 20:00:00', '2021-06-27 20:00:00');
+
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `app_politic`
+--
+
+DROP TABLE IF EXISTS `app_politic`;
+CREATE TABLE IF NOT EXISTS `app_politic` (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'ID',
+  `name` varchar(63) NOT NULL COMMENT '名称',
+  `status` varchar(31) NOT NULL COMMENT '状态',
+  `description` varchar(127) DEFAULT NULL COMMENT '说明',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 COMMENT='政治面貌' ROW_FORMAT=COMPACT;
+
+--
+-- 转存表中的数据 `app_politic`
+--
+
+INSERT INTO `app_politic` (`id`, `name`, `status`, `description`, `created_at`, `updated_at`) VALUES
+(1, '群众', '1', '无', '2021-06-27 20:00:00', '2021-06-27 20:00:00'),
+(2, '中共党员', '1', '无', '2021-06-27 20:00:00', '2021-06-27 20:00:00');
+
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `app_user`
+--
+
+DROP TABLE IF EXISTS `app_user`;
+CREATE TABLE IF NOT EXISTS `app_user` (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `workID` varchar(63) NOT NULL COMMENT '工号',
+  `username` varchar(10) NOT NULL COMMENT '中文名',
+  `sex` varchar(3) NOT NULL COMMENT '女，男',
+  `IdCard` varchar(31) DEFAULT NULL COMMENT '证件',
+  `phone` varchar(15) NOT NULL,
+  `email` varchar(63) NOT NULL,
+  `status` varchar(3) NOT NULL COMMENT '启用或禁用',
+  `password` varchar(255) NOT NULL,
+  `forceChgPwd` varchar(3) NOT NULL DEFAULT '1' COMMENT '要求修改密码',
+  `avatar` int(11) UNSIGNED DEFAULT NULL COMMENT '头像ID',
+  
+  `department` varchar(255) NULL COMMENT '部门',
+  `job` int(11) UNSIGNED DEFAULT NULL COMMENT '岗位ID',
+  `titile` int(11) UNSIGNED DEFAULT NULL COMMENT '职称ID',
+  `politic` int(11) UNSIGNED DEFAULT NULL COMMENT '政治面貌ID',
+  
+  `ip_address` varchar(63) DEFAULT NULL,
+  `last_login` int(11) UNSIGNED DEFAULT NULL,
+  
+  `created_at` datetime DEFAULT NULL COMMENT '日期',
+  `updated_at` datetime DEFAULT NULL COMMENT '日期',
+  `deleted_at` datetime DEFAULT NULL COMMENT '日期',
+  
+  `id01` int(11) UNSIGNED DEFAULT NULL COMMENT '预留',
+  `id02` int(11) UNSIGNED DEFAULT NULL COMMENT '预留',
+  `id03` int(11) UNSIGNED DEFAULT NULL COMMENT '预留',
+  `id04` int(11) UNSIGNED DEFAULT NULL COMMENT '预留',
+  `id05` int(11) UNSIGNED DEFAULT NULL COMMENT '预留',
+  `id06` int(11) UNSIGNED DEFAULT NULL COMMENT '预留',
+  `id07` int(11) UNSIGNED DEFAULT NULL COMMENT '预留',
+  `id08` int(11) UNSIGNED DEFAULT NULL COMMENT '预留',
+  `id09` int(11) UNSIGNED DEFAULT NULL COMMENT '预留',
+  `id10` int(11) UNSIGNED DEFAULT NULL COMMENT '预留',
+  `id11` int(11) UNSIGNED DEFAULT NULL COMMENT '预留',
+  `id12` int(11) UNSIGNED DEFAULT NULL COMMENT '预留',
+  `id13` int(11) UNSIGNED DEFAULT NULL COMMENT '预留',
+  `id14` int(11) UNSIGNED DEFAULT NULL COMMENT '预留',
+  `id15` int(11) UNSIGNED DEFAULT NULL COMMENT '预留',
+  `id16` int(11) UNSIGNED DEFAULT NULL COMMENT '预留',
+
+  `str01` varchar(63) DEFAULT NULL COMMENT '预留',
+  `str02` varchar(63) DEFAULT NULL COMMENT '预留',
+  `str03` varchar(63) DEFAULT NULL COMMENT '预留',
+  `str04` varchar(63) DEFAULT NULL COMMENT '预留',
+  `str05` varchar(63) DEFAULT NULL COMMENT '预留',
+  `str06` varchar(63) DEFAULT NULL COMMENT '预留',
+  `str07` varchar(63) DEFAULT NULL COMMENT '预留',
+  `str08` varchar(63) DEFAULT NULL COMMENT '预留',
+  `str09` varchar(63) DEFAULT NULL COMMENT '预留',
+  `str10` varchar(63) DEFAULT NULL COMMENT '预留',
+  `str11` varchar(63) DEFAULT NULL COMMENT '预留',
+  `str12` varchar(63) DEFAULT NULL COMMENT '预留',
+  `str13` varchar(63) DEFAULT NULL COMMENT '预留',
+  `str14` varchar(63) DEFAULT NULL COMMENT '预留',
+  `str15` varchar(63) DEFAULT NULL COMMENT '预留',
+  `str16` varchar(63) DEFAULT NULL COMMENT '预留',
+
+  `forgotten_password_selector` varchar(255) DEFAULT NULL,
+  `forgotten_password_code` varchar(255) DEFAULT NULL,
+  `forgotten_password_time` int(11) UNSIGNED DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `uc_phone` (`phone`) USING BTREE,
+  UNIQUE KEY `uc_email` (`email`) USING BTREE,
+  UNIQUE KEY `uc_forgotten_password_selector` (`forgotten_password_selector`) USING BTREE,
+  KEY `key_username` (`username`) USING BTREE,
+  KEY `key_user_ref_job` (`job`) USING BTREE,
+  KEY `key_user_ref_titile` (`titile`) USING BTREE,
+  KEY `key_user_ref_politic` (`politic`) USING BTREE,
+  
+  KEY `key_user_ref_id01` (`id01`) USING BTREE,
+  KEY `key_user_ref_id02` (`id02`) USING BTREE,
+  KEY `key_user_ref_id03` (`id03`) USING BTREE,
+  KEY `key_user_ref_id04` (`id04`) USING BTREE,
+  KEY `key_user_ref_id05` (`id05`) USING BTREE,
+  KEY `key_user_ref_id06` (`id06`) USING BTREE,
+  KEY `key_user_ref_id07` (`id07`) USING BTREE,
+  KEY `key_user_ref_id08` (`id08`) USING BTREE,
+  KEY `key_user_ref_id09` (`id09`) USING BTREE,
+  KEY `key_user_ref_id10` (`id10`) USING BTREE,
+  KEY `key_user_ref_id11` (`id11`) USING BTREE,
+  KEY `key_user_ref_id12` (`id12`) USING BTREE,
+  KEY `key_user_ref_id13` (`id13`) USING BTREE,
+  KEY `key_user_ref_id14` (`id14`) USING BTREE,
+  KEY `key_user_ref_id15` (`id15`) USING BTREE,
+  KEY `key_user_ref_id16` (`id16`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='用户' ROW_FORMAT=COMPACT;
+
+--
+-- 转存表中的数据 `app_user`
+--
+
+INSERT INTO `app_user` (`id`, `workID`, `username`, `sex`, `IdCard`, `phone`, `email`, `status`, `password`, `forceChgPwd`, `created_at`, `updated_at`,) VALUES
+(1, '1', '小明', '男', '', '13812345678', '3@3.3', '1', '$argon2i$v=19$m=16384,t=4,p=2$My9kc2ZXZHUvNkx1ZjFCdA$6ZcgoVANOcxp7g6qyGO5ICw9w94Rhbapk8Nz92zB9bk', '0', '2021-06-27 20:00:00', '2021-06-27 20:00:00');
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `app_user_role`
+--
+
+DROP TABLE IF EXISTS `app_user_role`;
+CREATE TABLE IF NOT EXISTS `app_user_role` (
+  `user_id` int(11) UNSIGNED NOT NULL COMMENT '用户ID',
+  `role_id` int(11) UNSIGNED NOT NULL COMMENT '角色ID',
+  PRIMARY KEY (`user_id`,`role_id`) USING BTREE,
+  KEY `key_user_role_user_id` (`user_id`) USING BTREE,
+  KEY `key_user_role_role_id` (`role_id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='用户角色关联' ROW_FORMAT=COMPACT;
+
+--
+-- 转存表中的数据 `app_user_role`
+--
+
+INSERT INTO `app_user_role` (`user_id`, `role_id`) VALUES
+(1, 1);
+
+COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
