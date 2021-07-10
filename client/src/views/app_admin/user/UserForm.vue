@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-06 21:16:22
+ * @LastEditTime: 2021-07-10 22:36:56
 -->
 <template>
   <!-- hidden PageHeaderWrapper title demo -->
@@ -166,6 +166,7 @@ export default {
         })
     },
     onCascaderChange (value, selectedOptions) {
+      console.log('selectedOptions', selectedOptions)
       this.record.department = selectedOptions.map(o => o.name).join(', ')
     },
     onSubmit () {

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-04 22:01:12
+ * @LastEditTime: 2021-07-10 23:33:07
  */
 
 namespace App\Models;
@@ -29,9 +29,18 @@ class JobModel extends Model
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
 
-    public function getJob()
+    public function getJob($columnKeys = [])
     {
-        $res = $this->select('id, name, status, description, updated_at')
+        $selectString = '';
+        if (empty($columnKeys)) {
+            $selectString = 'id, name, status, description, updated_at';
+        } else {
+            foreach ($columnKeys as $key) {
+                $selectString = $selectString . $key . ', ';
+            }
+        }
+
+        $res = $this->select($selectString)
             ->orderBy('id', 'ASC')
             ->findAll();
 

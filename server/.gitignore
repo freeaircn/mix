@@ -65,6 +65,23 @@ writable/debugbar/*
 php_errors.log
 
 #-------------------------
+# Own Application Temporary Files
+#-------------------------
+mix/writable/cache/*
+!mix/writable/cache/index.html
+
+mix/writable/logs/*
+!mix/writable/logs/index.html
+
+mix/writable/session/*
+!mix/writable/session/index.html
+
+mix/writable/uploads/*
+!mix/writable/uploads/index.html
+
+mix/writable/debugbar/*
+
+#-------------------------
 # User Guide Temp Files
 #-------------------------
 user_guide_src/build/*

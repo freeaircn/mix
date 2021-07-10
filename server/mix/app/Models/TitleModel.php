@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-04 22:22:25
+ * @LastEditTime: 2021-07-10 23:37:05
  */
 
 namespace App\Models;
@@ -29,9 +29,24 @@ class TitleModel extends Model
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
 
-    public function getTitle()
+    public function getTitle($columnKeys = [])
     {
-        $res = $this->select('id, name, status, description, updated_at')
+        // $res = $this->select('id, name, status, description, updated_at')
+        //     ->orderBy('id', 'ASC')
+        //     ->findAll();
+
+        // return $res;
+
+        $selectString = '';
+        if (empty($columnKeys)) {
+            $selectString = 'id, name, status, description, updated_at';
+        } else {
+            foreach ($columnKeys as $key) {
+                $selectString = $selectString . $key . ', ';
+            }
+        }
+
+        $res = $this->select($selectString)
             ->orderBy('id', 'ASC')
             ->findAll();
 

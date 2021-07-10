@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-06 21:30:02
+ * @LastEditTime: 2021-07-10 23:25:16
  */
 
 namespace App\Models;
@@ -29,14 +29,28 @@ class UserModel extends Model
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
 
-    public function getUser($job = [], $title = [], $politic = [])
+    public function getUser($dept = [], $job = [], $title = [], $politic = [])
     {
-        $res = $this->select('id, workID, username, sex, phone, email, status, department, job, title, politic, updated_at')
+        $res = $this->select('id, workID, username, sex, phone, email, status, deptLev0, deptLev1, deptLev2, deptLev3, deptLev4, deptLev5, deptLev6, deptLev7, job, title, politic, updated_at')
             ->orderBy('id', 'ASC')
             ->findAll();
 
         if (!empty($res)) {
             foreach ($res as &$user) {
+                // 部门名称
+                $department = '';
+                for ($cnt = 0; $cnt < 8; $cnt++) {
+                    $index = 'deptLev' . strval($cnt);
+                    if ($user[$index] < 1000) {
+                        foreach ($dept as $value) {
+                            if ($value['id'] === $user[$index]) {
+                                $department = $department . $value['name'] . ' / ';
+                            }
+                        }
+                    }
+                }
+                $user['department'] = substr($department, 0, strlen($department) - 3);
+
                 // 岗位名称
                 foreach ($job as $x) {
                     if ($user['job'] === $x['id']) {

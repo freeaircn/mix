@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-02 17:41:43
+ * @LastEditTime: 2021-07-10 23:37:29
  */
 
 namespace App\Models;
@@ -29,12 +29,27 @@ class RoleMode extends Model
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
 
-    public function getRoles()
+    public function getRoles($columnKeys = [])
     {
-        $rolesTbl = $this->select('id, name, alias, status, description, updated_at')
-            ->orderBy('updated_at', 'DESC')
+        // $rolesTbl = $this->select('id, name, alias, status, description, updated_at')
+        //     ->orderBy('updated_at', 'DESC')
+        //     ->findAll();
+
+        // return $rolesTbl;
+
+        $selectString = '';
+        if (empty($columnKeys)) {
+            $selectString = 'id, name, alias, status, description, updated_at';
+        } else {
+            foreach ($columnKeys as $key) {
+                $selectString = $selectString . $key . ', ';
+            }
+        }
+
+        $res = $this->select($selectString)
+            ->orderBy('id', 'ASC')
             ->findAll();
 
-        return $rolesTbl;
+        return $res;
     }
 }

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-06 21:24:30
+ * @LastEditTime: 2021-07-10 23:38:33
  */
 
 namespace App\Controllers;
@@ -454,17 +454,20 @@ class Home extends BaseController
     // 用户
     public function getUser()
     {
+        $deptModel = new DeptModel();
+        $dept      = $deptModel->getDept(['id', 'name']);
+
         $jobModel = new JobModel();
-        $job      = $jobModel->getJob();
+        $job      = $jobModel->getJob(['id', 'name']);
 
         $titleModel = new titleModel();
-        $title      = $titleModel->getTitle();
+        $title      = $titleModel->getTitle(['id', 'name']);
 
         $politicModel = new politicModel();
-        $politic      = $politicModel->getPolitic();
+        $politic      = $politicModel->getPolitic(['id', 'name']);
 
         $model  = new UserModel();
-        $result = $model->getUser($job, $title, $politic);
+        $result = $model->getUser($dept, $job, $title, $politic);
 
         $res['code'] = 0;
         $res['data'] = ['pageNo' => 1, 'totalCount' => 2, 'data' => $result];

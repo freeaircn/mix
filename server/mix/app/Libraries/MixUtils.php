@@ -40,11 +40,12 @@ class MixUtils
             if (property_exists($this, $key) && isset($config[$key])) {
                 $method = 'set' . ucfirst($key);
 
-                if (method_exists($this, $method)) {
-                    $this->$method($config[$key]);
-                } else {
-                    $this->$key = $config[$key];
-                }
+                // if (method_exists($this, $method)) {
+                //     $this->$method($config[$key]);
+                // } else {
+                //     $this->$key = $config[$key];
+                // }
+                $this->$key = $config[$key];
             }
         }
 

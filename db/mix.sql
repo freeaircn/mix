@@ -263,9 +263,16 @@ CREATE TABLE IF NOT EXISTS `app_user` (
   `forceChgPwd` varchar(3) NOT NULL DEFAULT '1' COMMENT '要求修改密码',
   `avatar` int(11) UNSIGNED DEFAULT NULL COMMENT '头像ID',
   
-  `department` varchar(255) NULL COMMENT '部门',
+  `deptLev0` int(11) DEFAULT 1000 COMMENT '部门0',
+  `deptLev1` int(11) DEFAULT 1000 COMMENT '部门1',
+  `deptLev2` int(11) DEFAULT 1000 COMMENT '部门2',
+  `deptLev3` int(11) DEFAULT 1000 COMMENT '部门3',
+  `deptLev4` int(11) DEFAULT 1000 COMMENT '部门4',
+  `deptLev5` int(11) DEFAULT 1000 COMMENT '部门5',
+  `deptLev6` int(11) DEFAULT 1000 COMMENT '部门6',
+  `deptLev7` int(11) DEFAULT 1000 COMMENT '部门7',
   `job` int(11) UNSIGNED DEFAULT NULL COMMENT '岗位ID',
-  `titile` int(11) UNSIGNED DEFAULT NULL COMMENT '职称ID',
+  `title` int(11) UNSIGNED DEFAULT NULL COMMENT '职称ID',
   `politic` int(11) UNSIGNED DEFAULT NULL COMMENT '政治面貌ID',
   
   `ip_address` varchar(63) DEFAULT NULL,
@@ -317,8 +324,18 @@ CREATE TABLE IF NOT EXISTS `app_user` (
   UNIQUE KEY `uc_email` (`email`) USING BTREE,
   UNIQUE KEY `uc_forgotten_password_selector` (`forgotten_password_selector`) USING BTREE,
   KEY `key_username` (`username`) USING BTREE,
+  
+  KEY `key_user_deptLev0` (`deptLev0`) USING BTREE,
+  KEY `key_user_deptLev1` (`deptLev1`) USING BTREE,
+  KEY `key_user_deptLev2` (`deptLev2`) USING BTREE,
+  KEY `key_user_deptLev3` (`deptLev3`) USING BTREE,
+  KEY `key_user_deptLev4` (`deptLev4`) USING BTREE,
+  KEY `key_user_deptLev5` (`deptLev5`) USING BTREE,
+  KEY `key_user_deptLev6` (`deptLev6`) USING BTREE,
+  KEY `key_user_deptLev7` (`deptLev7`) USING BTREE,
+  
   KEY `key_user_ref_job` (`job`) USING BTREE,
-  KEY `key_user_ref_titile` (`titile`) USING BTREE,
+  KEY `key_user_ref_title` (`title`) USING BTREE,
   KEY `key_user_ref_politic` (`politic`) USING BTREE,
   
   KEY `key_user_ref_id01` (`id01`) USING BTREE,
@@ -343,7 +360,7 @@ CREATE TABLE IF NOT EXISTS `app_user` (
 -- 转存表中的数据 `app_user`
 --
 
-INSERT INTO `app_user` (`id`, `workID`, `username`, `sex`, `IdCard`, `phone`, `email`, `status`, `password`, `forceChgPwd`, `created_at`, `updated_at`,) VALUES
+INSERT INTO `app_user` (`id`, `workID`, `username`, `sex`, `IdCard`, `phone`, `email`, `status`, `password`, `forceChgPwd`, `created_at`, `updated_at`) VALUES
 (1, '1', '小明', '男', '', '13812345678', '3@3.3', '1', '$argon2i$v=19$m=16384,t=4,p=2$My9kc2ZXZHUvNkx1ZjFCdA$6ZcgoVANOcxp7g6qyGO5ICw9w94Rhbapk8Nz92zB9bk', '0', '2021-06-27 20:00:00', '2021-06-27 20:00:00');
 
 -- --------------------------------------------------------
@@ -357,8 +374,7 @@ CREATE TABLE IF NOT EXISTS `app_user_role` (
   `user_id` int(11) UNSIGNED NOT NULL COMMENT '用户ID',
   `role_id` int(11) UNSIGNED NOT NULL COMMENT '角色ID',
   PRIMARY KEY (`user_id`,`role_id`) USING BTREE,
-  KEY `key_user_role_user_id` (`user_id`) USING BTREE,
-  KEY `key_user_role_role_id` (`role_id`) USING BTREE
+  KEY `key_user_role_user_id` (`user_id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='用户角色关联' ROW_FORMAT=COMPACT;
 
 --

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-06 22:25:54
+ * @LastEditTime: 2021-07-10 23:02:55
  */
 
 namespace App\Models;
@@ -29,9 +29,18 @@ class DeptModel extends Model
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
 
-    public function getDept()
+    public function getDept($columnKeys = [])
     {
-        $dept = $this->select('id, pid, name, status, description, updated_at')
+        $selectString = '';
+        if (empty($columnKeys)) {
+            $selectString = 'id, pid, name, status, description, updated_at';
+        } else {
+            foreach ($columnKeys as $key) {
+                $selectString = $selectString . $key . ', ';
+            }
+        }
+
+        $dept = $this->select($selectString)
             ->orderBy('id', 'ASC')
             ->findAll();
 

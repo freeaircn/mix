@@ -29,9 +29,18 @@ class PoliticModel extends Model
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
 
-    public function getPolitic()
+    public function getPolitic($columnKeys = [])
     {
-        $res = $this->select('id, name, status, description, updated_at')
+        $selectString = '';
+        if (empty($columnKeys)) {
+            $selectString = 'id, name, status, description, updated_at';
+        } else {
+            foreach ($columnKeys as $key) {
+                $selectString = $selectString . $key . ', ';
+            }
+        }
+
+        $res = $this->select($selectString)
             ->orderBy('id', 'ASC')
             ->findAll();
 
