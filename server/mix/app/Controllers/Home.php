@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-10 23:38:33
+ * @LastEditTime: 2021-07-14 00:36:41
  */
 
 namespace App\Controllers;
@@ -17,6 +17,7 @@ use App\Models\RoleMenuMode;
 use App\Models\RoleMode;
 use App\Models\TitleModel;
 use App\Models\UserModel;
+use App\Models\UserRoleModel;
 use CodeIgniter\API\ResponseTrait;
 
 class Home extends BaseController
@@ -454,20 +455,28 @@ class Home extends BaseController
     // 用户
     public function getUser()
     {
-        $deptModel = new DeptModel();
-        $dept      = $deptModel->getDept(['id', 'name']);
+        $tmp = $this->request->getGet();
+        $id  = isset($tmp['uid']) ? $tmp['uid'] : '0';
 
-        $jobModel = new JobModel();
-        $job      = $jobModel->getJob(['id', 'name']);
+        if ($id === '0') {
+            $deptModel = new DeptModel();
+            $dept      = $deptModel->getDept(['id', 'name']);
 
-        $titleModel = new titleModel();
-        $title      = $titleModel->getTitle(['id', 'name']);
+            $jobModel = new JobModel();
+            $job      = $jobModel->getJob(['id', 'name']);
 
-        $politicModel = new politicModel();
-        $politic      = $politicModel->getPolitic(['id', 'name']);
+            $titleModel = new titleModel();
+            $title      = $titleModel->getTitle(['id', 'name']);
 
-        $model  = new UserModel();
-        $result = $model->getUser($dept, $job, $title, $politic);
+            $politicModel = new politicModel();
+            $politic      = $politicModel->getPolitic(['id', 'name']);
+
+            $model  = new UserModel();
+            $result = $model->getAllUser($dept, $job, $title, $politic);
+        } else {
+            $model  = new UserModel();
+            $result = $model->getUserById($id);
+        }
 
         $res['code'] = 0;
         $res['data'] = ['pageNo' => 1, 'totalCount' => 2, 'data' => $result];
@@ -479,18 +488,35 @@ class Home extends BaseController
     {
         $client = $this->request->getJSON(true);
 
-        $model  = new UserModel();
-        $result = $model->newUser($client);
+        $user = [];
+        $role = [];
+        // 分离role
+        foreach ($client as $key => $value) {
+            if ($key === 'role') {
+                $role = $value;
+            } else {
+                $user[$key] = $value;
+            }
+        }
 
-        // $res['code']   = 0;
-        // $res['msg']    = '完成添加！';
-        // $res['data']   = ['id' => '1'];
-        // $res['client'] = $client;
+        // 写入user数据表
+        $model = new UserModel();
+        $uid   = $model->newUser($user);
 
-        if (is_numeric($result)) {
+        // 写入role数据表
+        if (is_numeric($uid)) {
+            $model2 = new UserRoleModel();
+            $result = $model2->newUserRole($uid, $role);
+        } else {
+            $res['code'] = 1;
+            $res['msg']  = '添加失败，稍后再试！';
+            return $this->respond($res);
+        }
+
+        if ($result) {
             $res['code'] = 0;
             $res['msg']  = '完成添加！';
-            $res['data'] = ['id' => $result];
+            $res['data'] = ['id' => $uid];
         } else {
             $res['code'] = 1;
             $res['msg']  = '添加失败，稍后再试！';
@@ -503,12 +529,33 @@ class Home extends BaseController
     {
         $client = $this->request->getJSON(true);
 
-        $model  = new UserModel();
-        $result = $model->save($client);
+        $user = [];
+        $role = [];
+        // 分离role
+        foreach ($client as $key => $value) {
+            if ($key === 'role') {
+                $role = $value;
+            } else {
+                $user[$key] = $value;
+            }
+        }
+
+        $model = new UserModel();
+        $uid   = $model->updateUser($user);
+
+        if ($uid) {
+            $model2 = new UserRoleModel();
+            $result = $model2->newUserRole($user['id'], $role);
+        } else {
+            $res['code'] = 1;
+            $res['msg']  = '修改失败，稍后再试！';
+            return $this->respond($res);
+        }
 
         if ($result) {
             $res['code'] = 0;
             $res['msg']  = '完成修改！';
+            $res['data'] = ['id' => $uid];
         } else {
             $res['code'] = 1;
             $res['msg']  = '修改失败，稍后再试！';
@@ -530,6 +577,26 @@ class Home extends BaseController
         } else {
             $res['code'] = 1;
             $res['msg']  = '删除失败，稍后再试！';
+        }
+
+        return $this->respond($res);
+    }
+
+    // 用户-角色
+    public function getUserRole()
+    {
+        $tmp = $this->request->getGet();
+        $uid = isset($tmp['uid']) ? $tmp['uid'] : '0';
+
+        $model  = new UserRoleModel();
+        $result = $model->getUserRole($uid);
+
+        if ($result) {
+            $res['code'] = 0;
+            $res['data'] = ['data' => $result];
+        } else {
+            $res['code'] = 1;
+            $res['data'] = ['data' => []];
         }
 
         return $this->respond($res);

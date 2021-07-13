@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-05 20:27:06
+ * @LastEditTime: 2021-07-13 22:49:02
  */
 import request from '@/utils/request'
 
@@ -16,6 +16,7 @@ const api = {
   job: '/job',
   title: '/title',
   politic: '/politic',
+  userRole: '/user_role',
   // user: '/user',
   //
   service: '/service',
@@ -257,5 +258,14 @@ export function delUser (id) {
     url: api.user,
     method: 'delete',
     data: { id }
+  })
+}
+
+// 用户-角色
+export function getUserRole (parameter) {
+  return request({
+    url: api.userRole,
+    method: 'get',
+    params: parameter
   })
 }

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-05 20:27:30
+ * @LastEditTime: 2021-07-13 22:49:57
  */
 
 namespace Config;
@@ -80,6 +80,8 @@ $routes->group('api', function ($routes) {
     $routes->post('user', 'Home::newUser');
     $routes->put('user', 'Home::updateUser');
     $routes->delete('user', 'Home::delUser');
+    //
+    $routes->get('user_role', 'Home::getUserRole');
     //
     $routes->add('(:any)', '404');
 });

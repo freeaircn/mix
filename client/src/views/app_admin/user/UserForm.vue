@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-10 22:36:56
+ * @LastEditTime: 2021-07-14 00:20:16
 -->
 <template>
   <!-- hidden PageHeaderWrapper title demo -->
@@ -51,7 +51,7 @@
           </a-radio-group>
         </a-form-model-item>
 
-        <a-form-model-item label="密码" prop="password">
+        <a-form-model-item v-if="!isEdit" label="密码" prop="password" >
           <a-input v-model="record.password"></a-input>
         </a-form-model-item>
 
@@ -66,7 +66,8 @@
         <a-form-model-item label="部门" prop="department">
           <a-cascader
             :options="departmentOptions"
-            @change="onCascaderChange"
+            v-model="record.department"
+            :allowClear="true"
             expand-trigger="hover"
             change-on-select
             :fieldNames="{ label: 'name', value: 'id', children: 'children' }"
@@ -106,7 +107,7 @@
 </template>
 
 <script>
-import { getPoliticTbl, getDeptTbl, getJobTbl, getTitleTbl, getRoleTbl, saveUser } from '@/api/manage'
+import { getUserTbl, getPoliticTbl, getDeptTbl, getJobTbl, getTitleTbl, getRoleTbl, saveUser, getUserRole } from '@/api/manage'
 import { listToTree } from '@/utils/util'
 
 export default {
@@ -126,49 +127,127 @@ export default {
       politicOptions: [],
       roleOptions: [],
       //
+      isEdit: false,
       record: {
-        password: '666',
-        department: ''
+        // password: '666',
+        department: [],
+        role: []
       },
       rules: {
 
       }
     }
   },
+  // watch: {
+  //   $route: {
+  //     handler: function (route) {
+  //       if (route.params.uid && route.params.uid !== 0) {
+  //         getUserTbl({ 'uid': route.params.uid })
+  //             .then(res => {
+  //               const user = res.data[0]
+  //               console.log('user', user)
+  //               console.log('record', this.record)
+  //             })
+  //             //  网络异常，清空页面数据显示，防止错误的操作
+  //           .catch((err) => {
+  //             if (err.response) {
+
+  //             }
+  //           })
+  //         }
+  //     },
+  //     immediate: true
+  //   }
+  // },
   created: function () {
-    this.getAllFormParams()
+    // this.getAllFormParams()
+    const uid = (this.$route.params.uid) ? this.$route.params.uid : '0'
+    this.isEdit = uid !== '0'
+    if (!this.isEdit) {
+      this.record['password'] = '666'
+    }
+    this.getAllFormParams(uid)
   },
   methods: {
-    getAllFormParams () {
-      Promise.all([getPoliticTbl(), getDeptTbl(), getJobTbl(), getTitleTbl(), getRoleTbl()])
-        .then((res) => {
-          this.politicOptions.splice(0)
-          this.politicOptions = res[0].data.slice(0)
-          //
-          listToTree(res[1].data, this.departmentOptions)
-          //
-          this.jobOptions.splice(0)
-          this.jobOptions = res[2].data.slice(0)
-          //
-          this.titleOptions.splice(0)
-          this.titleOptions = res[3].data.slice(0)
-          //
-          this.roleOptions.splice(0)
-          this.roleOptions = res[4].data.slice(0)
-        })
-        //  网络异常，清空页面数据显示，防止错误的操作
-        .catch((err) => {
-          if (err.response) {
-            setTimeout(() => {
-              this.getAllFormParams()
-            }, 1000)
-          }
-        })
+    getAllFormParams (uid = '0') {
+      if (uid === '0') {
+        Promise.all([getPoliticTbl(), getDeptTbl(), getJobTbl(), getTitleTbl(), getRoleTbl()])
+          .then((res) => {
+            this.politicOptions.splice(0)
+            this.politicOptions = res[0].data.slice(0)
+            //
+            listToTree(res[1].data, this.departmentOptions)
+            //
+            this.jobOptions.splice(0)
+            this.jobOptions = res[2].data.slice(0)
+            //
+            this.titleOptions.splice(0)
+            this.titleOptions = res[3].data.slice(0)
+            //
+            this.roleOptions.splice(0)
+            this.roleOptions = res[4].data.slice(0)
+          })
+          //  网络异常，清空页面数据显示，防止错误的操作
+          .catch((err) => {
+            if (err.response) {
+              setTimeout(() => {
+                this.getAllFormParams()
+              }, 1000)
+            }
+          })
+      } else {
+        Promise.all([getPoliticTbl(), getDeptTbl(), getJobTbl(), getTitleTbl(), getRoleTbl(), getUserTbl({ 'uid': uid }), getUserRole({ 'uid': uid })])
+          .then((res) => {
+            this.politicOptions.splice(0)
+            this.politicOptions = res[0].data.slice(0)
+            //
+            listToTree(res[1].data, this.departmentOptions)
+            //
+            this.jobOptions.splice(0)
+            this.jobOptions = res[2].data.slice(0)
+            //
+            this.titleOptions.splice(0)
+            this.titleOptions = res[3].data.slice(0)
+            //
+            this.roleOptions.splice(0)
+            this.roleOptions = res[4].data.slice(0)
+            //
+            const user = res[5].data[0]
+            this.fillUserObj(user)
+            //
+            this.record.role = res[6].data.slice(0)
+          })
+          //  网络异常，清空页面数据显示，防止错误的操作
+          .catch((err) => {
+            if (err.response) {
+              setTimeout(() => {
+                this.getAllFormParams()
+              }, 1000)
+            }
+          })
+      }
     },
-    onCascaderChange (value, selectedOptions) {
-      console.log('selectedOptions', selectedOptions)
-      this.record.department = selectedOptions.map(o => o.name).join(', ')
+
+    fillUserObj (user) {
+      console.log('user', user)
+      this.record.department.splice(0, this.record.department.length)
+      for (var p in user) {
+        if ((p.indexOf('deptLev') === -1) && user.hasOwnProperty(p)) {
+          this.record[p] = user[p]
+        }
+        if (p.indexOf('deptLev') !== -1 && user[p] !== '0') {
+          this.record.department.push(user[p])
+        }
+      }
+      console.log('record', this.record)
     },
+
+    // onCascaderChange (value, selectedOptions) {
+    //   // console.log('selectedOptions', selectedOptions)
+    //   // this.record.department = selectedOptions.map(o => o.name).join(', ')
+    //   // this.record.department = selectedOptions.map(o => o.id)
+    // },
+
     onSubmit () {
       this.$refs.form.validate(valid => {
         if (valid) {

@@ -80,6 +80,9 @@ INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `path`, `component`, `redir
 (12, 1, 7, 'politic', '/app/politic', 'app_admin/politic/index', '', b'0', b'0', b'0', '政治面貌', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
 (13, 1, 7, 'user', '/app/user', 'app_admin/user/Index', '/app/user/list', b'0', b'1', b'0', '注册用户', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
 (14, 1, 13, 'UserList', '/app/user/list', 'app_admin/user/UserList', '', b'0', b'0', b'1', '用户列表', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(15, 1, 13, 'UserForm', '/app/user/save/:uid', 'app_admin/user/UserForm', '', b'0', b'0', b'1', '编辑用户', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00');
+
+
 (15, 1, 13, 'UserForm', '/app/user/new', 'app_admin/user/UserForm', '', b'0', b'0', b'1', '新加用户', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00');
 
 (15, 1, 1, 'account', '/account', 'RouteView', '/account/settings', b'0', b'0', '个人页', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
@@ -259,18 +262,17 @@ CREATE TABLE IF NOT EXISTS `app_user` (
   `phone` varchar(15) NOT NULL,
   `email` varchar(63) NOT NULL,
   `status` varchar(3) NOT NULL COMMENT '启用或禁用',
-  `password` varchar(255) NOT NULL,
   `forceChgPwd` varchar(3) NOT NULL DEFAULT '1' COMMENT '要求修改密码',
   `avatar` int(11) UNSIGNED DEFAULT NULL COMMENT '头像ID',
   
-  `deptLev0` int(11) DEFAULT 1000 COMMENT '部门0',
-  `deptLev1` int(11) DEFAULT 1000 COMMENT '部门1',
-  `deptLev2` int(11) DEFAULT 1000 COMMENT '部门2',
-  `deptLev3` int(11) DEFAULT 1000 COMMENT '部门3',
-  `deptLev4` int(11) DEFAULT 1000 COMMENT '部门4',
-  `deptLev5` int(11) DEFAULT 1000 COMMENT '部门5',
-  `deptLev6` int(11) DEFAULT 1000 COMMENT '部门6',
-  `deptLev7` int(11) DEFAULT 1000 COMMENT '部门7',
+  `deptLev0` int(11) DEFAULT 0 COMMENT '部门0',
+  `deptLev1` int(11) DEFAULT 0 COMMENT '部门1',
+  `deptLev2` int(11) DEFAULT 0 COMMENT '部门2',
+  `deptLev3` int(11) DEFAULT 0 COMMENT '部门3',
+  `deptLev4` int(11) DEFAULT 0 COMMENT '部门4',
+  `deptLev5` int(11) DEFAULT 0 COMMENT '部门5',
+  `deptLev6` int(11) DEFAULT 0 COMMENT '部门6',
+  `deptLev7` int(11) DEFAULT 0 COMMENT '部门7',
   `job` int(11) UNSIGNED DEFAULT NULL COMMENT '岗位ID',
   `title` int(11) UNSIGNED DEFAULT NULL COMMENT '职称ID',
   `politic` int(11) UNSIGNED DEFAULT NULL COMMENT '政治面貌ID',
@@ -316,6 +318,7 @@ CREATE TABLE IF NOT EXISTS `app_user` (
   `str15` varchar(63) DEFAULT NULL COMMENT '预留',
   `str16` varchar(63) DEFAULT NULL COMMENT '预留',
 
+  `password` varchar(255) NOT NULL,
   `forgotten_password_selector` varchar(255) DEFAULT NULL,
   `forgotten_password_code` varchar(255) DEFAULT NULL,
   `forgotten_password_time` int(11) UNSIGNED DEFAULT NULL,

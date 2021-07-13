@@ -32,8 +32,8 @@
       </div>
 
       <div class="table-operator">
-        <!-- <a-button type="primary" icon="plus" @click="handleAdd">新建</a-button> -->
-        <router-link to="/app/user/new"><a-button type="primary" icon="plus" >新建</a-button></router-link>
+        <a-button type="primary" icon="plus" @click="handleAdd">新建</a-button>
+        <!-- <router-link to="/app/user/new"><a-button type="primary" icon="plus" >新建</a-button></router-link> -->
       </div>
 
       <a-table
@@ -190,10 +190,11 @@ export default {
     },
 
     handleAdd () {
-      this.tempRecord = Object.assign({}, { status: '1' })
+      const uid = 0
+      this.$router.push({ path: `/app/user/save/${uid}` })
     },
     handleEdit (record) {
-      this.tempRecord = Object.assign({}, record)
+      this.$router.push({ path: `/app/user/save/${record.id}` })
     },
 
     // handleSave (record) {
