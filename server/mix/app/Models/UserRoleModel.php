@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-13 23:00:23
+ * @LastEditTime: 2021-07-14 12:19:45
  */
 
 namespace App\Models;
@@ -68,6 +68,16 @@ class UserRoleModel extends Model
         }
 
         return ($cnt === $num) ? true : false;
+    }
+
+    public function delUserRole($uid = null)
+    {
+        if (!(is_numeric($uid))) {
+            return true;
+        }
+
+        $res = $this->where('user_id', $uid)->delete();
+        return $res;
     }
 
 }

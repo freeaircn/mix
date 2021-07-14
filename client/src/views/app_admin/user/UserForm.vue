@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-14 00:20:16
+ * @LastEditTime: 2021-07-14 21:05:54
 -->
 <template>
   <!-- hidden PageHeaderWrapper title demo -->
@@ -98,7 +98,7 @@
         </a-form-model-item>
 
         <a-form-model-item :wrapperCol="{ span: 24 }" style="text-align: center">
-          <a-button htmlType="submit" type="primary" @click="onSubmit">提交</a-button>
+          <a-button htmlType="submit" type="primary" @click="onSubmit">{{ btnLabel }}</a-button>
           <a-button style="margin-left: 8px">保存</a-button>
         </a-form-model-item>
       </a-form-model>
@@ -128,43 +128,20 @@ export default {
       roleOptions: [],
       //
       isEdit: false,
-      record: {
-        // password: '666',
-        department: [],
-        role: []
-      },
-      rules: {
-
-      }
+      btnLabel: '新建',
+      record: {},
+      rules: {}
     }
   },
-  // watch: {
-  //   $route: {
-  //     handler: function (route) {
-  //       if (route.params.uid && route.params.uid !== 0) {
-  //         getUserTbl({ 'uid': route.params.uid })
-  //             .then(res => {
-  //               const user = res.data[0]
-  //               console.log('user', user)
-  //               console.log('record', this.record)
-  //             })
-  //             //  网络异常，清空页面数据显示，防止错误的操作
-  //           .catch((err) => {
-  //             if (err.response) {
-
-  //             }
-  //           })
-  //         }
-  //     },
-  //     immediate: true
-  //   }
-  // },
   created: function () {
-    // this.getAllFormParams()
     const uid = (this.$route.params.uid) ? this.$route.params.uid : '0'
-    this.isEdit = uid !== '0'
-    if (!this.isEdit) {
-      this.record['password'] = '666'
+    if (uid === '0') {
+      this.isEdit = false
+      this.btnLabel = '新建'
+      this.record = Object.assign({}, { password: '666' })
+    } else {
+      this.isEdit = true
+      this.btnLabel = '修改'
     }
     this.getAllFormParams(uid)
   },
@@ -213,47 +190,58 @@ export default {
             this.roleOptions = res[4].data.slice(0)
             //
             const user = res[5].data[0]
-            this.fillUserObj(user)
             //
-            this.record.role = res[6].data.slice(0)
+            const role = res[6].data.slice(0)
+            // 合并数据
+            this.fillRecordObj(user, role)
           })
           //  网络异常，清空页面数据显示，防止错误的操作
           .catch((err) => {
             if (err.response) {
               setTimeout(() => {
-                this.getAllFormParams()
+                this.getAllFormParams(uid)
               }, 1000)
             }
           })
       }
     },
 
-    fillUserObj (user) {
-      console.log('user', user)
-      this.record.department.splice(0, this.record.department.length)
+    fillRecordObj (user, role) {
+      const temp = {}
+      temp.department = []
       for (var p in user) {
         if ((p.indexOf('deptLev') === -1) && user.hasOwnProperty(p)) {
-          this.record[p] = user[p]
+          temp[p] = user[p]
         }
         if (p.indexOf('deptLev') !== -1 && user[p] !== '0') {
-          this.record.department.push(user[p])
+          temp.department.push(user[p])
         }
       }
-      console.log('record', this.record)
+      this.record = Object.assign({}, temp, { role: role })
     },
 
-    // onCascaderChange (value, selectedOptions) {
-    //   // console.log('selectedOptions', selectedOptions)
-    //   // this.record.department = selectedOptions.map(o => o.name).join(', ')
-    //   // this.record.department = selectedOptions.map(o => o.id)
-    // },
-
     onSubmit () {
+      console.log('record', this.record)
       this.$refs.form.validate(valid => {
         if (valid) {
           saveUser(this.record)
             .then(() => {
-
+              if (this.isEdit) {
+                this.$router.push({ path: `/app/user/list` })
+              } else {
+                this.$confirm({
+                  title: '继续添加新用户？',
+                  content: h => <div style="">点击取消，将转至用户列表</div>,
+                  onOk: () => {
+                    this.$refs.form.clearValidate()
+                    this.record = Object.assign({})
+                  },
+                  onCancel: () => {
+                    this.$router.push({ path: `/app/user/list` })
+                  },
+                  class: 'test'
+                })
+              }
             })
             //  网络异常，清空页面数据显示，防止错误的操作
             // .catch((err) => {

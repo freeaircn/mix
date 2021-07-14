@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-14 00:44:17
+ * @LastEditTime: 2021-07-14 23:35:45
  */
 
 namespace App\Models;
@@ -30,11 +30,45 @@ class UserModel extends Model
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
 
-    public function getAllUser($dept = [], $job = [], $title = [], $politic = [])
+    public function getUserById($id = '0')
     {
-        $res = $this->select('id, workID, username, sex, IdCard, phone, email, status, deptLev0, deptLev1, deptLev2, deptLev3, deptLev4, deptLev5, deptLev6, deptLev7, job, title, politic, updated_at')
-            ->orderBy('id', 'ASC')
+        $res = $this->select('id, workID, username, sex, IdCard, phone, email, status, deptLev0, deptLev1, deptLev2, deptLev3, deptLev4, deptLev5, deptLev6, deptLev7, job, title, politic')
+            ->where('id', $id)
             ->findAll();
+
+        return $res;
+    }
+
+    public function getUserByQueryParam($dept = [], $job = [], $title = [], $politic = [], $queryParam = [])
+    {
+        $builder = $this->select('id, workID, username, sex, IdCard, phone, email, status, deptLev0,
+            deptLev1, deptLev2, deptLev3, deptLev4, deptLev5, deptLev6, deptLev7, job, title, politic, updated_at');
+
+        if (isset($queryParam['username']) && $queryParam['username'] !== '') {
+            $builder->like('username', $queryParam['username']);
+        }
+        if (isset($queryParam['status'])) {
+            $builder->where('status', $queryParam['status']);
+        }
+        if (isset($queryParam['department'])) {
+            $department = $queryParam['department'];
+            foreach ($department as $index => $value) {
+                $key = 'deptLev' . $index;
+
+                $builder->where($key, $value);
+            }
+        }
+
+        $total = $builder->countAllResults(false);
+
+        $builder->orderBy('id', 'ASC');
+
+        if (isset($queryParam['limit']) && isset($queryParam['offset'])) {
+            $res = $builder->findAll($queryParam['limit'], ($queryParam['offset'] - 1) * $queryParam['limit']);
+        }
+        if (isset($queryParam['limit']) && !isset($queryParam['offset'])) {
+            $res = $builder->findAll($queryParam['limit']);
+        }
 
         if (!empty($res)) {
             foreach ($res as &$user) {
@@ -73,16 +107,7 @@ class UserModel extends Model
             }
         }
 
-        return $res;
-    }
-
-    public function getUserById($id = '0')
-    {
-        $res = $this->select('id, workID, username, sex, IdCard, phone, email, status, deptLev0, deptLev1, deptLev2, deptLev3, deptLev4, deptLev5, deptLev6, deptLev7, job, title, politic')
-            ->where('id', $id)
-            ->findAll();
-
-        return $res;
+        return ['total' => $total, 'result' => $res];
     }
 
     public function newUser($data = [])

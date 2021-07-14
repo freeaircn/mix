@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-14 00:36:41
+ * @LastEditTime: 2021-07-14 23:10:58
  */
 
 namespace App\Controllers;
@@ -455,31 +455,24 @@ class Home extends BaseController
     // 用户
     public function getUser()
     {
-        $tmp = $this->request->getGet();
-        $id  = isset($tmp['uid']) ? $tmp['uid'] : '0';
+        $queryParam = $this->request->getGet();
 
-        if ($id === '0') {
-            $deptModel = new DeptModel();
-            $dept      = $deptModel->getDept(['id', 'name']);
-
-            $jobModel = new JobModel();
-            $job      = $jobModel->getJob(['id', 'name']);
-
-            $titleModel = new titleModel();
-            $title      = $titleModel->getTitle(['id', 'name']);
-
-            $politicModel = new politicModel();
-            $politic      = $politicModel->getPolitic(['id', 'name']);
-
+        // 1 由uid查询单个用户信息
+        if (isset($queryParam['uid'])) {
             $model  = new UserModel();
-            $result = $model->getAllUser($dept, $job, $title, $politic);
-        } else {
-            $model  = new UserModel();
-            $result = $model->getUserById($id);
+            $result = $model->getUserById($queryParam['uid']);
+
+            $res['code'] = 0;
+            $res['data'] = ['data' => $result];
+
+            return $this->respond($res);
         }
 
+        // 2 组合多条件查询：用户名、状态、部门
+        $result = $this->getUserList($queryParam);
+
         $res['code'] = 0;
-        $res['data'] = ['pageNo' => 1, 'totalCount' => 2, 'data' => $result];
+        $res['data'] = ['total' => $result['total'], 'data' => $result['result']];
 
         return $this->respond($res);
     }
@@ -567,16 +560,30 @@ class Home extends BaseController
     public function delUser()
     {
         $client = $this->request->getJSON(true);
+        if (isset($client['id']) && is_numeric($client['id'])) {
+            $id = $client['id'];
 
-        $model  = new UserModel();
-        $result = $model->delete($client['id']);
+            $result1 = false;
+            $result2 = false;
+            // 1 删除user-role表
+            $model1  = new UserRoleModel();
+            $result1 = $model1->delUserRole($id);
 
-        if ($result === true) {
-            $res['code'] = 0;
-            $res['msg']  = '完成删除！';
+            // 2 删除user表
+            if ($result1 === true) {
+                $model2  = new UserModel();
+                $result2 = $model2->delete($id);
+            }
+
+            if ($result1 === true && $result2 === true) {
+                $res['code'] = 0;
+                $res['msg']  = '完成删除！';
+            } else {
+                $res['code'] = 1;
+                $res['msg']  = '删除失败，稍后再试！';
+            }
         } else {
-            $res['code'] = 1;
-            $res['msg']  = '删除失败，稍后再试！';
+            $res['code'] = 0;
         }
 
         return $this->respond($res);
@@ -595,10 +602,31 @@ class Home extends BaseController
             $res['code'] = 0;
             $res['data'] = ['data' => $result];
         } else {
-            $res['code'] = 1;
+            $res['code'] = 0;
             $res['data'] = ['data' => []];
         }
 
         return $this->respond($res);
+    }
+
+    // 内部方法
+    protected function getUserList($queryParam = [])
+    {
+        $deptModel = new DeptModel();
+        $dept      = $deptModel->getDept(['id', 'name']);
+
+        $jobModel = new JobModel();
+        $job      = $jobModel->getJob(['id', 'name']);
+
+        $titleModel = new titleModel();
+        $title      = $titleModel->getTitle(['id', 'name']);
+
+        $politicModel = new politicModel();
+        $politic      = $politicModel->getPolitic(['id', 'name']);
+
+        $model  = new UserModel();
+        $result = $model->getUserByQueryParam($dept, $job, $title, $politic, $queryParam);
+
+        return $result;
     }
 }

@@ -7,23 +7,36 @@
       <div class="table-page-search-wrapper">
         <a-form layout="inline">
           <a-row :gutter="48">
-            <a-col :md="8" :sm="24">
+            <a-col :md="6" :sm="24">
               <a-form-item label="姓名">
-                <a-input v-model="queryParam.username" placeholder=""/>
+                <a-input v-model="queryParam.username" :allowClear="true" placeholder=""/>
               </a-form-item>
             </a-col>
-            <a-col :md="8" :sm="24">
+            <a-col :md="6" :sm="24">
               <a-form-item label="状态">
-                <a-select v-model="queryParam.status" placeholder="请选择">
+                <a-select v-model="queryParam.status" :allowClear="true" placeholder="请选择">
                   <a-select-option value="0">已禁用</a-select-option>
                   <a-select-option value="1">已启用</a-select-option>
                 </a-select>
               </a-form-item>
             </a-col>
-            <a-col :md="8" :sm="24">
+            <a-col :md="6" :sm="24">
+              <a-form-item label="部门">
+                <a-cascader
+                  :options="departmentOptions"
+                  v-model="queryParam.department"
+                  :allowClear="true"
+                  expand-trigger="hover"
+                  change-on-select
+                  :fieldNames="{ label: 'name', value: 'id', children: 'children' }"
+                  placeholder="请选择"
+                />
+              </a-form-item>
+            </a-col>
+            <a-col :md="6" :sm="24">
               <!-- <span class="table-page-search-submitButtons" :style="{ float: 'right', overflow: 'hidden' }"> -->
               <span class="table-page-search-submitButtons" >
-                <a-button type="primary" @click="loadData()">查询</a-button>
+                <a-button type="primary" @click="handleQuery">查询</a-button>
                 <a-button style="margin-left: 8px" @click="() => this.queryParam = {}">重置</a-button>
               </span>
             </a-col>
@@ -43,6 +56,7 @@
         :data-source="listData"
         :pagination="pagination"
         :loading="loading"
+        @change="handleTableChange"
       >
         <span slot="serial" slot-scope="text, record, index">
           {{ index + 1 }}
@@ -59,17 +73,13 @@
         </span>
       </a-table>
 
-      <!-- <user-form :visible.sync="visibleForm" :record="tempRecord" @res="handleSave">
-      </user-form> -->
-
     </a-card>
   </page-header-wrapper>
 </template>
 
 <script>
-// import UserForm from './modules/UserForm'
-import { getUserTbl, delUser } from '@/api/manage'
-// import { newTimestamp } from '@/utils/util'
+import { getUserTbl, delUser, getDeptTbl } from '@/api/manage'
+import { listToTree } from '@/utils/util'
 
 const columns = [
   {
@@ -143,18 +153,16 @@ const statusMap = {
 
 export default {
   name: 'UserList',
-  // components: {
-  //   UserForm
-  // },
   data () {
     this.columns = columns
     return {
       listData: [],
+      departmentOptions: [],
       // 查询参数
       queryParam: {},
-      pagination: {},
-      loading: false,
-      tempRecord: {}
+      pagination: { pageSize: 5 },
+      pageSize: 5,
+      loading: false
     }
   },
   filters: {
@@ -171,14 +179,25 @@ export default {
     //   showSizeChanger: this.showSizeChanger
     // }) || false
     // this.needTotalList = this.initTotalList(this.columns)
+    getDeptTbl()
+      .then(res => {
+        listToTree(res.data, this.departmentOptions)
+      })
+
     this.loadData()
   },
   methods: {
 
     loadData () {
-      const requestParameters = Object.assign({}, this.queryParam)
+      this.loading = true
+      const requestParameters = Object.assign({}, this.queryParam, { limit: this.pageSize, offset: this.pagination.current })
       getUserTbl(requestParameters)
         .then(res => {
+          const pagination = { ...this.pagination }
+          pagination.total = res.total
+          this.loading = false
+          this.pagination = pagination
+
           this.listData = res.data
         })
         //  网络异常，清空页面数据显示，防止错误的操作
@@ -189,46 +208,33 @@ export default {
        })
     },
 
+    handleTableChange (pagination) {
+      const pager = { ...this.pagination }
+      pager.current = pagination.current
+      this.pagination = pager
+
+      this.loadData()
+    },
+
+    handleQuery () {
+      this.pagination.current = 1
+      this.loadData()
+    },
+
     handleAdd () {
       const uid = 0
       this.$router.push({ path: `/app/user/save/${uid}` })
     },
+
     handleEdit (record) {
       this.$router.push({ path: `/app/user/save/${record.id}` })
     },
-
-    // handleSave (record) {
-    //   saveUser(record)
-    //    .then((res) => {
-    //       // 新建结果同步至table
-    //       if (res && res.id) {
-    //         var now = newTimestamp()
-    //         const temp = Object.assign({ id: res.id, updated_at: now }, record)
-    //         this.listData.unshift(temp)
-    //       }
-    //       // 修改结果同步至table
-    //       if (record && record.id) {
-    //         this.listData.forEach((element) => {
-    //           if (element.id === record.id) {
-    //             Object.assign(element, record)
-    //             element.updated_at = newTimestamp()
-    //           }
-    //         })
-    //       }
-    //    })
-    //    //  网络异常，清空页面数据显示，防止错误的操作
-    //    .catch((err) => {
-    //      if (err.response) {
-    //        this.listData.splice(0, this.listData.length)
-    //      }
-    //    })
-    // },
 
     // 删除请求
     handleDel (record) {
       this.$confirm({
         title: '确定删除吗?',
-        content: '删除 ' + record.name,
+        content: '删除 ' + record.username,
         onOk: () => {
           delUser(record.id)
             .then(() => {
