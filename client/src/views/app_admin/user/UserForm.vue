@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-14 21:05:54
+ * @LastEditTime: 2021-07-16 16:22:30
 -->
 <template>
   <!-- hidden PageHeaderWrapper title demo -->
@@ -51,13 +51,13 @@
           </a-radio-group>
         </a-form-model-item>
 
-        <a-form-model-item v-if="!isEdit" label="密码" prop="password" >
+        <a-form-model-item label="密码" prop="password" >
           <a-input v-model="record.password"></a-input>
         </a-form-model-item>
 
         <a-form-model-item label="政治面貌" prop="politic">
           <a-select v-model="record.politic" placeholder="请选择" >
-            <a-select-option v-for="d in politicOptions" :key="d.id" :value="d.id">
+            <a-select-option v-for="d in politicOptions" :key="d.id" :value="d.id" :disabled="d.status === '0'">
               {{ d.name }}
             </a-select-option>
           </a-select>
@@ -77,21 +77,21 @@
 
         <a-form-model-item label="岗位" prop="job">
           <a-select v-model="record.job" placeholder="请选择" >
-            <a-select-option v-for="d in jobOptions" :key="d.id" :value="d.id">
+            <a-select-option v-for="d in jobOptions" :key="d.id" :value="d.id" :disabled="d.status === '0'">
               {{ d.name }}
             </a-select-option>
           </a-select>
         </a-form-model-item>
         <a-form-model-item label="职称" prop="title">
           <a-select v-model="record.title" placeholder="请选择" >
-            <a-select-option v-for="d in titleOptions" :key="d.id" :value="d.id">
+            <a-select-option v-for="d in titleOptions" :key="d.id" :value="d.id" :disabled="d.status === '0'">
               {{ d.name }}
             </a-select-option>
           </a-select>
         </a-form-model-item>
         <a-form-model-item label="用户角色" prop="role">
           <a-select v-model="record.role" mode="multiple" placeholder="请选择" >
-            <a-select-option v-for="d in roleOptions" :key="d.id" :value="d.id">
+            <a-select-option v-for="d in roleOptions" :key="d.id" :value="d.id" :disabled="d.status === '0'">
               {{ d.name }}
             </a-select-option>
           </a-select>
@@ -107,6 +107,7 @@
 </template>
 
 <script>
+import md5 from 'md5'
 import { getUserTbl, getPoliticTbl, getDeptTbl, getJobTbl, getTitleTbl, getRoleTbl, saveUser, getUserRole } from '@/api/manage'
 import { listToTree } from '@/utils/util'
 
@@ -127,7 +128,7 @@ export default {
       politicOptions: [],
       roleOptions: [],
       //
-      isEdit: false,
+      isNewUserPage: true,
       btnLabel: '新建',
       record: {},
       rules: {}
@@ -136,24 +137,32 @@ export default {
   created: function () {
     const uid = (this.$route.params.uid) ? this.$route.params.uid : '0'
     if (uid === '0') {
-      this.isEdit = false
+      this.isNewUserPage = true
       this.btnLabel = '新建'
       this.record = Object.assign({}, { password: '666' })
     } else {
-      this.isEdit = true
+      this.isNewUserPage = false
       this.btnLabel = '修改'
     }
-    this.getAllFormParams(uid)
+    this.getAllFormParams(this.isNewUserPage, uid)
   },
   methods: {
-    getAllFormParams (uid = '0') {
-      if (uid === '0') {
-        Promise.all([getPoliticTbl(), getDeptTbl(), getJobTbl(), getTitleTbl(), getRoleTbl()])
+    getAllFormParams (isNewUserPage = true, uid = 0) {
+      if (isNewUserPage) {
+        Promise.all([getPoliticTbl(), getDeptTbl({ columnName: ['id', 'name', 'pid', 'status'] }), getJobTbl(), getTitleTbl(), getRoleTbl()])
           .then((res) => {
             this.politicOptions.splice(0)
             this.politicOptions = res[0].data.slice(0)
             //
-            listToTree(res[1].data, this.departmentOptions)
+            const tempDept = res[1].data
+            tempDept.forEach((elem, index) => {
+              for (var key in elem) {
+                if (key === 'status' && elem[key] === '0') {
+                  elem.disabled = true
+                }
+              }
+            })
+            listToTree(tempDept, this.departmentOptions)
             //
             this.jobOptions.splice(0)
             this.jobOptions = res[2].data.slice(0)
@@ -168,17 +177,25 @@ export default {
           .catch((err) => {
             if (err.response) {
               setTimeout(() => {
-                this.getAllFormParams()
+                this.getAllFormParams(this.isNewUserPage)
               }, 1000)
             }
           })
       } else {
-        Promise.all([getPoliticTbl(), getDeptTbl(), getJobTbl(), getTitleTbl(), getRoleTbl(), getUserTbl({ 'uid': uid }), getUserRole({ 'uid': uid })])
+        Promise.all([getPoliticTbl(), getDeptTbl({ columnName: ['id', 'name', 'pid', 'status'] }), getJobTbl(), getTitleTbl(), getRoleTbl(), getUserTbl({ 'uid': uid }), getUserRole({ 'uid': uid })])
           .then((res) => {
             this.politicOptions.splice(0)
             this.politicOptions = res[0].data.slice(0)
             //
-            listToTree(res[1].data, this.departmentOptions)
+            const tempDept = res[1].data
+            tempDept.forEach((elem, index) => {
+              for (var key in elem) {
+                if (key === 'status' && elem[key] === '0') {
+                  elem.disabled = true
+                }
+              }
+            })
+            listToTree(tempDept, this.departmentOptions)
             //
             this.jobOptions.splice(0)
             this.jobOptions = res[2].data.slice(0)
@@ -199,7 +216,7 @@ export default {
           .catch((err) => {
             if (err.response) {
               setTimeout(() => {
-                this.getAllFormParams(uid)
+                this.getAllFormParams(this.isNewUserPage, uid)
               }, 1000)
             }
           })
@@ -221,26 +238,29 @@ export default {
     },
 
     onSubmit () {
-      console.log('record', this.record)
       this.$refs.form.validate(valid => {
         if (valid) {
-          saveUser(this.record)
+          const data = { ...this.record }
+          if (this.record.password) {
+            data.password = md5(this.record.password)
+          }
+          saveUser(data)
             .then(() => {
-              if (this.isEdit) {
-                this.$router.push({ path: `/app/user/list` })
-              } else {
+              if (this.isNewUserPage) {
                 this.$confirm({
                   title: '继续添加新用户？',
                   content: h => <div style="">点击取消，将转至用户列表</div>,
                   onOk: () => {
                     this.$refs.form.clearValidate()
-                    this.record = Object.assign({})
+                    this.record = Object.assign({}, { password: '666' })
                   },
                   onCancel: () => {
                     this.$router.push({ path: `/app/user/list` })
                   },
                   class: 'test'
                 })
+              } else {
+                this.$router.push({ path: `/app/user/list` })
               }
             })
             //  网络异常，清空页面数据显示，防止错误的操作

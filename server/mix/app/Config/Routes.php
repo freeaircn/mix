@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-13 22:49:57
+ * @LastEditTime: 2021-07-16 23:48:58
  */
 
 namespace Config;
@@ -42,9 +42,9 @@ $routes->setAutoRoute(true);
 
 // Mix code: API routes
 $routes->group('api', function ($routes) {
-    $routes->post('auth/login', 'Home::login');
-    $routes->post('auth/logout', 'Home::logout');
-    $routes->get('user/info', 'Home::getUserInfo');
+    $routes->post('auth/login', 'Auth::login');
+    $routes->post('auth/logout', 'Auth::logout');
+    $routes->get('user/info', 'Auth::getUserInfo');
     //
     $routes->get('role', 'Home::getRole');
     $routes->post('role', 'Home::newRole');

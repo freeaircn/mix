@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-14 23:10:58
+ * @LastEditTime: 2021-07-17 13:01:39
  */
 
 namespace App\Controllers;
@@ -13,7 +13,7 @@ use App\Models\DeptModel;
 use App\Models\JobModel;
 use App\Models\MenuModel;
 use App\Models\PoliticModel;
-use App\Models\RoleMenuMode;
+use App\Models\RoleMenuModel;
 use App\Models\RoleMode;
 use App\Models\TitleModel;
 use App\Models\UserModel;
@@ -35,7 +35,7 @@ class Home extends BaseController
         $client = $this->request->getJSON(true);
         $this->session->set($client);
 
-        $token = md5(time());
+        $token = md5('666');
 
         $res['code'] = 0;
         $res['data'] = ['token' => $token, 'client' => $client];
@@ -56,25 +56,25 @@ class Home extends BaseController
         return $this->respond($res);
     }
 
-    public function getUserInfo()
-    {
-        $menuModel = new MenuModel();
-        $menus     = $menuModel->getMenus();
+    // public function getUserInfo()
+    // {
+    //     $model  = new MenuModel();
+    //     $result = $model->getMenu(['type' => '1']);
 
-        $res['code'] = 0;
-        $res['data'] = ['menus' => $menus];
+    //     $res['code'] = 0;
+    //     $res['data'] = ['menus' => $result];
 
-        return $this->respond($res);
-    }
+    //     return $this->respond($res);
+    // }
 
     // 角色
     public function getRole()
     {
-        $roleModel = new RoleMode();
-        $roles     = $roleModel->getRoles();
+        $model  = new RoleMode();
+        $result = $model->getRole();
 
         $res['code'] = 0;
-        $res['data'] = ['pageNo' => 1, 'totalCount' => 2, 'data' => $roles];
+        $res['data'] = ['data' => $result];
 
         return $this->respond($res);
     }
@@ -83,8 +83,8 @@ class Home extends BaseController
     {
         $client = $this->request->getJSON(true);
 
-        $roleModel = new RoleMode();
-        $result    = $roleModel->insert($client);
+        $model  = new RoleMode();
+        $result = $model->insert($client);
 
         if (is_numeric($result)) {
             $res['code'] = 0;
@@ -102,8 +102,8 @@ class Home extends BaseController
     {
         $client = $this->request->getJSON(true);
 
-        $roleModel = new RoleMode();
-        $result    = $roleModel->save($client);
+        $model  = new RoleMode();
+        $result = $model->save($client);
 
         if ($result) {
             $res['code'] = 0;
@@ -120,8 +120,8 @@ class Home extends BaseController
     {
         $client = $this->request->getJSON(true);
 
-        $roleModel = new RoleMode();
-        $result    = $roleModel->delete($client['id']);
+        $model  = new RoleMode();
+        $result = $model->delete($client['id']);
 
         if ($result === true) {
             $res['code'] = 0;
@@ -137,11 +137,11 @@ class Home extends BaseController
     // 菜单
     public function getMenu()
     {
-        $menuModel = new MenuModel();
-        $menu      = $menuModel->getMenuIDName();
+        $model  = new MenuModel();
+        $result = $model->getMenuByColumnName(['id', 'type', 'pid', 'title']);
 
         $res['code'] = 0;
-        $res['data'] = ['menu' => $menu];
+        $res['data'] = ['menu' => $result];
 
         return $this->respond($res);
     }
@@ -153,11 +153,11 @@ class Home extends BaseController
 
         $role_id = $client['role_id'];
 
-        $roleMenuModel = new RoleMenuMode();
-        $menu          = $roleMenuModel->getMenuByRole($role_id);
+        $model  = new RoleMenuModel();
+        $result = $model->getMenuByRole($role_id);
 
         $res['code']   = 0;
-        $res['data']   = ['menu' => $menu];
+        $res['data']   = ['menu' => $result];
         $res['client'] = $client;
 
         return $this->respond($res);
@@ -170,8 +170,8 @@ class Home extends BaseController
         $role_id = $client['role_id'];
         $menus   = $client['menus'];
 
-        $roleMenuModel = new RoleMenuMode();
-        $result        = $roleMenuModel->saveRoleMenu($role_id, $menus);
+        $model  = new RoleMenuModel();
+        $result = $model->saveRoleMenu($role_id, $menus);
 
         if ($result === true) {
             $res['code'] = 0;
@@ -187,11 +187,19 @@ class Home extends BaseController
     // 部门
     public function getDept()
     {
-        $deptModel = new DeptModel();
-        $dept      = $deptModel->getDept();
+        $queryParam = $this->request->getGet();
+
+        if (isset($queryParam['columnName'])) {
+            $model       = new DeptModel();
+            $result      = $model->getDept($queryParam['columnName']);
+            $res['data'] = ['data' => $result];
+        } else {
+            $model       = new DeptModel();
+            $result      = $model->getDept();
+            $res['data'] = ['data' => $result];
+        }
 
         $res['code'] = 0;
-        $res['data'] = ['pageNo' => 1, 'totalCount' => 2, 'data' => $dept];
 
         return $this->respond($res);
     }
@@ -200,8 +208,8 @@ class Home extends BaseController
     {
         $client = $this->request->getJSON(true);
 
-        $deptModel = new DeptModel();
-        $result    = $deptModel->insert($client);
+        $model  = new DeptModel();
+        $result = $model->insert($client);
 
         if (is_numeric($result)) {
             $res['code'] = 0;
@@ -219,8 +227,8 @@ class Home extends BaseController
     {
         $client = $this->request->getJSON(true);
 
-        $deptModel = new DeptModel();
-        $result    = $deptModel->save($client);
+        $model  = new DeptModel();
+        $result = $model->save($client);
 
         if ($result) {
             $res['code'] = 0;
@@ -237,8 +245,8 @@ class Home extends BaseController
     {
         $client = $this->request->getJSON(true);
 
-        $deptModel = new DeptModel();
-        $result    = $deptModel->delete($client['id']);
+        $model  = new DeptModel();
+        $result = $model->delete($client['id']);
 
         if ($result === true) {
             $res['code'] = 0;
@@ -258,7 +266,7 @@ class Home extends BaseController
         $result = $model->getJob();
 
         $res['code'] = 0;
-        $res['data'] = ['pageNo' => 1, 'totalCount' => 2, 'data' => $result];
+        $res['data'] = ['data' => $result];
 
         return $this->respond($res);
     }
@@ -325,7 +333,7 @@ class Home extends BaseController
         $result = $model->getTitle();
 
         $res['code'] = 0;
-        $res['data'] = ['pageNo' => 1, 'totalCount' => 2, 'data' => $result];
+        $res['data'] = ['data' => $result];
 
         return $this->respond($res);
     }
@@ -392,7 +400,7 @@ class Home extends BaseController
         $result = $model->getPolitic();
 
         $res['code'] = 0;
-        $res['data'] = ['pageNo' => 1, 'totalCount' => 2, 'data' => $result];
+        $res['data'] = ['data' => $result];
 
         return $this->respond($res);
     }

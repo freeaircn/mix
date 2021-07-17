@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-04 22:25:09
+ * @LastEditTime: 2021-07-15 10:35:55
  */
 
 namespace App\Models;
@@ -29,18 +29,18 @@ class PoliticModel extends Model
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
 
-    public function getPolitic($columnKeys = [])
+    public function getPolitic($columnName = [])
     {
-        $selectString = '';
-        if (empty($columnKeys)) {
-            $selectString = 'id, name, status, description, updated_at';
+        $selectSQL = '';
+        if (empty($columnName)) {
+            $selectSQL = 'id, name, status, description, updated_at';
         } else {
-            foreach ($columnKeys as $key) {
-                $selectString = $selectString . $key . ', ';
+            foreach ($columnName as $key) {
+                $selectSQL = $selectSQL . $key . ', ';
             }
         }
 
-        $res = $this->select($selectString)
+        $res = $this->select($selectSQL)
             ->orderBy('id', 'ASC')
             ->findAll();
 

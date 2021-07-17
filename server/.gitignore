@@ -80,6 +80,7 @@ mix/writable/uploads/*
 !mix/writable/uploads/index.html
 
 mix/writable/debugbar/*
+!mix/writable/debugbar/.gitkeep
 
 #-------------------------
 # User Guide Temp Files

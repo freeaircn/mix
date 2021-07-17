@@ -31,7 +31,7 @@ USE `mix`;
 DROP TABLE IF EXISTS `app_menu`;
 CREATE TABLE IF NOT EXISTS `app_menu` (
   `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'ID',
-  `type` int(11) UNSIGNED NOT NULL COMMENT '菜单-1，权限-2',
+  `type` int(11) UNSIGNED NOT NULL COMMENT '0-辅助展示，1-页面，2-API',
    `pid` int(11) UNSIGNED NOT NULL COMMENT '上级菜单ID',
   
   `name` varchar(63) DEFAULT NULL COMMENT '路由名称',
@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS `app_menu` (
   `target` varchar(63) DEFAULT NULL COMMENT '打开到新窗口',
   
   
-  `roles` varchar(255) DEFAULT NULL COMMENT '权限',
+  `authority` varchar(63) DEFAULT NULL COMMENT 'Mix权限',
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
@@ -62,33 +62,90 @@ CREATE TABLE IF NOT EXISTS `app_menu` (
 -- 转存表中的数据 `app_menu`
 --
 
-INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `path`, `component`, `redirect`, `hidden`, `hideChildrenInMenu`, `meta_hidden`, `title`, `icon`, `keepAlive`, `hiddenHeaderContent`, `permission`, `target`, `roles`, `created_at`) VALUES
-(1, 1, 0, 'index', '/', 'BasicLayout', '/dashboard/workplace', b'0', b'0', b'0', '首页', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `title`, `created_at`) VALUES
+(1, 0, 0, 'Page', '前端页面', '2021-06-27 20:00:00'),
+(2, 0, 0, 'API', '数据资源', '2021-06-27 20:00:00');
 
-(2, 1, 1, 'dashboard', '/dashboard', 'RouteView', '/dashboard/workplace', b'0', b'0', b'0', '仪表盘', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
-(3, 1, 2, 'Workplace', '/dashboard/workplace', 'dashboard/Workplace', '', b'0', b'0', b'0', '工作台', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
-(4, 1, 2, 'External', 'https://www.baidu.com/', '', '', b'0', b'0', b'0', '外部链接', '', b'0', b'0', '', '_blank', '', '2021-06-27 20:00:00'),
+INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `path`, `component`, `redirect`, `hidden`, `hideChildrenInMenu`, `meta_hidden`, `title`, `icon`, `keepAlive`, `hiddenHeaderContent`, `permission`, `target`, `authority`, `created_at`) VALUES
+(3, 1, 1, 'index', '/', 'BasicLayout', '/dashboard/workplace', b'0', b'0', b'0', '首页', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
 
-(5, 1, 1, 'form', '/form', 'PageView', '/form/base-form', b'0', b'0', b'0', '表单页', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
-(6, 1, 5, 'BaseForm', '/form/base-form', 'form/basicForm/index', '', b'0', b'0', b'0', '基础表单', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(4, 1, 3, 'dashboard', '/dashboard', 'RouteView', '/dashboard/workplace', b'0', b'0', b'0', '仪表盘', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(5, 1, 4, 'Workplace', '/dashboard/workplace', 'dashboard/Workplace', '', b'0', b'0', b'0', '工作台', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(6, 1, 4, 'External', 'https://www.baidu.com/', '', '', b'0', b'0', b'0', '外部链接', '', b'0', b'0', '', '_blank', '', '2021-06-27 20:00:00'),
 
-(7, 1, 1, 'app', '/app', 'RouteView', '/app/role', b'0', b'0', b'0', '应用管理', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
-(8, 1, 7, 'role', '/app/role', 'app_admin/role/BasicList', '', b'0', b'0', b'0', '用户角色', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
-(9, 1, 7, 'dept', '/app/dept', 'app_admin/dept/index', '', b'0', b'0', b'0', '部门机构', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
-(10, 1, 7, 'job', '/app/job', 'app_admin/job/index', '', b'0', b'0', b'0', '工作岗位', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
-(11, 1, 7, 'title', '/app/title', 'app_admin/title/index', '', b'0', b'0', b'0', '技能职称', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
-(12, 1, 7, 'politic', '/app/politic', 'app_admin/politic/index', '', b'0', b'0', b'0', '政治面貌', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
-(13, 1, 7, 'user', '/app/user', 'app_admin/user/Index', '/app/user/list', b'0', b'1', b'0', '注册用户', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
-(14, 1, 13, 'UserList', '/app/user/list', 'app_admin/user/UserList', '', b'0', b'0', b'1', '用户列表', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
-(15, 1, 13, 'UserForm', '/app/user/save/:uid', 'app_admin/user/UserForm', '', b'0', b'0', b'1', '编辑用户', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00');
+(7, 1, 3, 'form', '/form', 'PageView', '/form/base-form', b'0', b'0', b'0', '表单页', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(8, 1, 7, 'BaseForm', '/form/base-form', 'form/basicForm/index', '', b'0', b'0', b'0', '基础表单', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
 
+(9, 1, 3, 'app', '/app', 'RouteView', '/app/role', b'0', b'0', b'0', '应用管理', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(10, 1, 9, 'role', '/app/role', 'app_admin/role/BasicList', '', b'0', b'0', b'0', '用户角色', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(11, 1, 9, 'dept', '/app/dept', 'app_admin/dept/index', '', b'0', b'0', b'0', '部门机构', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(12, 1, 9, 'job', '/app/job', 'app_admin/job/index', '', b'0', b'0', b'0', '工作岗位', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(13, 1, 9, 'title', '/app/title', 'app_admin/title/index', '', b'0', b'0', b'0', '技能职称', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(14, 1, 9, 'politic', '/app/politic', 'app_admin/politic/index', '', b'0', b'0', b'0', '政治面貌', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(15, 1, 9, 'user', '/app/user', 'app_admin/user/Index', '/app/user/list', b'0', b'1', b'0', '注册用户', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(16, 1, 15, 'UserList', '/app/user/list', 'app_admin/user/UserList', '', b'0', b'0', b'1', '用户列表', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(17, 1, 15, 'UserForm', '/app/user/save/:uid', 'app_admin/user/UserForm', '', b'0', b'0', b'1', '编辑用户', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00');
 
-(15, 1, 13, 'UserForm', '/app/user/new', 'app_admin/user/UserForm', '', b'0', b'0', b'1', '新加用户', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00');
+INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `title`, `authority`, `created_at`) VALUES
+(18, 0, 2, 'DataUser', '用户信息', '', '2021-06-27 20:00:00'),
+(19, 2, 18, 'Get', '查询', 'user:get', '2021-06-27 20:00:00'),
+(20, 2, 18, 'Post', '新建', 'user:post', '2021-06-27 20:00:00'),
+(21, 2, 18, 'Update', '修改', 'user:update', '2021-06-27 20:00:00'),
+(22, 2, 18, 'Delete', '删除', 'user:delete', '2021-06-27 20:00:00');
 
-(15, 1, 1, 'account', '/account', 'RouteView', '/account/settings', b'0', b'0', '个人页', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
-(16, 1, 15, 'settings', '/account/settings', 'account/settings/Index', '/account/settings/basic', b'0', b'1', '个人设置', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
-(17, 1, 16, 'BasicSettings', '/account/settings/basic', 'account/settings/BasicSetting', '', b'0', b'0', '基本设置', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
-(18, 1, 16, 'SecuritySettings', '/account/settings/security', 'account/settings/Security', '', b'0', b'0', '安全设置', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00');
+INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `title`, `authority`, `created_at`) VALUES
+(23, 0, 2, 'DataRole', '角色数据', '', '2021-06-27 20:00:00'),
+(24, 2, 23, 'Get', '查询', 'role:get', '2021-06-27 20:00:00'),
+(25, 2, 23, 'Post', '新建', 'role:post', '2021-06-27 20:00:00'),
+(26, 2, 23, 'Update', '修改', 'role:update', '2021-06-27 20:00:00'),
+(27, 2, 23, 'Delete', '删除', 'role:delete', '2021-06-27 20:00:00');
+
+INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `title`, `authority`, `created_at`) VALUES
+(28, 0, 2, 'DataDept', '部门数据', '', '2021-06-27 20:00:00'),
+(29, 2, 28, 'Get', '查询', 'dept:get', '2021-06-27 20:00:00'),
+(30, 2, 28, 'Post', '新建', 'dept:post', '2021-06-27 20:00:00'),
+(31, 2, 28, 'Update', '修改', 'dept:update', '2021-06-27 20:00:00'),
+(32, 2, 28, 'Delete', '删除', 'dept:delete', '2021-06-27 20:00:00');
+
+INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `title`, `authority`, `created_at`) VALUES
+(33, 0, 2, 'DataJob', '岗位数据', '', '2021-06-27 20:00:00'),
+(34, 2, 33, 'Get', '查询', 'job:get', '2021-06-27 20:00:00'),
+(35, 2, 33, 'Post', '新建', 'job:post', '2021-06-27 20:00:00'),
+(36, 2, 33, 'Update', '修改', 'job:update', '2021-06-27 20:00:00'),
+(37, 2, 33, 'Delete', '删除', 'job:delete', '2021-06-27 20:00:00');
+
+INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `title`, `authority`, `created_at`) VALUES
+(38, 0, 2, 'DataTitle', '职称数据', '', '2021-06-27 20:00:00'),
+(39, 2, 38, 'Get', '查询', 'title:get', '2021-06-27 20:00:00'),
+(40, 2, 38, 'Post', '新建', 'title:post', '2021-06-27 20:00:00'),
+(41, 2, 38, 'Update', '修改', 'title:update', '2021-06-27 20:00:00'),
+(42, 2, 38, 'Delete', '删除', 'title:delete', '2021-06-27 20:00:00');
+
+INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `title`, `authority`, `created_at`) VALUES
+(43, 0, 2, 'DataPolitic', '政治面貌数据', '', '2021-06-27 20:00:00'),
+(44, 2, 43, 'Get', '查询', 'politic:get', '2021-06-27 20:00:00'),
+(45, 2, 43, 'Post', '新建', 'politic:post', '2021-06-27 20:00:00'),
+(46, 2, 43, 'Update', '修改', 'politic:update', '2021-06-27 20:00:00'),
+(47, 2, 43, 'Delete', '删除', 'politic:delete', '2021-06-27 20:00:00');
+
+INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `title`, `authority`, `created_at`) VALUES
+(48, 0, 2, 'DataMenu', '菜单数据', '', '2021-06-27 20:00:00'),
+(49, 2, 48, 'Get', '查询', 'menu:get', '2021-06-27 20:00:00');
+
+INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `title`, `authority`, `created_at`) VALUES
+(50, 0, 2, 'DataRoleMenu', '角色-菜单数据', '', '2021-06-27 20:00:00'),
+(51, 2, 50, 'Get', '查询', 'role_menu:get', '2021-06-27 20:00:00'),
+(52, 2, 50, 'Post', '新建', 'role_menu:post', '2021-06-27 20:00:00');
+
+INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `title`, `authority`, `created_at`) VALUES
+(53, 0, 2, 'DataUserMenu', '用户-角色数据', '', '2021-06-27 20:00:00'),
+(54, 2, 53, 'Get', '查询', 'user_role:get', '2021-06-27 20:00:00');
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `app_role`
+--
 
 DROP TABLE IF EXISTS `app_role`;
 CREATE TABLE IF NOT EXISTS `app_role` (
@@ -366,6 +423,7 @@ CREATE TABLE IF NOT EXISTS `app_user` (
 INSERT INTO `app_user` (`id`, `workID`, `username`, `sex`, `IdCard`, `phone`, `email`, `status`, `password`, `forceChgPwd`, `created_at`, `updated_at`) VALUES
 (1, '1', '小明', '男', '', '13812345678', '3@3.3', '1', '$argon2i$v=19$m=16384,t=4,p=2$My9kc2ZXZHUvNkx1ZjFCdA$6ZcgoVANOcxp7g6qyGO5ICw9w94Rhbapk8Nz92zB9bk', '0', '2021-06-27 20:00:00', '2021-06-27 20:00:00');
 
+
 -- --------------------------------------------------------
 
 --
@@ -386,6 +444,56 @@ CREATE TABLE IF NOT EXISTS `app_user_role` (
 
 INSERT INTO `app_user_role` (`user_id`, `role_id`) VALUES
 (1, 1);
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `app_login_attempts`
+--
+
+DROP TABLE IF EXISTS `app_login_attempts`;
+CREATE TABLE IF NOT EXISTS `app_login_attempts` (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `ip_address` varchar(45) NOT NULL,
+  `identity` varchar(63) NOT NULL,
+  `time` int(11) UNSIGNED DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+--
+-- 转存表中的数据 `app_login_attempts`
+--
+
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `app_user_avatar`
+--
+
+DROP TABLE IF EXISTS `app_user_avatar`;
+CREATE TABLE IF NOT EXISTS `app_user_avatar` (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) DEFAULT NULL COMMENT '文件名',
+  `path` varchar(255) DEFAULT NULL COMMENT '路径',
+  `size` varchar(255) DEFAULT NULL COMMENT '大小',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 COMMENT='头像' ROW_FORMAT=COMPACT;
+
+--
+-- 转存表中的数据 `app_user_avatar`
+--
+
+INSERT INTO `app_user_avatar` (`id`, `name`, `path`, `size`, `created_at`, `updated_at`) VALUES
+(1, 'male.jpg', 'avatar/default/', NULL, '2021-06-27 20:00:00', '2021-06-27 20:00:00'),
+(2, 'female.jpg', 'avatar/default/', NULL, '2021-06-27 20:00:00', '2021-06-27 20:00:00');
+
+
+
+
 
 COMMIT;
 

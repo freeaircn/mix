@@ -74,6 +74,7 @@
 import BlankForm from './modules/BlankForm'
 import PermissionTree from './modules/PermissionTree'
 import { getRoleTbl, saveRole, delRole, getMenu, getRoleMenu, saveRoleMenu } from '@/api/manage'
+import { listToTree, newTimestamp } from '@/utils/util'
 
 const columns = [
   {
@@ -188,7 +189,7 @@ export default {
        .then((res) => {
           // 新建结果同步至table
           if (res && res.id) {
-            var now = this.formatDateTime()
+            var now = newTimestamp()
             const temp = Object.assign({ id: res.id, updated_at: now }, record)
             this.data.unshift(temp)
           }
@@ -197,7 +198,7 @@ export default {
             this.data.forEach((element) => {
               if (element.id === record.id) {
                 Object.assign(element, record)
-                element.updated_at = this.formatDateTime()
+                element.updated_at = newTimestamp()
               }
             })
           }
@@ -230,7 +231,9 @@ export default {
       Promise.all([getMenu(), getRoleMenu({ role_id: role.id })])
         .then(function (res) {
           this.treeData.splice(0)
-          this.treeData = res[0].menu.slice(0)
+          // this.treeData = res[0].menu.slice(0)
+          const menuList = this.formatMenuData(res[0].menu.slice(0))
+          listToTree(menuList, this.treeData)
           //
           res[1].menu.forEach(element => {
             this.checkedKeys.push(element.menu_id)
@@ -250,45 +253,21 @@ export default {
        })
     },
 
-    formatDateTime () {
-      var date = new Date()
-      var y = date.getFullYear()
-      var m = date.getMonth() + 1
-      m = m < 10 ? ('0' + m) : m
-      var d = date.getDate()
-      d = d < 10 ? ('0' + d) : d
-      var h = date.getHours()
-      h = h < 10 ? ('0' + h) : h
-      var minute = date.getMinutes()
-      minute = minute < 10 ? ('0' + minute) : minute
-      var second = date.getSeconds()
-      second = second < 10 ? ('0' + second) : second
-      return y + '-' + m + '-' + d + ' ' + h + ':' + minute + ':' + second
+    formatMenuData (menu) {
+      menu.forEach(element => {
+        if (element.type && element.type === '0') {
+          element.disableCheckbox = true
+          element.checkable = false
+        }
+        if (element.type && element.type === '1') {
+          element.slots = { icon: 'file-image' }
+        }
+        if (element.type && element.type === '2') {
+          element.slots = { icon: 'form' }
+        }
+      })
+      return menu
     }
   }
 }
 </script>
-
-<style lang="less" scoped>
-.ant-avatar-lg {
-    width: 48px;
-    height: 48px;
-    line-height: 48px;
-}
-
-.list-content-item {
-    color: rgba(0, 0, 0, .45);
-    display: inline-block;
-    vertical-align: middle;
-    font-size: 14px;
-    margin-left: 40px;
-    span {
-        line-height: 20px;
-    }
-    p {
-        margin-top: 4px;
-        margin-bottom: 0;
-        line-height: 22px;
-    }
-}
-</style>

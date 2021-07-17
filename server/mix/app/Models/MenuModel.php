@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-06 22:25:33
+ * @LastEditTime: 2021-07-17 10:38:13
  */
 
 namespace App\Models;
@@ -29,16 +29,23 @@ class MenuModel extends Model
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
 
-    public function getMenus()
+    public function getMenu($queryParam = [])
     {
-        $menusTbl = $this->select('id, pid, name, path, component, redirect, hideChildrenInMenu, title, icon, keepAlive, meta_hidden, hiddenHeaderContent, hidden, permission, target')
-            ->where('type', '1')
-            ->orderBy('id', 'ASC')
-            ->findAll();
+        $selectSQL = 'id, pid, name, path, component, redirect, hideChildrenInMenu, title, icon, keepAlive, meta_hidden, hiddenHeaderContent, hidden, permission, target';
+        $builder   = $this->select($selectSQL);
+
+        if (isset($queryParam['type']) && $queryParam['type'] === '1') {
+            $builder->where('type', '1');
+        }
+        if (isset($queryParam['pageId']) && !empty($queryParam['pageId'])) {
+            $builder->whereIn('id', $queryParam['pageId']);
+        }
+        $builder->orderBy('id', 'ASC');
+        $data = $builder->findAll();
 
         $menus = [];
-        if (!empty($menusTbl)) {
-            foreach ($menusTbl as $item) {
+        if (!empty($data)) {
+            foreach ($data as $item) {
                 $menu = [];
                 $meta = [];
                 //
@@ -92,14 +99,60 @@ class MenuModel extends Model
         return $res;
     }
 
-    public function getMenuIDName()
+    public function getMenuByColumnName($columnName = [])
     {
-        $menu = $this->select('id, pid, title')
+        $selectSQL = '';
+        foreach ($columnName as $name) {
+            $selectSQL = $selectSQL . $name . ', ';
+        }
+
+        $builder = $this->select($selectSQL)->orderBy('id', 'ASC');
+        $data    = $builder->findAll();
+
+        // $utils = Services::mixUtils();
+        // $res   = $utils->arr2tree($data);
+
+        return $data;
+    }
+
+    public function getApiAclByMenuId(array $menuId = null)
+    {
+        if (!is_array($menuId) || empty($menuId)) {
+            return [];
+        }
+
+        $temp = $this->select('authority')
+            ->where('type', '2')
+            ->whereIn('id', $menuId)
             ->orderBy('id', 'ASC')
             ->findAll();
 
-        $utils = Services::mixUtils();
-        $res   = $utils->arr2tree($menu);
+        $res = [];
+        foreach ($temp as $value) {
+            if (!empty($value['authority'])) {
+                $res[] = $value['authority'];
+            }
+        }
+
+        return $res;
+    }
+
+    public function getPageIdByMenuId(array $menuId = null)
+    {
+        if (!is_array($menuId) || empty($menuId)) {
+            return [];
+        }
+
+        $temp = $this->select('id')
+            ->where('type', '1')
+            ->whereIn('id', $menuId)
+            ->orderBy('id', 'ASC')
+            ->findAll();
+
+        $res = [];
+        foreach ($temp as $value) {
+            $res[] = $value['id'];
+        }
 
         return $res;
     }

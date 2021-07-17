@@ -2,6 +2,7 @@
 import Cookies from 'js-cookie'
 import { login, getInfo, logout } from '@/api/login'
 import { ACCESS_TOKEN } from '@/store/mutation-types'
+import { resetRouter } from '@/router'
 // import { welcome } from '@/utils/util'
 
 const user = {
@@ -99,11 +100,12 @@ const user = {
     Login ({ commit }, userInfo) {
       return new Promise((resolve, reject) => {
         login(userInfo).then(data => {
+          // 写cookie
           if (data.token) {
-            // storage.set(ACCESS_TOKEN, data.token)
             Cookies.set(ACCESS_TOKEN, data.token)
             commit('SET_TOKEN', data.token)
           }
+          //
           resolve()
         }).catch(error => {
           reject(error)
@@ -112,16 +114,13 @@ const user = {
     },
 
     Logout ({ commit, state }) {
-      return new Promise((resolve) => {
+      return new Promise((resolve, reject) => {
         logout(state.token).then(() => {
-          commit('SET_TOKEN', '')
-          commit('SET_ROLES', [])
-          // storage.remove(ACCESS_TOKEN)
-          Cookies.remove(ACCESS_TOKEN)
+          preLogout(commit)
           resolve()
-        }).catch(() => {
-          resolve()
-        }).finally(() => {
+        }).catch((error) => {
+          preLogout(commit)
+          reject(error)
         })
       })
     },
@@ -130,35 +129,41 @@ const user = {
     GetInfo ({ commit }) {
       return new Promise((resolve, reject) => {
         getInfo().then(data => {
-          // const result = data.result
-
-          // if (result.role && result.role.permissions.length > 0) {
-          //   const role = result.role
-          //   role.permissions = result.role.permissions
-          //   role.permissions.map(per => {
-          //     if (per.actionEntitySet != null && per.actionEntitySet.length > 0) {
-          //       const action = per.actionEntitySet.map(action => { return action.action })
-          //       per.actionList = action
-          //     }
-          //   })
-          //   role.permissionList = role.permissions.map(permission => { return permission.permissionId })
-          //   commit('SET_ROLES', result.role)
-          //   commit('SET_INFO', result)
-          // } else {
-          //   reject(new Error('getInfo: roles must be a non-null array !'))
-          // }
-
-          // commit('SET_NAME', { name: result.name, welcome: welcome() })
-          // commit('SET_AVATAR', result.avatar)
-
+          // 存user数据
+          if (data.info) {
+            const user = { ...data.info }
+            commit('SET_INFO', user)
+            if (user.username) {
+              commit('SET_NAME', { name: user.username, welcome: '' })
+            }
+            if (user.avatarFile) {
+              commit('SET_AVATAR', user.avatarFile)
+            }
+          }
+          //
           commit('SET_ROLES', ['VERIFIED'])
-          resolve(data)
+          //
+          if (data.menus) {
+            resolve(data.menus)
+          } else {
+            resolve([])
+          }
         }).catch(error => {
           reject(error)
         })
       })
     }
   }
+}
+
+export const preLogout = (commit) => {
+  commit('SET_TOKEN', '')
+  commit('SET_ROLES', [])
+  commit('SET_NAME', { name: '', welcome: '' })
+  commit('SET_AVATAR', '')
+  commit('SET_INFO', {})
+  Cookies.remove(ACCESS_TOKEN)
+  resetRouter()
 }
 
 export default user

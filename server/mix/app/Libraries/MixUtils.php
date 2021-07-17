@@ -2,6 +2,8 @@
 
 namespace App\Libraries;
 
+use CodeIgniter\HTTP\RequestInterface;
+
 class MixUtils
 {
     public $maxPwdSizeBytes     = 254;
@@ -10,6 +12,8 @@ class MixUtils
         'time_cost'   => 4,
         'threads'     => PASSWORD_ARGON2_DEFAULT_THREADS,
     ];
+
+    // public $validationRules;
 
     public function __construct($config = null)
     {
@@ -36,7 +40,7 @@ class MixUtils
 
         foreach (array_keys(get_class_vars(get_class($this))) as $key) {
             if (property_exists($this, $key) && isset($config[$key])) {
-                $method = 'set' . ucfirst($key);
+                // $method = 'set' . ucfirst($key);
 
                 // if (method_exists($this, $method)) {
                 //     $this->$method($config[$key]);
@@ -105,6 +109,51 @@ class MixUtils
         }
 
         return false;
+    }
+
+    public function verifyPassword($password, $hashPassword)
+    {
+        // $MAX_PASSWORD_SIZE_BYTES = $this->config->item('MAX_PASSWORD_SIZE_BYTES', 'app_config');
+        // Check for empty password, or password containing null char, or password above limit
+        // Null char may pose issue: http://php.net/manual/en/function.password-hash.php#118603
+        // Long password may pose DOS issue (note: strlen gives size in bytes and not in multibyte symbol)
+        if (empty($password) || empty($hashPassword) || strpos($password, "\0") !== false
+            || strlen($password) > $this->maxPwdSizeBytes) {
+            return false;
+        }
+
+        return password_verify($password, $hashPassword);
+    }
+
+    public function accessAuth(RequestInterface $request)
+    {
+        // 检查是否存在session数据。存在 - 已登录；不存在 - 未登录。
+        $phone = session('phone');
+        if (is_null($phone)) {
+            return '用户还未登录！';
+        }
+
+        // ！！！超级用户，仅测试使用。
+        if ($phone == '13812345679') {
+            return true;
+        }
+
+        // API鉴权
+        $acl = session('acl');
+        if (is_null($acl) || empty($acl)) {
+            return '用户没有权限！';
+        }
+        $wanted = '';
+        $method = $request->getMethod();
+        $url    = $request->uri->getSegments();
+        if ($url[0] === 'api') {
+            $wanted = $url[1] . ':' . $method;
+        }
+        if (in_array($wanted, $acl) === false) {
+            return '用户没有权限！';
+        }
+
+        return true;
     }
 
     /**

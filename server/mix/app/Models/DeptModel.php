@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-10 23:02:55
+ * @LastEditTime: 2021-07-15 09:34:07
  */
 
 namespace App\Models;
@@ -29,25 +29,25 @@ class DeptModel extends Model
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
 
-    public function getDept($columnKeys = [])
+    public function getDept($columnName = [], $queryParam = [])
     {
-        $selectString = '';
-        if (empty($columnKeys)) {
-            $selectString = 'id, pid, name, status, description, updated_at';
+        $selectSQL = '';
+        if (empty($columnName)) {
+            $selectSQL = 'id, pid, name, status, description, updated_at';
         } else {
-            foreach ($columnKeys as $key) {
-                $selectString = $selectString . $key . ', ';
+            foreach ($columnName as $name) {
+                $selectSQL = $selectSQL . $name . ', ';
             }
         }
 
-        $dept = $this->select($selectString)
-            ->orderBy('id', 'ASC')
-            ->findAll();
+        $builder = $this->select($selectSQL);
+        if (isset($queryParam['status']) && $queryParam['status'] === 'enabled') {
+            $builder->where('status', '1');
+        }
+        $builder->orderBy('id', 'ASC');
 
-        // $utils = service('mixUtils');
-        // $utils = Services::mixUtils();
-        // $res   = $utils->arr2tree($dept);
+        $res = $builder->findAll();
 
-        return $dept;
+        return $res;
     }
 }

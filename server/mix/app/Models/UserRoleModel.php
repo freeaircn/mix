@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-14 12:19:45
+ * @LastEditTime: 2021-07-15 10:55:34
  */
 
 namespace App\Models;
@@ -29,9 +29,9 @@ class UserRoleModel extends Model
     // protected $updatedField  = 'updated_at';
     // protected $deletedField  = 'deleted_at';
 
-    public function getUserRole($uid = '0')
+    public function getUserRole($uid = null)
     {
-        if ($uid === '0') {
+        if (!is_numeric($uid)) {
             return false;
         }
 

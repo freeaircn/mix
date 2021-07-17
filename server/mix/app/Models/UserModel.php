@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-14 23:35:45
+ * @LastEditTime: 2021-07-16 10:56:27
  */
 
 namespace App\Models;
@@ -18,7 +18,7 @@ class UserModel extends Model
     protected $table         = 'app_user';
     protected $primaryKey    = 'id';
     protected $allowedFields = ['workID', 'username', 'sex', 'IdCard', 'phone', 'email', 'status', 'password', 'forceChgPwd', 'avatar',
-        'deptLev0', 'deptLev1', 'deptLev2', 'deptLev3', 'deptLev4', 'deptLev5', 'deptLev6', 'deptLev7', 'job', 'title', 'politic'];
+        'deptLev0', 'deptLev1', 'deptLev2', 'deptLev3', 'deptLev4', 'deptLev5', 'deptLev6', 'deptLev7', 'job', 'title', 'politic', 'last_login', 'ip_address'];
 
     protected $useAutoIncrement = true;
 
@@ -32,6 +32,10 @@ class UserModel extends Model
 
     public function getUserById($id = '0')
     {
+        if (!is_numeric($id)) {
+            return false;
+        }
+
         $res = $this->select('id, workID, username, sex, IdCard, phone, email, status, deptLev0, deptLev1, deptLev2, deptLev3, deptLev4, deptLev5, deptLev6, deptLev7, job, title, politic')
             ->where('id', $id)
             ->findAll();
@@ -41,11 +45,14 @@ class UserModel extends Model
 
     public function getUserByQueryParam($dept = [], $job = [], $title = [], $politic = [], $queryParam = [])
     {
-        $builder = $this->select('id, workID, username, sex, IdCard, phone, email, status, deptLev0,
+        $builder = $this->select('id, workID, username, sex, IdCard, phone, email, status, avatar, deptLev0,
             deptLev1, deptLev2, deptLev3, deptLev4, deptLev5, deptLev6, deptLev7, job, title, politic, updated_at');
 
         if (isset($queryParam['username']) && $queryParam['username'] !== '') {
             $builder->like('username', $queryParam['username']);
+        }
+        if (isset($queryParam['phone']) && $queryParam['phone'] !== '') {
+            $builder->where('phone', $queryParam['phone']);
         }
         if (isset($queryParam['status'])) {
             $builder->where('status', $queryParam['status']);
@@ -68,6 +75,9 @@ class UserModel extends Model
         }
         if (isset($queryParam['limit']) && !isset($queryParam['offset'])) {
             $res = $builder->findAll($queryParam['limit']);
+        }
+        if (!isset($queryParam['limit']) && !isset($queryParam['offset'])) {
+            $res = $builder->findAll();
         }
 
         if (!empty($res)) {
@@ -110,6 +120,19 @@ class UserModel extends Model
         return ['total' => $total, 'result' => $res];
     }
 
+    public function getUserPasswordByPhone(string $phone = '')
+    {
+        if (!is_numeric($phone)) {
+            return '';
+        }
+
+        $res = $this->select('password')
+            ->where('phone', $phone)
+            ->findAll();
+
+        return $res[0]['password'];
+    }
+
     public function newUser($data = [])
     {
         if (empty($data)) {
@@ -138,12 +161,14 @@ class UserModel extends Model
         }
 
         // 密码hash
-        $utils   = service('mixUtils');
-        $tempPwd = $utils->hashPassword($user['password']);
-        if ($tempPwd === false) {
-            return false;
+        if (isset($user['password'])) {
+            $utils   = service('mixUtils');
+            $tempPwd = $utils->hashPassword($user['password']);
+            if ($tempPwd === false) {
+                return false;
+            }
+            $user['password'] = $tempPwd;
         }
-        $user['password'] = $tempPwd;
 
         $result = $this->insert($user);
         if (is_numeric($result)) {
@@ -180,7 +205,31 @@ class UserModel extends Model
             $user[$key] = $value;
         }
 
+        // 密码hash
+        if (isset($user['password'])) {
+            $utils   = service('mixUtils');
+            $tempPwd = $utils->hashPassword($user['password']);
+            if ($tempPwd === false) {
+                return false;
+            }
+            $user['password'] = $tempPwd;
+        }
+
         $result = $this->save($user);
         return $result;
+    }
+
+    public function updateLastLoginAndIP($id = null, $ip_address = null)
+    {
+        if (!is_numeric($id) || $id <= 0 || !is_string($ip_address) || empty($ip_address)) {
+            return false;
+        }
+
+        $datetime = new \DateTime;
+        $data     = [
+            'last_login' => $datetime->format('Y-m-d H:i:s'),
+            'ip_address' => $ip_address,
+        ];
+        return $this->update($id, $data);
     }
 }

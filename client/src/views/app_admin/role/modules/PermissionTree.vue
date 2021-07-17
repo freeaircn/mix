@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-30 20:13:01
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-02 22:03:20
+ * @LastEditTime: 2021-07-17 13:47:31
 -->
 <template>
   <a-modal
@@ -15,15 +15,26 @@
     @ok="handleOk"
     @change="handleVisibleChange"
   >
+    <!-- <div class="table-page-search-wrapper">
+      <div class="icons-list">
+        <span>页面-</span><a-icon type="file-image" ></a-icon>
+        <span>API-</span><a-icon type="form" ></a-icon>
+      </div>
+    </div> -->
+
     <a-tree
       v-model="checkedKeys2"
       checkable
+      :showIcon="true"
       :replaceFields="{ children:'children', title:'title', key:'id' }"
       autoExpandParent
       defaultExpandAll
       :selected-keys="selectedKeys"
       :tree-data="treeData"
-    />
+    >
+      <a-icon slot="file-image" type="file-image" />
+      <a-icon slot="form" type="form" />
+    </a-tree>
   </a-modal>
 </template>
 
@@ -99,3 +110,10 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.icons-list >>> .anticon {
+  margin-right: 18px;
+  font-size: 18px;
+}
+</style>

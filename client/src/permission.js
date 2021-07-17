@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-06-30 19:40:18
+ * @LastEditTime: 2021-07-17 01:14:36
  */
 import router from './router'
 import store from './store'
@@ -11,7 +11,7 @@ import store from './store'
 import Cookies from 'js-cookie'
 import NProgress from 'nprogress' // progress bar
 import '@/components/NProgress/nprogress.less' // progress bar custom style
-import notification from 'ant-design-vue/es/notification'
+// import notification from 'ant-design-vue/es/notification'
 import { setDocumentTitle, domTitle } from '@/utils/domUtil'
 import { ACCESS_TOKEN } from '@/store/mutation-types'
 import { i18nRender } from '@/locales'
@@ -34,7 +34,7 @@ router.beforeEach((to, from, next) => {
     } else {
       // next() // 调试
       // check login user.roles is null
-      if (store.getters.roles.length === 0) {
+      if (store.getters.roles && store.getters.roles.length === 0) {
         // request login userInfo
         store
           .dispatch('GetInfo')
@@ -57,7 +57,7 @@ router.beforeEach((to, from, next) => {
             // })
 
             // Mix code
-            const menus = res.menus
+            const menus = res
             store.dispatch('GenerateRoutes', { menus }).then(() => {
               router.addRoutes(store.getters.addRouters)
               // next({ ...to, replace: true })
@@ -73,10 +73,10 @@ router.beforeEach((to, from, next) => {
             })
           })
           .catch(() => {
-            notification.error({
-              message: '错误',
-              description: '请求用户信息失败，请重试'
-            })
+            // notification.error({
+            //   message: '错误',
+            //   description: '请求用户信息失败，请重试'
+            // })
             // 失败时，获取用户信息失败时，调用登出，来清空历史保留信息
             store.dispatch('Logout').then(() => {
               next({ path: loginRoutePath, query: { redirect: to.fullPath } })
