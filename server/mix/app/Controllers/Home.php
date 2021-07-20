@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-17 13:01:39
+ * @LastEditTime: 2021-07-18 13:38:30
  */
 
 namespace App\Controllers;
@@ -30,38 +30,38 @@ class Home extends BaseController
         return view('home.html');
     }
 
-    public function login()
-    {
-        $client = $this->request->getJSON(true);
-        $this->session->set($client);
+    // public function login()
+    // {
+    //     $client = $this->request->getJSON(true);
+    //     $this->session->set($client);
 
-        $token = md5('666');
+    //     $token = md5('666');
 
-        $res['code'] = 0;
-        $res['data'] = ['token' => $token, 'client' => $client];
+    //     $res['code'] = EXIT_SUCCESS;
+    //     $res['data'] = ['token' => $token, 'client' => $client];
 
-        return $this->respond($res);
-    }
+    //     return $this->respond($res);
+    // }
 
-    public function logout()
-    {
-        // 1 log
-        // $user = $this->session->userdata();
-        // $this->common_tools->app_log('notice', "logout.", 'auth-logout');
+    // public function logout()
+    // {
+    //     // 1 log
+    //     // $user = $this->session->userdata();
+    //     // $this->common_tools->app_log('notice', "logout.", 'auth-logout');
 
-        // 2 销毁session
-        $this->session->destroy();
+    //     // 2 销毁session
+    //     $this->session->destroy();
 
-        $res['code'] = 0;
-        return $this->respond($res);
-    }
+    //     $res['code'] = EXIT_SUCCESS;
+    //     return $this->respond($res);
+    // }
 
     // public function getUserInfo()
     // {
     //     $model  = new MenuModel();
     //     $result = $model->getMenu(['type' => '1']);
 
-    //     $res['code'] = 0;
+    //     $res['code'] = EXIT_SUCCESS;
     //     $res['data'] = ['menus' => $result];
 
     //     return $this->respond($res);
@@ -73,7 +73,7 @@ class Home extends BaseController
         $model  = new RoleMode();
         $result = $model->getRole();
 
-        $res['code'] = 0;
+        $res['code'] = EXIT_SUCCESS;
         $res['data'] = ['data' => $result];
 
         return $this->respond($res);
@@ -87,11 +87,11 @@ class Home extends BaseController
         $result = $model->insert($client);
 
         if (is_numeric($result)) {
-            $res['code'] = 0;
+            $res['code'] = EXIT_SUCCESS;
             $res['msg']  = '完成添加！';
             $res['data'] = ['id' => $result];
         } else {
-            $res['code'] = 1;
+            $res['code'] = EXIT_ERROR;
             $res['msg']  = '添加失败，稍后再试！';
         }
 
@@ -106,10 +106,10 @@ class Home extends BaseController
         $result = $model->save($client);
 
         if ($result) {
-            $res['code'] = 0;
+            $res['code'] = EXIT_SUCCESS;
             $res['msg']  = '完成修改！';
         } else {
-            $res['code'] = 1;
+            $res['code'] = EXIT_ERROR;
             $res['msg']  = '修改失败，稍后再试！';
         }
 
@@ -124,10 +124,10 @@ class Home extends BaseController
         $result = $model->delete($client['id']);
 
         if ($result === true) {
-            $res['code'] = 0;
+            $res['code'] = EXIT_SUCCESS;
             $res['msg']  = '完成删除！';
         } else {
-            $res['code'] = 1;
+            $res['code'] = EXIT_ERROR;
             $res['msg']  = '删除失败，稍后再试！';
         }
 
@@ -140,7 +140,7 @@ class Home extends BaseController
         $model  = new MenuModel();
         $result = $model->getMenuByColumnName(['id', 'type', 'pid', 'title']);
 
-        $res['code'] = 0;
+        $res['code'] = EXIT_SUCCESS;
         $res['data'] = ['menu' => $result];
 
         return $this->respond($res);
@@ -174,10 +174,10 @@ class Home extends BaseController
         $result = $model->saveRoleMenu($role_id, $menus);
 
         if ($result === true) {
-            $res['code'] = 0;
+            $res['code'] = EXIT_SUCCESS;
             $res['msg']  = '权限已更新！';
         } else {
-            $res['code'] = 1;
+            $res['code'] = EXIT_ERROR;
             $res['msg']  = '权限配置失败，稍后再试！';
         }
 
@@ -199,7 +199,7 @@ class Home extends BaseController
             $res['data'] = ['data' => $result];
         }
 
-        $res['code'] = 0;
+        $res['code'] = EXIT_SUCCESS;
 
         return $this->respond($res);
     }
@@ -212,11 +212,11 @@ class Home extends BaseController
         $result = $model->insert($client);
 
         if (is_numeric($result)) {
-            $res['code'] = 0;
+            $res['code'] = EXIT_SUCCESS;
             $res['msg']  = '完成添加！';
             $res['data'] = ['id' => $result];
         } else {
-            $res['code'] = 1;
+            $res['code'] = EXIT_ERROR;
             $res['msg']  = '添加失败，稍后再试！';
         }
 
@@ -231,10 +231,10 @@ class Home extends BaseController
         $result = $model->save($client);
 
         if ($result) {
-            $res['code'] = 0;
+            $res['code'] = EXIT_SUCCESS;
             $res['msg']  = '完成修改！';
         } else {
-            $res['code'] = 1;
+            $res['code'] = EXIT_ERROR;
             $res['msg']  = '修改失败，稍后再试！';
         }
 
@@ -249,10 +249,10 @@ class Home extends BaseController
         $result = $model->delete($client['id']);
 
         if ($result === true) {
-            $res['code'] = 0;
+            $res['code'] = EXIT_SUCCESS;
             $res['msg']  = '完成删除！';
         } else {
-            $res['code'] = 1;
+            $res['code'] = EXIT_ERROR;
             $res['msg']  = '删除失败，稍后再试！';
         }
 
@@ -265,7 +265,7 @@ class Home extends BaseController
         $model  = new JobModel();
         $result = $model->getJob();
 
-        $res['code'] = 0;
+        $res['code'] = EXIT_SUCCESS;
         $res['data'] = ['data' => $result];
 
         return $this->respond($res);
@@ -279,11 +279,11 @@ class Home extends BaseController
         $result = $model->insert($client);
 
         if (is_numeric($result)) {
-            $res['code'] = 0;
+            $res['code'] = EXIT_SUCCESS;
             $res['msg']  = '完成添加！';
             $res['data'] = ['id' => $result];
         } else {
-            $res['code'] = 1;
+            $res['code'] = EXIT_ERROR;
             $res['msg']  = '添加失败，稍后再试！';
         }
 
@@ -298,10 +298,10 @@ class Home extends BaseController
         $result = $model->save($client);
 
         if ($result) {
-            $res['code'] = 0;
+            $res['code'] = EXIT_SUCCESS;
             $res['msg']  = '完成修改！';
         } else {
-            $res['code'] = 1;
+            $res['code'] = EXIT_ERROR;
             $res['msg']  = '修改失败，稍后再试！';
         }
 
@@ -316,10 +316,10 @@ class Home extends BaseController
         $result = $model->delete($client['id']);
 
         if ($result === true) {
-            $res['code'] = 0;
+            $res['code'] = EXIT_SUCCESS;
             $res['msg']  = '完成删除！';
         } else {
-            $res['code'] = 1;
+            $res['code'] = EXIT_ERROR;
             $res['msg']  = '删除失败，稍后再试！';
         }
 
@@ -332,7 +332,7 @@ class Home extends BaseController
         $model  = new TitleModel();
         $result = $model->getTitle();
 
-        $res['code'] = 0;
+        $res['code'] = EXIT_SUCCESS;
         $res['data'] = ['data' => $result];
 
         return $this->respond($res);
@@ -346,11 +346,11 @@ class Home extends BaseController
         $result = $model->insert($client);
 
         if (is_numeric($result)) {
-            $res['code'] = 0;
+            $res['code'] = EXIT_SUCCESS;
             $res['msg']  = '完成添加！';
             $res['data'] = ['id' => $result];
         } else {
-            $res['code'] = 1;
+            $res['code'] = EXIT_ERROR;
             $res['msg']  = '添加失败，稍后再试！';
         }
 
@@ -365,10 +365,10 @@ class Home extends BaseController
         $result = $model->save($client);
 
         if ($result) {
-            $res['code'] = 0;
+            $res['code'] = EXIT_SUCCESS;
             $res['msg']  = '完成修改！';
         } else {
-            $res['code'] = 1;
+            $res['code'] = EXIT_ERROR;
             $res['msg']  = '修改失败，稍后再试！';
         }
 
@@ -383,10 +383,10 @@ class Home extends BaseController
         $result = $model->delete($client['id']);
 
         if ($result === true) {
-            $res['code'] = 0;
+            $res['code'] = EXIT_SUCCESS;
             $res['msg']  = '完成删除！';
         } else {
-            $res['code'] = 1;
+            $res['code'] = EXIT_ERROR;
             $res['msg']  = '删除失败，稍后再试！';
         }
 
@@ -399,7 +399,7 @@ class Home extends BaseController
         $model  = new PoliticModel();
         $result = $model->getPolitic();
 
-        $res['code'] = 0;
+        $res['code'] = EXIT_SUCCESS;
         $res['data'] = ['data' => $result];
 
         return $this->respond($res);
@@ -413,11 +413,11 @@ class Home extends BaseController
         $result = $model->insert($client);
 
         if (is_numeric($result)) {
-            $res['code'] = 0;
+            $res['code'] = EXIT_SUCCESS;
             $res['msg']  = '完成添加！';
             $res['data'] = ['id' => $result];
         } else {
-            $res['code'] = 1;
+            $res['code'] = EXIT_ERROR;
             $res['msg']  = '添加失败，稍后再试！';
         }
 
@@ -432,10 +432,10 @@ class Home extends BaseController
         $result = $model->save($client);
 
         if ($result) {
-            $res['code'] = 0;
+            $res['code'] = EXIT_SUCCESS;
             $res['msg']  = '完成修改！';
         } else {
-            $res['code'] = 1;
+            $res['code'] = EXIT_ERROR;
             $res['msg']  = '修改失败，稍后再试！';
         }
 
@@ -450,10 +450,10 @@ class Home extends BaseController
         $result = $model->delete($client['id']);
 
         if ($result === true) {
-            $res['code'] = 0;
+            $res['code'] = EXIT_SUCCESS;
             $res['msg']  = '完成删除！';
         } else {
-            $res['code'] = 1;
+            $res['code'] = EXIT_ERROR;
             $res['msg']  = '删除失败，稍后再试！';
         }
 
@@ -470,7 +470,7 @@ class Home extends BaseController
             $model  = new UserModel();
             $result = $model->getUserById($queryParam['uid']);
 
-            $res['code'] = 0;
+            $res['code'] = EXIT_SUCCESS;
             $res['data'] = ['data' => $result];
 
             return $this->respond($res);
@@ -479,7 +479,7 @@ class Home extends BaseController
         // 2 组合多条件查询：用户名、状态、部门
         $result = $this->getUserList($queryParam);
 
-        $res['code'] = 0;
+        $res['code'] = EXIT_SUCCESS;
         $res['data'] = ['total' => $result['total'], 'data' => $result['result']];
 
         return $this->respond($res);
@@ -509,17 +509,17 @@ class Home extends BaseController
             $model2 = new UserRoleModel();
             $result = $model2->newUserRole($uid, $role);
         } else {
-            $res['code'] = 1;
+            $res['code'] = EXIT_ERROR;
             $res['msg']  = '添加失败，稍后再试！';
             return $this->respond($res);
         }
 
         if ($result) {
-            $res['code'] = 0;
+            $res['code'] = EXIT_SUCCESS;
             $res['msg']  = '完成添加！';
             $res['data'] = ['id' => $uid];
         } else {
-            $res['code'] = 1;
+            $res['code'] = EXIT_ERROR;
             $res['msg']  = '添加失败，稍后再试！';
         }
 
@@ -548,17 +548,17 @@ class Home extends BaseController
             $model2 = new UserRoleModel();
             $result = $model2->newUserRole($user['id'], $role);
         } else {
-            $res['code'] = 1;
+            $res['code'] = EXIT_ERROR;
             $res['msg']  = '修改失败，稍后再试！';
             return $this->respond($res);
         }
 
         if ($result) {
-            $res['code'] = 0;
+            $res['code'] = EXIT_SUCCESS;
             $res['msg']  = '完成修改！';
             $res['data'] = ['id' => $uid];
         } else {
-            $res['code'] = 1;
+            $res['code'] = EXIT_ERROR;
             $res['msg']  = '修改失败，稍后再试！';
         }
 
@@ -584,14 +584,14 @@ class Home extends BaseController
             }
 
             if ($result1 === true && $result2 === true) {
-                $res['code'] = 0;
+                $res['code'] = EXIT_SUCCESS;
                 $res['msg']  = '完成删除！';
             } else {
-                $res['code'] = 1;
+                $res['code'] = EXIT_ERROR;
                 $res['msg']  = '删除失败，稍后再试！';
             }
         } else {
-            $res['code'] = 0;
+            $res['code'] = EXIT_SUCCESS;
         }
 
         return $this->respond($res);
@@ -607,10 +607,10 @@ class Home extends BaseController
         $result = $model->getUserRole($uid);
 
         if ($result) {
-            $res['code'] = 0;
+            $res['code'] = EXIT_SUCCESS;
             $res['data'] = ['data' => $result];
         } else {
-            $res['code'] = 0;
+            $res['code'] = EXIT_SUCCESS;
             $res['data'] = ['data' => []];
         }
 

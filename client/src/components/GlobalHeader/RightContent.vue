@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-06-29 14:18:55
+ * @LastEditTime: 2021-07-20 23:00:34
 -->
 <template>
   <div :class="wrpCls">
@@ -38,12 +38,16 @@ export default {
     theme: {
       type: String,
       required: true
+    },
+    currentUser: {
+      type: Object,
+      default: () => {}
     }
   },
   data () {
     return {
-      showMenu: true,
-      currentUser: {}
+      showMenu: true
+      // currentUser: {}
     }
   },
   computed: {
@@ -53,13 +57,13 @@ export default {
         [`ant-pro-global-header-index-${(this.isMobile || !this.topMenu) ? 'light' : this.theme}`]: true
       }
     }
-  },
-  mounted () {
-    setTimeout(() => {
-      this.currentUser = {
-        name: 'Serati Ma'
-      }
-    }, 1500)
   }
+  // mounted () {
+  //   setTimeout(() => {
+  //     this.currentUser = {
+  //       name: 'Serati Ma'
+  //     }
+  //   }, 1500)
+  // }
 }
 </script>

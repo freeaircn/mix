@@ -21,7 +21,7 @@
               :placeholder="$t('user.login.phone.placeholder')"
               v-decorator="[
                 'phone',
-                {rules: [{ required: true, pattern: /^[1][3,4,5,7,8][0-9]{9}$/, message: $t('user.phone.required') }], validateTrigger: 'change'}
+                {rules: [{ required: true, pattern: /^[1][3,4,5,7,8][0-9]{9}$/, message: $t('user.phone.required') }], validateTrigger: 'blur'}
               ]"
             >
               <a-icon slot="prefix" type="user" :style="{ color: 'rgba(0,0,0,.25)' }"/>
@@ -43,7 +43,7 @@
         </a-tab-pane>
         <a-tab-pane key="tab2" :tab="$t('user.login.tab-login-mobile')" disabled>
           <a-form-item>
-            <a-input size="large" type="text" :placeholder="$t('user.login.mobile.placeholder')" v-decorator="['mobile', {rules: [{ required: true, pattern: /^1[34578]\d{9}$/, message: $t('user.login.mobile.placeholder') }], validateTrigger: 'change'}]">
+            <a-input size="large" type="text" :placeholder="$t('user.login.mobile.placeholder')" v-decorator="['mobile', {rules: [{ required: true, pattern: /^1[34578]\d{9}$/, message: $t('user.login.mobile.placeholder') }], validateTrigger: 'blur'}]">
               <a-icon slot="prefix" type="mobile" :style="{ color: 'rgba(0,0,0,.25)' }"/>
             </a-input>
           </a-form-item>
@@ -72,7 +72,7 @@
       <a-form-item>
         <!-- <a-checkbox v-decorator="['rememberMe', { valuePropName: 'checked' }]">{{ $t('user.login.remember-me') }}</a-checkbox> -->
         <router-link
-          :to="{ name: 'recover', params: { user: 'aaa'} }"
+          :to="{ name: 'ForgetPassword' }"
           class="forge-password"
           style="float: right;"
         >{{ $t('user.login.forgot-password') }}</router-link>

@@ -73,9 +73,6 @@ INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `path`, `component`, `redir
 (5, 1, 4, 'Workplace', '/dashboard/workplace', 'dashboard/Workplace', '', b'0', b'0', b'0', '工作台', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
 (6, 1, 4, 'External', 'https://www.baidu.com/', '', '', b'0', b'0', b'0', '外部链接', '', b'0', b'0', '', '_blank', '', '2021-06-27 20:00:00'),
 
-(7, 1, 3, 'form', '/form', 'PageView', '/form/base-form', b'0', b'0', b'0', '表单页', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
-(8, 1, 7, 'BaseForm', '/form/base-form', 'form/basicForm/index', '', b'0', b'0', b'0', '基础表单', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
-
 (9, 1, 3, 'app', '/app', 'RouteView', '/app/role', b'0', b'0', b'0', '应用管理', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
 (10, 1, 9, 'role', '/app/role', 'app_admin/role/BasicList', '', b'0', b'0', b'0', '用户角色', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
 (11, 1, 9, 'dept', '/app/dept', 'app_admin/dept/index', '', b'0', b'0', b'0', '部门机构', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
@@ -90,42 +87,42 @@ INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `title`, `authority`, `crea
 (18, 0, 2, 'DataUser', '用户信息', '', '2021-06-27 20:00:00'),
 (19, 2, 18, 'Get', '查询', 'user:get', '2021-06-27 20:00:00'),
 (20, 2, 18, 'Post', '新建', 'user:post', '2021-06-27 20:00:00'),
-(21, 2, 18, 'Update', '修改', 'user:update', '2021-06-27 20:00:00'),
+(21, 2, 18, 'put', '修改', 'user:put', '2021-06-27 20:00:00'),
 (22, 2, 18, 'Delete', '删除', 'user:delete', '2021-06-27 20:00:00');
 
 INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `title`, `authority`, `created_at`) VALUES
 (23, 0, 2, 'DataRole', '角色数据', '', '2021-06-27 20:00:00'),
 (24, 2, 23, 'Get', '查询', 'role:get', '2021-06-27 20:00:00'),
 (25, 2, 23, 'Post', '新建', 'role:post', '2021-06-27 20:00:00'),
-(26, 2, 23, 'Update', '修改', 'role:update', '2021-06-27 20:00:00'),
+(26, 2, 23, 'put', '修改', 'role:put', '2021-06-27 20:00:00'),
 (27, 2, 23, 'Delete', '删除', 'role:delete', '2021-06-27 20:00:00');
 
 INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `title`, `authority`, `created_at`) VALUES
 (28, 0, 2, 'DataDept', '部门数据', '', '2021-06-27 20:00:00'),
 (29, 2, 28, 'Get', '查询', 'dept:get', '2021-06-27 20:00:00'),
 (30, 2, 28, 'Post', '新建', 'dept:post', '2021-06-27 20:00:00'),
-(31, 2, 28, 'Update', '修改', 'dept:update', '2021-06-27 20:00:00'),
+(31, 2, 28, 'put', '修改', 'dept:put', '2021-06-27 20:00:00'),
 (32, 2, 28, 'Delete', '删除', 'dept:delete', '2021-06-27 20:00:00');
 
 INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `title`, `authority`, `created_at`) VALUES
 (33, 0, 2, 'DataJob', '岗位数据', '', '2021-06-27 20:00:00'),
 (34, 2, 33, 'Get', '查询', 'job:get', '2021-06-27 20:00:00'),
 (35, 2, 33, 'Post', '新建', 'job:post', '2021-06-27 20:00:00'),
-(36, 2, 33, 'Update', '修改', 'job:update', '2021-06-27 20:00:00'),
+(36, 2, 33, 'put', '修改', 'job:put', '2021-06-27 20:00:00'),
 (37, 2, 33, 'Delete', '删除', 'job:delete', '2021-06-27 20:00:00');
 
 INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `title`, `authority`, `created_at`) VALUES
 (38, 0, 2, 'DataTitle', '职称数据', '', '2021-06-27 20:00:00'),
 (39, 2, 38, 'Get', '查询', 'title:get', '2021-06-27 20:00:00'),
 (40, 2, 38, 'Post', '新建', 'title:post', '2021-06-27 20:00:00'),
-(41, 2, 38, 'Update', '修改', 'title:update', '2021-06-27 20:00:00'),
+(41, 2, 38, 'put', '修改', 'title:put', '2021-06-27 20:00:00'),
 (42, 2, 38, 'Delete', '删除', 'title:delete', '2021-06-27 20:00:00');
 
 INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `title`, `authority`, `created_at`) VALUES
 (43, 0, 2, 'DataPolitic', '政治面貌数据', '', '2021-06-27 20:00:00'),
 (44, 2, 43, 'Get', '查询', 'politic:get', '2021-06-27 20:00:00'),
 (45, 2, 43, 'Post', '新建', 'politic:post', '2021-06-27 20:00:00'),
-(46, 2, 43, 'Update', '修改', 'politic:update', '2021-06-27 20:00:00'),
+(46, 2, 43, 'put', '修改', 'politic:put', '2021-06-27 20:00:00'),
 (47, 2, 43, 'Delete', '删除', 'politic:delete', '2021-06-27 20:00:00');
 
 INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `title`, `authority`, `created_at`) VALUES
@@ -140,6 +137,20 @@ INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `title`, `authority`, `crea
 INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `title`, `authority`, `created_at`) VALUES
 (53, 0, 2, 'DataUserMenu', '用户-角色数据', '', '2021-06-27 20:00:00'),
 (54, 2, 53, 'Get', '查询', 'user_role:get', '2021-06-27 20:00:00');
+
+
+INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `path`, `component`, `redirect`, `hidden`, `hideChildrenInMenu`, `meta_hidden`, `title`, `icon`, `keepAlive`, `hiddenHeaderContent`, `permission`, `target`, `authority`, `created_at`) VALUES
+(55, 1, 3, 'Account', '/account', 'RouteView', '/account/settings', b'0', b'0', b'0', '个人页', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(56, 1, 55, 'Settings', '/account/settings', 'app_account/settings/Index', '/account/settings/basic', b'0', b'1', b'0', '个人设置', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(57, 1, 56, 'BasicSettings', '/account/settings/basic', 'app_account/settings/BasicSetting', '', b'0', b'0', b'1', '个人信息', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(58, 1, 56, 'SecuritySettings', '/account/settings/security', 'app_account/settings/Security', '', b'0', b'0', b'1', '安全设置', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00');
+
+
+INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `title`, `authority`, `created_at`) VALUES
+(59, 0, 2, 'DataAccount', '用户个人数据', '', '2021-06-27 20:00:00'),
+(60, 2, 59, 'Get', '查询', 'account:get', '2021-06-27 20:00:00'),
+(61, 2, 59, 'put', '修改', 'account:put', '2021-06-27 20:00:00');
+
 
 -- --------------------------------------------------------
 
@@ -492,7 +503,23 @@ INSERT INTO `app_user_avatar` (`id`, `name`, `path`, `size`, `created_at`, `upda
 (2, 'female.jpg', 'avatar/default/', NULL, '2021-06-27 20:00:00', '2021-06-27 20:00:00');
 
 
+-- --------------------------------------------------------
 
+--
+-- 表的结构 `app_sms_code`
+--
+
+DROP TABLE IF EXISTS `app_sms_code`;
+CREATE TABLE IF NOT EXISTS `app_sms_code` (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `phone` varchar(15) NOT NULL,
+  `code` varchar(5) DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `uc_sms_code_phone` (`phone`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
 
 COMMIT;

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-07-06 21:44:27
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-15 22:15:43
+ * @LastEditTime: 2021-07-18 15:21:04
  */
 
 namespace Config;
@@ -27,16 +27,11 @@ class MixUtils extends BaseConfig
      * 登录
      */
     public $maxAttempts = 5;
-    public $lockoutTime = 600;
+    public $lockoutTime = 600; // 秒
 
     /**
-     * Stores self-define rules.
-     *
+     * 验证码
      */
-    // public $validationRules = [
-    //     'phone'    => 'required',
-    //     'password' => 'required',
-    //     'email'    => 'required|valid_email',
-    // ];
+    public $smsCodeTimeout = 600; // 秒
 
 }

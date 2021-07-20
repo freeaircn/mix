@@ -28,13 +28,13 @@
     <!-- 1.0.0+ 版本 pro-layout 提供 API,
           增加 Header 左侧内容区自定义
     -->
-    <template v-slot:headerContentRender>
+    <!-- <template v-slot:headerContentRender>
       <div>
         <a-tooltip title="刷新页面">
           <a-icon type="reload" style="font-size: 18px;cursor: pointer;" @click="() => { $message.info('功能测试中') }" />
         </a-tooltip>
       </div>
-    </template>
+    </template> -->
 
     <setting-drawer v-if="isDev" :settings="settings" @change="handleSettingChange">
       <div style="margin: 12px 0;">
@@ -42,7 +42,7 @@
       </div>
     </setting-drawer>
     <template v-slot:rightContentRender>
-      <right-content :top-menu="settings.layout === 'topmenu'" :is-mobile="isMobile" :theme="settings.theme" />
+      <right-content :top-menu="settings.layout === 'topmenu'" :is-mobile="isMobile" :theme="settings.theme" :currentUser="currentUser"/>
     </template>
     <!-- custom footer / 自定义Footer -->
     <template v-slot:footerRender>
@@ -55,7 +55,7 @@
 <script>
 import { SettingDrawer, updateTheme } from '@ant-design-vue/pro-layout'
 import { i18nRender } from '@/locales'
-import { mapState } from 'vuex'
+import { mapState, mapGetters } from 'vuex'
 import { CONTENT_WIDTH_TYPE, SIDEBAR_TYPE, TOGGLE_MOBILE_TYPE } from '@/store/mutation-types'
 
 import defaultSettings from '@/config/defaultSettings'
@@ -112,7 +112,13 @@ export default {
     ...mapState({
       // 动态主路由
       mainMenu: state => state.permission.addRouters
-    })
+    }),
+    ...mapGetters([
+      'userInfo'
+    ]),
+    currentUser: function () {
+      return { name: this.userInfo.username, avatar: this.userInfo.avatarFile }
+    }
   },
   created () {
     const routes = this.mainMenu.find(item => item.path === '/')

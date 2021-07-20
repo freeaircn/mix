@@ -70,7 +70,7 @@ export default {
         name: [
           { required: true, message: '请输入名称', trigger: 'blur' }
         ],
-        status: [{ required: true, message: '请选择启用或禁用', trigger: 'change' }]
+        status: [{ required: true, message: '请选择启用或禁用', trigger: 'blur' }]
       }
     }
   },

@@ -3,13 +3,13 @@
  * @Author: freeair
  * @Date: 2021-06-30 20:13:01
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-05 20:39:47
+ * @LastEditTime: 2021-07-20 23:44:36
 -->
 <template>
   <a-modal
-    :title="title"
+    title="修改手机号"
     :visible="modalVisible"
-    :width="700"
+    :width="600"
     :centered="true"
     :maskClosable="false"
     @ok="handleOk"
@@ -22,41 +22,36 @@
       :label-col="labelCol"
       :wrapper-col="wrapperCol"
     >
-      <a-form-model-item label="姓名" prop="username">
-        <a-input v-model="record.username"></a-input>
+      <a-form-model-item label="手机号" prop="phone">
+        <a-input v-model="record.phone" autocomplete="off" placeholder="输入新手机号">
+        </a-input>
       </a-form-model-item>
 
-      <a-form-model-item label="状态" prop="status">
-        <a-select v-model="record.status" placeholder="请选择启用或禁用" >
-          <a-select-option value="0">禁用</a-select-option>
-          <a-select-option value="1">启用</a-select-option>
-        </a-select>
+      <a-form-model-item label="密码" prop="password">
+        <a-input-password v-model="record.password" autocomplete="off" placeholder="输入登录密码"></a-input-password>
       </a-form-model-item>
 
-      <!-- <a-form-model-item label="描述" prop="description">
-        <a-textarea v-model="record.description"></a-textarea>
-      </a-form-model-item> -->
     </a-form-model>
   </a-modal>
 </template>
 
 <script>
+import * as pattern from '@/utils/validateRegex'
 
 export default {
-  name: 'UserForm',
+  name: 'PhoneForm',
   props: {
     visible: {
       type: Boolean,
       default: false
-    },
-    record: {
-      type: Object,
-      default: null
     }
   },
   data () {
     return {
-      title: '新建',
+      record: {
+        phone: '',
+        password: ''
+      },
       modalVisible: false,
       labelCol: {
         xs: { span: 24 },
@@ -67,39 +62,38 @@ export default {
         sm: { span: 13 }
       },
       rules: {
-        name: [
-          { required: true, message: '请输入名称', trigger: 'blur' }
+        phone: [
+          { required: true, message: '请输入手机号', trigger: ['blur'] },
+          { pattern: pattern.phone.regex, message: pattern.phone.msg, trigger: ['blur'] }
         ],
-        status: [{ required: true, message: '请选择启用或禁用', trigger: 'change' }]
+        password: [ { required: true, message: '请输入登录密码', trigger: ['blur'] } ]
       }
     }
   },
   watch: {
     visible: {
       handler: function (val) {
-        this.title = this.record.id ? '修改' : '新建'
         this.modalVisible = val
       },
       immediate: true
     }
   },
-  // mounted () {
-  //   // this.record && this.form.setFieldsValue(pick(this.record, fields))
-  //   this.form = Object.assign({}, this.record)
-  // },
   methods: {
     handleOk () {
       this.$refs.form.validate(valid => {
           if (valid) {
-            const res = Object.assign({}, this.record)
+            const res = { ...this.record }
             this.$emit('res', res)
             this.modalVisible = false
             this.$emit('update:visible', false)
+            this.$refs.form.resetFields()
           }
         })
     },
+
     handleVisibleChange (visible) {
       this.$emit('update:visible', visible)
+      this.$refs.form.resetFields()
     }
   }
 }

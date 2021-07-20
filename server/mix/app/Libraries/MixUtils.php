@@ -13,7 +13,7 @@ class MixUtils
         'threads'     => PASSWORD_ARGON2_DEFAULT_THREADS,
     ];
 
-    // public $validationRules;
+    public $smsCodeTimeout;
 
     public function __construct($config = null)
     {
@@ -154,6 +154,27 @@ class MixUtils
         }
 
         return true;
+    }
+
+    public function isTimeout(string $timeName = null, string $time)
+    {
+        if (empty($timeName) || empty($time)) {
+            return false;
+        }
+
+        // 验证码
+        if ($timeName === 'SMS_CODE') {
+            $timeout = $this->smsCodeTimeout;
+            $now     = date("Y-m-d H:i:s");
+            if (strtotime($now) - strtotime($time) > $timeout) {
+                // 超期
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        return false;
     }
 
     /**

@@ -7,9 +7,10 @@
         </div>
         <div class="content">
           <div class="content-title">
-            {{ timeFix }}，{{ user.name }}<span class="welcome-text">，{{ welcome }}</span>
+            <!-- {{ timeFix }}，{{ user.name }}<span class="welcome-text">，{{ welcome }}</span> -->
+            {{ timeFix }}，{{ currentUser.name }}
           </div>
-          <div>前端工程师 | 蚂蚁金服 - 某某某事业群 - VUE平台</div>
+          <div>{{ currentUser.department }}</div>
         </div>
       </div>
     </template>
@@ -125,7 +126,8 @@
 
 <script>
 import { timeFix } from '@/utils/util'
-import { mapState } from 'vuex'
+// import { mapState } from 'vuex'
+import { mapState, mapGetters } from 'vuex'
 import { PageHeaderWrapper } from '@ant-design-vue/pro-layout'
 import { Radar } from '@/components'
 
@@ -195,15 +197,19 @@ export default {
       nickname: (state) => state.user.nickname,
       welcome: (state) => state.user.welcome
     }),
-    currentUser () {
+    ...mapGetters([
+      'userInfo'
+    ]),
+    currentUser: function () {
       return {
-        name: 'Serati Ma',
-        avatar: 'https://gw.alipayobjects.com/zos/antfincdn/XAosXuNZyF/BiazfanxmamNRoxxVxka.png'
+        name: this.userInfo.username,
+        avatar: process.env.VUE_APP_PUBLIC_BASE_URL + this.userInfo.avatarFile,
+        department: this.userInfo.department
       }
-    },
-    userInfo () {
-      return this.$store.getters.userInfo
     }
+    // userInfo () {
+    //   return this.$store.getters.userInfo
+    // }
   },
   created () {
     this.user = this.userInfo

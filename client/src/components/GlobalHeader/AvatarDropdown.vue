@@ -1,15 +1,22 @@
+<!--
+ * @Description:
+ * @Author: freeair
+ * @Date: 2021-06-19 12:28:13
+ * @LastEditors: freeair
+ * @LastEditTime: 2021-07-20 23:19:21
+-->
 <template>
   <a-dropdown v-if="currentUser && currentUser.name" placement="bottomRight">
     <span class="ant-pro-account-avatar">
-      <a-avatar size="small" src="https://gw.alipayobjects.com/zos/antfincdn/XAosXuNZyF/BiazfanxmamNRoxxVxka.png" class="antd-pro-global-header-index-avatar" />
+      <a-avatar v-if="currentUser.avatar" size="default" :src="avatarImg" alt="用户" class="antd-pro-global-header-index-avatar" />
       <span>{{ currentUser.name }}</span>
     </span>
     <template v-slot:overlay>
       <a-menu class="ant-pro-drop-down menu" :selected-keys="[]">
-        <a-menu-item v-if="menu" key="center" @click="handleToCenter">
+        <!-- <a-menu-item v-if="menu" key="center" @click="handleToCenter">
           <a-icon type="user" />
           {{ $t('menu.account.center') }}
-        </a-menu-item>
+        </a-menu-item> -->
         <a-menu-item v-if="menu" key="settings" @click="handleToSettings">
           <a-icon type="setting" />
           {{ $t('menu.account.settings') }}
@@ -40,6 +47,12 @@ export default {
     menu: {
       type: Boolean,
       default: true
+    }
+  },
+  computed: {
+    avatarImg: function () {
+      return process.env.VUE_APP_PUBLIC_BASE_URL + this.currentUser.avatar
+      // return 'http://127.0.0.1:8080/' + store.getters.avatar
     }
   },
   methods: {

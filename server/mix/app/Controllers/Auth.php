@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-17 13:00:45
+ * @LastEditTime: 2021-07-20 19:20:33
  */
 
 namespace App\Controllers;
@@ -16,7 +16,7 @@ use App\Models\JobModel;
 use App\Models\MenuModel;
 use App\Models\PoliticModel;
 use App\Models\RoleMenuModel;
-use App\Models\RoleMode;
+use App\Models\SmsCodeModel;
 use App\Models\TitleModel;
 use App\Models\UserModel;
 use App\Models\UserRoleModel;
@@ -30,11 +30,8 @@ class Auth extends BaseController
     {
         // 检查请求数据
         if (!$this->validate('AuthLogin')) {
-            $errors = $this->validator->getErrors();
-            foreach ($errors as $key => $value) {
-                log_message('error', '{file}:{line} --> validate request failed ' . $key . ' => ' . $value);
-            }
-            $res['code'] = 1;
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '请求数据无效！';
             return $this->respond($res);
         }
 
@@ -50,7 +47,7 @@ class Auth extends BaseController
         if ($result) {
             log_message('error', '{file}:{line} --> max login attempts exceeded: ' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4) . ' => ' . $ip_address);
 
-            $res['code'] = 1;
+            $res['code'] = EXIT_ERROR;
             $res['msg']  = '已尝试失败多次，请5分钟后再试！';
             return $this->respond($res);
         }
@@ -61,7 +58,7 @@ class Auth extends BaseController
             $authModel->increaseLoginAttempts($phone, $ip_address);
             log_message('error', '{file}:{line} --> phone not existed ' . $phone . ' => ' . $ip_address);
 
-            $res['code'] = 1;
+            $res['code'] = EXIT_ERROR;
             $res['msg']  = '用户不存在！';
             return $this->respond($res);
         }
@@ -69,14 +66,14 @@ class Auth extends BaseController
         $user = $query['result'][0];
         // 检查用户status 被禁用
         if ($user['status'] === '0') {
-            $res['code'] = 1;
-            $res['msg']  = '该用户已禁用！';
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '该用户已禁用，请联系管理员！';
             return $this->respond($res);
         }
 
         // 验证密码
         $userModel    = new UserModel();
-        $hashPassword = $userModel->getUserPasswordByPhone($phone);
+        $hashPassword = $userModel->getUserPassword(['phone' => $phone]);
 
         $utils  = service('mixUtils');
         $result = $utils->verifyPassword($password, $hashPassword);
@@ -84,7 +81,7 @@ class Auth extends BaseController
             $authModel->increaseLoginAttempts($phone, $ip_address);
             log_message('error', '{file}:{line} --> password not correct ' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4) . ' => ' . $ip_address);
 
-            $res['code'] = 1;
+            $res['code'] = EXIT_ERROR;
             $res['msg']  = '账号或密码错误！';
             return $this->respond($res);
         }
@@ -124,7 +121,7 @@ class Auth extends BaseController
         // 日志
         log_message('notice', '{file}:{line} --> login success ' . '[' . substr(session_id(), 0, 15) . '] ' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4) . ' => ' . $ip_address);
 
-        $res['code'] = 0;
+        $res['code'] = EXIT_SUCCESS;
         $res['data'] = ['token' => md5(time())];
 
         return $this->respond($res);
@@ -139,21 +136,121 @@ class Auth extends BaseController
         // 销毁session
         $this->session->destroy();
 
-        $res['code'] = 0;
+        $res['code'] = EXIT_SUCCESS;
+        return $this->respond($res);
+    }
+
+    // 验证码
+    public function sms()
+    {
+        // 检查请求数据
+        if (!$this->validate('AuthSMS')) {
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '请求数据无效！';
+            return $this->respond($res);
+        }
+
+        // 取出请求数据
+        $client = $this->request->getJSON(true);
+        $phone  = $client['phone'];
+
+        // 查找绑定的邮箱地址
+        $userModel = new UserModel();
+        $email     = $userModel->getUseEmailByPhone($phone);
+
+        if (empty($email)) {
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '账号不存在或未绑定邮箱！';
+            return $this->respond($res);
+        }
+
+        // 生成验证码
+        $smsCodeModel = new SmsCodeModel();
+        $code         = $smsCodeModel->newSmsCodeByPhone($phone);
+        if (empty($code)) {
+            log_message('error', '{file}:{line} --> new sms code failed' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4));
+
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '发送验证码失败，稍后尝试！';
+            return $this->respond($res);
+        }
+
+        // 验证码发送邮件
+        $emailParam = [
+            'code' => $code,
+            'dt'   => date("Y-m-d H:i:s"),
+        ];
+        $emailMessage = view('auth/sms_code.php', $emailParam);
+
+        $emailAPI = \Config\Services::email();
+        $emailAPI->setFrom($emailAPI->SMTPUser, '来自Mix应用');
+        $emailAPI->setTo($email);
+        $emailAPI->setSubject('【请勿回复此邮件】验证码： ' . $code);
+        $emailAPI->setMessage($emailMessage);
+        if (!$emailAPI->send(false)) {
+            $err = $emailAPI->printDebugger('subject');
+            log_message('error', '{file}:{line} --> send mail failed' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4) . '.  ' . $err);
+
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '发送验证码失败，稍后尝试！';
+            return $this->respond($res);
+        }
+
+        // 屏蔽个人信息
+        $emailArr = explode("@", $email);
+        $strlen   = mb_strlen($emailArr[0], 'utf-8');
+        if ($strlen < 4) {
+            $maskEmail = $emailArr[0] . '***@' . $emailArr[1];
+        } else {
+            $maskEmail = substr($emailArr[0], 0, 4) . '***@' . $emailArr[1];
+        }
+
+        $res['code'] = EXIT_SUCCESS;
+        $res['data'] = ['email' => $maskEmail];
+        return $this->respond($res);
+    }
+
+    // 修改密码
+    public function resetPassword()
+    {
+        // 检查请求数据
+        if (!$this->validate('AuthResetPassword')) {
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '请求数据无效！';
+            return $this->respond($res);
+        }
+
+        // 取出请求数据
+        $client   = $this->request->getJSON(true);
+        $phone    = $client['phone'];
+        $code     = $client['code'];
+        $password = $client['password'];
+
+        // 核对验证码
+        $smsCodeModel = new SmsCodeModel();
+        $isOK         = $smsCodeModel->validateSmsCodeByPhone($phone, $code);
+        if (!$isOK) {
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '验证码无效！';
+            return $this->respond($res);
+        }
+
+        // 修改密码
+        $userModel = new UserModel();
+        $isOK      = $userModel->updatePasswordByPhone($phone, $password);
+        if (!$isOK) {
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '修改密码失败，稍后再试！';
+            return $this->respond($res);
+        }
+
+        $res['code'] = EXIT_SUCCESS;
+        $res['msg']  = '请使用新密码登录！';
         return $this->respond($res);
     }
 
     public function getUserInfo()
     {
-        // 检验session是否存在，对于 get() 方法，如果你要访问的项目不存在，返回 NULL
-        // $phone = $this->session->get('phone');
-
-        // if (is_null($phone)) {
-        //     $res['code'] = 1;
-        //     $res['msg']  = '账号没有登录！';
-        //     return $this->respond($res);
-        // }
-
         // 取session保存的用户数据
         $sessionData = $this->session->get();
 
@@ -172,167 +269,17 @@ class Auth extends BaseController
             array_shift($sessionData);
             array_pop($sessionData);
 
-            $res['code'] = 0;
+            $res['code'] = EXIT_SUCCESS;
             $res['data'] = ['menus' => $result, 'info' => $sessionData];
         } else {
-            $res['code'] = 1;
+            $res['code'] = EXIT_ERROR;
             $res['msg']  = '用户没有授权！';
         }
 
         return $this->respond($res);
     }
 
-    // 角色
-    public function getRole()
-    {
-        $model  = new RoleMode();
-        $result = $model->getRole();
-
-        $res['code'] = 0;
-        $res['data'] = ['data' => $result];
-
-        return $this->respond($res);
-    }
-
-    // 角色-权限
-    public function getRoleMenu()
-    {
-        $client = $this->request->getGet();
-
-        $role_id = $client['role_id'];
-
-        $model  = new RoleMenuModel();
-        $result = $model->getMenuByRole($role_id);
-
-        $res['code']   = 0;
-        $res['data']   = ['menu' => $result];
-        $res['client'] = $client;
-
-        return $this->respond($res);
-    }
-
-    // 部门
-    public function getDept()
-    {
-        $queryParam = $this->request->getGet();
-
-        if (isset($queryParam['columnName'])) {
-            $model       = new DeptModel();
-            $result      = $model->getDept($queryParam['columnName']);
-            $res['data'] = ['data' => $result];
-        } else {
-            $model       = new DeptModel();
-            $result      = $model->getDept();
-            $res['data'] = ['data' => $result];
-        }
-
-        $res['code'] = 0;
-
-        return $this->respond($res);
-    }
-
-    // 岗位
-    public function getJob()
-    {
-        $model  = new JobModel();
-        $result = $model->getJob();
-
-        $res['code'] = 0;
-        $res['data'] = ['data' => $result];
-
-        return $this->respond($res);
-    }
-
-    // 职称
-    public function getTitle()
-    {
-        $model  = new TitleModel();
-        $result = $model->getTitle();
-
-        $res['code'] = 0;
-        $res['data'] = ['data' => $result];
-
-        return $this->respond($res);
-    }
-
-    // 政治面貌
-    public function getPolitic()
-    {
-        $model  = new PoliticModel();
-        $result = $model->getPolitic();
-
-        $res['code'] = 0;
-        $res['data'] = ['data' => $result];
-
-        return $this->respond($res);
-    }
-
-    // 用户
-    public function getUser()
-    {
-        $queryParam = $this->request->getGet();
-
-        // 1 由uid查询单个用户信息
-        if (isset($queryParam['uid'])) {
-            $model  = new UserModel();
-            $result = $model->getUserById($queryParam['uid']);
-
-            $res['code'] = 0;
-            $res['data'] = ['data' => $result];
-
-            return $this->respond($res);
-        }
-
-        // 2 组合多条件查询：用户名、状态、部门
-        $result = $this->getUserList($queryParam);
-
-        $res['code'] = 0;
-        $res['data'] = ['total' => $result['total'], 'data' => $result['result']];
-
-        return $this->respond($res);
-    }
-
-    // 用户-角色
-    public function getUserRole()
-    {
-        $tmp = $this->request->getGet();
-        $uid = isset($tmp['uid']) ? $tmp['uid'] : '0';
-
-        $model  = new UserRoleModel();
-        $result = $model->getUserRole($uid);
-
-        if ($result) {
-            $res['code'] = 0;
-            $res['data'] = ['data' => $result];
-        } else {
-            $res['code'] = 0;
-            $res['data'] = ['data' => []];
-        }
-
-        return $this->respond($res);
-    }
-
     // 内部方法
-    protected function getUserList($queryParam = [])
-    {
-        $deptModel = new DeptModel();
-        $dept      = $deptModel->getDept(['id', 'name']);
-
-        $jobModel = new JobModel();
-        $job      = $jobModel->getJob(['id', 'name']);
-
-        $titleModel = new titleModel();
-        $title      = $titleModel->getTitle(['id', 'name']);
-
-        $politicModel = new politicModel();
-        $politic      = $politicModel->getPolitic(['id', 'name']);
-
-        $model  = new UserModel();
-        $result = $model->getUserByQueryParam($dept, $job, $title, $politic, $queryParam);
-
-        return $result;
-    }
-
     protected function getUserByQuery($queryParam = [])
     {
         $deptModel = new DeptModel();

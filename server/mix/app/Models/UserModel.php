@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-16 10:56:27
+ * @LastEditTime: 2021-07-20 16:38:53
  */
 
 namespace App\Models;
@@ -53,6 +53,9 @@ class UserModel extends Model
         }
         if (isset($queryParam['phone']) && $queryParam['phone'] !== '') {
             $builder->where('phone', $queryParam['phone']);
+        }
+        if (isset($queryParam['id']) && $queryParam['id'] !== '') {
+            $builder->where('id', $queryParam['id']);
         }
         if (isset($queryParam['status'])) {
             $builder->where('status', $queryParam['status']);
@@ -120,17 +123,40 @@ class UserModel extends Model
         return ['total' => $total, 'result' => $res];
     }
 
-    public function getUserPasswordByPhone(string $phone = '')
+    public function getUserPassword(array $whereCondition = [])
+    {
+        if (empty($whereCondition)) {
+            return '';
+        }
+
+        $res = $this->select('password')
+            ->where($whereCondition)
+            ->findAll();
+
+        // return $res[0]['password'];
+
+        if (isset($res[0]) && isset($res[0]['password'])) {
+            return $res[0]['password'];
+        } else {
+            return '';
+        }
+    }
+
+    public function getUseEmailByPhone(string $phone = '')
     {
         if (!is_numeric($phone)) {
             return '';
         }
 
-        $res = $this->select('password')
+        $res = $this->select('email')
             ->where('phone', $phone)
             ->findAll();
 
-        return $res[0]['password'];
+        if (isset($res[0]) && isset($res[0]['email'])) {
+            return $res[0]['email'];
+        } else {
+            return '';
+        }
     }
 
     public function newUser($data = [])
@@ -158,6 +184,11 @@ class UserModel extends Model
         foreach ($department as $index => $value) {
             $key        = 'deptLev' . $index;
             $user[$key] = $value;
+        }
+
+        // 默认头像
+        if (isset($user['sex'])) {
+            $user['avatar'] = ($user['sex'] == '男') ? 1 : 2;
         }
 
         // 密码hash
@@ -231,5 +262,31 @@ class UserModel extends Model
             'ip_address' => $ip_address,
         ];
         return $this->update($id, $data);
+    }
+
+    public function updatePasswordByPhone(string $phone = null, string $password = null)
+    {
+        if (!is_numeric($phone) || empty($password)) {
+            return false;
+        }
+
+        // hash 密码
+        $utils        = \Config\Services::mixUtils();
+        $hashPassword = $utils->hashPassword($password);
+        if ($hashPassword === false) {
+            log_message('error', '{file}:{line} --> update password hash failed' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4));
+            return false;
+        }
+
+        // 修改密码
+        $data = [
+            'password' => $hashPassword,
+        ];
+        if ($this->where('phone', $phone)->set($data)->update()) {
+            return true;
+        } else {
+            log_message('error', '{file}:{line} --> update password db update failed' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4));
+            return false;
+        }
     }
 }

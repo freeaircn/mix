@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-18 15:40:14
+ * @LastEditTime: 2021-07-18 15:44:10
 -->
 <template>
   <a-result
@@ -21,7 +21,7 @@
 
 <script>
 export default {
-  name: 'RegisterResult',
+  name: 'ChangePwdResult',
   data () {
     return {
       description: '账号登录密码已经修改，请使用新密码登录。',
@@ -44,7 +44,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-
-</style>

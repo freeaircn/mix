@@ -73,8 +73,8 @@ export default {
         name: [
           { required: true, message: '请输入角色名称', trigger: 'blur' }
         ],
-        alias: [{ required: true, message: '请输入角色别名', trigger: 'change' }],
-        status: [{ required: true, message: '请选择启用或禁用', trigger: 'change' }]
+        alias: [{ required: true, message: '请输入角色别名', trigger: 'blur' }],
+        status: [{ required: true, message: '请选择启用或禁用', trigger: 'blur' }]
       }
     }
   },

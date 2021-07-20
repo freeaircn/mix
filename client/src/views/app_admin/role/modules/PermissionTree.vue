@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-30 20:13:01
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-17 13:47:31
+ * @LastEditTime: 2021-07-18 21:38:34
 -->
 <template>
   <a-modal
@@ -15,18 +15,15 @@
     @ok="handleOk"
     @change="handleVisibleChange"
   >
-    <!-- <div class="table-page-search-wrapper">
-      <div class="icons-list">
-        <span>页面-</span><a-icon type="file-image" ></a-icon>
-        <span>API-</span><a-icon type="form" ></a-icon>
-      </div>
-    </div> -->
+    <a-button style="margin-right: 18px;" @click="handleSelectAll">全选</a-button>
+    <a-button @click="handleClearAll">清空</a-button>
 
     <a-tree
       v-model="checkedKeys2"
       checkable
       :showIcon="true"
       :replaceFields="{ children:'children', title:'title', key:'id' }"
+      :checkStrictly="true"
       autoExpandParent
       defaultExpandAll
       :selected-keys="selectedKeys"
@@ -55,6 +52,10 @@ export default {
       type: Array,
       default: () => []
     },
+    allCheckableId: {
+      type: Array,
+      default: () => []
+    },
     checkedKeys: {
       type: Array,
       default: () => []
@@ -63,7 +64,10 @@ export default {
   data () {
     return {
       modalTitle: '',
-      checkedKeys2: [],
+      checkedKeys2: {
+        checked: [],
+        halfChecked: []
+      },
       selectedKeys: [],
       //
       modalVisible: false,
@@ -87,7 +91,7 @@ export default {
     },
     checkedKeys: {
       handler: function (val) {
-        this.checkedKeys2 = val
+        this.checkedKeys2.checked = val
       },
       immediate: true
     }
@@ -96,7 +100,7 @@ export default {
     handleOk () {
       const res = {
         role_id: this.role.id,
-        menus: this.checkedKeys2
+        menus: this.checkedKeys2.checked
       }
       this.$emit('submitPermission', res)
       this.modalVisible = false
@@ -105,8 +109,19 @@ export default {
 
     handleVisibleChange (visible) {
       this.$emit('update:visible', visible)
-    }
+    },
 
+    handleSelectAll () {
+      this.checkedKeys2 = {}
+      this.checkedKeys2.checked = this.allCheckableId
+      this.checkedKeys2.halfChecked = []
+    },
+
+    handleClearAll () {
+      this.checkedKeys2 = {}
+      this.checkedKeys2.checked = []
+      this.checkedKeys2.halfChecked = []
+    }
   }
 }
 </script>

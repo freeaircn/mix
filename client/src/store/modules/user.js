@@ -1,6 +1,7 @@
 // import storage from 'store'
 import Cookies from 'js-cookie'
 import { login, getInfo, logout } from '@/api/login'
+import { apiUpdateUserInfo, apiUpdateLoginPassword, apiUpdatePhone, apiUpdateEmail } from '@/api/account'
 import { ACCESS_TOKEN } from '@/store/mutation-types'
 import { resetRouter } from '@/router'
 // import { welcome } from '@/utils/util'
@@ -31,6 +32,16 @@ const user = {
     },
     SET_INFO: (state, info) => {
       state.info = info
+    },
+    SET_USER_PHONE: (state, phone) => {
+      if (state.info.phone) {
+        state.info.phone = phone
+      }
+    },
+    SET_USER_EMAIL: (state, email) => {
+      if (state.info.email) {
+        state.info.email = email
+      }
     }
   },
 
@@ -149,6 +160,69 @@ const user = {
             resolve([])
           }
         }).catch(error => {
+          reject(error)
+        })
+      })
+    },
+
+    // 修改用户个人信息
+    UpdateUserInfo ({ commit }, userInfo) {
+      return new Promise((resolve, reject) => {
+        apiUpdateUserInfo(userInfo).then((data) => {
+          // 存user数据
+          if (data.info) {
+            const user = { ...data.info }
+            commit('SET_INFO', user)
+            if (user.username) {
+              commit('SET_NAME', { name: user.username, welcome: '' })
+            }
+            if (user.avatarFile) {
+              commit('SET_AVATAR', user.avatarFile)
+            }
+          }
+          resolve()
+        }).catch((error) => {
+          reject(error)
+        })
+      })
+    },
+
+    // 修改用户登录密码
+    UpdateUserLoginPassword ({ commit }, params) {
+      return new Promise((resolve, reject) => {
+        apiUpdateLoginPassword(params).then(() => {
+          resolve()
+        }).catch((error) => {
+          reject(error)
+        })
+      })
+    },
+
+    // 修改用户手机号
+    UpdateUserPhone ({ commit }, params) {
+      return new Promise((resolve, reject) => {
+        apiUpdatePhone(params).then((data) => {
+          // 存user数据
+          if (data.phone) {
+            commit('SET_USER_PHONE', data.phone)
+          }
+          resolve()
+        }).catch((error) => {
+          reject(error)
+        })
+      })
+    },
+
+    // 修改用户邮箱
+    UpdateUserEmail ({ commit }, params) {
+      return new Promise((resolve, reject) => {
+        apiUpdateEmail(params).then((data) => {
+          // 存user数据
+          if (data.email) {
+            commit('SET_USER_EMAIL', data.email)
+          }
+          resolve()
+        }).catch((error) => {
           reject(error)
         })
       })

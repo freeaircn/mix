@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-30 20:13:01
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-04 22:29:39
+ * @LastEditTime: 2021-07-20 19:11:26
 -->
 <template>
   <a-modal
@@ -70,7 +70,7 @@ export default {
         name: [
           { required: true, message: '请输入名称', trigger: 'blur' }
         ],
-        status: [{ required: true, message: '请选择启用或禁用', trigger: 'change' }]
+        status: [{ required: true, message: '请选择启用或禁用', trigger: 'blur' }]
       }
     }
   },

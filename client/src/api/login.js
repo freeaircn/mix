@@ -1,12 +1,21 @@
+/*
+ * @Description:
+ * @Author: freeair
+ * @Date: 2021-06-19 12:28:13
+ * @LastEditors: freeair
+ * @LastEditTime: 2021-07-18 13:56:33
+ */
 import request from '@/utils/request'
 
 const userApi = {
   Login: '/auth/login',
   Logout: '/auth/logout',
+  SendSms: '/auth/sms', // Mix code
+  resetPassword: '/auth/reset-password', // Mix code
   ForgePassword: '/auth/forge-password',
   Register: '/auth/register',
   twoStepCode: '/auth/2step-code',
-  SendSms: '/account/sms',
+  // SendSms: '/account/sms',
   SendSmsErr: '/account/sms_err',
   // get my info
   UserInfo: '/user/info',
@@ -35,6 +44,15 @@ export function login (parameter) {
 export function getSmsCaptcha (parameter) {
   return request({
     url: userApi.SendSms,
+    method: 'post',
+    data: parameter
+  })
+}
+
+// Mix code
+export function resetPassword (parameter) {
+  return request({
+    url: userApi.resetPassword,
     method: 'post',
     data: parameter
   })

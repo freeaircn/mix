@@ -360,6 +360,16 @@ export const constantRouterMap = [
         name: 'login',
         component: () => import(/* webpackChunkName: "user" */ '@/views/user/Login')
       },
+      {
+        path: 'forget-password',
+        name: 'ForgetPassword',
+        component: () => import(/* webpackChunkName: "user" */ '@/views/user/ForgetPassword/index')
+      },
+      {
+        path: 'change-pwd-result',
+        name: 'ChangePwdResult',
+        component: () => import(/* webpackChunkName: "user" */ '@/views/user/ForgetPassword/Result')
+      }
       // {
       //   path: 'register',
       //   name: 'register',
@@ -369,12 +379,12 @@ export const constantRouterMap = [
       //   path: 'register-result',
       //   name: 'registerResult',
       //   component: () => import(/* webpackChunkName: "user" */ '@/views/user/RegisterResult')
-      // },
-      {
-        path: 'recover',
-        name: 'recover',
-        component: undefined
-      }
+      // }
+      // {
+      //   path: 'recover',
+      //   name: 'recover',
+      //   component: undefined
+      // }
     ]
   },
   {

@@ -60,6 +60,8 @@ const errorHandler = (error) => {
 
 // Mix code
 request.defaults.headers.post['Content-Type'] = 'application/json'
+request.defaults.headers.put['Content-Type'] = 'application/json'
+request.defaults.headers.delete['Content-Type'] = 'application/json'
 
 // Mix code: Post请求转换请求，使用json。qs 序列化，undefined或空数组，axios post 提交时，qs不填入http body。
 request.defaults.transformRequest = [function (data) {

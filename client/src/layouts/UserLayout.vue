@@ -22,7 +22,7 @@
 
         <div class="footer">
           <div class="links">
-            <a href="#">帮助</a>
+            <!-- <a href="#">帮助</a> -->
             <a href="#">隐私</a>
             <a href="#">条款</a>
           </div>

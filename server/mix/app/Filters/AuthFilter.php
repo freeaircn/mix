@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-07-16 23:08:38
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-17 01:17:42
+ * @LastEditTime: 2021-07-18 13:34:53
  */
 
 /**
@@ -59,7 +59,7 @@ class AuthFilter implements FilterInterface
         if ($msg !== true) {
             $this->response = Services::response();
 
-            $res['code'] = 1;
+            $res['code'] = EXIT_ERROR;
             $res['msg']  = $msg;
 
             return $this->respond($res);

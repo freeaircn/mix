@@ -63,7 +63,13 @@
       <blank-form :visible.sync="visibleRoleForm" :record="tempRecord" @res="handleSubmitRole">
       </blank-form>
 
-      <permission-tree :visible.sync="visiblePermissionTree" :role="tempRole" :treeData="treeData" :checkedKeys="checkedKeys" @submitPermission="handleSubmitPermission">
+      <permission-tree
+        :visible.sync="visiblePermissionTree"
+        :role="tempRole"
+        :treeData="treeData"
+        :allCheckableId="allCheckableMenuId"
+        :checkedKeys="checkedKeys"
+        @submitPermission="handleSubmitPermission">
       </permission-tree>
 
     </a-card>
@@ -145,6 +151,7 @@ export default {
       //
       visiblePermissionTree: false,
       tempRole: {},
+      allCheckableMenuId: [],
       treeData: [],
       checkedKeys: []
     }
@@ -231,7 +238,6 @@ export default {
       Promise.all([getMenu(), getRoleMenu({ role_id: role.id })])
         .then(function (res) {
           this.treeData.splice(0)
-          // this.treeData = res[0].menu.slice(0)
           const menuList = this.formatMenuData(res[0].menu.slice(0))
           listToTree(menuList, this.treeData)
           //
@@ -254,6 +260,7 @@ export default {
     },
 
     formatMenuData (menu) {
+      this.allCheckableMenuId.splice(0)
       menu.forEach(element => {
         if (element.type && element.type === '0') {
           element.disableCheckbox = true
@@ -261,9 +268,11 @@ export default {
         }
         if (element.type && element.type === '1') {
           element.slots = { icon: 'file-image' }
+          this.allCheckableMenuId.push(element['id'])
         }
         if (element.type && element.type === '2') {
           element.slots = { icon: 'form' }
+          this.allCheckableMenuId.push(element['id'])
         }
       })
       return menu
