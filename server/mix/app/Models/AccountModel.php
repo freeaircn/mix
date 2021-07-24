@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-20 17:35:06
+ * @LastEditTime: 2021-07-23 21:39:25
  */
 
 namespace App\Models;
@@ -75,7 +75,7 @@ class AccountModel extends Model
         $utils        = \Config\Services::mixUtils();
         $hashPassword = $utils->hashPassword($password);
         if ($hashPassword === false) {
-            log_message('error', '{file}:{line} --> update password hash failed' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4));
+            log_message('error', '{file}:{line} --> update password hash failed');
             return false;
         }
 
@@ -86,7 +86,7 @@ class AccountModel extends Model
         if ($this->where('phone', $phone)->set($data)->update()) {
             return true;
         } else {
-            log_message('error', '{file}:{line} --> update password db update failed' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4));
+            log_message('error', '{file}:{line} --> update password db update failed');
             return false;
         }
     }

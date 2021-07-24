@@ -13,7 +13,23 @@ class MixUtils
         'threads'     => PASSWORD_ARGON2_DEFAULT_THREADS,
     ];
 
-    public $smsCodeTimeout;
+    /**
+     * 登录
+     */
+    public $maxAttempts = 5;
+    public $lockoutTime = 600; // 秒
+
+    /**
+     * 验证码
+     */
+    public $smsCodeTimeout = 600; // 秒
+
+    /**
+     * 默认头像
+     */
+    public $defaultAvatarPath   = 'avatar/default/';
+    public $defaultAvatarMale   = 'male.jpg';
+    public $defaultAvatarFemale = 'female.jpg';
 
     public function __construct($config = null)
     {

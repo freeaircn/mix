@@ -42,6 +42,11 @@ const user = {
       if (state.info.email) {
         state.info.email = email
       }
+    },
+    SET_USER_AVATAR_FILE: (state, avatarFile) => {
+      if (state.info.avatarFile) {
+        state.info.avatarFile = avatarFile
+      }
     }
   },
 
@@ -225,6 +230,19 @@ const user = {
         }).catch((error) => {
           reject(error)
         })
+      })
+    },
+
+    // 修改头像
+    UpdateUserAvatar ({ commit }, params) {
+      return new Promise((resolve, reject) => {
+          if (params !== '') {
+            commit('SET_USER_AVATAR_FILE', params)
+            commit('SET_AVATAR', params)
+            resolve()
+          } else {
+            reject(params)
+          }
       })
     }
   }

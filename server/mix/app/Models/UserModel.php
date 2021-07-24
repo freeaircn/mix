@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-20 16:38:53
+ * @LastEditTime: 2021-07-24 22:43:35
  */
 
 namespace App\Models;
@@ -159,6 +159,23 @@ class UserModel extends Model
         }
     }
 
+    public function getUserAvatarById($id = null)
+    {
+        if (!is_numeric($id)) {
+            return false;
+        }
+
+        $res = $this->select('avatar')
+            ->where('id', $id)
+            ->findAll();
+
+        if (isset($res[0]) && isset($res[0]['avatar'])) {
+            return $res[0]['avatar'];
+        } else {
+            return false;
+        }
+    }
+
     public function newUser($data = [])
     {
         if (empty($data)) {
@@ -184,11 +201,6 @@ class UserModel extends Model
         foreach ($department as $index => $value) {
             $key        = 'deptLev' . $index;
             $user[$key] = $value;
-        }
-
-        // 默认头像
-        if (isset($user['sex'])) {
-            $user['avatar'] = ($user['sex'] == '男') ? 1 : 2;
         }
 
         // 密码hash

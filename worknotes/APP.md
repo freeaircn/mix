@@ -522,12 +522,47 @@
       DB修改成功后，更新session，更新vuex
     
   5 修改头像
+    # 前端
     
-  
+      <div class="ant-upload-preview" >
+          <img :src="avatarImg"/>
+          <div class="upload">
+            <a-upload
+              name="file"
+              :action="uploadAction"
+              :showUploadList="false"
+              :before-upload="handleBeforeUploadAvatar"
+              @change="handleUploadAvatarChange"
+            >
+              <a-button :loading="isUploading"> <a-icon type="upload" /> 更换头像 </a-button>
+            </a-upload>
+          </div>
+        </div>
+    
+    前端上传文件组件，http请求不被axios拦截。后端处理过程中，遇到错误时，返回http的状态码不能时200，选择使用422.
+      
+  6 修改流程：
+    前端选择文件，并上传。
+    
+    后端检查文件，并调整文件。
+    
+    修改数据库。
+    
+    修改session。
+    
+    返回修改后数据。
+    
+    前端修改vuex。
+    
+    页面更新显示。
+    
+  linux 文件权限
+    chown -R apache:apache /var/www/html/binglang/server/resource/avatar
+    chmod -R 777 /var/www/html/binglang/server/resource/avatar
 ```
 
 ---
-### 6. 编写用户头像功能
+### 包
 ```
   # 前端
     # 引入identicon.js，crypto
@@ -542,53 +577,6 @@
       hash.update(seed.toString())
       const data = new Identicon(hash.digest('hex'), 178).toString()
       this.imageUrl = 'data:image/png;base64,' + data
-    
-    # 使用el-upload
-        <el-upload
-          class="avatar-uploader"
-          action="http://127.0.0.1/api/avatar/update" // 服务端地址
-          :show-file-list="false"
-          list-type="picture"
-          :on-success="handleAvatarSuccess"
-          :before-upload="beforeAvatarUpload"
-        >
-          <img v-if="imageUrl" :src="imageUrl" class="avatar">
-          <i v-else class="el-icon-plus avatar-uploader-icon" />
-        </el-upload>
-
-  # 后端
-    使用library->upload
-      public function update_post() // 控制器使用restserver类
-      {
-          $config['upload_path']   = './resource/avatar/';   // 存放文件相对路径，注：路径是相对于你网站的 index.php 文件的，而不是相对于控制器或视图文件。
-          $config['allowed_types'] = 'gif|jpg|png';
-          $config['max_size']      = 100;
-          $config['max_width']     = 1024;
-          $config['max_height']    = 768;
-
-          $this->load->library('upload', $config);
-
-          if (!$this->upload->do_upload('file')) {  // 接收上传
-              $res['code'] = 300;
-              $res['msg']  = $this->upload->display_errors();
-
-          } else {
-              $res['code'] = App_Code::SUCCESS;
-              $res['data'] = $this->upload->data();   // 接收完毕的结果
-          }
-
-          $this->response($res, 200);
-      }
-    
-    # CI路径定义  位于index.php
-      APPPATH: "D:\www\binglang\server\application\app\"
-      BASEPATH: "D:\www\binglang\server\system\"
-      FCPATH: "D:\www\binglang\server\"
-      SELF: "index.php"
-      SYSDIR: "system"
-      
-      chown -R apache:apache /var/www/html/binglang/server/resource/avatar
-      chmod -R 777 /var/www/html/binglang/server/resource/avatar
   
 ```
 

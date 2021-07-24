@@ -4,11 +4,12 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-18 13:38:30
+ * @LastEditTime: 2021-07-24 23:05:31
  */
 
 namespace App\Controllers;
 
+use App\Models\AvatarModel;
 use App\Models\DeptModel;
 use App\Models\JobModel;
 use App\Models\MenuModel;
@@ -500,6 +501,17 @@ class Home extends BaseController
             }
         }
 
+        // 默认头像
+        $avatarModel = new AvatarModel();
+        $avatarId    = $avatarModel->newDefaultAvatarBySex($user['sex']);
+        if (!is_numeric($avatarId)) {
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '添加失败，稍后再试！';
+            $res['err']  = 'avatar';
+            return $this->respond($res);
+        }
+        $user['avatar'] = $avatarId;
+
         // 写入user数据表
         $model = new UserModel();
         $uid   = $model->newUser($user);
@@ -509,6 +521,9 @@ class Home extends BaseController
             $model2 = new UserRoleModel();
             $result = $model2->newUserRole($uid, $role);
         } else {
+            // 头像 db表，回退
+            $avatarModel->deleteAvatarById($avatarId);
+
             $res['code'] = EXIT_ERROR;
             $res['msg']  = '添加失败，稍后再试！';
             return $this->respond($res);
@@ -573,14 +588,28 @@ class Home extends BaseController
 
             $result1 = false;
             $result2 = false;
-            // 1 删除user-role表
+            $result3 = false;
+            // 删除user-role表
             $model1  = new UserRoleModel();
             $result1 = $model1->delUserRole($id);
 
-            // 2 删除user表
+            // 删除user表
             if ($result1 === true) {
-                $model2  = new UserModel();
-                $result2 = $model2->delete($id);
+                $model2   = new UserModel();
+                $avatarId = $model2->getUserAvatarById($id);
+                $result2  = $model2->delete($id);
+            }
+
+            // 删除头像
+            if ($result2 === true && $avatarId !== false) {
+                $model3 = new AvatarModel();
+                $avatar = $model3->getAvatarPathAndNameById($avatarId);
+                // 删除文件
+                if (strpos($avatar['path'], 'default') === false) {
+                    $absolutePath = WRITEPATH . '../public/avatar/user/';
+                    unlink($absolutePath . $avatar['name']);
+                }
+                $result3 = $model3->deleteAvatarById($avatarId);
             }
 
             if ($result1 === true && $result2 === true) {

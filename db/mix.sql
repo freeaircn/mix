@@ -151,6 +151,9 @@ INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `title`, `authority`, `crea
 (60, 2, 59, 'Get', '查询', 'account:get', '2021-06-27 20:00:00'),
 (61, 2, 59, 'put', '修改', 'account:put', '2021-06-27 20:00:00');
 
+INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `title`, `authority`, `created_at`) VALUES
+(62, 2, 59, 'post', '新建', 'account:post', '2021-06-27 20:00:00');
+
 
 -- --------------------------------------------------------
 

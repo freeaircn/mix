@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-07-06 21:44:27
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-18 15:21:04
+ * @LastEditTime: 2021-07-24 22:19:25
  */
 
 namespace Config;
@@ -34,4 +34,10 @@ class MixUtils extends BaseConfig
      */
     public $smsCodeTimeout = 600; // 秒
 
+    /**
+     * 默认头像
+     */
+    public $defaultAvatarPath   = 'avatar/default/';
+    public $defaultAvatarMale   = 'male.jpg';
+    public $defaultAvatarFemale = 'female.jpg';
 }

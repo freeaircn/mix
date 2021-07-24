@@ -67,35 +67,27 @@
 
       </a-col>
       <a-col :order="1" :md="24" :lg="8" :style="{ minHeight: '180px' }">
-        <!-- <div class="ant-upload-preview" @click="$refs.modal.edit(1)" >
-          <a-icon type="cloud-upload-o" class="upload-icon"/>
-          <div class="mask">
-            <a-icon type="plus" />
-          </div>
-          <img :src="avatarImg"/>
-        </div> -->
         <div class="ant-upload-preview" >
           <img :src="avatarImg"/>
           <div class="upload">
             <a-upload
-              name="avatar"
-              action="https://www.mocky.io/v2/5cc8019d300000980a055e76"
+              name="file"
+              :action="uploadAction"
+              :showUploadList="false"
               :before-upload="handleBeforeUploadAvatar"
               @change="handleUploadAvatarChange"
             >
-              <a-button > <a-icon type="upload" /> 更换头像 </a-button>
+              <a-button :loading="isUploading"> <a-icon type="upload" /> 更换头像 </a-button>
             </a-upload>
           </div>
         </div>
       </a-col>
     </a-row>
-
-    <avatar-modal ref="modal" @ok="setavatar"/>
   </div>
 </template>
 
 <script>
-import AvatarModal from './AvatarModal'
+import mixConfig from '@/config/mix_config'
 import { baseMixin } from '@/store/app-mixin'
 // import store from '@/store'
 import { mapGetters, mapActions } from 'vuex'
@@ -105,28 +97,10 @@ import * as pattern from '@/utils/validateRegex'
 
 export default {
   mixins: [baseMixin],
-  components: {
-    AvatarModal
-  },
   data () {
     return {
-      // cropper
-      preview: {},
-      option: {
-        img: '',
-        info: true,
-        size: 1,
-        outputType: 'jpeg',
-        canScale: false,
-        autoCrop: true,
-        // 只有自动截图开启 宽度高度才生效
-        autoCropWidth: 180,
-        autoCropHeight: 180,
-        fixedBox: true,
-        // 开启宽度和高度比例
-        fixed: true,
-        fixedNumber: [1, 1]
-      },
+      uploadAction: mixConfig.uploadAvatarApi,
+      isUploading: false,
       // Mix code
       labelCol: {
         lg: { span: 7 }, sm: { span: 7 }
@@ -171,7 +145,7 @@ export default {
     }
   },
   methods: {
-    ...mapActions(['UpdateUserInfo']),
+    ...mapActions(['UpdateUserInfo', 'UpdateUserAvatar']),
 
     getAllFormParams () {
       Promise.all([getPoliticTbl(), getDeptTbl({ columnName: ['id', 'name', 'pid', 'status'] }), getJobTbl(), getTitleTbl()])
@@ -203,10 +177,6 @@ export default {
         })
     },
 
-    setavatar (url) {
-      this.option.img = url
-    },
-
     handleSaveUserInfo () {
       this.$refs.form.validate(valid => {
         if (valid) {
@@ -225,29 +195,42 @@ export default {
       })
     },
 
+    // 处理上传图片
     handleBeforeUploadAvatar (file) {
       const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png'
       if (!isJpgOrPng) {
-        this.$message.error('You can only upload JPG file!')
+        this.$message.error('图片只能是 JPG或PNG 格式！')
       }
       const isLt2M = file.size / 1024 / 1024 < 2
       if (!isLt2M) {
-        this.$message.error('Image must smaller than 2MB!')
+        this.$message.error('图片大小不能超过 2MB！')
       }
       return isJpgOrPng && isLt2M
     },
 
     handleUploadAvatarChange (info) {
-      if (info.file.status !== 'uploading') {
-        console.log(info.file, info.fileList)
+      if (info.file.status === 'uploading') {
+        this.isUploading = true
+        return
+      } else {
+        this.isUploading = false
       }
+
       if (info.file.status === 'done') {
-        this.$message.success(`${info.file.name} file uploaded successfully`)
+        if (info.file.response.code === 0) {
+          this.UpdateUserAvatar(info.file.response.avatarFile)
+            .then(() => {
+              this.$message.success(`图片上传成功！`)
+            })
+        } else {
+          this.$message.error(`图片上传失败，稍后再试！`)
+        }
       } else if (info.file.status === 'error') {
-        this.$message.error(`${info.file.name} file upload failed.`)
+        this.$message.error(`图片上传失败，稍后再试！`)
       }
     },
 
+    // 内部方法
     filterUserInfo (user) {
       const department = []
       for (var p in user) {

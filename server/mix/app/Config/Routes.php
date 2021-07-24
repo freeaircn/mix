@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-20 18:36:43
+ * @LastEditTime: 2021-07-22 23:31:24
  */
 
 namespace Config;
@@ -53,6 +53,7 @@ $routes->group('api', function ($routes) {
     $routes->put('account/phone', 'Account::updatePhone');
     $routes->put('account/sms', 'Account::sms');
     $routes->put('account/email', 'Account::updateEmail');
+    $routes->post('account/avatar', 'Account::updateAvatar');
     //
     $routes->get('role', 'Home::getRole');
     $routes->post('role', 'Home::newRole');

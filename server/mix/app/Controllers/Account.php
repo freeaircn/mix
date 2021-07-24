@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-20 19:08:23
+ * @LastEditTime: 2021-07-24 21:54:28
  */
 
 namespace App\Controllers;
@@ -152,7 +152,7 @@ class Account extends BaseController
         // 修改数据库
         $model = new AccountModel();
         if (!$model->updatePasswordById($id, $newPassword)) {
-            $phone = $this->session->get('phone');
+            // $phone = $this->session->get('phone');
             log_message('error', '{file}:{line} --> update user password db failed ' . '[' . substr(session_id(), 0, 15) . '] ' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4));
 
             $res['code'] = EXIT_ERROR;
@@ -200,7 +200,7 @@ class Account extends BaseController
         $utils  = service('mixUtils');
         $result = $utils->verifyPassword($password, $hashPassword);
         if ($result === false) {
-            log_message('error', '{file}:{line} --> password error when update user phone');
+            log_message('error', '{file}:{line} --> password error when update user phone' . '[' . substr(session_id(), 0, 15) . '] ' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4));
 
             $res['code'] = EXIT_ERROR;
             $res['msg']  = '密码错误！';
@@ -210,7 +210,7 @@ class Account extends BaseController
         // 修改数据库
         $model = new AccountModel();
         if (!$model->updatePhoneById($id, $phone)) {
-            $phone = $this->session->get('phone');
+            // $phone = $this->session->get('phone');
             log_message('error', '{file}:{line} --> update user phone db failed ' . '[' . substr(session_id(), 0, 15) . '] ' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4));
 
             $res['code'] = EXIT_ERROR;
@@ -260,7 +260,7 @@ class Account extends BaseController
         $smsCodeModel = new SmsCodeModel();
         $code         = $smsCodeModel->newSmsCodeByPhone($phone);
         if (empty($code)) {
-            log_message('error', '{file}:{line} --> new sms code failed' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4));
+            log_message('error', '{file}:{line} --> new sms code failed' . '[' . substr(session_id(), 0, 15) . '] ' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4));
 
             $res['code']  = EXIT_ERROR;
             $res['msg']   = '发送验证码失败，稍后尝试！';
@@ -341,7 +341,7 @@ class Account extends BaseController
         $utils  = service('mixUtils');
         $result = $utils->verifyPassword($password, $hashPassword);
         if ($result === false) {
-            log_message('error', '{file}:{line} --> password error when update user email');
+            log_message('error', '{file}:{line} --> password error when update user email' . '[' . substr(session_id(), 0, 15) . '] ' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4));
 
             $res['code'] = EXIT_ERROR;
             $res['msg']  = '密码错误！';
@@ -351,7 +351,6 @@ class Account extends BaseController
         // 修改数据库
         $model = new AccountModel();
         if (!$model->updateEmailById($id, $email)) {
-            $phone = $this->session->get('phone');
             log_message('error', '{file}:{line} --> update user email db failed ' . '[' . substr(session_id(), 0, 15) . '] ' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4));
 
             $res['code'] = EXIT_ERROR;
@@ -365,6 +364,78 @@ class Account extends BaseController
         $res['code'] = EXIT_SUCCESS;
         $res['msg']  = '修改成功！';
         $res['data'] = ['email' => $email];
+
+        return $this->respond($res);
+    }
+
+    public function updateAvatar()
+    {
+        $file = $this->request->getFile('file');
+        // var_dump($file);
+
+        $phone = $this->session->get('phone');
+        // 检查文件
+        if (!$file->isValid() || ($file->getSize() / 1024 / 1024 > 2) || $file->getMimeType() !== 'image/jpeg') {
+            log_message('error', '{file}:{line} --> upload avatar file invalid ' . '[' . substr(session_id(), 0, 15) . '] ' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4));
+
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '头像图片文件超要求';
+            return $this->respond($res, 422);
+
+        }
+
+        $newName      = $file->getRandomName();
+        $absolutePath = WRITEPATH . '../public/avatar/user/';
+        $absoluteFile = WRITEPATH . '../public/avatar/user/' . $newName;
+        $relativePath = 'avatar/user/';
+        // 移动文件
+        if (!$file->hasMoved()) {
+            $file->move($absolutePath, $newName, true);
+        }
+
+        // 调整文件大小
+        try {
+            $image = \Config\Services::image('gd')
+                ->withFile($absoluteFile)
+                ->resize(144, 144, true)
+                ->save($absoluteFile);
+        } catch (\CodeIgniter\Images\ImageException $e) {
+            log_message('error', '{file}:{line} --> upload avatar resize failed ' . $e->getMessage() . '[' . substr(session_id(), 0, 15) . '] ' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4));
+
+            // 删除文件
+            unlink($absoluteFile);
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '头像图片文件调整失败';
+            return $this->respond($res, 422);
+        }
+
+        // 查询头像文件路径和文件名，待后续删除旧头像文件
+        $avatarId    = $this->session->get('avatar');
+        $avatarModel = new AvatarModel();
+        $oldAvatar   = $avatarModel->getAvatarPathAndNameById($avatarId);
+
+        // 更改数据库
+        if (!$avatarModel->updateAvatarById($avatarId, $relativePath, $newName)) {
+            log_message('error', '{file}:{line} --> upload avatar db failed ' . '[' . substr(session_id(), 0, 15) . '] ' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4));
+
+            // 删除文件
+            unlink($absoluteFile);
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '修改DB失败';
+            return $this->respond($res, 422);
+        }
+
+        // 修改session
+        $avatarFile = $relativePath . $newName;
+        $this->session->set('avatarFile', $avatarFile);
+
+        // 删除旧文件
+        if (strpos($oldAvatar['path'], 'default') === false) {
+            unlink($absolutePath . $oldAvatar['name']);
+        }
+
+        $res['code']       = EXIT_SUCCESS;
+        $res['avatarFile'] = $avatarFile;
 
         return $this->respond($res);
     }
