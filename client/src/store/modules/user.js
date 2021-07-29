@@ -1,7 +1,8 @@
 // import storage from 'store'
 import Cookies from 'js-cookie'
-import { login, getInfo, logout } from '@/api/login'
-import { apiUpdateUserInfo, apiUpdateLoginPassword, apiUpdatePhone, apiUpdateEmail } from '@/api/account'
+// import { login, getInfo, logout } from '@/api/login'
+import { login, logout } from '@/api/login'
+import { apiGetUserInfo, apiGetUserMenus, apiUpdateUserInfo, apiUpdateLoginPassword, apiUpdatePhone, apiUpdateEmail } from '@/api/account'
 import { ACCESS_TOKEN } from '@/store/mutation-types'
 import { resetRouter } from '@/router'
 // import { welcome } from '@/utils/util'
@@ -142,28 +143,56 @@ const user = {
     },
 
     // 获取用户信息
+    // GetInfo ({ commit }) {
+    //   return new Promise((resolve, reject) => {
+    //     getInfo().then(data => {
+    //       // 存user数据
+    //       if (data.info) {
+    //         const user = { ...data.info }
+    //         commit('SET_INFO', user)
+    //         if (user.username) {
+    //           commit('SET_NAME', { name: user.username, welcome: '' })
+    //         }
+    //         if (user.avatarFile) {
+    //           commit('SET_AVATAR', user.avatarFile)
+    //         }
+    //       }
+    //       //
+    //       commit('SET_ROLES', ['VERIFIED'])
+    //       //
+    //       if (data.menus) {
+    //         resolve(data.menus)
+    //       } else {
+    //         resolve([])
+    //       }
+    //     }).catch(error => {
+    //       reject(error)
+    //     })
+    //   })
+    // },
     GetInfo ({ commit }) {
       return new Promise((resolve, reject) => {
-        getInfo().then(data => {
-          // 存user数据
-          if (data.info) {
-            const user = { ...data.info }
-            commit('SET_INFO', user)
-            if (user.username) {
-              commit('SET_NAME', { name: user.username, welcome: '' })
+        Promise.all([apiGetUserInfo(), apiGetUserMenus()])
+          .then((res) => {
+            // 存user数据
+            if (res[0] && res[0].info) {
+              const user = { ...res[0].info }
+              commit('SET_INFO', user)
+              if (user.username) {
+                commit('SET_NAME', { name: user.username, welcome: '' })
+              }
+              if (user.avatarFile) {
+                commit('SET_AVATAR', user.avatarFile)
+              }
             }
-            if (user.avatarFile) {
-              commit('SET_AVATAR', user.avatarFile)
+            //
+            commit('SET_ROLES', ['VERIFIED'])
+            // 用户授权页面
+            if (res[1] && res[1].menus) {
+              resolve(res[1].menus)
+            } else {
+              resolve([])
             }
-          }
-          //
-          commit('SET_ROLES', ['VERIFIED'])
-          //
-          if (data.menus) {
-            resolve(data.menus)
-          } else {
-            resolve([])
-          }
         }).catch(error => {
           reject(error)
         })

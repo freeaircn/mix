@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-20 23:39:25
+ * @LastEditTime: 2021-07-29 23:32:38
  */
 
 namespace Config;
@@ -69,6 +69,14 @@ class Validation
         'password' => 'required|alpha_numeric',
         'email'    => 'required|regex_match[/^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/]',
         'code'     => 'required|regex_match[^[1-9]\d{4}$]',
+    ];
+
+    public $GeneratorEventNew = [
+        'station_id'   => 'required|regex_match[^[1-9]\d{0,2}$]',
+        'generator_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
+        'event'        => 'required|regex_match[^[1-9]\d{0,2}$]',
+        'timestamp'    => 'required|regex_match[^[1-9]\d{9}$]',
+        'creator'      => 'required|regex_match[/^([\x{4e00}-\x{9fa5}]{1,6})$/u]',
     ];
 
     /**

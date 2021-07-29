@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-20 19:20:33
+ * @LastEditTime: 2021-07-29 22:59:38
  */
 
 namespace App\Controllers;
@@ -112,10 +112,30 @@ class Auth extends BaseController
             }
         }
 
+        // 获取用户所属部门
+        $deptLevPath      = [];
+        $belongToDeptId   = '0';
+        $belongToDeptName = '';
+        foreach ($user as $key => $value) {
+            if (strpos($key, 'deptLev') !== false && $value != 0) {
+                $deptLevPath[] = $value;
+            }
+        }
+        $deptModel = new DeptModel();
+        $belongTo  = $deptModel->getDept(['id', 'name', 'dataMask'], ['ids' => $deptLevPath]);
+        foreach ($belongTo as $value) {
+            if ($value['dataMask'] != 0) {
+                $belongToDeptId   = $value['id'];
+                $belongToDeptName = $value['name'];
+            }
+        }
+
         // 写入session数据
-        $sessionData           = $user;
-        $sessionData['acl']    = $userACL;
-        $sessionData['pageId'] = $userPageId;
+        $sessionData                     = $user;
+        $sessionData['acl']              = $userACL;
+        $sessionData['pageId']           = $userPageId;
+        $sessionData['belongToDeptId']   = $belongToDeptId;
+        $sessionData['belongToDeptName'] = $belongToDeptName;
         $this->session->set($sessionData);
 
         // 日志
@@ -249,35 +269,35 @@ class Auth extends BaseController
         return $this->respond($res);
     }
 
-    public function getUserInfo()
-    {
-        // 取session保存的用户数据
-        $sessionData = $this->session->get();
+    // public function getUserInfo()
+    // {
+    //     // 取session保存的用户数据
+    //     $sessionData = $this->session->get();
 
-        // 取用户有权访问的前端页面路由
-        if (isset($sessionData['pageId']) && !empty($sessionData['pageId'])) {
-            $pageId = $sessionData['pageId'];
+    //     // 取用户有权访问的前端页面路由
+    //     if (isset($sessionData['pageId']) && !empty($sessionData['pageId'])) {
+    //         $pageId = $sessionData['pageId'];
 
-            $model  = new MenuModel();
-            $result = $model->getMenu(['pageId' => $pageId]);
+    //         $model  = new MenuModel();
+    //         $result = $model->getMenu(['pageId' => $pageId]);
 
-            // 去掉acl和pageId
-            if (isset($sessionData['acl'])) {
-                $sessionData['acl'] = '';
-            }
-            $sessionData['pageId'] = '';
-            array_shift($sessionData);
-            array_pop($sessionData);
+    //         // 去掉acl和pageId
+    //         if (isset($sessionData['acl'])) {
+    //             $sessionData['acl'] = '';
+    //         }
+    //         $sessionData['pageId'] = '';
+    //         array_shift($sessionData);
+    //         array_pop($sessionData);
 
-            $res['code'] = EXIT_SUCCESS;
-            $res['data'] = ['menus' => $result, 'info' => $sessionData];
-        } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '用户没有授权！';
-        }
+    //         $res['code'] = EXIT_SUCCESS;
+    //         $res['data'] = ['menus' => $result, 'info' => $sessionData];
+    //     } else {
+    //         $res['code'] = EXIT_ERROR;
+    //         $res['msg']  = '用户没有授权！';
+    //     }
 
-        return $this->respond($res);
-    }
+    //     return $this->respond($res);
+    // }
 
     // 内部方法
     protected function getUserByQuery($queryParam = [])

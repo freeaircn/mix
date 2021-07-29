@@ -162,9 +162,18 @@ class MixUtils
         $wanted = '';
         $method = $request->getMethod();
         $url    = $request->uri->getSegments();
-        if ($url[0] === 'api') {
-            $wanted = $url[1] . ':' . $method;
+
+        // if (isset($url[0]) && $url[0] === 'api') {
+        //     $wanted = $url[1] . ':' . $method;
+        // }
+
+        if (isset($url[0]) && $url[0] === 'api') {
+            for ($i = 1; $i < count($url); $i++) {
+                $wanted = $wanted . $url[$i] . '/';
+            }
+            $wanted = rtrim($wanted, "/") . ':' . $method;
         }
+
         if (in_array($wanted, $acl) === false) {
             return '用户没有权限！';
         }

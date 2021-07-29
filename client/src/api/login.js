@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-18 13:56:33
+ * @LastEditTime: 2021-07-29 23:00:02
  */
 import request from '@/utils/request'
 
@@ -58,15 +58,15 @@ export function resetPassword (parameter) {
   })
 }
 
-export function getInfo () {
-  return request({
-    url: userApi.UserInfo,
-    method: 'get',
-    headers: {
-      'Content-Type': 'application/json;charset=UTF-8'
-    }
-  })
-}
+// export function getInfo () {
+//   return request({
+//     url: userApi.UserInfo,
+//     method: 'get',
+//     headers: {
+//       'Content-Type': 'application/json;charset=UTF-8'
+//     }
+//   })
+// }
 
 export function getCurrentUserNav () {
   return request({

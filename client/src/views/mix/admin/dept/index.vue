@@ -92,6 +92,11 @@ const columns = [
     scopedSlots: { customRender: 'status' }
   },
   {
+    title: '业务数据标识',
+    dataIndex: 'dataMask',
+    scopedSlots: { customRender: 'dataMask' }
+  },
+  {
     title: '更新时间',
     dataIndex: 'updated_at',
     sorter: true

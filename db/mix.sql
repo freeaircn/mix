@@ -70,18 +70,18 @@ INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `path`, `component`, `redir
 (3, 1, 1, 'index', '/', 'BasicLayout', '/dashboard/workplace', b'0', b'0', b'0', '首页', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
 
 (4, 1, 3, 'dashboard', '/dashboard', 'RouteView', '/dashboard/workplace', b'0', b'0', b'0', '仪表盘', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
-(5, 1, 4, 'Workplace', '/dashboard/workplace', 'dashboard/Workplace', '', b'0', b'0', b'0', '工作台', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
-(6, 1, 4, 'External', 'https://www.baidu.com/', '', '', b'0', b'0', b'0', '外部链接', '', b'0', b'0', '', '_blank', '', '2021-06-27 20:00:00'),
+(5, 1, 4, 'Workplace', '/dashboard/workplace', 'mix/dashboard/Workplace', '', b'0', b'0', b'0', '工作台', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(6, 1, 4, 'GeneratorEvent', '/dashboard/generator_event', 'mix/dashboard/GeneratorEvent', '', b'0', b'0', b'0', '机组事件', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
 
 (9, 1, 3, 'app', '/app', 'RouteView', '/app/role', b'0', b'0', b'0', '应用管理', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
-(10, 1, 9, 'role', '/app/role', 'app_admin/role/BasicList', '', b'0', b'0', b'0', '用户角色', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
-(11, 1, 9, 'dept', '/app/dept', 'app_admin/dept/index', '', b'0', b'0', b'0', '部门机构', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
-(12, 1, 9, 'job', '/app/job', 'app_admin/job/index', '', b'0', b'0', b'0', '工作岗位', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
-(13, 1, 9, 'title', '/app/title', 'app_admin/title/index', '', b'0', b'0', b'0', '技能职称', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
-(14, 1, 9, 'politic', '/app/politic', 'app_admin/politic/index', '', b'0', b'0', b'0', '政治面貌', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
-(15, 1, 9, 'user', '/app/user', 'app_admin/user/Index', '/app/user/list', b'0', b'1', b'0', '注册用户', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
-(16, 1, 15, 'UserList', '/app/user/list', 'app_admin/user/UserList', '', b'0', b'0', b'1', '用户列表', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
-(17, 1, 15, 'UserForm', '/app/user/save/:uid', 'app_admin/user/UserForm', '', b'0', b'0', b'1', '编辑用户', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00');
+(10, 1, 9, 'role', '/app/role', 'mix/admin/role/BasicList', '', b'0', b'0', b'0', '用户角色', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(11, 1, 9, 'dept', '/app/dept', 'mix/admin/dept/index', '', b'0', b'0', b'0', '部门机构', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(12, 1, 9, 'job', '/app/job', 'mix/admin/job/index', '', b'0', b'0', b'0', '工作岗位', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(13, 1, 9, 'title', '/app/title', 'mix/admin/title/index', '', b'0', b'0', b'0', '技能职称', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(14, 1, 9, 'politic', '/app/politic', 'mix/admin/politic/index', '', b'0', b'0', b'0', '政治面貌', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(15, 1, 9, 'user', '/app/user', 'mix/admin/user/Index', '/app/user/list', b'0', b'1', b'0', '注册用户', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(16, 1, 15, 'UserList', '/app/user/list', 'mix/admin/user/UserList', '', b'0', b'0', b'1', '用户列表', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(17, 1, 15, 'UserForm', '/app/user/save/:uid', 'mix/admin/user/UserForm', '', b'0', b'0', b'1', '编辑用户', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00');
 
 INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `title`, `authority`, `created_at`) VALUES
 (18, 0, 2, 'DataUser', '用户信息', '', '2021-06-27 20:00:00'),
@@ -141,18 +141,28 @@ INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `title`, `authority`, `crea
 
 INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `path`, `component`, `redirect`, `hidden`, `hideChildrenInMenu`, `meta_hidden`, `title`, `icon`, `keepAlive`, `hiddenHeaderContent`, `permission`, `target`, `authority`, `created_at`) VALUES
 (55, 1, 3, 'Account', '/account', 'RouteView', '/account/settings', b'0', b'0', b'0', '个人页', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
-(56, 1, 55, 'Settings', '/account/settings', 'app_account/settings/Index', '/account/settings/basic', b'0', b'1', b'0', '个人设置', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
-(57, 1, 56, 'BasicSettings', '/account/settings/basic', 'app_account/settings/BasicSetting', '', b'0', b'0', b'1', '个人信息', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
-(58, 1, 56, 'SecuritySettings', '/account/settings/security', 'app_account/settings/Security', '', b'0', b'0', b'1', '安全设置', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00');
+(56, 1, 55, 'Settings', '/account/settings', 'mix/account/settings/Index', '/account/settings/basic', b'0', b'1', b'0', '个人设置', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(57, 1, 56, 'BasicSettings', '/account/settings/basic', 'mix/account/settings/BasicSetting', '', b'0', b'0', b'1', '个人信息', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00'),
+(58, 1, 56, 'SecuritySettings', '/account/settings/security', 'mix/account/settings/Security', '', b'0', b'0', b'1', '安全设置', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00');
 
 
 INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `title`, `authority`, `created_at`) VALUES
 (59, 0, 2, 'DataAccount', '用户个人数据', '', '2021-06-27 20:00:00'),
-(60, 2, 59, 'Get', '查询', 'account:get', '2021-06-27 20:00:00'),
-(61, 2, 59, 'put', '修改', 'account:put', '2021-06-27 20:00:00');
+(60, 2, 59, 'Get', '查询个人信息', 'account/info:get', '2021-06-27 20:00:00'),
+(61, 2, 59, 'Get', '查询授权页面', 'account/menus:get', '2021-06-27 20:00:00'),
+(62, 2, 59, 'post', '新建头像', 'account/avatar:post', '2021-06-27 20:00:00'),
+(63, 2, 59, 'put', '修改个人信息', 'account:put', '2021-06-27 20:00:00'),
+(64, 2, 59, 'put', '修改登录密码', 'account/password:put', '2021-06-27 20:00:00'),
+(65, 2, 59, 'put', '修改手机号', 'account/phone:put', '2021-06-27 20:00:00'),
+(66, 2, 59, 'put', '提交验证码', 'account/sms:put', '2021-06-27 20:00:00'),
+(67, 2, 59, 'put', '修改邮箱', 'account/email:put', '2021-06-27 20:00:00');
 
 INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `title`, `authority`, `created_at`) VALUES
-(62, 2, 59, 'post', '新建', 'account:post', '2021-06-27 20:00:00');
+(68, 0, 2, 'DataGeneratorEvent', '机组事件数据', '', '2021-06-27 20:00:00'),
+(69, 2, 68, 'Get', '查询', 'generator/event:get', '2021-06-27 20:00:00'),
+(70, 2, 68, 'post', '新建', 'generator/event:post', '2021-06-27 20:00:00'),
+(71, 2, 68, 'put', '修改', 'generator/event:put', '2021-06-27 20:00:00'),
+(72, 2, 68, 'delete', '删除', 'generator/event:delete', '2021-06-27 20:00:00');
 
 
 -- --------------------------------------------------------
@@ -218,6 +228,7 @@ CREATE TABLE IF NOT EXISTS `app_dept` (
   `pid` int(11) UNSIGNED NOT NULL COMMENT '上级节点',
   `status` varchar(31) NOT NULL COMMENT '状态',
   `description` varchar(127) DEFAULT NULL COMMENT '说明',
+  `dataMask` tinyint(11) UNSIGNED DEFAULT NULL COMMENT '数据区域标识',
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
@@ -231,8 +242,8 @@ CREATE TABLE IF NOT EXISTS `app_dept` (
 
 INSERT INTO `app_dept` (`id`, `name`, `pid`, `status`, `description`, `created_at`, `updated_at`) VALUES
 (1, 'Mix项目', 0, '1', '无', '2021-06-27 20:00:00', '2021-06-27 20:00:00'),
-(2, '开发组', 1, '1', '无', '2021-06-27 20:00:00', '2021-06-27 20:00:00'),
-(3, '测试组', 1, '1', '无', '2021-06-27 20:00:00', '2021-06-27 20:00:00'),
+(2, '开发部', 1, '1', '无', '2021-06-27 20:00:00', '2021-06-27 20:00:00'),
+(3, '测试部', 1, '1', '无', '2021-06-27 20:00:00', '2021-06-27 20:00:00'),
 (4, '开发一组', 2, '1', '无', '2021-06-27 20:00:00', '2021-06-27 20:00:00');
 
 -- --------------------------------------------------------
@@ -523,6 +534,60 @@ CREATE TABLE IF NOT EXISTS `app_sms_code` (
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE KEY `uc_sms_code_phone` (`phone`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+
+
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `app_generator_event_log`
+--
+
+DROP TABLE IF EXISTS `app_generator_event_log`;
+CREATE TABLE IF NOT EXISTS `app_generator_event_log` (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'ID',
+  `station_id` tinyint(3) UNSIGNED NOT NULL COMMENT '站点',
+  `generator_id` tinyint(3) UNSIGNED NOT NULL COMMENT '机组',
+  `event` tinyint(3) UNSIGNED NOT NULL COMMENT '1-停机，2-开机，3-检修开始，4-检修结束',
+  `timestamp` int(11) UNSIGNED NOT NULL COMMENT '时间戳',
+  `run_time` int(11) UNSIGNED NOT NULL COMMENT '运行时间',
+  `mnt_time` int(11) UNSIGNED NOT NULL COMMENT '检修时间',
+  `creator` varchar(7) DEFAULT NULL COMMENT '记录人',
+  `created_at` int(11) UNSIGNED DEFAULT NULL,
+  `updated_at` int(11) UNSIGNED DEFAULT NULL,
+  `deleted_at` int(11) UNSIGNED DEFAULT NULL,
+  `description` varchar(127) DEFAULT NULL COMMENT '说明',
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='发电机事件' ROW_FORMAT=COMPACT;
+    
+
+    
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `app_generator_event_statistic`
+--
+
+DROP TABLE IF EXISTS `app_generator_event_statistic`;
+CREATE TABLE IF NOT EXISTS `app_generator_event_statistic` (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'ID',
+  `station_id` tinyint(3) UNSIGNED NOT NULL COMMENT '站点',
+  `generator_id` tinyint(3) UNSIGNED NOT NULL COMMENT '机组',
+  `year` smallint(4) UNSIGNED NOT NULL COMMENT '年份',
+  `status` tinyint(3) UNSIGNED NOT NULL COMMENT '1-静止，2-发电，3-检修',
+  `run_at` int(11) UNSIGNED NOT NULL COMMENT '开机时间戳',
+  `mnt_at` int(11) UNSIGNED NOT NULL COMMENT '检修开始时间戳',
+  `run_times` int(11) UNSIGNED NOT NULL COMMENT '开机次数',
+  `mnt_times` int(11) UNSIGNED NOT NULL COMMENT '检修次数',
+  `run_total_time` int(11) UNSIGNED NOT NULL COMMENT '运行总时间',
+  `mnt_total_time` int(11) UNSIGNED NOT NULL COMMENT '检修总时间',
+  `created_at` int(11) UNSIGNED DEFAULT NULL,
+  `updated_at` int(11) UNSIGNED DEFAULT NULL,
+  `deleted_at` int(11) UNSIGNED DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='发电机事件统计' ROW_FORMAT=COMPACT;
+
 
 
 COMMIT;

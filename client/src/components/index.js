@@ -1,3 +1,10 @@
+/*
+ * @Description:
+ * @Author: freeair
+ * @Date: 2021-06-19 12:28:13
+ * @LastEditors: freeair
+ * @LastEditTime: 2021-07-29 00:15:42
+ */
 // chart
 import Bar from '@/components/Charts/Bar'
 import ChartCard from '@/components/Charts/ChartCard'
@@ -27,6 +34,10 @@ import ArticleListContent from '@/components/ArticleListContent'
 
 import Dialog from '@/components/Dialog'
 
+// Mix
+import ChartCard2 from '@/components/Mix/Charts/ChartCard2'
+import MiniHorizontalBar from '@/components/Mix/Charts/MiniHorizontalBar'
+
 export {
   AvatarList,
   Bar,
@@ -52,5 +63,8 @@ export {
   StandardFormRow,
   ArticleListContent,
 
-  Dialog
+  Dialog,
+
+  ChartCard2,
+  MiniHorizontalBar
 }

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-22 23:31:24
+ * @LastEditTime: 2021-07-29 23:22:15
  */
 
 namespace Config;
@@ -46,8 +46,9 @@ $routes->group('api', function ($routes) {
     $routes->post('auth/logout', 'Auth::logout');
     $routes->post('auth/sms', 'Auth::sms');
     $routes->post('auth/reset-password', 'Auth::resetPassword');
-    $routes->get('user/info', 'Auth::getUserInfo');
     //
+    $routes->get('account/info', 'Account::getUserInfo');
+    $routes->get('account/menus', 'Account::getUserMenus');
     $routes->put('account', 'Account::updateUserInfo');
     $routes->put('account/password', 'Account::updatePassword');
     $routes->put('account/phone', 'Account::updatePhone');
@@ -91,6 +92,9 @@ $routes->group('api', function ($routes) {
     $routes->delete('user', 'Home::delUser');
     //
     $routes->get('user_role', 'Home::getUserRole');
+    //
+    $routes->get('generator/event', 'GeneratorEvent::getGeneratorEvent');
+    $routes->post('generator/event', 'GeneratorEvent::newGeneratorEvent');
     //
     $routes->add('(:any)', '404');
 });

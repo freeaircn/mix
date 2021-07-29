@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-24 21:54:28
+ * @LastEditTime: 2021-07-29 22:58:15
  */
 
 namespace App\Controllers;
@@ -29,6 +29,34 @@ class Account extends BaseController
         // 取session保存的用户数据
         $sessionData = $this->session->get();
 
+        // 去掉acl和pageId
+        if (isset($sessionData['acl'])) {
+            $sessionData['acl'] = '';
+        }
+
+        if (isset($sessionData['pageId'])) {
+            $sessionData['pageId'] = '';
+        }
+
+        array_shift($sessionData);
+        array_pop($sessionData);
+
+        if (isset($sessionData['phone'])) {
+            $res['code'] = EXIT_SUCCESS;
+            $res['data'] = ['info' => $sessionData];
+        } else {
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '用户信息空！';
+        }
+
+        return $this->respond($res);
+    }
+
+    public function getUserMenus()
+    {
+        // 取session保存的用户数据
+        $sessionData = $this->session->get();
+
         // 取用户有权访问的前端页面路由
         if (isset($sessionData['pageId']) && !empty($sessionData['pageId'])) {
             $pageId = $sessionData['pageId'];
@@ -36,19 +64,11 @@ class Account extends BaseController
             $model  = new MenuModel();
             $result = $model->getMenu(['pageId' => $pageId]);
 
-            // 去掉acl和pageId
-            if (isset($sessionData['acl'])) {
-                $sessionData['acl'] = '';
-            }
-            $sessionData['pageId'] = '';
-            array_shift($sessionData);
-            array_pop($sessionData);
-
             $res['code'] = EXIT_SUCCESS;
-            $res['data'] = ['menus' => $result, 'info' => $sessionData];
+            $res['data'] = ['menus' => $result];
         } else {
             $res['code'] = EXIT_ERROR;
-            $res['msg']  = '用户没有授权！';
+            $res['msg']  = '用户授权空！';
         }
 
         return $this->respond($res);

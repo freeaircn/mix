@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-30 20:13:01
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-20 19:11:48
+ * @LastEditTime: 2021-07-29 18:44:15
 -->
 <template>
   <a-modal
@@ -35,6 +35,10 @@
 
       <a-form-model-item label="描述" prop="description">
         <a-textarea v-model="record.description"></a-textarea>
+      </a-form-model-item>
+
+      <a-form-model-item label="业务数据标识" prop="dataMask">
+        <a-input v-model="record.dataMask"></a-input>
       </a-form-model-item>
 
       <a-form-model-item label="上级" prop="pid">

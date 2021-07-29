@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-15 09:34:07
+ * @LastEditTime: 2021-07-29 19:08:52
  */
 
 namespace App\Models;
@@ -17,7 +17,7 @@ class DeptModel extends Model
 
     protected $table         = 'app_dept';
     protected $primaryKey    = 'id';
-    protected $allowedFields = ['name', 'pid', 'status', 'description'];
+    protected $allowedFields = ['name', 'pid', 'status', 'description', 'dataMask'];
 
     protected $useAutoIncrement = true;
 
@@ -33,17 +33,21 @@ class DeptModel extends Model
     {
         $selectSQL = '';
         if (empty($columnName)) {
-            $selectSQL = 'id, pid, name, status, description, updated_at';
+            $selectSQL = 'id, pid, name, status, description, dataMask, updated_at';
         } else {
             foreach ($columnName as $name) {
                 $selectSQL = $selectSQL . $name . ', ';
             }
         }
-
         $builder = $this->select($selectSQL);
+
         if (isset($queryParam['status']) && $queryParam['status'] === 'enabled') {
             $builder->where('status', '1');
         }
+        if (isset($queryParam['ids']) && !empty($queryParam['ids'])) {
+            $builder->whereIn('id', $queryParam['ids']);
+        }
+
         $builder->orderBy('id', 'ASC');
 
         $res = $builder->findAll();
