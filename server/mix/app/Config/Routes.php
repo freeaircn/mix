@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-29 23:22:15
+ * @LastEditTime: 2021-07-30 09:34:08
  */
 
 namespace Config;
@@ -56,42 +56,42 @@ $routes->group('api', function ($routes) {
     $routes->put('account/email', 'Account::updateEmail');
     $routes->post('account/avatar', 'Account::updateAvatar');
     //
-    $routes->get('role', 'Home::getRole');
-    $routes->post('role', 'Home::newRole');
-    $routes->put('role', 'Home::updateRole');
-    $routes->delete('role', 'Home::delRole');
+    $routes->get('role', 'Admin::getRole');
+    $routes->post('role', 'Admin::newRole');
+    $routes->put('role', 'Admin::updateRole');
+    $routes->delete('role', 'Admin::delRole');
     //
-    $routes->get('menu', 'Home::getMenu');
+    $routes->get('menu', 'Admin::getMenu');
     //
-    $routes->get('role_menu', 'Home::getRoleMenu');
-    $routes->post('role_menu', 'Home::saveRoleMenu');
+    $routes->get('role_menu', 'Admin::getRoleMenu');
+    $routes->post('role_menu', 'Admin::saveRoleMenu');
     //
-    $routes->get('dept', 'Home::getDept');
-    $routes->post('dept', 'Home::newDept');
-    $routes->put('dept', 'Home::UpdateDept');
-    $routes->delete('dept', 'Home::delDept');
+    $routes->get('dept', 'Admin::getDept');
+    $routes->post('dept', 'Admin::newDept');
+    $routes->put('dept', 'Admin::UpdateDept');
+    $routes->delete('dept', 'Admin::delDept');
     //
-    $routes->get('job', 'Home::getJob');
-    $routes->post('job', 'Home::newJob');
-    $routes->put('job', 'Home::updateJob');
-    $routes->delete('job', 'Home::delJob');
+    $routes->get('job', 'Admin::getJob');
+    $routes->post('job', 'Admin::newJob');
+    $routes->put('job', 'Admin::updateJob');
+    $routes->delete('job', 'Admin::delJob');
     //
-    $routes->get('title', 'Home::getTitle');
-    $routes->post('title', 'Home::newTitle');
-    $routes->put('title', 'Home::updateTitle');
-    $routes->delete('title', 'Home::delTitle');
+    $routes->get('title', 'Admin::getTitle');
+    $routes->post('title', 'Admin::newTitle');
+    $routes->put('title', 'Admin::updateTitle');
+    $routes->delete('title', 'Admin::delTitle');
     //
-    $routes->get('politic', 'Home::getPolitic');
-    $routes->post('politic', 'Home::newPolitic');
-    $routes->put('politic', 'Home::updatePolitic');
-    $routes->delete('politic', 'Home::delPolitic');
+    $routes->get('politic', 'Admin::getPolitic');
+    $routes->post('politic', 'Admin::newPolitic');
+    $routes->put('politic', 'Admin::updatePolitic');
+    $routes->delete('politic', 'Admin::delPolitic');
     //
-    $routes->get('user', 'Home::getUser');
-    $routes->post('user', 'Home::newUser');
-    $routes->put('user', 'Home::updateUser');
-    $routes->delete('user', 'Home::delUser');
+    $routes->get('user', 'Admin::getUser');
+    $routes->post('user', 'Admin::newUser');
+    $routes->put('user', 'Admin::updateUser');
+    $routes->delete('user', 'Admin::delUser');
     //
-    $routes->get('user_role', 'Home::getUserRole');
+    $routes->get('user_role', 'Admin::getUserRole');
     //
     $routes->get('generator/event', 'GeneratorEvent::getGeneratorEvent');
     $routes->post('generator/event', 'GeneratorEvent::newGeneratorEvent');

@@ -551,13 +551,13 @@ CREATE TABLE IF NOT EXISTS `app_generator_event_log` (
   `generator_id` tinyint(3) UNSIGNED NOT NULL COMMENT '机组',
   `event` tinyint(3) UNSIGNED NOT NULL COMMENT '1-停机，2-开机，3-检修开始，4-检修结束',
   `timestamp` int(11) UNSIGNED NOT NULL COMMENT '时间戳',
-  `run_time` int(11) UNSIGNED NOT NULL COMMENT '运行时间',
-  `mnt_time` int(11) UNSIGNED NOT NULL COMMENT '检修时间',
+  `run_time` int(11) UNSIGNED DEFAULT 0 COMMENT '运行时间',
+  `mnt_time` int(11) UNSIGNED DEFAULT 0 COMMENT '检修时间',
   `creator` varchar(7) DEFAULT NULL COMMENT '记录人',
+  `description` varchar(127) DEFAULT NULL COMMENT '说明',
   `created_at` int(11) UNSIGNED DEFAULT NULL,
   `updated_at` int(11) UNSIGNED DEFAULT NULL,
   `deleted_at` int(11) UNSIGNED DEFAULT NULL,
-  `description` varchar(127) DEFAULT NULL COMMENT '说明',
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='发电机事件' ROW_FORMAT=COMPACT;
     
@@ -578,8 +578,8 @@ CREATE TABLE IF NOT EXISTS `app_generator_event_statistic` (
   `status` tinyint(3) UNSIGNED NOT NULL COMMENT '1-静止，2-发电，3-检修',
   `run_at` int(11) UNSIGNED NOT NULL COMMENT '开机时间戳',
   `mnt_at` int(11) UNSIGNED NOT NULL COMMENT '检修开始时间戳',
-  `run_times` int(11) UNSIGNED NOT NULL COMMENT '开机次数',
-  `mnt_times` int(11) UNSIGNED NOT NULL COMMENT '检修次数',
+  `run_num` int(11) UNSIGNED NOT NULL COMMENT '开机次数',
+  `mnt_num` int(11) UNSIGNED NOT NULL COMMENT '检修次数',
   `run_total_time` int(11) UNSIGNED NOT NULL COMMENT '运行总时间',
   `mnt_total_time` int(11) UNSIGNED NOT NULL COMMENT '检修总时间',
   `created_at` int(11) UNSIGNED DEFAULT NULL,
