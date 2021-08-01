@@ -164,6 +164,8 @@ INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `title`, `authority`, `crea
 (71, 2, 68, 'put', '修改', 'generator/event:put', '2021-06-27 20:00:00'),
 (72, 2, 68, 'delete', '删除', 'generator/event:delete', '2021-06-27 20:00:00');
 
+INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `title`, `authority`, `created_at`) VALUES
+(73, 2, 68, 'Get', '查询事件统计', 'generator/event/statistic:get', '2021-06-27 20:00:00');
 
 -- --------------------------------------------------------
 
@@ -549,44 +551,20 @@ CREATE TABLE IF NOT EXISTS `app_generator_event_log` (
   `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'ID',
   `station_id` tinyint(3) UNSIGNED NOT NULL COMMENT '站点',
   `generator_id` tinyint(3) UNSIGNED NOT NULL COMMENT '机组',
-  `event` tinyint(3) UNSIGNED NOT NULL COMMENT '1-停机，2-开机，3-检修开始，4-检修结束',
-  `timestamp` int(11) UNSIGNED NOT NULL COMMENT '时间戳',
+  `event` tinyint(3) UNSIGNED NOT NULL COMMENT '1-停机，2-开机',
+  `event_at` datetime DEFAULT NULL COMMENT '时间',
   `run_time` int(11) UNSIGNED DEFAULT 0 COMMENT '运行时间',
-  `mnt_time` int(11) UNSIGNED DEFAULT 0 COMMENT '检修时间',
   `creator` varchar(7) DEFAULT NULL COMMENT '记录人',
   `description` varchar(127) DEFAULT NULL COMMENT '说明',
-  `created_at` int(11) UNSIGNED DEFAULT NULL,
-  `updated_at` int(11) UNSIGNED DEFAULT NULL,
-  `deleted_at` int(11) UNSIGNED DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='发电机事件' ROW_FORMAT=COMPACT;
     
 
     
--- --------------------------------------------------------
 
---
--- 表的结构 `app_generator_event_statistic`
---
-
-DROP TABLE IF EXISTS `app_generator_event_statistic`;
-CREATE TABLE IF NOT EXISTS `app_generator_event_statistic` (
-  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'ID',
-  `station_id` tinyint(3) UNSIGNED NOT NULL COMMENT '站点',
-  `generator_id` tinyint(3) UNSIGNED NOT NULL COMMENT '机组',
-  `year` smallint(4) UNSIGNED NOT NULL COMMENT '年份',
-  `status` tinyint(3) UNSIGNED NOT NULL COMMENT '1-静止，2-发电，3-检修',
-  `run_at` int(11) UNSIGNED NOT NULL COMMENT '开机时间戳',
-  `mnt_at` int(11) UNSIGNED NOT NULL COMMENT '检修开始时间戳',
-  `run_num` int(11) UNSIGNED NOT NULL COMMENT '开机次数',
-  `mnt_num` int(11) UNSIGNED NOT NULL COMMENT '检修次数',
-  `run_total_time` int(11) UNSIGNED NOT NULL COMMENT '运行总时间',
-  `mnt_total_time` int(11) UNSIGNED NOT NULL COMMENT '检修总时间',
-  `created_at` int(11) UNSIGNED DEFAULT NULL,
-  `updated_at` int(11) UNSIGNED DEFAULT NULL,
-  `deleted_at` int(11) UNSIGNED DEFAULT NULL,
-  PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='发电机事件统计' ROW_FORMAT=COMPACT;
 
 
 

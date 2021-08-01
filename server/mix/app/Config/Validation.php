@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-29 23:32:38
+ * @LastEditTime: 2021-08-01 23:31:31
  */
 
 namespace Config;
@@ -75,8 +75,16 @@ class Validation
         'station_id'   => 'required|regex_match[^[1-9]\d{0,2}$]',
         'generator_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
         'event'        => 'required|regex_match[^[1-9]\d{0,2}$]',
-        'timestamp'    => 'required|regex_match[^[1-9]\d{9}$]',
+        'event_at'     => 'required|regex_match[/^[1-2]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])\s+([0-1]\d|20|21|22|23):[0-5]\d:[0-5]\d$/]',
         'creator'      => 'required|regex_match[/^([\x{4e00}-\x{9fa5}]{1,6})$/u]',
+    ];
+
+    public $GeneratorEventGet = [
+        'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
+        'start'      => 'required|valid_date[Y-m-d]',
+        'end'        => 'required|valid_date[Y-m-d]',
+        'limit'      => 'required|regex_match[^[1-9]\d{0,2}$]',
+        'offset'     => 'required|regex_match[^[1-9]\d{0,9}$]',
     ];
 
     /**

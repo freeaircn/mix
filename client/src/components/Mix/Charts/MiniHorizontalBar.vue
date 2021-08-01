@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-28 23:48:12
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-29 05:37:58
+ * @LastEditTime: 2021-07-31 21:15:44
  padding="[36, 5, 18, 5]"
 -->
 <template>
@@ -45,13 +45,6 @@
 </template>
 
 <script>
-const scale = [{
-  dataKey: 'value',
-  max: 100,
-  min: 0,
-  nice: false,
-  alias: '次数'
-}]
 
 const barLabel = ['value', {
   textStyle: {
@@ -106,7 +99,13 @@ export default {
   },
   data () {
     return {
-      scale,
+      scale: [{
+        dataKey: 'value',
+        max: 100,
+        min: 0,
+        nice: false,
+        alias: '次数'
+      }],
       barLabel,
       label,
       tickLine,
@@ -120,12 +119,12 @@ export default {
       handler: function (val) {
         if (val.length > 0) {
           let max = val[0].value
-          for (var i = 0; i < val.length; i++) {
+          for (var i = 1; i < val.length; i++) {
             if (val[i].value > max) {
               max = val[i].value // 最大值
             }
           }
-          this.scale[0].max = max
+          this.scale[0].max = max + 1
         }
       },
       immediate: true

@@ -17,9 +17,6 @@
     <span slot="event" slot-scope="text">
       {{ text | eventFilter }}
     </span>
-    <span slot="timestamp" slot-scope="text">
-      {{ text | timestampFilter }}
-    </span>
     <span slot="action" slot-scope="text, record">
       <template>
         <a @click="handleEdit(record)">修改</a>
@@ -31,7 +28,7 @@
 </template>
 
 <script>
-import moment from 'moment'
+// import moment from 'moment'
 
 const columns = [
   {
@@ -50,8 +47,7 @@ const columns = [
   },
   {
     title: '时间',
-    dataIndex: 'timestamp',
-    scopedSlots: { customRender: 'timestamp' }
+    dataIndex: 'event_at'
   },
   {
     title: '记录人',
@@ -124,9 +120,6 @@ export default {
     },
     eventFilter (type) {
       return eventMap[type].text
-    },
-    timestampFilter (value) {
-      return moment.unix(value).format('YYYY-MM-DD HH:MM:ss')
     }
   },
   watch: {

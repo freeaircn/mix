@@ -6,8 +6,8 @@
 
     <div class="antd-pro-pages-dashboard-analysis-twoColLayout" :class="!isMobile && 'desktop'">
       <a-row :gutter="8" type="flex" :style="{ marginBottom: '8px' }">
-        <a-col :xl="8" :lg="24" :md="24" :sm="24" :xs="24">
-          <a-card :loading="loading" :bordered="false" title="事件录入" :style="{height: '100%'}">
+        <a-col :xl="8" :lg="24" :md="24" :sm="24" :xs="24" >
+          <a-card :bordered="false" title="事件录入" :style="{height: '100%'}">
             <a-form-model
               ref="eventForm"
               :model="objEvent"
@@ -29,13 +29,11 @@
                 <a-select v-model="objEvent.event" placeholder="请选择">
                   <a-select-option value="1">停机</a-select-option>
                   <a-select-option value="2">开机</a-select-option>
-                  <a-select-option value="3">检修开始</a-select-option>
-                  <a-select-option value="4">检修结束</a-select-option>
                 </a-select>
               </a-form-model-item>
 
-              <a-form-model-item label="日期/时间" prop="timestamp">
-                <a-date-picker v-model="objEvent.timestamp" valueFormat="YYYY-MM-DD HH:mm:ss" show-time placeholder="请选择" />
+              <a-form-model-item label="日期/时间" prop="event_at">
+                <a-date-picker v-model="objEvent.event_at" valueFormat="YYYY-MM-DD HH:mm:ss" show-time placeholder="请选择" />
               </a-form-model-item>
 
               <a-form-model-item label="说明" prop="description">
@@ -50,11 +48,11 @@
         </a-col>
 
         <a-col :xl="16" :lg="24" :md="24" :sm="24" :xs="24">
-          <a-card class="antd-pro-pages-dashboard-analysis-salesCard" :loading="loading" :bordered="false" title="事件查询" :style="{ height: '100%' }">
+          <a-card class="antd-pro-pages-dashboard-analysis-salesCard" :loading="listLoading" :bordered="false" title="事件查询" :style="{ height: '100%' }">
             <div>
-              <a-date-picker v-model="hisEventStartTimestamp" valueFormat="YYYY-MM-DD" placeholder="开始日期"/>
+              <a-date-picker v-model="hisEventStartAt" valueFormat="YYYY-MM-DD" placeholder="开始日期"/>
               <span style="margin: 0px 8px"></span>
-              <a-date-picker v-model="hisEventEndTimestamp" valueFormat="YYYY-MM-DD" placeholder="结束日期"/>
+              <a-date-picker v-model="hisEventEndAt" valueFormat="YYYY-MM-DD" placeholder="结束日期"/>
               <span style="margin: 0 18px"><a-button type="primary" @click="handleQueryHisEvent">查询</a-button></span>
             </div>
 
@@ -67,41 +65,21 @@
       </a-row>
     </div>
 
-    <a-card :title="currentYear + '年'" :loading="loading" :bordered="false" :body-style="{marginBottom: '8px'}">
+    <a-card :title="currentYear + '年'" :loading="barLoading" :bordered="false" :body-style="{marginBottom: '8px'}">
       <div class="current-year-card">
-        <!-- <div class="current-year-card-header">
-          {{ currentYear }}年
-        </div> -->
         <div class="current-year-card-content">
           <a-row :gutter="8">
-            <a-col :sm="24" :md="12" :xl="6" :style="{ marginBottom: '8px' }">
-              <chart-card2 :loading="loading" title="开机次数">
+            <a-col :sm="24" :md="12" :xl="12" :style="{ marginBottom: '8px' }">
+              <chart-card2 :loading="barLoading" title="开机次数">
                 <div>
-                  <mini-horizontal-bar :data="singleData" color="#5ab1ef"/>
+                  <mini-horizontal-bar :data="barStatisticRunNumber" color="#5ab1ef"/>
                 </div>
               </chart-card2>
             </a-col>
-
-            <a-col :sm="24" :md="12" :xl="6" :style="{ marginBottom: '8px' }">
-              <chart-card2 :loading="loading" title="运行时长（小时）">
+            <a-col :sm="24" :md="12" :xl="12" :style="{ marginBottom: '8px' }">
+              <chart-card2 :loading="barLoading" title="运行时长（小时）">
                 <div>
-                  <mini-horizontal-bar :data="singleData" />
-                </div>
-              </chart-card2>
-            </a-col>
-
-            <a-col :sm="24" :md="12" :xl="6" :style="{ marginBottom: '8px' }">
-              <chart-card2 :loading="loading" title="检修次数">
-                <div>
-                  <mini-horizontal-bar :data="singleData" color="#ffb980"/>
-                </div>
-              </chart-card2>
-            </a-col>
-
-            <a-col :sm="24" :md="12" :xl="6" :style="{ marginBottom: '8px' }">
-              <chart-card2 :loading="loading" title="检修时长（小时）">
-                <div>
-                  <mini-horizontal-bar :data="singleData" color="#f5994e"/>
+                  <mini-horizontal-bar :data="barStatisticRunTotalTime" />
                 </div>
               </chart-card2>
             </a-col>
@@ -135,17 +113,11 @@ import moment from 'moment'
 import { ChartCard2, MiniHorizontalBar } from '@/components'
 import { GeneratorEventList } from './components'
 import { mapGetters } from 'vuex'
-import { getGeneratorEvent, saveGeneratorEvent } from '@/api/service'
+import { getGeneratorEvent, saveGeneratorEvent, getGeneratorEventStatistic } from '@/api/service'
 import { baseMixin } from '@/store/app-mixin'
 
-const singleData = [
-  { name: '1G', value: 10 },
-  { name: '2G', value: 20 },
-  { name: '3G', value: 15 }
-]
-
 const availableYearRange = []
-for (let i = 2019; i <= moment().year(); i++) {
+for (let i = 2018; i <= moment().year(); i++) {
   availableYearRange.push({
     name: i + '年',
     value: i
@@ -166,7 +138,7 @@ export default {
       // 录入事件 表单区域
       objEvent: {
         station_id: null,
-        timestamp: ''
+        event_at: ''
       },
       labelCol: {
         lg: { span: 7 }, sm: { span: 7 }
@@ -177,11 +149,11 @@ export default {
       rules: {
         generator_id: [{ required: true, message: '请选择机组', trigger: 'change' }],
         event: [{ required: true, message: '请选择事件名称', trigger: 'change' }],
-        timestamp: [{ required: true, message: '请选择日期和时间', trigger: ['change', 'blur'] }]
+        event_at: [{ required: true, message: '请选择日期和时间', trigger: ['change', 'blur'] }]
       },
       // 事件 列表显示区
-      hisEventStartTimestamp: '',
-      hisEventEndTimestamp: '',
+      hisEventStartAt: '',
+      hisEventEndAt: '',
 
       listLoading: false,
       eventLogListPageIndex: 1,
@@ -190,8 +162,10 @@ export default {
       totalEventLog: 0,
 
       // 统计Bar显示区
+      barLoading: false,
       currentYear: moment().year(),
-      singleData,
+      barStatisticRunNumber: [],
+      barStatisticRunTotalTime: [],
 
       // 历史统计显示区
       availableYearRange
@@ -209,12 +183,12 @@ export default {
     }, 1000)
 
     // 事件 列表显示区
-    const start = moment('2011-01-01 00:00:00').unix()
-    const end = moment().unix()
+    const start = '2011-01-01'
+    const end = moment().format('YYYY-MM-DD')
     const query = {
       station_id: this.userInfo.belongToDeptId,
-      startTimestamp: start,
-      endTimestamp: end,
+      start: start,
+      end: end,
       limit: this.pageSize,
       offset: 1
     }
@@ -228,12 +202,29 @@ export default {
       })
       .catch((err) => {
         this.listLoading = false
+        this.eventLogData.splice(0, this.eventLogData.length)
         if (err.response) {
-          this.eventLogData.splice(0, this.listData.length)
         }
       })
 
     // 统计 Bar显示区
+    const query2 = {
+      year: this.currentYear,
+      station_id: this.userInfo.belongToDeptId
+    }
+    this.barLoading = true
+    getGeneratorEventStatistic(query2)
+      .then(res => {
+        this.filterBarStatisticData(res.data)
+        this.barLoading = false
+      })
+      .catch((err) => {
+        this.barLoading = false
+        this.barStatisticRunNumber.splice(0, this.barStatisticRunNumber.length)
+        this.barStatisticRunTotalTime.splice(0, this.barStatisticRunTotalTime.length)
+        if (err.response) {
+        }
+      })
 
     // 历史统计显示区
   },
@@ -244,13 +235,12 @@ export default {
       this.$refs.eventForm.validate(valid => {
         if (valid) {
           const data = { ...this.objEvent }
-          data.timestamp = moment(this.objEvent.timestamp).unix()
           data.station_id = this.userInfo.belongToDeptId
           data.creator = this.userInfo.username
 
           saveGeneratorEvent(data)
             .then(() => {
-
+              this.handleQueryHisEvent()
             })
             //  网络异常，清空页面数据显示，防止错误的操作
             .catch((err) => {
@@ -264,18 +254,11 @@ export default {
 
     // 事件列表显示区
     handleQueryHisEvent () {
-      let start = moment('2011-01-01 00:00:00').unix()
-      let end = moment().unix()
-
-      if (this.hisEventStartTimestamp) {
-        start = moment(this.hisEventStartTimestamp + ' 00:00:00').unix()
-      }
-      if (this.hisEventEndTimestamp) {
-        end = moment(this.hisEventEndTimestamp + ' 23:59:59').unix()
-      }
-
       // 检查输入日期
-      if (start >= end) {
+      const format = 'YYYY-MM-DD'
+      const start = this.hisEventStartAt ? this.hisEventStartAt : '2011-01-01'
+      const end = this.hisEventEndAt ? this.hisEventEndAt : moment().format(format)
+      if (moment(moment(end, format)).diff(moment(moment(start, format)), 'days') < 0) {
         this.$notification.warning({
           message: '错误',
           description: '请检查起始时间和结束时间'
@@ -285,8 +268,8 @@ export default {
 
       const query = {
         station_id: this.userInfo.belongToDeptId,
-        startTimestamp: start,
-        endTimestamp: end,
+        start: start,
+        end: end,
         limit: this.pageSize,
         offset: 1
       }
@@ -302,27 +285,20 @@ export default {
         })
         .catch((err) => {
           this.listLoading = false
+          this.eventLogData.splice(0, this.eventLogData.length)
           if (err.response) {
-            this.eventLogData.splice(0, this.listData.length)
           }
         })
     },
 
     onReqEventLog (param) {
       const query = { ...param }
-      query.station_id = this.userInfo.belongToDeptId
-
-      let start = moment('2011-01-01 00:00:00').unix()
-      let end = moment().unix()
-      if (this.hisEventStartTimestamp) {
-        start = moment(this.hisEventStartTimestamp + ' 00:00:00').unix()
-      }
-      if (this.hisEventEndTimestamp) {
-        end = moment(this.hisEventEndTimestamp + ' 23:59:59').unix()
-      }
 
       // 检查输入日期
-      if (start >= end) {
+      const format = 'YYYY-MM-DD'
+      const start = this.hisEventStartAt ? this.hisEventStartAt : '2011-01-01'
+      const end = this.hisEventEndAt ? this.hisEventEndAt : moment().format(format)
+      if (moment(moment(end, format)).diff(moment(moment(start, format)), 'days') < 0) {
         this.$notification.warning({
           message: '错误',
           description: '请检查起始时间和结束时间'
@@ -330,8 +306,9 @@ export default {
         return
       }
 
-      query.startTimestamp = start
-      query.endTimestamp = end
+      query.station_id = this.userInfo.belongToDeptId
+      query.start = start
+      query.end = end
 
       this.listLoading = true
       getGeneratorEvent(query)
@@ -343,15 +320,52 @@ export default {
         })
         .catch((err) => {
           this.listLoading = false
+          this.eventLogData.splice(0, this.eventLogData.length)
           if (err.response) {
-            this.eventLogData.splice(0, this.listData.length)
           }
         })
+    },
+
+    // bar 统计显示区
+    filterBarStatisticData (data) {
+      this.barStatisticRunNumber.splice(0, this.barStatisticRunNumber.length)
+      this.barStatisticRunTotalTime.splice(0, this.barStatisticRunTotalTime.length)
+
+      data.forEach(element => {
+        const tempRunNumber = {
+          name: element.generator_id + 'G',
+          value: Number(element.run_num)
+        }
+        const tempRunTotalTime = {
+          name: element.generator_id + 'G',
+          value: element.run_total_time / 3600
+        }
+
+        this.barStatisticRunNumber.push(tempRunNumber)
+        this.barStatisticRunTotalTime.push(tempRunTotalTime)
+      })
     },
 
     // 历史统计 显示区
     handleQueryHisStatistic () {
       console.log('QueryHisStatistic')
+      const query2 = {
+        year: this.currentYear,
+        station_id: this.userInfo.belongToDeptId
+      }
+      this.barLoading = true
+      getGeneratorEventStatistic(query2)
+        .then(res => {
+          this.filterBarStatisticData(res.data)
+          this.barLoading = false
+        })
+        .catch((err) => {
+          this.barLoading = false
+          this.barStatisticRunNumber.splice(0, this.barStatisticRunNumber.length)
+          this.barStatisticRunTotalTime.splice(0, this.barStatisticRunTotalTime.length)
+          if (err.response) {
+          }
+        })
     }
   }
 }
@@ -400,13 +414,5 @@ export default {
     right: 54px;
     bottom: 12px;
   }
-
-  // .current-year-card-header {
-  //   font-size: 16px;
-  //   line-height: 22px;
-  //   border-bottom: 1px solid #e8e8e8;
-  //   padding: 8px;
-  //   margin-bottom: 8px;
-  // }
 
 </style>

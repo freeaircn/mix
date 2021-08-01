@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-30 16:56:15
+ * @LastEditTime: 2021-07-31 22:37:04
  */
 
 namespace App\Models\Generator;
@@ -55,6 +55,28 @@ class GenEventStatisticModel extends Model
         $res = $builder->findAll();
 
         return isset($res[0]) ? $res[0] : [];
+    }
+
+    public function getStatisticByYearAndStation($columnName = [], $queryParam = [])
+    {
+        $selectSQL = '';
+        if (empty($columnName)) {
+            $selectSQL = 'generator_id, run_num, mnt_num, run_total_time, mnt_total_time';
+        } else {
+            foreach ($columnName as $key) {
+                $selectSQL = $selectSQL . $key . ', ';
+            }
+        }
+        $builder = $this->select($selectSQL);
+
+        $builder->where('year', $queryParam['year']);
+        $builder->where('station_id', $queryParam['station_id']);
+
+        $builder->orderBy('generator_id', 'ASC');
+
+        $result = $builder->findAll();
+
+        return $result;
     }
 
     public function newStatistic(array $statistic)
