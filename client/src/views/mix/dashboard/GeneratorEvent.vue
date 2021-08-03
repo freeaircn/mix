@@ -70,16 +70,25 @@
         <div class="current-year-card-content">
           <a-row :gutter="8">
             <a-col :sm="24" :md="12" :xl="12" :style="{ marginBottom: '8px' }">
-              <chart-card2 :loading="barLoading" title="开机次数">
+              <chart-card2 :loading="barLoading" title="运行时长（小时）">
+                <a-tooltip slot="action">
+                  <template slot="title">
+                    截至日期：
+                    <div>1G：{{ barStatisticLatestTime[0] }}</div>
+                    <div>2G：{{ barStatisticLatestTime[1] }}</div>
+                    <div>3G：{{ barStatisticLatestTime[2] }}</div>
+                  </template>
+                  <a-icon type="info-circle-o" />
+                </a-tooltip>
                 <div>
-                  <mini-horizontal-bar :data="barStatisticRunNumber" color="#5ab1ef"/>
+                  <mini-horizontal-bar :data="barStatisticRunTotalTime" scaleAlias="小时"/>
                 </div>
               </chart-card2>
             </a-col>
             <a-col :sm="24" :md="12" :xl="12" :style="{ marginBottom: '8px' }">
-              <chart-card2 :loading="barLoading" title="运行时长（小时）">
+              <chart-card2 :loading="barLoading" title="开机次数">
                 <div>
-                  <mini-horizontal-bar :data="barStatisticRunTotalTime" />
+                  <mini-horizontal-bar :data="barStatisticRunNumber" color="#5ab1ef" scaleAlias="次数"/>
                 </div>
               </chart-card2>
             </a-col>
@@ -166,6 +175,7 @@ export default {
       currentYear: moment().year(),
       barStatisticRunNumber: [],
       barStatisticRunTotalTime: [],
+      barStatisticLatestTime: [],
 
       // 历史统计显示区
       availableYearRange
@@ -222,6 +232,7 @@ export default {
         this.barLoading = false
         this.barStatisticRunNumber.splice(0, this.barStatisticRunNumber.length)
         this.barStatisticRunTotalTime.splice(0, this.barStatisticRunTotalTime.length)
+        this.barStatisticLatestTime.splice(0, this.barStatisticLatestTime.length)
         if (err.response) {
         }
       })
@@ -330,6 +341,7 @@ export default {
     filterBarStatisticData (data) {
       this.barStatisticRunNumber.splice(0, this.barStatisticRunNumber.length)
       this.barStatisticRunTotalTime.splice(0, this.barStatisticRunTotalTime.length)
+      this.barStatisticLatestTime.splice(0, this.barStatisticLatestTime.length)
 
       data.forEach(element => {
         const tempRunNumber = {
@@ -343,6 +355,7 @@ export default {
 
         this.barStatisticRunNumber.push(tempRunNumber)
         this.barStatisticRunTotalTime.push(tempRunTotalTime)
+        this.barStatisticLatestTime.push(element.latest_time)
       })
     },
 
@@ -363,6 +376,7 @@ export default {
           this.barLoading = false
           this.barStatisticRunNumber.splice(0, this.barStatisticRunNumber.length)
           this.barStatisticRunTotalTime.splice(0, this.barStatisticRunTotalTime.length)
+          this.barStatisticLatestTime.splice(0, this.barStatisticLatestTime.length)
           if (err.response) {
           }
         })

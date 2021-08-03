@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-08-02 00:05:57
+ * @LastEditTime: 2021-08-02 12:49:25
  */
 
 namespace App\Models\Generator;
@@ -91,6 +91,15 @@ class GenEventLogModel extends Model
         return isset($res[0]) ? $res[0] : [];
     }
 
+    public function delEventLogById($id)
+    {
+        if (!is_numeric($id)) {
+            return false;
+        }
+
+        return $this->delete($id);
+    }
+
     public function getStatisticByYearAndStation($queryParam = [])
     {
         $res = [];
@@ -110,23 +119,34 @@ class GenEventLogModel extends Model
             $builder->where('generator_id', $i);
             $arr2 = $builder->findAll();
 
+            // 查询最后一条事件的事件
+            $builder = $this->select('event, event_at, run_time');
+            $builder->where('Year(event_at)', $queryParam['year']);
+            $builder->where('station_id', $queryParam['station_id']);
+            $builder->where('generator_id', $i);
+            $arr3 = $builder->orderBy('event_at', 'DESC')
+                ->limit(1)
+                ->findAll();
+
+            $latest_time = '0';
+            if (isset($arr3[0])) {
+                // 事件：开机，run_time：不等于0，开机运行跨年
+                if ($arr3[0]['event'] == 2 && $arr3[0]['run_time'] != 0) {
+                    $latest_time = substr($arr3[0]['event_at'], 0, 10) . " 23:59:59";
+                } else {
+                    $latest_time = $arr3[0]['event_at'];
+                }
+            }
+
             $res[] = [
                 'generator_id'   => $i,
                 'run_num'        => isset($arr1[0]) ? $arr1[0]['run_num'] : 0,
                 'run_total_time' => isset($arr2[0]) ? $arr2[0]['run_total_time'] : 0,
+                'latest_time'    => $latest_time,
             ];
 
         }
 
         return $res;
-    }
-
-    public function delEventLogById($id)
-    {
-        if (!is_numeric($id)) {
-            return false;
-        }
-
-        return $this->delete($id);
     }
 }

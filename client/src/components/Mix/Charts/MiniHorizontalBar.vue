@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-28 23:48:12
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-31 21:15:44
+ * @LastEditTime: 2021-08-02 22:23:23
  padding="[36, 5, 18, 5]"
 -->
 <template>
@@ -77,13 +77,13 @@ const title = {
   }
 }
 
-const tooltip = [
-  'x*y',
-  (x, y) => ({
-    name: x,
-    value: y
-  })
-]
+// const tooltip = [
+//   'x*y',
+//   (x, y) => ({
+//     name: x,
+//     value: y
+//   })
+// ]
 
 export default {
   name: 'MiniHorizontalBar',
@@ -95,6 +95,10 @@ export default {
     color: {
       type: String,
       default: '#1890ff'
+    },
+    scaleAlias: {
+      type: String,
+      default: ''
     }
   },
   data () {
@@ -104,14 +108,13 @@ export default {
         max: 100,
         min: 0,
         nice: false,
-        alias: '次数'
+        alias: this.scaleAlias
       }],
       barLabel,
       label,
       tickLine,
       line,
-      title,
-      tooltip
+      title
     }
   },
   watch: {
