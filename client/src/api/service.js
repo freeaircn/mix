@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-31 20:16:54
+ * @LastEditTime: 2021-08-18 21:16:09
  */
 import request from '@/utils/request'
 
@@ -37,10 +37,10 @@ export function getGeneratorEventStatistic (params) {
   })
 }
 
-export function delGeneratorEvent (id) {
+export function delGeneratorEvent (params) {
   return request({
     url: api.generator_event,
     method: 'delete',
-    data: { id }
+    data: params
   })
 }

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-08-01 23:31:31
+ * @LastEditTime: 2021-08-18 21:25:02
  */
 
 namespace Config;
@@ -80,11 +80,18 @@ class Validation
     ];
 
     public $GeneratorEventGet = [
-        'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
-        'start'      => 'required|valid_date[Y-m-d]',
-        'end'        => 'required|valid_date[Y-m-d]',
-        'limit'      => 'required|regex_match[^[1-9]\d{0,2}$]',
-        'offset'     => 'required|regex_match[^[1-9]\d{0,9}$]',
+        'station_id'   => 'required|regex_match[^[1-9]\d{0,2}$]',
+        'generator_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
+        'start'        => 'required|valid_date[Y-m-d]',
+        'end'          => 'required|valid_date[Y-m-d]',
+        'limit'        => 'required|regex_match[^[1-9]\d{0,2}$]',
+        'offset'       => 'required|regex_match[^[1-9]\d{0,9}$]',
+    ];
+
+    public $GeneratorEventDelete = [
+        'id'           => 'required|regex_match[^[1-9]\d{0,10}$]',
+        'station_id'   => 'required|regex_match[^[1-9]\d{0,2}$]',
+        'generator_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
     ];
 
     /**

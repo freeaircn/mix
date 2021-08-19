@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-08-01 23:46:41
+ * @LastEditTime: 2021-08-18 21:45:43
  */
 
 namespace App\Controllers;
@@ -36,11 +36,21 @@ class GeneratorEvent extends BaseController
             return $this->respond($res);
         }
 
-        $query['station_id'] = $param['station_id'];
-        $query['start']      = $param['start'];
-        $query['end']        = $param['end'];
-        $query['limit']      = $param['limit'];
-        $query['offset']     = $param['offset'];
+        // 与session比对
+        $stationID = $this->session->get('belongToDeptId');
+        if ($param['station_id'] != $stationID) {
+            $res['error'] = 'invalid station_id';
+            $res['code']  = EXIT_ERROR;
+            $res['msg']   = '请求数据无效';
+            return $this->respond($res);
+        }
+
+        $query['station_id']   = $param['station_id'];
+        $query['generator_id'] = $param['generator_id'];
+        $query['start']        = $param['start'];
+        $query['end']          = $param['end'];
+        $query['limit']        = $param['limit'];
+        $query['offset']       = $param['offset'];
 
         $result = $this->eventModel->getEventLog([], $query);
 
@@ -62,6 +72,15 @@ class GeneratorEvent extends BaseController
         }
 
         $client = $this->request->getJSON(true);
+
+        // 与session比对
+        $stationID = $this->session->get('belongToDeptId');
+        if ($client['station_id'] != $stationID) {
+            $res['error'] = 'invalid station_id';
+            $res['code']  = EXIT_ERROR;
+            $res['msg']   = '请求数据无效';
+            return $this->respond($res);
+        }
 
         // 取出检验后的数据
         $newEvent = [
@@ -116,23 +135,57 @@ class GeneratorEvent extends BaseController
     //     return $this->respond($res);
     // }
 
-    // public function delRole()
-    // {
-    //     $client = $this->request->getJSON(true);
+    public function delGeneratorEvent()
+    {
+        // 检查请求数据
+        if (!$this->validate('GeneratorEventDelete')) {
+            $res['error'] = $this->validator->getErrors();
 
-    //     $model  = new RoleMode();
-    //     $result = $model->delete($client['id']);
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '请求数据无效';
+            return $this->respond($res);
+        }
 
-    //     if ($result === true) {
-    //         $res['code'] = EXIT_SUCCESS;
-    //         $res['msg']  = '完成删除！';
-    //     } else {
-    //         $res['code'] = EXIT_ERROR;
-    //         $res['msg']  = '删除失败，稍后再试！';
-    //     }
+        $client = $this->request->getJSON(true);
 
-    //     return $this->respond($res);
-    // }
+        // 与session比对
+        $stationID = $this->session->get('belongToDeptId');
+        if ($client['station_id'] != $stationID) {
+            $res['code']  = EXIT_ERROR;
+            $res['msg']   = '请求数据无效';
+            $res['error'] = 'invalid station_id';
+            return $this->respond($res);
+        }
+
+        // 查找时间最进一条事件
+        $lastEvent = $this->eventModel->getLastEventLogByStationGen($client['station_id'], $client['generator_id']);
+
+        // 对比
+        if ($lastEvent['id'] != $client['id']) {
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '只能删除某机组记录时间最近的一条';
+            return $this->respond($res);
+        }
+
+        if (($lastEvent['station_id'] != $client['station_id']) || ($lastEvent['generator_id'] != $client['generator_id']) || ($lastEvent['event'] != $client['event'])) {
+            $res['code']  = EXIT_ERROR;
+            $res['msg']   = '请求数据无效';
+            $res['error'] = 'invalid params';
+            return $this->respond($res);
+        }
+
+        $result = $this->eventModel->delEventLogById($client['id']);
+
+        if ($result === true) {
+            $res['code'] = EXIT_SUCCESS;
+            $res['msg']  = '已删除';
+        } else {
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '删除失败，稍后再试';
+        }
+
+        return $this->respond($res);
+    }
 
     public function getGeneratorEventStatistic()
     {

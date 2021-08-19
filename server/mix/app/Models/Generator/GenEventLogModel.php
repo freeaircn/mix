@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-08-02 12:49:25
+ * @LastEditTime: 2021-08-18 20:20:24
  */
 
 namespace App\Models\Generator;
@@ -41,7 +41,12 @@ class GenEventLogModel extends Model
         }
         $builder = $this->select($selectSQL);
 
-        $whereSql = "station_id = " . $queryParam['station_id'] . " AND Date(event_at) BETWEEN " . "'" . $queryParam['start'] . "'" . " AND " . "'" . $queryParam['end'] . "'";
+        if ($queryParam['generator_id'] == '9') {
+            $whereSql = "station_id = " . $queryParam['station_id'] . " AND Date(event_at) BETWEEN " . "'" . $queryParam['start'] . "'" . " AND " . "'" . $queryParam['end'] . "'";
+        } else {
+            $whereSql = "station_id = " . $queryParam['station_id'] . " AND generator_id = " . $queryParam['generator_id'] . " AND Date(event_at) BETWEEN " . "'" . $queryParam['start'] . "'" . " AND " . "'" . $queryParam['end'] . "'";
+        }
+
         $builder->where($whereSql);
 
         $total = $builder->countAllResults(false);

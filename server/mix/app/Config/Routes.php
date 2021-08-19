@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-31 20:17:29
+ * @LastEditTime: 2021-08-18 21:19:57
  */
 
 namespace Config;
@@ -96,6 +96,7 @@ $routes->group('api', function ($routes) {
     $routes->get('generator/event', 'GeneratorEvent::getGeneratorEvent');
     $routes->post('generator/event', 'GeneratorEvent::newGeneratorEvent');
     $routes->get('generator/event/statistic', 'GeneratorEvent::getGeneratorEventStatistic');
+    $routes->delete('generator/event', 'GeneratorEvent::delGeneratorEvent');
     //
     $routes->add('(:any)', '404');
 });

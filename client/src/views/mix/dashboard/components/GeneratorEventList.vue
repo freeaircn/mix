@@ -162,30 +162,19 @@ export default {
 
     // 删除请求
     handleDel (record) {
-      console.log('del', record)
-      // this.$confirm({
-      //   title: '确定删除吗?',
-      //   content: '删除 ' + record.username,
-      //   onOk: () => {
-      //     delUser(record.id)
-      //       .then(() => {
-      //         // 结果同步至table
-      //         if (record.id) {
-      //           this.listData.forEach(function (element, index, array) {
-      //             if (element.id === record.id) {
-      //               array.splice(index, 1)
-      //             }
-      //           })
-      //         }
-      //       })
-      //       //  网络异常，清空页面数据显示，防止错误的操作
-      //       .catch((err) => {
-      //         if (err.response) {
-      //           this.listData.splice(0, this.listData.length)
-      //         }
-      //       })
-      //   }
-      // })
+      const param = {
+        id: record.id,
+        station_id: record.station_id,
+        generator_id: record.generator_id,
+        event: record.event
+      }
+      this.$confirm({
+        title: '确定删除吗?',
+        // content: '删除 ' + record.username,
+        onOk: () => {
+          this.$emit('reqDelete', param)
+        }
+      })
     }
   }
 }

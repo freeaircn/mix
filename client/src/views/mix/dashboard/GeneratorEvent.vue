@@ -49,16 +49,39 @@
 
         <a-col :xl="16" :lg="24" :md="24" :sm="24" :xs="24">
           <a-card class="antd-pro-pages-dashboard-analysis-salesCard" :loading="listLoading" :bordered="false" title="事件查询" :style="{ height: '100%' }">
-            <div>
-              <a-date-picker v-model="hisEventStartAt" valueFormat="YYYY-MM-DD" placeholder="开始日期"/>
-              <span style="margin: 0px 8px"></span>
-              <a-date-picker v-model="hisEventEndAt" valueFormat="YYYY-MM-DD" placeholder="结束日期"/>
-              <span style="margin: 0 18px"><a-button type="primary" @click="handleQueryHisEvent">查询</a-button></span>
-            </div>
+            <a-form-model ref="hisEventForm" layout="inline" :model="hisEvent" @submit.native.prevent>
+              <a-form-model-item>
+                <a-date-picker v-model="hisEvent.startAt" valueFormat="YYYY-MM-DD" placeholder="开始日期"/>
+              </a-form-model-item>
+
+              <a-form-model-item>
+                <a-date-picker v-model="hisEvent.endAt" valueFormat="YYYY-MM-DD" placeholder="结束日期"/>
+              </a-form-model-item>
+
+              <a-form-model-item>
+                <a-select v-model="hisEvent.generatorId" placeholder="机组" allowClear style="width: 75px">
+                  <a-select-option value="1">1G</a-select-option>
+                  <a-select-option value="2">2G</a-select-option>
+                  <a-select-option value="3">3G</a-select-option>
+                </a-select>
+              </a-form-model-item>
+
+              <a-form-model-item>
+                <a-button type="primary" @click="handleQueryHisEvent">查询</a-button>
+              </a-form-model-item>
+            </a-form-model>
 
             <div>
               <!-- style="width: calc(100% - 240px);" -->
-              <GeneratorEventList :loading="listLoading" :listData="eventLogData" :current.sync="eventLogListPageIndex" :total="totalEventLog" @reqData="onReqEventLog"></GeneratorEventList>
+              <GeneratorEventList
+                :loading="listLoading"
+                :listData="eventLogData"
+                :current.sync="eventLogListPageIndex"
+                :total="totalEventLog"
+                @reqData="onReqEventLog"
+                @reqDelete="onReqDelEventLog"
+              >
+              </GeneratorEventList>
             </div>
           </a-card>
         </a-col>
@@ -122,7 +145,7 @@ import moment from 'moment'
 import { ChartCard2, MiniHorizontalBar } from '@/components'
 import { GeneratorEventList } from './components'
 import { mapGetters } from 'vuex'
-import { getGeneratorEvent, saveGeneratorEvent, getGeneratorEventStatistic } from '@/api/service'
+import { getGeneratorEvent, saveGeneratorEvent, getGeneratorEventStatistic, delGeneratorEvent } from '@/api/service'
 import { baseMixin } from '@/store/app-mixin'
 
 const availableYearRange = []
@@ -161,8 +184,11 @@ export default {
         event_at: [{ required: true, message: '请选择日期和时间', trigger: ['change', 'blur'] }]
       },
       // 事件 列表显示区
-      hisEventStartAt: '',
-      hisEventEndAt: '',
+      hisEvent: {
+        startAt: '',
+        endAt: ''
+        // generatorId: null
+      },
 
       listLoading: false,
       eventLogListPageIndex: 1,
@@ -197,6 +223,7 @@ export default {
     const end = moment().format('YYYY-MM-DD')
     const query = {
       station_id: this.userInfo.belongToDeptId,
+      generator_id: 9,
       start: start,
       end: end,
       limit: this.pageSize,
@@ -252,6 +279,7 @@ export default {
           saveGeneratorEvent(data)
             .then(() => {
               this.handleQueryHisEvent()
+              this.queryThisYearStatistic()
             })
             //  网络异常，清空页面数据显示，防止错误的操作
             .catch((err) => {
@@ -267,8 +295,9 @@ export default {
     handleQueryHisEvent () {
       // 检查输入日期
       const format = 'YYYY-MM-DD'
-      const start = this.hisEventStartAt ? this.hisEventStartAt : '2011-01-01'
-      const end = this.hisEventEndAt ? this.hisEventEndAt : moment().format(format)
+      const start = this.hisEvent.startAt ? this.hisEvent.startAt : '2011-01-01'
+      const end = this.hisEvent.endAt ? this.hisEvent.endAt : moment().format(format)
+      const gid = this.hisEvent.generatorId ? this.hisEvent.generatorId : 9
       if (moment(moment(end, format)).diff(moment(moment(start, format)), 'days') < 0) {
         this.$notification.warning({
           message: '错误',
@@ -279,6 +308,7 @@ export default {
 
       const query = {
         station_id: this.userInfo.belongToDeptId,
+        generator_id: gid,
         start: start,
         end: end,
         limit: this.pageSize,
@@ -307,8 +337,9 @@ export default {
 
       // 检查输入日期
       const format = 'YYYY-MM-DD'
-      const start = this.hisEventStartAt ? this.hisEventStartAt : '2011-01-01'
-      const end = this.hisEventEndAt ? this.hisEventEndAt : moment().format(format)
+      const start = this.hisEvent.startAt ? this.hisEvent.startAt : '2011-01-01'
+      const end = this.hisEvent.endAt ? this.hisEvent.endAt : moment().format(format)
+      const gid = this.hisEvent.generatorId ? this.hisEvent.generatorId : 9
       if (moment(moment(end, format)).diff(moment(moment(start, format)), 'days') < 0) {
         this.$notification.warning({
           message: '错误',
@@ -318,6 +349,7 @@ export default {
       }
 
       query.station_id = this.userInfo.belongToDeptId
+      query.generator_id = gid
       query.start = start
       query.end = end
 
@@ -337,7 +369,40 @@ export default {
         })
     },
 
+    onReqDelEventLog (param) {
+      delGeneratorEvent(param)
+        .then(() => {
+            this.handleQueryHisEvent()
+            this.queryThisYearStatistic()
+          })
+          //  网络异常，清空页面数据显示，防止错误的操作
+          .catch((err) => {
+            if (err.response) { }
+          })
+    },
+
     // bar 统计显示区
+    queryThisYearStatistic () {
+      const query2 = {
+        year: this.currentYear,
+        station_id: this.userInfo.belongToDeptId
+      }
+      this.barLoading = true
+      getGeneratorEventStatistic(query2)
+        .then(res => {
+          this.filterBarStatisticData(res.data)
+          this.barLoading = false
+        })
+        .catch((err) => {
+          this.barLoading = false
+          this.barStatisticRunNumber.splice(0, this.barStatisticRunNumber.length)
+          this.barStatisticRunTotalTime.splice(0, this.barStatisticRunTotalTime.length)
+          this.barStatisticLatestTime.splice(0, this.barStatisticLatestTime.length)
+          if (err.response) {
+          }
+        })
+    },
+
     filterBarStatisticData (data) {
       this.barStatisticRunNumber.splice(0, this.barStatisticRunNumber.length)
       this.barStatisticRunTotalTime.splice(0, this.barStatisticRunTotalTime.length)
