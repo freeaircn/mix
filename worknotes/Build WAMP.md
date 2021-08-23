@@ -98,7 +98,7 @@ CMD验证：php -v
 ***2. 安装php-Composer***
 ```
 1 设置国内镜像
-composer config -g repo.packagist composer https://packagist.phpcomposer.com
+[取消]composer config -g repo.packagist composer https://packagist.phpcomposer.com
 
 composer config -g repo.packagist composer https://mirrors.aliyun.com/composer/
 
@@ -147,7 +147,7 @@ composer config -g repo.packagist composer https://mirrors.aliyun.com/composer/
   npm install
   
 3 build for test environment
-  npm run server
+  npm run serve
 
 4 build for production environment
   npm run build

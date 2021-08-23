@@ -1,30 +1,71 @@
 <template>
-  <a-table
-    ref="table"
-    rowKey="id"
-    :columns="columns"
-    :data-source="listData"
-    :pagination="pagination"
-    :loading="loading"
-    @change="handleTableChange"
-  >
-    <span slot="serial" slot-scope="text, record, index">
-      {{ index + 1 }}
-    </span>
-    <span slot="generator_id" slot-scope="text">
-      {{ text | generatorIdFilter }}
-    </span>
-    <span slot="event" slot-scope="text">
-      {{ text | eventFilter }}
-    </span>
-    <span slot="action" slot-scope="text, record">
-      <template>
-        <a @click="handleEdit(record)">修改</a>
-        <a-divider type="vertical" />
-        <a @click="handleDel(record)">删除</a>
-      </template>
-    </span>
-  </a-table>
+  <div>
+    <a-table
+      ref="table"
+      rowKey="id"
+      :columns="columns"
+      :data-source="listData"
+      :pagination="pagination"
+      :loading="loading"
+      @change="handleTableChange"
+    >
+      <span slot="serial" slot-scope="text, record, index">
+        {{ index + 1 }}
+      </span>
+      <span slot="generator_id" slot-scope="text">
+        {{ text | generatorIdFilter }}
+      </span>
+      <span slot="event" slot-scope="text">
+        {{ text | eventFilter }}
+      </span>
+      <span slot="action" slot-scope="text, record">
+        <template>
+          <a @click="handleEdit(record)">修改</a>
+          <a-divider type="vertical" />
+          <a @click="handleDel(record)">删除</a>
+        </template>
+      </span>
+    </a-table>
+
+    <a-modal
+      title="修改"
+      v-model="editModalVisible"
+      :width="500"
+      :centered="true"
+      @ok="handleEditOk"
+    >
+      <a-form-model
+        ref="editForm"
+        :model="curRecord"
+        :rules="rules"
+        :label-col="labelCol"
+        :wrapper-col="wrapperCol"
+      >
+        <a-form-model-item label="机组" prop="generator_id">
+          <a-select v-model="curRecord.generator_id" disabled>
+            <a-select-option value="1">1G</a-select-option>
+            <a-select-option value="2">2G</a-select-option>
+            <a-select-option value="3">3G</a-select-option>
+          </a-select>
+        </a-form-model-item>
+
+        <a-form-model-item label="事件" prop="event">
+          <a-select v-model="curRecord.event" disabled>
+            <a-select-option value="1">停机</a-select-option>
+            <a-select-option value="2">开机</a-select-option>
+          </a-select>
+        </a-form-model-item>
+
+        <a-form-model-item label="日期/时间" prop="event_at">
+          <a-date-picker v-model="curRecord.event_at" valueFormat="YYYY-MM-DD HH:mm:ss" show-time placeholder="请选择" />
+        </a-form-model-item>
+
+        <a-form-model-item label="说明" prop="description">
+          <a-textarea v-model="curRecord.description"></a-textarea>
+        </a-form-model-item>
+      </a-form-model>
+    </a-modal>
+  </div>
 </template>
 
 <script>
@@ -111,6 +152,19 @@ export default {
         current: 1,
         pageSize: 5,
         total: 0
+      },
+
+      // 修改表单对话框
+      labelCol: {
+        lg: { span: 7 }, sm: { span: 7 }
+      },
+      wrapperCol: {
+        lg: { span: 10 }, sm: { span: 17 }
+      },
+      editModalVisible: false,
+      curRecord: {},
+      rules: {
+        event_at: [{ required: true, message: '请选择日期和时间', trigger: ['change', 'blur'] }]
       }
     }
   },
@@ -157,7 +211,14 @@ export default {
     },
 
     handleEdit (record) {
-      console.log('edit', record)
+      this.curRecord = { ...record }
+      this.editModalVisible = true
+    },
+
+    handleEditOk () {
+      this.editModalVisible = false
+      const param = { ...this.curRecord }
+      this.$emit('reqEdit', param)
     },
 
     // 删除请求

@@ -69,6 +69,10 @@
               <a-form-model-item>
                 <a-button type="primary" @click="handleQueryHisEvent">查询</a-button>
               </a-form-model-item>
+
+              <a-form-model-item>
+                <a-button @click="handleQueryHisEvent">导出</a-button>
+              </a-form-model-item>
             </a-form-model>
 
             <div>
@@ -79,6 +83,7 @@
                 :current.sync="eventLogListPageIndex"
                 :total="totalEventLog"
                 @reqData="onReqEventLog"
+                @reqEdit="onReqEditEventLog"
                 @reqDelete="onReqDelEventLog"
               >
               </GeneratorEventList>
@@ -89,6 +94,7 @@
     </div>
 
     <a-card :title="currentYear + '年'" :loading="barLoading" :bordered="false" :body-style="{marginBottom: '8px'}">
+      <a-button slot="extra" type="link" @click="queryThisYearStatistic">刷新</a-button>
       <div class="current-year-card">
         <div class="current-year-card-content">
           <a-row :gutter="8">
@@ -195,6 +201,9 @@ export default {
       pageSize: 5,
       eventLogData: [],
       totalEventLog: 0,
+
+      editEventModalVisible: false,
+      editEventRecord: {},
 
       // 统计Bar显示区
       barLoading: false,
@@ -381,6 +390,19 @@ export default {
           })
     },
 
+    onReqEditEventLog (param) {
+      param.creator = this.userInfo.username
+      saveGeneratorEvent(param)
+        .then(() => {
+            this.handleQueryHisEvent()
+            this.queryThisYearStatistic()
+          })
+          //  网络异常，清空页面数据显示，防止错误的操作
+          .catch((err) => {
+            if (err.response) { }
+          })
+    },
+
     // bar 统计显示区
     queryThisYearStatistic () {
       const query2 = {
@@ -427,24 +449,7 @@ export default {
     // 历史统计 显示区
     handleQueryHisStatistic () {
       console.log('QueryHisStatistic')
-      const query2 = {
-        year: this.currentYear,
-        station_id: this.userInfo.belongToDeptId
-      }
-      this.barLoading = true
-      getGeneratorEventStatistic(query2)
-        .then(res => {
-          this.filterBarStatisticData(res.data)
-          this.barLoading = false
-        })
-        .catch((err) => {
-          this.barLoading = false
-          this.barStatisticRunNumber.splice(0, this.barStatisticRunNumber.length)
-          this.barStatisticRunTotalTime.splice(0, this.barStatisticRunTotalTime.length)
-          this.barStatisticLatestTime.splice(0, this.barStatisticLatestTime.length)
-          if (err.response) {
-          }
-        })
+      this.$message.warning('暂不支持该功能')
     }
   }
 }

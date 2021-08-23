@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-08-18 20:20:24
+ * @LastEditTime: 2021-08-23 19:48:15
  */
 
 namespace App\Models\Generator;
@@ -77,7 +77,7 @@ class GenEventLogModel extends Model
         return $this->save($event);
     }
 
-    public function getLastEventLogByStationGen($station_id = 0, $generator_id = 0)
+    public function getLastEventLogByStationGen($station_id = 0, $generator_id = 0, $limit = 1)
     {
         if (!is_numeric($station_id) || !is_numeric($generator_id)) {
             return [];
@@ -90,10 +90,14 @@ class GenEventLogModel extends Model
         $builder->where('generator_id', $generator_id);
 
         $res = $builder->orderBy('event_at', 'DESC')
-            ->limit(1)
+            ->limit($limit)
             ->findAll();
 
-        return isset($res[0]) ? $res[0] : [];
+        if ($limit === 1) {
+            return isset($res[0]) ? $res[0] : [];
+        } else {
+            return $res;
+        }
     }
 
     public function delEventLogById($id)
