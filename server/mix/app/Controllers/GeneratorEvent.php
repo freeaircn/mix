@@ -4,13 +4,15 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-08-23 20:14:20
+ * @LastEditTime: 2021-08-24 10:14:11
  */
 
 namespace App\Controllers;
 
 use App\Models\Generator\GenEventLogModel;
 use CodeIgniter\API\ResponseTrait;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class GeneratorEvent extends BaseController
 {
@@ -241,6 +243,43 @@ class GeneratorEvent extends BaseController
             $res['code'] = EXIT_ERROR;
             $res['msg']  = '删除失败，稍后再试';
         }
+
+        return $this->respond($res);
+    }
+
+    // 导出excel文件
+    public function getExportGeneratorEvent()
+    {
+        $param = $this->request->getGet();
+
+        // 检查输入
+        if (!$this->validate('GeneratorEventExport')) {
+            $res['error'] = $this->validator->getErrors();
+
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '请求数据无效';
+            return $this->respond($res);
+        }
+
+        // 与session比对
+        $stationID = $this->session->get('belongToDeptId');
+        if ($param['station_id'] != $stationID) {
+            $res['error'] = 'invalid station_id';
+            $res['code']  = EXIT_ERROR;
+            $res['msg']   = '请求数据无效';
+            return $this->respond($res);
+        }
+
+        //
+        $spreadsheet = new Spreadsheet();
+        $sheet       = $spreadsheet->getActiveSheet();
+        $sheet->setCellValue('A1', 'Hello World !');
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save('hello world.xlsx');
+
+        $res['code'] = EXIT_SUCCESS;
+        $res['data'] = ['data' => $param];
 
         return $this->respond($res);
     }

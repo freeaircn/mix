@@ -3,13 +3,14 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-08-18 21:16:09
+ * @LastEditTime: 2021-08-24 10:04:02
  */
 import request from '@/utils/request'
 
 const api = {
   generator_event: '/generator/event',
-  generator_event_statistic: '/generator/event/statistic'
+  generator_event_statistic: '/generator/event/statistic',
+  generator_event_export: '/generator/event/export'
 }
 
 // 机组事件
@@ -42,5 +43,13 @@ export function delGeneratorEvent (params) {
     url: api.generator_event,
     method: 'delete',
     data: params
+  })
+}
+
+export function getExportGeneratorEvent (params) {
+  return request({
+    url: api.generator_event_export,
+    method: 'get',
+    params: params
   })
 }

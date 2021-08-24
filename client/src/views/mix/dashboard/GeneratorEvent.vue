@@ -71,7 +71,7 @@
               </a-form-model-item>
 
               <a-form-model-item>
-                <a-button @click="handleQueryHisEvent">导出</a-button>
+                <a-button @click="handleExportHisEvent">导出</a-button>
               </a-form-model-item>
             </a-form-model>
 
@@ -151,7 +151,7 @@ import moment from 'moment'
 import { ChartCard2, MiniHorizontalBar } from '@/components'
 import { GeneratorEventList } from './components'
 import { mapGetters } from 'vuex'
-import { getGeneratorEvent, saveGeneratorEvent, getGeneratorEventStatistic, delGeneratorEvent } from '@/api/service'
+import { getGeneratorEvent, saveGeneratorEvent, getGeneratorEventStatistic, delGeneratorEvent, getExportGeneratorEvent } from '@/api/service'
 import { baseMixin } from '@/store/app-mixin'
 
 const availableYearRange = []
@@ -336,6 +336,37 @@ export default {
         .catch((err) => {
           this.listLoading = false
           this.eventLogData.splice(0, this.eventLogData.length)
+          if (err.response) {
+          }
+        })
+    },
+
+    // 请求导出excel文件
+    handleExportHisEvent () {
+      // 检查输入日期
+      const format = 'YYYY-MM-DD'
+      const start = this.hisEvent.startAt ? this.hisEvent.startAt : moment().format('YYYY') + '-01-01'
+      const end = this.hisEvent.endAt ? this.hisEvent.endAt : moment().format(format)
+      const diffDays = moment(moment(end, format)).diff(moment(moment(start, format)), 'days')
+      if (diffDays < 0 || diffDays > 366) {
+        this.$notification.warning({
+          message: '错误',
+          description: '检查起始、结束时间（365天以内）'
+        })
+        return
+      }
+
+      const query = {
+        station_id: this.userInfo.belongToDeptId,
+        start: start,
+        end: end
+      }
+
+      getExportGeneratorEvent(query)
+        .then(res => {
+
+        })
+        .catch((err) => {
           if (err.response) {
           }
         })

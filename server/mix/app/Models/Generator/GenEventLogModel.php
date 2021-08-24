@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-08-23 19:48:15
+ * @LastEditTime: 2021-08-24 10:12:29
  */
 
 namespace App\Models\Generator;
