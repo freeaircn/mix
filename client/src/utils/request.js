@@ -78,6 +78,9 @@ request.defaults.paramsSerializer = function (params) {
 request.interceptors.response.use(
   // Any status code that lie within the range of 2xx cause this function to trigger
   response => {
+    if (response.data instanceof Blob) {
+      return Promise.resolve(response)
+    }
     console.log('--- server response ---', response.data)
     const res = response.data
     if (res.code === 0) {

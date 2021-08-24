@@ -341,7 +341,7 @@ export default {
         })
     },
 
-    // 请求导出excel文件
+    // 导出excel文件
     handleExportHisEvent () {
       // 检查输入日期
       const format = 'YYYY-MM-DD'
@@ -364,7 +364,22 @@ export default {
 
       getExportGeneratorEvent(query)
         .then(res => {
+          const { data, headers } = res
 
+          // 下载excel文件
+          const blob = new Blob([data], { type: headers['content-type'] })
+          const dom = document.createElement('a')
+          const url = window.URL.createObjectURL(blob)
+          const filename = this.userInfo.belongToDeptName + '_开停机记录_' + moment().format('YYYY-MM-DD') + '.xlsx'
+          dom.href = url
+          dom.download = decodeURI(filename)
+          dom.style.display = 'none'
+          document.body.appendChild(dom)
+          dom.click()
+          dom.parentNode.removeChild(dom)
+          window.URL.revokeObjectURL(url)
+
+          this.$message.info('已导出文件')
         })
         .catch((err) => {
           if (err.response) {

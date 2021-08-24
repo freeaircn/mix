@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-08-24 10:04:02
+ * @LastEditTime: 2021-08-24 11:29:46
  */
 import request from '@/utils/request'
 
@@ -50,6 +50,7 @@ export function getExportGeneratorEvent (params) {
   return request({
     url: api.generator_event_export,
     method: 'get',
+    responseType: 'blob',
     params: params
   })
 }

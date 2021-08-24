@@ -2,6 +2,7 @@
 
 namespace Config;
 
+use App\Libraries\MixUtils;
 use CodeIgniter\Config\BaseService;
 
 /**
@@ -19,13 +20,35 @@ use CodeIgniter\Config\BaseService;
  */
 class Services extends BaseService
 {
-	// public static function example($getShared = true)
-	// {
-	//     if ($getShared)
-	//     {
-	//         return static::getSharedInstance('example');
-	//     }
-	//
-	//     return new \CodeIgniter\Example();
-	// }
+    // public static function example($getShared = true)
+    // {
+    //     if ($getShared)
+    //     {
+    //         return static::getSharedInstance('example');
+    //     }
+    //
+    //     return new \CodeIgniter\Example();
+    // }
+
+    // public static function mixUtils($getShared = true)
+    // {
+    //     if ($getShared) {
+    //         return static::getSharedInstance('mixUtils');
+    //     }
+
+    //     return new MixUtils();
+    // }
+
+    public static function mixUtils($config = null, bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('mixUtils', $config);
+        }
+
+        if (empty($config) || !(is_array($config) || $config instanceof MixUtils)) {
+            $config = config('MixUtils');
+        }
+
+        return new MixUtils($config);
+    }
 }
