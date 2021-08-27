@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-08-24 17:42:07
+ * @LastEditTime: 2021-08-25 15:33:20
  */
 
 namespace App\Controllers;
@@ -322,7 +322,7 @@ class GeneratorEvent extends BaseController
                 $style['font']['bold'] = false;
                 $sheet->getStyle('A2:F' . $row)->applyFromArray($style);
             } else {
-                break;
+                continue;
             }
         }
         $spreadsheet->setActiveSheetIndex(0);
