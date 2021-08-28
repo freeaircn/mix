@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-08-24 10:12:57
+ * @LastEditTime: 2021-08-28 20:33:11
  */
 
 namespace Config;
@@ -107,6 +107,12 @@ class Validation
         'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
         'start'      => 'required|valid_date[Y-m-d]',
         'end'        => 'required|valid_date[Y-m-d]',
+    ];
+
+    public $MeterLogsNew = [
+        'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
+        'log_at'     => 'required|valid_date[Y-m-d]',
+        'creator'    => 'required|regex_match[/^([\x{4e00}-\x{9fa5}]{1,6})$/u]',
     ];
 
     /**

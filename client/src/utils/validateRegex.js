@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2019-12-24 09:56:03
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-20 23:55:50
+ * @LastEditTime: 2021-08-28 18:36:26
  */
 
 // 正则表达式
@@ -50,4 +50,9 @@ export const lowerLetterUnderline = {
 export const lowerLetterNumUnderline = {
   regex: /^[a-z_0-9]{0,60}$/,
   msg: '请输入小写字母，数字或下划线，不超过60个字'
+}
+
+export const positiveFloatNumber = {
+  regex: /^([1-9]([0-9]){0,}([.]([0-9]){0,}[1-9]+)?)?([0]([.]([0-9]){0,}[1-9]+)?)?$/,
+  msg: '请输入数字，例如0，12，12.3，0.123'
 }

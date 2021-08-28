@@ -152,15 +152,17 @@ export default {
           return { name: alias, value: item.kWh }
         },
         customItems: (originalItems) => {
-          const rate = Object.assign({}, originalItems[1])
-          rate.name = '完成率'
-          if (originalItems[0].data.type === 'plan') {
-            rate.value = (originalItems[1].data.kWh / originalItems[0].data.kWh * 100).toPrecision(4) + '%'
-          } else {
-            rate.value = (originalItems[0].data.kWh / originalItems[1].data.kWh * 100).toPrecision(4) + '%'
+          if (originalItems.length === 2) {
+            const rate = Object.assign({}, originalItems[1])
+            rate.name = '完成率'
+            if (originalItems[0].data.type === 'plan') {
+              rate.value = (originalItems[1].data.kWh / originalItems[0].data.kWh * 100).toPrecision(4) + '%'
+            } else {
+              rate.value = (originalItems[0].data.kWh / originalItems[1].data.kWh * 100).toPrecision(4) + '%'
+            }
+            originalItems.push(rate)
           }
 
-          originalItems.push(rate)
           return originalItems
         }
       }
@@ -211,14 +213,16 @@ export default {
           return { name: alias, value: item.kWh }
         },
         customItems: (originalItems) => {
-          const rate = Object.assign({}, originalItems[1])
-          rate.name = '完成率'
-          if (originalItems[0].data.type === 'plan') {
-            rate.value = (originalItems[1].data.kWh / originalItems[0].data.kWh * 100).toPrecision(4) + '%'
-          } else {
-            rate.value = (originalItems[0].data.kWh / originalItems[1].data.kWh * 100).toPrecision(4) + '%'
+          if (originalItems.length === 2) {
+            const rate = Object.assign({}, originalItems[1])
+            rate.name = '完成率'
+            if (originalItems[0].data.type === 'plan') {
+              rate.value = (originalItems[1].data.kWh / originalItems[0].data.kWh * 100).toPrecision(4) + '%'
+            } else {
+              rate.value = (originalItems[0].data.kWh / originalItems[1].data.kWh * 100).toPrecision(4) + '%'
+            }
+            originalItems.push(rate)
           }
-          originalItems.push(rate)
           return originalItems
         }
       }

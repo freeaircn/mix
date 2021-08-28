@@ -14,8 +14,6 @@
               :rules="rules"
               :label-col="labelCol"
               :wrapper-col="wrapperCol"
-              @submit="handleNewEvent"
-              @submit.native.prevent
             >
               <a-form-model-item :wrapper-col="{ lg: { span: 14, offset: 4 }, sm: { span: 14 } }">
                 <div style="font-size: 16px; font-weight:bold">{{ logMeterSteps[logMeterStepIndex].title }}</div>
@@ -24,145 +22,32 @@
                 <a-date-picker v-model="metersForm.log_at" valueFormat="YYYY-MM-DD" placeholder="请选择" />
               </a-form-model-item>
 
-              <a-form-model-item v-show="logMeterStepIndex == 0" label="正向有功" prop="FAK">
-                <a-input v-model="metersForm.lineMainFAK" placeholder="线路主表" />
-              </a-form-model-item>
-              <a-form-model-item v-show="logMeterStepIndex == 0" label="反向有功" prop="BAK">
-                <a-input v-model="metersForm.lineMainBAK" placeholder="线路主表" />
-              </a-form-model-item>
-              <a-form-model-item v-show="logMeterStepIndex == 0" label="正向无功" prop="FRK">
-                <a-input v-model="metersForm.lineMainFRK" placeholder="线路主表" />
-              </a-form-model-item>
-              <a-form-model-item v-show="logMeterStepIndex == 0" label="反向无功" prop="BRK">
-                <a-input v-model="metersForm.lineMainBRK" placeholder="线路主表" />
-              </a-form-model-item>
+              <div v-for="(item, i) in metersForm.meter" :key="item.prop+'_'+i" v-show="logMeterStepIndex == i" >
+                <a-form-model-item label="正向有功">
+                  <a-input-number v-model="metersForm.meter[i].fak" :min="0" :style="{width: '100%'}" />
+                </a-form-model-item>
+                <a-form-model-item label="反向有功" v-show="i < 2 || i > 4">
+                  <a-input-number v-model="metersForm.meter[i].bak" :min="0" :style="{width: '100%'}" />
+                </a-form-model-item>
+                <a-form-model-item label="正向无功">
+                  <a-input-number v-model="metersForm.meter[i].frk" :min="0" :style="{width: '100%'}" />
+                </a-form-model-item>
+                <a-form-model-item label="反向无功">
+                  <a-input-number v-model="metersForm.meter[i].brk" :min="0" :style="{width: '100%'}" />
+                </a-form-model-item>
 
-              <a-form-model-item v-show="logMeterStepIndex == 1" label="正向有功" prop="FAK">
-                <a-input v-model="metersForm.lineSubFAK" placeholder="线路副表" />
-              </a-form-model-item>
-              <a-form-model-item v-show="logMeterStepIndex == 1" label="反向有功" prop="BAK">
-                <a-input v-model="metersForm.lineSubBAK" placeholder="线路副表" />
-              </a-form-model-item>
-              <a-form-model-item v-show="logMeterStepIndex == 1" label="正向无功" prop="FRK">
-                <a-input v-model="metersForm.lineSubFRK" placeholder="线路副表" />
-              </a-form-model-item>
-              <a-form-model-item v-show="logMeterStepIndex == 1" label="反向无功" prop="BRK">
-                <a-input v-model="metersForm.lineSubBRK" placeholder="线路副表" />
-              </a-form-model-item>
-
-              <a-form-model-item v-show="logMeterStepIndex == 2" label="正向有功" prop="FAK">
-                <a-input v-model="metersForm.firstGenFAK" placeholder="1G" />
-              </a-form-model-item>
-              <!-- <a-form-model-item v-show="logMeterStepIndex == 2" label="反向有功" prop="BAK">
-                    <a-input v-model="metersForm.firstGenBAK" placeholder="1G" />
-                  </a-form-model-item> -->
-              <a-form-model-item v-show="logMeterStepIndex == 2" label="正向无功" prop="FRK">
-                <a-input v-model="metersForm.firstGenFRK" placeholder="1G" />
-              </a-form-model-item>
-              <a-form-model-item v-show="logMeterStepIndex == 2" label="反向无功" prop="BRK">
-                <a-input v-model="metersForm.firstGenBRK" placeholder="1G" />
-              </a-form-model-item>
-              <a-form-model-item v-show="logMeterStepIndex == 2" label="高峰" prop="Peak">
-                <a-input v-model="metersForm.firstGenPeak" placeholder="1G" />
-              </a-form-model-item>
-              <a-form-model-item v-show="logMeterStepIndex == 2" label="低谷" prop="Valley">
-                <a-input v-model="metersForm.firstGenValley" placeholder="1G" />
-              </a-form-model-item>
-
-              <a-form-model-item v-show="logMeterStepIndex == 3" label="正向有功" prop="FAK">
-                <a-input v-model="metersForm.secondGenFAK" placeholder="2G" />
-              </a-form-model-item>
-              <!-- <a-form-model-item v-show="logMeterStepIndex == 3" label="反向有功" prop="BAK">
-                    <a-input v-model="metersForm.secondGenBAK" placeholder="2G" />
-                  </a-form-model-item> -->
-              <a-form-model-item v-show="logMeterStepIndex == 3" label="正向无功" prop="FRK">
-                <a-input v-model="metersForm.secondGenFRK" placeholder="2G" />
-              </a-form-model-item>
-              <a-form-model-item v-show="logMeterStepIndex == 3" label="反向无功" prop="BRK">
-                <a-input v-model="metersForm.secondGenBRK" placeholder="2G" />
-              </a-form-model-item>
-              <a-form-model-item v-show="logMeterStepIndex == 3" label="高峰" prop="Peak">
-                <a-input v-model="metersForm.secondGenPeak" placeholder="2G" />
-              </a-form-model-item>
-              <a-form-model-item v-show="logMeterStepIndex == 3" label="低谷" prop="Valley">
-                <a-input v-model="metersForm.secondGenValley" placeholder="2G" />
-              </a-form-model-item>
-
-              <a-form-model-item v-show="logMeterStepIndex == 4" label="正向有功" prop="FAK">
-                <a-input v-model="metersForm.thirdGenFAK" placeholder="3G" />
-              </a-form-model-item>
-              <!-- <a-form-model-item v-show="logMeterStepIndex == 4" label="反向有功" prop="BAK">
-                    <a-input v-model="metersForm.thirdGenBAK" placeholder="3G" />
-                  </a-form-model-item> -->
-              <a-form-model-item v-show="logMeterStepIndex == 4" label="正向无功" prop="FRK">
-                <a-input v-model="metersForm.thirdGenFRK" placeholder="3G" />
-              </a-form-model-item>
-              <a-form-model-item v-show="logMeterStepIndex == 4" label="反向无功" prop="BRK">
-                <a-input v-model="metersForm.thirdGenBRK" placeholder="3G" />
-              </a-form-model-item>
-              <a-form-model-item v-show="logMeterStepIndex == 4" label="高峰" prop="Peak">
-                <a-input v-model="metersForm.thirdGenPeak" placeholder="3G" />
-              </a-form-model-item>
-              <a-form-model-item v-show="logMeterStepIndex == 4" label="低谷" prop="Valley">
-                <a-input v-model="metersForm.thirdGenValley" placeholder="3G" />
-              </a-form-model-item>
-
-              <a-form-model-item v-show="logMeterStepIndex == 5" label="正向有功" prop="FAK">
-                <a-input v-model="metersForm.firstTransformerFAK" placeholder="1#厂变" />
-              </a-form-model-item>
-              <a-form-model-item v-show="logMeterStepIndex == 5" label="反向有功" prop="BAK">
-                <a-input v-model="metersForm.firstTransformerBAK" placeholder="1#厂变" />
-              </a-form-model-item>
-              <a-form-model-item v-show="logMeterStepIndex == 5" label="正向无功" prop="FRK">
-                <a-input v-model="metersForm.firstTransformerFRK" placeholder="1#厂变" />
-              </a-form-model-item>
-              <a-form-model-item v-show="logMeterStepIndex == 5" label="反向无功" prop="BRK">
-                <a-input v-model="metersForm.firstTransformerBRK" placeholder="1#厂变" />
-              </a-form-model-item>
-
-              <a-form-model-item v-show="logMeterStepIndex == 6" label="正向有功" prop="FAK">
-                <a-input v-model="metersForm.secondTransformerFAK" placeholder="2#厂变" />
-              </a-form-model-item>
-              <a-form-model-item v-show="logMeterStepIndex == 6" label="反向有功" prop="BAK">
-                <a-input v-model="metersForm.secondTransformerBAK" placeholder="2#厂变" />
-              </a-form-model-item>
-              <a-form-model-item v-show="logMeterStepIndex == 6" label="正向无功" prop="FRK">
-                <a-input v-model="metersForm.secondTransformerFRK" placeholder="2#厂变" />
-              </a-form-model-item>
-              <a-form-model-item v-show="logMeterStepIndex == 6" label="反向无功" prop="BRK">
-                <a-input v-model="metersForm.secondTransformerBRK" placeholder="2#厂变" />
-              </a-form-model-item>
-
-              <a-form-model-item v-show="logMeterStepIndex == 7" label="正向有功" prop="FAK">
-                <a-input v-model="metersForm.thirdTransformerFAK" placeholder="3#厂变" />
-              </a-form-model-item>
-              <a-form-model-item v-show="logMeterStepIndex == 7" label="反向有功" prop="BAK">
-                <a-input v-model="metersForm.thirdTransformerBAK" placeholder="3#厂变" />
-              </a-form-model-item>
-              <a-form-model-item v-show="logMeterStepIndex == 7" label="正向无功" prop="FRK">
-                <a-input v-model="metersForm.thirdTransformerFRK" placeholder="3#厂变" />
-              </a-form-model-item>
-              <a-form-model-item v-show="logMeterStepIndex == 7" label="反向无功" prop="BRK">
-                <a-input v-model="metersForm.thirdTransformerBRK" placeholder="3#厂变" />
-              </a-form-model-item>
-
-              <a-form-model-item v-show="logMeterStepIndex == 8" label="正向有功" prop="FAK">
-                <a-input v-model="metersForm.fourthTransformerFAK" placeholder="隔离变" />
-              </a-form-model-item>
-              <a-form-model-item v-show="logMeterStepIndex == 8" label="反向有功" prop="BAK">
-                <a-input v-model="metersForm.fourthTransformerBAK" placeholder="隔离变" />
-              </a-form-model-item>
-              <a-form-model-item v-show="logMeterStepIndex == 8" label="正向无功" prop="FRK">
-                <a-input v-model="metersForm.fourthTransformerFRK" placeholder="隔离变" />
-              </a-form-model-item>
-              <a-form-model-item v-show="logMeterStepIndex == 8" label="反向无功" prop="BRK">
-                <a-input v-model="metersForm.fourthTransformerBRK" placeholder="隔离变" />
-              </a-form-model-item>
+                <a-form-model-item label="高峰" v-show="i > 1 && i < 5">
+                  <a-input-number v-model="metersForm.meter[i].peak" :min="0" :style="{width: '100%'}" />
+                </a-form-model-item>
+                <a-form-model-item label="低谷" v-show="i > 1 && i < 5">
+                  <a-input-number v-model="metersForm.meter[i].valley" :min="0" :style="{width: '100%'}" />
+                </a-form-model-item>
+              </div>
 
               <a-form-model-item :wrapper-col="{ lg: { span: 14, offset: 4 }, sm: { span: 14 } }">
                 <div>
                   <a-button v-if="logMeterStepIndex < logMeterSteps.length - 1" type="primary" block @click="handleLogMeterStepNext">下一步</a-button>
-                  <a-button v-if="logMeterStepIndex == logMeterSteps.length - 1" type="primary" block @click="$message.success('Processing complete!')">提交</a-button>
+                  <a-button v-if="logMeterStepIndex == logMeterSteps.length - 1" type="primary" block @click="handleLogMeters">提交</a-button>
                 </div>
                 <div>
                   <a-button v-if="logMeterStepIndex > 0" style="margin-top: 8px" block @click="handleLogMeterStepPrev">上一步</a-button>
@@ -210,11 +95,10 @@
 
         <a-col :xl="8" :lg="24" :md="24" :sm="24" :xs="24">
           <a-card :bordered="false" :title="currentYear + '年计划'" :style="{height: '100%'}">
-            <!-- <a slot="extra" href="#">修改</a> -->
             <a-button type="primary">修改</a-button>
             <PlanKWhList
               :loading="listLoading"
-              :listData="planKWHList"
+              :listData="planKWhData"
               :current.sync="eventLogListPageIndex"
               @reqData="onReqEventLog"
               @reqEdit="onReqEditEventLog"
@@ -254,9 +138,10 @@
 
 <script>
 import moment from 'moment'
+// import * as pattern from '@/utils/validateRegex'
 import { MetersLogList, PlanKWhList, RealKWhChart } from './components/meter'
 import { mapGetters } from 'vuex'
-import { getGeneratorEvent, saveGeneratorEvent, getGeneratorEventStatistic, delGeneratorEvent, getExportGeneratorEvent } from '@/api/service'
+import { getGeneratorEvent, saveMeterLogs, getGeneratorEventStatistic, delGeneratorEvent, getExportGeneratorEvent } from '@/api/service'
 import { baseMixin } from '@/store/app-mixin'
 
 const availableYearRange = []
@@ -293,9 +178,10 @@ export default {
       ],
 
       metersForm: {
-        station_id: null,
-        log_at: ''
+        log_at: '',
+        meter: this.makeupMeterDataStructure()
       },
+
       labelCol: {
         lg: { span: 4 }, sm: { span: 4 }
       },
@@ -303,9 +189,7 @@ export default {
         lg: { span: 14 }, sm: { span: 14 }
       },
       rules: {
-        generator_id: [{ required: true, message: '请选择机组', trigger: 'change' }],
-        event: [{ required: true, message: '请选择事件名称', trigger: 'change' }],
-        event_at: [{ required: true, message: '请选择日期和时间', trigger: ['change', 'blur'] }]
+        log_at: [{ required: true, message: '请选择日期', trigger: ['change', 'blur'] }]
       },
 
       // 列表显示区
@@ -325,7 +209,7 @@ export default {
       editEventRecord: {},
 
       // 年计划显示区
-      planKWHList: [
+      planKWhData: [
         { id: 1, month: '1月', value: 1000 },
         { id: 2, month: '2月', value: 2000 },
         { id: 3, month: '3月', value: 3000 },
@@ -412,9 +296,12 @@ export default {
   },
   methods: {
 
-    // 录入事件 表单区域
-
+    // 录入表单区域
     handleLogMeterStepNext () {
+      if (this.hasNullInMeterData(this.metersForm.meter[this.logMeterStepIndex])) {
+        this.$message.warning('请输入数字，例如：0，12，12.3，0.123')
+        return true
+      }
       this.logMeterStepIndex++
     },
 
@@ -422,17 +309,21 @@ export default {
       this.logMeterStepIndex--
     },
 
-    handleNewEvent () {
-      this.$refs.eventForm.validate(valid => {
+    handleLogMeters () {
+      if (this.hasNullInMeterData(this.metersForm.meter[this.logMeterStepIndex])) {
+        this.$message.warning('请输入数字，例如：0，12，12.3，0.123')
+        return true
+      }
+      this.$refs.metersForm.validate(valid => {
         if (valid) {
-          const data = { ...this.objEvent }
+          const data = { ...this.metersForm }
           data.station_id = this.userInfo.belongToDeptId
           data.creator = this.userInfo.username
 
-          saveGeneratorEvent(data)
+          saveMeterLogs(data)
             .then(() => {
-              this.handleQueryHisEvent()
-              this.queryThisYearStatistic()
+              // this.handleQueryHisEvent()
+              // this.queryThisYearStatistic()
             })
             //  网络异常，清空页面数据显示，防止错误的操作
             .catch((err) => {
@@ -582,7 +473,7 @@ export default {
 
     onReqEditEventLog (param) {
       param.creator = this.userInfo.username
-      saveGeneratorEvent(param)
+      saveMeterLogs(param)
         .then(() => {
             this.handleQueryHisEvent()
             this.queryThisYearStatistic()
@@ -640,6 +531,30 @@ export default {
     handleQueryHisStatistic () {
       console.log('QueryHisStatistic')
       this.$message.warning('暂不支持该功能')
+    },
+
+    makeupMeterDataStructure () {
+      var data = new Array(9)
+      for (let i = 0; i < data.length; i++) {
+        data[i] = {
+          fak: '0',
+          bak: '0',
+          frk: '0',
+          brk: '0',
+          peak: '0',
+          valley: '0'
+        }
+      }
+      return data
+    },
+
+    hasNullInMeterData (data) {
+      for (const x in data) {
+        if (data[x] === null) {
+          return true
+        }
+      }
+      return false
     }
   }
 }
