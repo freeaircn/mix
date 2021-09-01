@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-08-28 10:43:58
+ * @LastEditTime: 2021-08-30 16:55:58
  */
 import request from '@/utils/request'
 
@@ -11,7 +11,8 @@ const api = {
   generator_event: '/generator/event',
   generator_event_statistic: '/generator/event/statistic',
   generator_event_export: '/generator/event/export',
-  meters: '/meters'
+  meters: '/meters',
+  meters_daily_report: '/meters/daily_report'
 }
 
 // 机组事件
@@ -62,5 +63,21 @@ export function saveMeterLogs (data) {
     url: api.meters,
     method: data.id && data.id > 0 ? 'put' : 'post',
     data: data
+  })
+}
+
+export function getMeterLogs (params) {
+  return request({
+    url: api.meters,
+    method: 'get',
+    params: params
+  })
+}
+
+export function getMetersDailyReport (params) {
+  return request({
+    url: api.meters_daily_report,
+    method: 'get',
+    params: params
   })
 }

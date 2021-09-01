@@ -202,6 +202,46 @@ class MixUtils
         return false;
     }
 
+    public function getPlusOffsetDay(string $date = '', $offset = 0)
+    {
+        return date("Y-m-d",strtotime($offset . " days", strtotime($date)));
+    }
+
+    public function getDayOfPreviousWeek(string $date = '')
+    {
+        return date('Y-m-d', strtotime($date . ' -1 week'));
+    }
+
+    public function getFirstDayOfMonth(string $date = '', $offset = 0)
+    {
+        return date("Y-m-d", strtotime("first day of" . $offset . " month", strtotime($date)));
+    }
+
+    public function getLastDayOfMonth(string $date = '', $offset = 0)
+    {
+        return date("Y-m-d", strtotime("last day of" . $offset . " month", strtotime($date)));
+    }
+
+    public function getFirstDayOfQuarter(string $date = '', $offset = 0)
+    {
+        $year    = date('Y', strtotime($date));
+        $quarter = ceil((date('n', strtotime($date))) / 3) + $offset;
+        return date('Y-m-d', mktime(0, 0, 0, $quarter * 3 - 3 + 1, 1, $year));
+    }
+
+    public function getLastDayOfQuarter(string $date = '', $offset = 0)
+    {
+        $year    = date('Y', strtotime($date));
+        $quarter = ceil((date('n', strtotime($date))) / 3) + $offset;
+        return date('Y-m-d', mktime(23, 59, 59, $quarter * 3, date('t', mktime(0, 0, 0, $quarter * 3, 1, $year)), $year));
+    }
+
+    public function getLastDayOfYear(string $date = '', $offset = 0)
+    {
+        $year = date('Y', strtotime($date)) + $offset;
+        return $year . '-12-31';
+    }
+
     /**
      * 根据id便利数据表，输出包括输入id的所有子节点id
      * @param int $id
@@ -236,52 +276,52 @@ class MixUtils
      * @param {str}
      * @return {*}
      */
-    public function resize_avatar_img($source_img, $new_image)
-    {
-        // if (empty($source_img) || empty($new_image)) {
-        //     return false;
-        // }
+    // public function resize_avatar_img($source_img, $new_image)
+    // {
+    //     // if (empty($source_img) || empty($new_image)) {
+    //     //     return false;
+    //     // }
 
-        // $config['image_library'] = 'gd2';
-        // $config['source_image']  = $source_img;
-        // $config['new_image']     = $new_image;
-        // // $config['create_thumb']   = true;
-        // $config['maintain_ratio'] = true;
-        // $config['width']          = 200;
-        // $config['height']         = 200;
+    //     // $config['image_library'] = 'gd2';
+    //     // $config['source_image']  = $source_img;
+    //     // $config['new_image']     = $new_image;
+    //     // // $config['create_thumb']   = true;
+    //     // $config['maintain_ratio'] = true;
+    //     // $config['width']          = 200;
+    //     // $config['height']         = 200;
 
-        // $this->load->library('image_lib', $config);
+    //     // $this->load->library('image_lib', $config);
 
-        // if (!$this->image_lib->resize()) {
-        //     // echo $this->image_lib->display_errors();
-        //     return false;
-        // } else {
-        //     return true;
-        // }
+    //     // if (!$this->image_lib->resize()) {
+    //     //     // echo $this->image_lib->display_errors();
+    //     //     return false;
+    //     // } else {
+    //     //     return true;
+    //     // }
 
-    }
+    // }
 
-    public function update_user_prop_in_session($data = [])
-    {
-        // if (empty($data)) {
-        //     return false;
-        // }
+    // public function update_user_prop_in_session($data = [])
+    // {
+    //     // if (empty($data)) {
+    //     //     return false;
+    //     // }
 
-        // // 1 读取当前session数据
-        // $current = $this->session->userdata();
-        // if (empty($current['acl'])) {
-        //     return false;
-        // }
+    //     // // 1 读取当前session数据
+    //     // $current = $this->session->userdata();
+    //     // if (empty($current['acl'])) {
+    //     //     return false;
+    //     // }
 
-        // // 2 查找并更改
-        // foreach ($data as $i => $i_value) {
-        //     foreach ($current as $j => $j_value) {
-        //         if ($i === $j) {
-        //             $this->session->set_userdata($i, $i_value);
-        //         }
-        //     }
-        // }
+    //     // // 2 查找并更改
+    //     // foreach ($data as $i => $i_value) {
+    //     //     foreach ($current as $j => $j_value) {
+    //     //         if ($i === $j) {
+    //     //             $this->session->set_userdata($i, $i_value);
+    //     //         }
+    //     //     }
+    //     // }
 
-        // return true;
-    }
+    //     // return true;
+    // }
 }

@@ -603,22 +603,23 @@ DROP TABLE IF EXISTS `app_meter`;
 CREATE TABLE IF NOT EXISTS `app_meter` (
   `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
   `station_id` tinyint(3) UNSIGNED DEFAULT NULL COMMENT '站点',
-  `log_at` datetime DEFAULT NULL,
+  `log_date` date DEFAULT NULL,
+  `log_time` time DEFAULT NULL,
   `meter_id` tinyint(3) UNSIGNED DEFAULT NULL COMMENT '表编号',
   
-  `fak` varchar(63) DEFAULT NULL COMMENT '正向有功',
-  `bak` varchar(63) DEFAULT NULL COMMENT '反向有功',
-  `frk` varchar(63) DEFAULT NULL COMMENT '正向无功',
-  `brk` varchar(63) DEFAULT NULL COMMENT '反向无功',
-  `peak` varchar(63) DEFAULT NULL COMMENT '高峰',
-  `valley` varchar(63) DEFAULT NULL COMMENT '低谷',
+  `fak` int(11) UNSIGNED DEFAULT 0 COMMENT '正向有功',
+  `bak` int(11) UNSIGNED DEFAULT 0 COMMENT '反向有功',
+  `frk` int(11) UNSIGNED DEFAULT 0 COMMENT '正向无功',
+  `brk` int(11) UNSIGNED DEFAULT 0 COMMENT '反向无功',
+  `peak` int(11) UNSIGNED DEFAULT 0 COMMENT '高峰',
+  `valley` int(11) UNSIGNED DEFAULT 0 COMMENT '低谷',
   
-  `fak_delta` varchar(63) DEFAULT NULL COMMENT '正向有功',
-  `bak_delta` varchar(63) DEFAULT NULL COMMENT '反向有功',
-  `frk_delta` varchar(63) DEFAULT NULL COMMENT '正向无功',
-  `brk_delta` varchar(63) DEFAULT NULL COMMENT '反向无功',
-  `peak_delta` varchar(63) DEFAULT NULL COMMENT '高峰',
-  `valley_delta` varchar(63) DEFAULT NULL COMMENT '低谷',
+  `fak_delta` int(11) UNSIGNED DEFAULT 0 COMMENT '正向有功',
+  `bak_delta` int(11) UNSIGNED DEFAULT 0 COMMENT '反向有功',
+  `frk_delta` int(11) UNSIGNED DEFAULT 0 COMMENT '正向无功',
+  `brk_delta` int(11) UNSIGNED DEFAULT 0 COMMENT '反向无功',
+  `peak_delta` int(11) UNSIGNED DEFAULT 0 COMMENT '高峰',
+  `valley_delta` int(11) UNSIGNED DEFAULT 0 COMMENT '低谷',
   
   `creator` varchar(7) DEFAULT NULL COMMENT '记录人',
   `created_at` datetime DEFAULT NULL,
@@ -626,6 +627,22 @@ CREATE TABLE IF NOT EXISTS `app_meter` (
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='电度表' ROW_FORMAT=COMPACT;
+
+DROP TABLE IF EXISTS `app_kwh_planning`;
+CREATE TABLE IF NOT EXISTS `app_kwh_planning` (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `station_id` tinyint(3) UNSIGNED DEFAULT NULL COMMENT '站点',
+  `year` smallint(4) UNSIGNED DEFAULT 0 COMMENT '年份',
+  `month` smallint(2) UNSIGNED DEFAULT 0 COMMENT '月份',
+  `planning` int(11) UNSIGNED DEFAULT 0 COMMENT '计划',
+  `deal` int(11) UNSIGNED DEFAULT 0 COMMENT '成交',
+  
+  `creator` varchar(7) DEFAULT NULL COMMENT '记录人',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='计划发电量' ROW_FORMAT=COMPACT;
 
 
 --

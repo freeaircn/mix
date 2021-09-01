@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-08-24 16:58:53
+ * @LastEditTime: 2021-08-29 21:20:12
  */
 
 namespace App\Models\Generator;
@@ -94,8 +94,7 @@ class GenEventLogModel extends Model
         $builder->where('generator_id', $generator_id);
 
         $res = $builder->orderBy('event_at', 'DESC')
-            ->limit($limit)
-            ->findAll();
+            ->findAll($limit);
 
         if ($limit === 1) {
             return isset($res[0]) ? $res[0] : [];
@@ -138,8 +137,7 @@ class GenEventLogModel extends Model
             $builder->where('station_id', $queryParam['station_id']);
             $builder->where('generator_id', $i);
             $arr3 = $builder->orderBy('event_at', 'DESC')
-                ->limit(1)
-                ->findAll();
+                ->findAll(1);
 
             $latest_time = '0';
             if (isset($arr3[0])) {

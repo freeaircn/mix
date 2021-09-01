@@ -68,8 +68,12 @@ const columns = [
     dataIndex: 'month'
   },
   {
-    title: '发电量(kWh)',
-    dataIndex: 'value'
+    title: '计划',
+    dataIndex: 'planning'
+  },
+  {
+    title: '成交',
+    dataIndex: 'deal'
   }
 ]
 
@@ -90,7 +94,7 @@ export default {
     },
     pageSize: {
       type: Number,
-      default: 5
+      default: 6
     },
     total: {
       type: Number,

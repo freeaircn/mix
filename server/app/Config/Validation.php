@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-08-28 20:33:11
+ * @LastEditTime: 2021-08-30 16:58:58
  */
 
 namespace Config;
@@ -111,8 +111,23 @@ class Validation
 
     public $MeterLogsNew = [
         'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
-        'log_at'     => 'required|valid_date[Y-m-d]',
+        'log_date'   => 'required|valid_date[Y-m-d]',
+        'log_time'   => 'required|regex_match[/^([0-1]\d|20|21|22|23):[0-5]\d:[0-5]\d$/]',
         'creator'    => 'required|regex_match[/^([\x{4e00}-\x{9fa5}]{1,6})$/u]',
+    ];
+
+    public $MeterLogsGet = [
+        'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
+        'date'       => 'required|valid_date[Y-m-d]',
+        'type'       => 'required|in_list[month]',
+        'limit'      => 'required|regex_match[^[1-9]\d{0,2}$]',
+        'offset'     => 'required|regex_match[^[1-9]\d{0,9}$]',
+    ];
+
+    public $MeterDailyReportGet = [
+        'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
+        'log_date'   => 'required|valid_date[Y-m-d]',
+        'log_time'   => 'required|regex_match[/^([0-1]\d|20|21|22|23):[0-5]\d:[0-5]\d$/]',
     ];
 
     /**

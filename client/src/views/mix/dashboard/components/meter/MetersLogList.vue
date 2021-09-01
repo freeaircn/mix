@@ -14,9 +14,7 @@
       </span>
       <span slot="action" slot-scope="text, record">
         <template>
-          <a @click="handleEdit(record)">简报</a>
-          <a-divider type="vertical" />
-          <a @click="handleEdit(record)">修改</a>
+          <a @click="onClickReport(record)">简报</a>
           <a-divider type="vertical" />
           <a @click="handleDel(record)">删除</a>
         </template>
@@ -73,8 +71,12 @@ const columns = [
     scopedSlots: { customRender: 'serial' }
   },
   {
+    title: '日期',
+    dataIndex: 'log_date'
+  },
+  {
     title: '时间',
-    dataIndex: 'log_at'
+    dataIndex: 'log_time'
   },
   {
     title: '记录人',
@@ -83,24 +85,9 @@ const columns = [
   {
     title: '操作',
     dataIndex: 'action',
-    width: '150px',
     scopedSlots: { customRender: 'action' }
   }
 ]
-
-const generatorIdMap = {
-  1: { text: '1G' },
-  2: { text: '2G' },
-  3: { text: '3G' },
-  4: { text: '4G' }
-}
-
-const eventMap = {
-  1: { text: '停机' },
-  2: { text: '开机' },
-  3: { text: '检修开始' },
-  4: { text: '检修结束' }
-}
 
 export default {
   name: 'MetersLogList',
@@ -119,7 +106,7 @@ export default {
     },
     pageSize: {
       type: Number,
-      default: 5
+      default: 6
     },
     total: {
       type: Number,
@@ -132,7 +119,7 @@ export default {
       // 事件列表显示区
       pagination: {
         current: 1,
-        pageSize: 5,
+        pageSize: 6,
         total: 0
       },
 
@@ -148,14 +135,6 @@ export default {
       rules: {
         event_at: [{ required: true, message: '请选择日期和时间', trigger: ['change', 'blur'] }]
       }
-    }
-  },
-  filters: {
-    generatorIdFilter (type) {
-      return generatorIdMap[type].text
-    },
-    eventFilter (type) {
-      return eventMap[type].text
     }
   },
   watch: {
@@ -179,7 +158,7 @@ export default {
     }
   },
   methods: {
-
+    // 分页切换
     handleTableChange (value) {
       this.pagination.current = value.current
 
@@ -189,7 +168,12 @@ export default {
         offset: this.pagination.current
       }
       this.$emit('update:current', value.current)
-      this.$emit('reqData', queryParam)
+      this.$emit('paginationChange', queryParam)
+    },
+
+    // 查看简报，消息码report
+    onClickReport (record) {
+      this.$emit('report', record)
     },
 
     handleEdit (record) {

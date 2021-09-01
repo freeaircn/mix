@@ -18,8 +18,19 @@
               <a-form-model-item :wrapper-col="{ lg: { span: 14, offset: 4 }, sm: { span: 14 } }">
                 <div style="font-size: 16px; font-weight:bold">{{ logMeterSteps[logMeterStepIndex].title }}</div>
               </a-form-model-item>
-              <a-form-model-item label="日期" prop="log_at">
-                <a-date-picker v-model="metersForm.log_at" valueFormat="YYYY-MM-DD" placeholder="请选择" />
+              <a-form-model-item label="日期" prop="log_date">
+                <a-date-picker v-model="metersForm.log_date" valueFormat="YYYY-MM-DD" placeholder="请选择" />
+              </a-form-model-item>
+
+              <a-form-model-item label="时间" prop="log_time">
+                <a-radio-group v-model="metersForm.log_time">
+                  <a-radio :value="'20:00:00'">
+                    20:00
+                  </a-radio>
+                  <a-radio :value="'23:59:00'">
+                    23:59
+                  </a-radio>
+                </a-radio-group>
               </a-form-model-item>
 
               <div v-for="(item, i) in metersForm.meter" :key="item.prop+'_'+i" v-show="logMeterStepIndex == i" >
@@ -59,17 +70,13 @@
 
         <a-col :xl="8" :lg="24" :md="24" :sm="24" :xs="24">
           <a-card class="antd-pro-pages-dashboard-analysis-salesCard" :loading="listLoading" :bordered="false" title="电表记录" :style="{ height: '100%' }">
-            <a-form-model ref="hisEventForm" layout="inline" :model="hisEvent" @submit.native.prevent>
+            <a-form-model ref="hisLogsForm" layout="inline" :model="hisLogsParam" @submit.native.prevent>
               <a-form-model-item>
-                <a-date-picker v-model="hisEvent.startAt" valueFormat="YYYY-MM-DD" placeholder="开始日期"/>
+                <a-month-picker v-model="hisLogsParam.date" valueFormat="YYYY-MM-DD" />
               </a-form-model-item>
 
               <a-form-model-item>
-                <a-date-picker v-model="hisEvent.endAt" valueFormat="YYYY-MM-DD" placeholder="结束日期"/>
-              </a-form-model-item>
-
-              <a-form-model-item>
-                <a-button type="primary" @click="handleQueryHisEvent">查询</a-button>
+                <a-button type="primary" @click="handleQueryHisLogs">查询</a-button>
               </a-form-model-item>
 
               <!-- <a-form-model-item>
@@ -81,10 +88,11 @@
               <!-- style="width: calc(100% - 240px);" -->
               <MetersLogList
                 :loading="listLoading"
-                :listData="eventLogData"
-                :current.sync="eventLogListPageIndex"
-                :total="totalEventLog"
-                @reqData="onReqEventLog"
+                :listData="listLogData"
+                :current.sync="logListPageIndex"
+                :total="totalLogs"
+                @paginationChange="onReqEventLog"
+                @report="onReqDailyReport"
                 @reqEdit="onReqEditEventLog"
                 @reqDelete="onReqDelEventLog"
               >
@@ -94,12 +102,12 @@
         </a-col>
 
         <a-col :xl="8" :lg="24" :md="24" :sm="24" :xs="24">
-          <a-card :bordered="false" :title="currentYear + '年计划'" :style="{height: '100%'}">
+          <a-card :bordered="false" :title="currentYear + '年 计划&成交电量'" :style="{height: '100%'}">
             <a-button type="primary">修改</a-button>
             <PlanKWhList
               :loading="listLoading"
               :listData="planKWhData"
-              :current.sync="eventLogListPageIndex"
+              :current.sync="logListPageIndex"
               @reqData="onReqEventLog"
               @reqEdit="onReqEditEventLog"
               @reqDelete="onReqDelEventLog"
@@ -138,10 +146,10 @@
 
 <script>
 import moment from 'moment'
-// import * as pattern from '@/utils/validateRegex'
+// import { deepMerge } from '@/utils/util'
 import { MetersLogList, PlanKWhList, RealKWhChart } from './components/meter'
 import { mapGetters } from 'vuex'
-import { getGeneratorEvent, saveMeterLogs, getGeneratorEventStatistic, delGeneratorEvent, getExportGeneratorEvent } from '@/api/service'
+import { getMeterLogs, saveMeterLogs, getMetersDailyReport, getGeneratorEventStatistic, delGeneratorEvent, getExportGeneratorEvent } from '@/api/service'
 import { baseMixin } from '@/store/app-mixin'
 
 const availableYearRange = []
@@ -178,7 +186,8 @@ export default {
       ],
 
       metersForm: {
-        log_at: '',
+        log_date: '',
+        log_time: '',
         meter: this.makeupMeterDataStructure()
       },
 
@@ -189,10 +198,15 @@ export default {
         lg: { span: 14 }, sm: { span: 14 }
       },
       rules: {
-        log_at: [{ required: true, message: '请选择日期', trigger: ['change', 'blur'] }]
+        log_date: [{ required: true, message: '请选择日期', trigger: ['change'] }],
+        log_time: [{ required: true, message: '请选择时间', trigger: ['change'] }]
       },
 
       // 列表显示区
+      hisLogsParam: {
+        date: ''
+      },
+
       hisEvent: {
         startAt: '',
         endAt: ''
@@ -200,28 +214,28 @@ export default {
       },
 
       listLoading: false,
-      eventLogListPageIndex: 1,
-      pageSize: 5,
-      eventLogData: [],
-      totalEventLog: 0,
+      logListPageIndex: 1,
+      pageSize: 6,
+      listLogData: [],
+      totalLogs: 0,
 
       editEventModalVisible: false,
       editEventRecord: {},
 
       // 年计划显示区
       planKWhData: [
-        { id: 1, month: '1月', value: 1000 },
-        { id: 2, month: '2月', value: 2000 },
-        { id: 3, month: '3月', value: 3000 },
-        { id: 4, month: '4月', value: 4000 },
-        { id: 5, month: '5月', value: 5000 },
-        { id: 6, month: '6月', value: 6000 },
-        { id: 7, month: '7月', value: 7000 },
-        { id: 8, month: '8月', value: 8000 },
-        { id: 9, month: '9月', value: 9000 },
-        { id: 10, month: '10月', value: 10000 },
-        { id: 11, month: '11月', value: 11000 },
-        { id: 12, month: '12月', value: 12000 }
+        { id: 1, month: '1月', planning: 1000, deal: 1000 },
+        { id: 2, month: '2月', planning: 2000, deal: 1000 },
+        { id: 3, month: '3月', planning: 3000, deal: 1000 },
+        { id: 4, month: '4月', planning: 4000, deal: 1000 },
+        { id: 5, month: '5月', planning: 5000, deal: 1000 },
+        { id: 6, month: '6月', planning: 6000, deal: 1000 },
+        { id: 7, month: '7月', planning: 7000, deal: 1000 },
+        { id: 8, month: '8月', planning: 8000, deal: 1000 },
+        { id: 9, month: '9月', planning: 9000, deal: 1000 },
+        { id: 10, month: '10月', planning: 10000, deal: 1000 },
+        { id: 11, month: '11月', planning: 11000, deal: 1000 },
+        { id: 12, month: '12月', planning: 12000, deal: 1000 }
       ],
 
       // 统计Bar显示区
@@ -242,55 +256,16 @@ export default {
     ])
   },
   created () {
+    this.hisLogsParam.date = moment().format('YYYY-MM-DD')
+    //
     setTimeout(() => {
       this.loading = !this.loading
     }, 1000)
 
-    // 事件 列表显示区
-    const start = '2011-01-01'
-    const end = moment().format('YYYY-MM-DD')
-    const query = {
-      station_id: this.userInfo.belongToDeptId,
-      generator_id: 9,
-      start: start,
-      end: end,
-      limit: this.pageSize,
-      offset: 1
-    }
-    this.listLoading = true
-    getGeneratorEvent(query)
-      .then(res => {
-        this.listLoading = false
-        //
-        this.totalEventLog = res.total
-        this.eventLogData = res.data
-      })
-      .catch((err) => {
-        this.listLoading = false
-        this.eventLogData.splice(0, this.eventLogData.length)
-        if (err.response) {
-        }
-      })
+    // log列表显示区
+    this.handleQueryHisLogs()
 
-    // 统计 Bar显示区
-    const query2 = {
-      year: this.currentYear,
-      station_id: this.userInfo.belongToDeptId
-    }
-    this.barLoading = true
-    getGeneratorEventStatistic(query2)
-      .then(res => {
-        this.filterBarStatisticData(res.data)
-        this.barLoading = false
-      })
-      .catch((err) => {
-        this.barLoading = false
-        this.barStatisticRunNumber.splice(0, this.barStatisticRunNumber.length)
-        this.barStatisticRunTotalTime.splice(0, this.barStatisticRunTotalTime.length)
-        this.barStatisticLatestTime.splice(0, this.barStatisticLatestTime.length)
-        if (err.response) {
-        }
-      })
+    // 图标显示区
 
     // 历史统计显示区
   },
@@ -317,12 +292,14 @@ export default {
       this.$refs.metersForm.validate(valid => {
         if (valid) {
           const data = { ...this.metersForm }
+          const meter = JSON.parse(JSON.stringify(this.metersForm.meter))
+          data.meter = this.floorMeterValue(meter)
           data.station_id = this.userInfo.belongToDeptId
           data.creator = this.userInfo.username
 
           saveMeterLogs(data)
             .then(() => {
-              // this.handleQueryHisEvent()
+              // this.handleQueryHisLogs()
               // this.queryThisYearStatistic()
             })
             //  网络异常，清空页面数据显示，防止错误的操作
@@ -336,41 +313,47 @@ export default {
     },
 
     // 事件列表显示区
-    handleQueryHisEvent () {
-      // 检查输入日期
-      const format = 'YYYY-MM-DD'
-      const start = this.hisEvent.startAt ? this.hisEvent.startAt : '2011-01-01'
-      const end = this.hisEvent.endAt ? this.hisEvent.endAt : moment().format(format)
-      const gid = this.hisEvent.generatorId ? this.hisEvent.generatorId : 9
-      if (moment(moment(end, format)).diff(moment(moment(start, format)), 'days') < 0) {
-        this.$notification.warning({
-          message: '错误',
-          description: '请检查起始时间和结束时间'
-        })
-        return
+    handleQueryHisLogs () {
+      if (this.hisLogsParam.date == null) {
+        this.hisLogsParam.date = moment().format('YYYY-MM-DD')
       }
-
       const query = {
         station_id: this.userInfo.belongToDeptId,
-        generator_id: gid,
-        start: start,
-        end: end,
+        date: this.hisLogsParam.date,
+        type: 'month',
         limit: this.pageSize,
         offset: 1
       }
-
-      this.eventLogListPageIndex = 1
+      this.logListPageIndex = 1
       this.listLoading = true
-      getGeneratorEvent(query)
+      getMeterLogs(query)
         .then(res => {
           this.listLoading = false
           //
-          this.totalEventLog = res.total
-          this.eventLogData = res.data
+          this.totalLogs = res.total
+          this.listLogData = res.data
         })
         .catch((err) => {
           this.listLoading = false
-          this.eventLogData.splice(0, this.eventLogData.length)
+          this.listLogData.splice(0, this.listLogData.length)
+          if (err.response) {
+          }
+        })
+    },
+
+    // 查看电量单日简报
+    onReqDailyReport (param) {
+      console.log('report', param)
+      const query = {
+        station_id: param.station_id,
+        log_date: param.log_date,
+        log_time: param.log_time
+      }
+      getMetersDailyReport(query)
+        .then(res => {
+
+        })
+        .catch((err) => {
           if (err.response) {
           }
         })
@@ -444,16 +427,16 @@ export default {
       query.end = end
 
       this.listLoading = true
-      getGeneratorEvent(query)
+      getMeterLogs(query)
         .then(res => {
           this.listLoading = false
           //
-          this.totalEventLog = res.total
-          this.eventLogData = res.data
+          this.totalLogs = res.total
+          this.listLogData = res.data
         })
         .catch((err) => {
           this.listLoading = false
-          this.eventLogData.splice(0, this.eventLogData.length)
+          this.listLogData.splice(0, this.listLogData.length)
           if (err.response) {
           }
         })
@@ -555,6 +538,19 @@ export default {
         }
       }
       return false
+    },
+
+    floorMeterValue (data) {
+      for (let i = 0; i < data.length; i++) {
+        for (const x in data[i]) {
+          if (i < 2) {
+            data[i][x] = Math.floor(data[i][x] * 10000)
+          } else {
+            data[i][x] = Math.floor(data[i][x] * 100)
+          }
+        }
+      }
+      return data
     }
   }
 }
