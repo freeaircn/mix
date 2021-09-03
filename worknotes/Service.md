@@ -160,6 +160,19 @@
     创建时间
     更新时间
     
+     // 检查输入日期
+      const format = 'YYYY-MM-DD'
+      const start = this.hisEvent.startAt ? this.hisEvent.startAt : '2011-01-01'
+      const end = this.hisEvent.endAt ? this.hisEvent.endAt : moment().format(format)
+      const gid = this.hisEvent.generatorId ? this.hisEvent.generatorId : 9
+      if (moment(moment(end, format)).diff(moment(moment(start, format)), 'days') < 0) {
+        this.$notification.warning({
+          message: '错误',
+          description: '请检查起始时间和结束时间'
+        })
+        return
+      }
+    
 5 数据单位和范围
   1 电表
     1 线路表：kwh，4位小数，变比1320000
@@ -306,10 +319,29 @@
     ('2', '2021', '11', '57000000', '0'),
     ('2', '2021', '12', '40000000', '0');
 
-  
+  7 统计
+    1 机组出口电表
+      日峰谷电量
+      日，周，月，季度，年 累计发电量
+      月计划完成率
+      季度计划完成率
+      年计划完成率
     
-  
-  
+    2 线路主表
+      日，周，月，年 累计上网电量 
+      月成交率完成率
+      
+      #####
+      
+              上网电量    发电量    完成计划
+      今日
+      七日
+      本月
+      本季度
+      全年
+    
+      日高峰
+      日低谷
     
 ```
 

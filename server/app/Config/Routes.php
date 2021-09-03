@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-08-30 16:57:24
+ * @LastEditTime: 2021-09-03 19:53:40
  */
 
 namespace Config;
@@ -102,7 +102,11 @@ $routes->group('api', function ($routes) {
     //
     $routes->post('meters', 'Meters::newMeterLogs');
     $routes->get('meters', 'Meters::getMeterLogs');
+    $routes->delete('meters', 'Meters::delMeterLogs');
     $routes->get('meters/daily_report', 'Meters::getDailyReport');
+    //
+    $routes->get('meters/planning_kWh', 'Meters::getPlanningKWh');
+    $routes->put('meters/planning_kWh', 'Meters::updatePlanningKWhRecord');
     //
     $routes->add('(:any)', '404');
 });

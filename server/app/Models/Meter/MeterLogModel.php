@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-01 21:20:27
+ * @LastEditTime: 2021-09-03 20:44:26
  */
 
 namespace App\Models\Meter;
@@ -54,6 +54,21 @@ class MeterLogModel extends Model
         $builder   = $this->select($selectSql);
 
         $builder->where($query);
+        $res = $builder->findAll();
+
+        return $res;
+    }
+
+    public function getById($id)
+    {
+        if (!is_numeric($id) || $id < 0) {
+            return false;
+        }
+
+        $selectSql = 'id, station_id, meter_id, log_date, log_time, fak, bak, frk, brk, peak, valley, fak_delta, bak_delta, frk_delta, brk_delta, peak_delta, valley_delta, creator';
+        $builder   = $this->select($selectSql);
+
+        $builder->where('id', $id);
         $res = $builder->findAll();
 
         return $res;
@@ -154,21 +169,36 @@ class MeterLogModel extends Model
         return isset($result[0]) ? $result[0] : [];
     }
 
-    public function saveEventLog(array $event)
+    public function getLastDateByStationTime($columnName = [], $query = [], $limit = 1)
     {
-        if (empty($event)) {
+        if (empty($columnName)) {
             return false;
         }
 
-        return $this->save($event);
+        $selectSql = '';
+        foreach ($columnName as $key) {
+            $selectSql = $selectSql . $key . ', ';
+        }
+        $builder = $this->select($selectSql);
+
+        $builder->where($query);
+
+        $res = $builder->orderBy('log_date', 'DESC')
+            ->findAll($limit);
+
+        if ($limit === 1) {
+            return isset($res[0]) ? $res[0] : [];
+        } else {
+            return $res;
+        }
     }
 
-    public function delEventLogById($id)
+    public function deleteByStationDateTime($query)
     {
-        if (!is_numeric($id)) {
+        if (empty($query)) {
             return false;
         }
 
-        return $this->delete($id);
+        return $this->where($query)->delete();
     }
 }

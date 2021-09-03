@@ -69,32 +69,19 @@
         </a-col>
 
         <a-col :xl="8" :lg="24" :md="24" :sm="24" :xs="24">
-          <a-card class="antd-pro-pages-dashboard-analysis-salesCard" :loading="listLoading" :bordered="false" title="电表记录" :style="{ height: '100%' }">
-            <a-form-model ref="hisLogsForm" layout="inline" :model="hisLogsParam" @submit.native.prevent>
-              <a-form-model-item>
-                <a-month-picker v-model="hisLogsParam.date" valueFormat="YYYY-MM-DD" />
-              </a-form-model-item>
-
-              <a-form-model-item>
-                <a-button type="primary" @click="handleQueryHisLogs">查询</a-button>
-              </a-form-model-item>
-
-              <!-- <a-form-model-item>
-                <a-button @click="handleExportHisEvent">导出</a-button>
-              </a-form-model-item> -->
-            </a-form-model>
-
+          <a-card class="antd-pro-pages-dashboard-analysis-salesCard" :bordered="false" title="电表记录" :style="{ height: '100%' }">
             <div>
               <!-- style="width: calc(100% - 240px);" -->
               <MetersLogList
-                :loading="listLoading"
-                :listData="listLogData"
+                :loading="logListLoading"
+                :date="logListDate"
+                :listData="logListData"
                 :current.sync="logListPageIndex"
                 :total="totalLogs"
-                @paginationChange="onReqEventLog"
+                @paginationChange="onLogListPageChange"
+                @query="onQueryMeterLog"
                 @report="onReqDailyReport"
-                @reqEdit="onReqEditEventLog"
-                @reqDelete="onReqDelEventLog"
+                @delete="onDeleteMeterLog"
               >
               </MetersLogList>
             </div>
@@ -102,29 +89,27 @@
         </a-col>
 
         <a-col :xl="8" :lg="24" :md="24" :sm="24" :xs="24">
-          <a-card :bordered="false" :title="currentYear + '年 计划&成交电量'" :style="{height: '100%'}">
-            <a-button type="primary">修改</a-button>
-            <PlanKWhList
-              :loading="listLoading"
-              :listData="planKWhData"
-              :current.sync="logListPageIndex"
-              @reqData="onReqEventLog"
-              @reqEdit="onReqEditEventLog"
-              @reqDelete="onReqDelEventLog"
+          <a-card :bordered="false" title="计划&成交电量" :style="{height: '100%'}">
+            <PlanningKWhList
+              :loading="planningKWhListLoading"
+              :date="planningKWhListDate"
+              :listData="planningKWhListData"
+              @query="onQueryPlanningKWh"
+              @update="onUpdatePlanningKWhRecord"
             >
-            </PlanKWhList>
+            </PlanningKWhList>
           </a-card>
         </a-col>
       </a-row>
     </div>
 
-    <RealKWhChart
-      :loading="false"
-      :year="'2021'"
+    <KWhStatistic
+      :loading="kWhStatisticLoading"
+      :date="kWhStatisticDate"
     >
-    </RealKWhChart>
+    </KWhStatistic>
 
-    <a-card :loading="loading" title="历史统计" :bordered="false" :body-style="{padding: '0', marginBottom: '8px'}">
+    <a-card :loading="false" title="历史统计" :bordered="false" :body-style="{padding: '0', marginBottom: '8px'}">
       <div style="padding: 8px">
         <a-select style="width: 100px" placeholder="起始" >
           <a-select-option v-for="d in availableYearRange" :key="d.value" :value="d.value" >
@@ -147,9 +132,9 @@
 <script>
 import moment from 'moment'
 // import { deepMerge } from '@/utils/util'
-import { MetersLogList, PlanKWhList, RealKWhChart } from './components/meter'
+import { MetersLogList, PlanningKWhList, KWhStatistic } from './components/meter'
 import { mapGetters } from 'vuex'
-import { getMeterLogs, saveMeterLogs, getMetersDailyReport, getGeneratorEventStatistic, delGeneratorEvent, getExportGeneratorEvent } from '@/api/service'
+import { getMeterLogs, saveMeterLogs, getMetersDailyReport, delMeterLogs, getPlanningKWh, updatePlanningKWhRecord } from '@/api/service'
 import { baseMixin } from '@/store/app-mixin'
 
 const availableYearRange = []
@@ -165,13 +150,13 @@ export default {
   mixins: [baseMixin],
   components: {
     MetersLogList,
-    PlanKWhList,
-    RealKWhChart
+    PlanningKWhList,
+    KWhStatistic
   },
   data () {
     return {
-      loading: true,
-      // 电表读数记录区
+
+      // 输入记录
       logMeterStepIndex: 0,
       logMeterSteps: [
         { title: '线路主表' },
@@ -184,13 +169,11 @@ export default {
         { title: '3#厂变' },
         { title: '隔离变' }
       ],
-
       metersForm: {
         log_date: '',
         log_time: '',
         meter: this.makeupMeterDataStructure()
       },
-
       labelCol: {
         lg: { span: 4 }, sm: { span: 4 }
       },
@@ -202,50 +185,25 @@ export default {
         log_time: [{ required: true, message: '请选择时间', trigger: ['change'] }]
       },
 
-      // 列表显示区
-      hisLogsParam: {
-        date: ''
-      },
-
-      hisEvent: {
-        startAt: '',
-        endAt: ''
-        // generatorId: null
-      },
-
-      listLoading: false,
+      // 记录显示
+      logListLoading: false,
       logListPageIndex: 1,
       pageSize: 6,
-      listLogData: [],
       totalLogs: 0,
+      logListDate: '',
+      logListData: [],
 
-      editEventModalVisible: false,
-      editEventRecord: {},
+      // 年计划显示
+      planningKWhListLoading: false,
+      planningKWhListDate: '',
+      // { id: 1, month: '1月', planning: 1000, deal: 1000 },
+      planningKWhListData: [],
 
-      // 年计划显示区
-      planKWhData: [
-        { id: 1, month: '1月', planning: 1000, deal: 1000 },
-        { id: 2, month: '2月', planning: 2000, deal: 1000 },
-        { id: 3, month: '3月', planning: 3000, deal: 1000 },
-        { id: 4, month: '4月', planning: 4000, deal: 1000 },
-        { id: 5, month: '5月', planning: 5000, deal: 1000 },
-        { id: 6, month: '6月', planning: 6000, deal: 1000 },
-        { id: 7, month: '7月', planning: 7000, deal: 1000 },
-        { id: 8, month: '8月', planning: 8000, deal: 1000 },
-        { id: 9, month: '9月', planning: 9000, deal: 1000 },
-        { id: 10, month: '10月', planning: 10000, deal: 1000 },
-        { id: 11, month: '11月', planning: 11000, deal: 1000 },
-        { id: 12, month: '12月', planning: 12000, deal: 1000 }
-      ],
+      // 统计显示
+      kWhStatisticLoading: false,
+      kWhStatisticDate: '',
 
-      // 统计Bar显示区
-      barLoading: false,
-      currentYear: moment().year(),
-      barStatisticRunNumber: [],
-      barStatisticRunTotalTime: [],
-      barStatisticLatestTime: [],
-
-      // 历史统计显示区
+      // 历史统计显示
       availableYearRange
 
     }
@@ -256,22 +214,18 @@ export default {
     ])
   },
   created () {
-    this.hisLogsParam.date = moment().format('YYYY-MM-DD')
-    //
-    setTimeout(() => {
-      this.loading = !this.loading
-    }, 1000)
-
-    // log列表显示区
-    this.handleQueryHisLogs()
-
-    // 图标显示区
-
-    // 历史统计显示区
+    // 初值
+    this.logListDate = moment().format('YYYY-MM-DD')
+    this.planningKWhListDate = moment().format('YYYY-MM-DD')
+  },
+  mounted () {
+    // 记录显示
+    this.onQueryMeterLog(this.logListDate)
+    this.onQueryPlanningKWh(this.planningKWhListDate)
   },
   methods: {
 
-    // 录入表单区域
+    // 录入表单
     handleLogMeterStepNext () {
       if (this.hasNullInMeterData(this.metersForm.meter[this.logMeterStepIndex])) {
         this.$message.warning('请输入数字，例如：0，12，12.3，0.123')
@@ -300,7 +254,6 @@ export default {
           saveMeterLogs(data)
             .then(() => {
               // this.handleQueryHisLogs()
-              // this.queryThisYearStatistic()
             })
             //  网络异常，清空页面数据显示，防止错误的操作
             .catch((err) => {
@@ -312,30 +265,50 @@ export default {
       })
     },
 
-    // 事件列表显示区
-    handleQueryHisLogs () {
-      if (this.hisLogsParam.date == null) {
-        this.hisLogsParam.date = moment().format('YYYY-MM-DD')
-      }
+    // 记录列表显示
+    onQueryMeterLog (date) {
       const query = {
         station_id: this.userInfo.belongToDeptId,
-        date: this.hisLogsParam.date,
+        date: date,
         type: 'month',
         limit: this.pageSize,
         offset: 1
       }
       this.logListPageIndex = 1
-      this.listLoading = true
+      this.logListLoading = true
       getMeterLogs(query)
         .then(res => {
-          this.listLoading = false
+          this.logListLoading = false
           //
+          this.logListDate = date
           this.totalLogs = res.total
-          this.listLogData = res.data
+          this.logListData = res.data
         })
         .catch((err) => {
-          this.listLoading = false
-          this.listLogData.splice(0, this.listLogData.length)
+          this.logListLoading = false
+          this.logListData.splice(0, this.logListData.length)
+          if (err.response) {
+          }
+        })
+    },
+
+    onLogListPageChange (param) {
+      const query = { ...param }
+      query.station_id = this.userInfo.belongToDeptId
+      query.date = this.logListDate
+      query.type = 'month'
+
+      this.logListLoading = true
+      getMeterLogs(query)
+        .then(res => {
+          this.logListLoading = false
+          //
+          this.totalLogs = res.total
+          this.logListData = res.data
+        })
+        .catch((err) => {
+          this.logListLoading = false
+          this.logListData.splice(0, this.logListData.length)
           if (err.response) {
           }
         })
@@ -359,161 +332,62 @@ export default {
         })
     },
 
-    // 导出excel文件
-    handleExportHisEvent () {
-      // 检查输入日期
-      const format = 'YYYY-MM-DD'
-      const start = this.hisEvent.startAt ? this.hisEvent.startAt : moment().format('YYYY') + '-01-01'
-      const end = this.hisEvent.endAt ? this.hisEvent.endAt : moment().format(format)
-      const diffDays = moment(moment(end, format)).diff(moment(moment(start, format)), 'days')
-      if (diffDays < 0 || diffDays > 366) {
-        this.$notification.warning({
-          message: '错误',
-          description: '检查起始、结束时间（365天以内）'
-        })
-        return
-      }
+    onDeleteMeterLog (param) {
+      console.log('delete', param)
+      delMeterLogs(param)
+        .then(() => {
+            this.onQueryMeterLog(this.logListDate)
+          })
+          //  网络异常，清空页面数据显示，防止错误的操作
+          .catch((err) => {
+            if (err.response) {
+              this.logListData.splice(0, this.logListData.length)
+            }
+          })
+    },
 
+    // 查询计划
+    onQueryPlanningKWh (date) {
       const query = {
         station_id: this.userInfo.belongToDeptId,
-        start: start,
-        end: end
+        date: date
       }
-
-      getExportGeneratorEvent(query)
+      this.planningKWhListLoading = true
+      getPlanningKWh(query)
         .then(res => {
-          const { data, headers } = res
-
-          // 下载excel文件
-          const blob = new Blob([data], { type: headers['content-type'] })
-          const dom = document.createElement('a')
-          const url = window.URL.createObjectURL(blob)
-          const filename = this.userInfo.belongToDeptName + '_开停机记录_' + moment().format('YYYY-MM-DD') + '.xlsx'
-          dom.href = url
-          dom.download = decodeURI(filename)
-          dom.style.display = 'none'
-          document.body.appendChild(dom)
-          dom.click()
-          dom.parentNode.removeChild(dom)
-          window.URL.revokeObjectURL(url)
-
-          this.$message.info('已导出文件')
-        })
-        .catch((err) => {
-          if (err.response) {
-          }
-        })
-    },
-
-    onReqEventLog (param) {
-      const query = { ...param }
-
-      // 检查输入日期
-      const format = 'YYYY-MM-DD'
-      const start = this.hisEvent.startAt ? this.hisEvent.startAt : '2011-01-01'
-      const end = this.hisEvent.endAt ? this.hisEvent.endAt : moment().format(format)
-      const gid = this.hisEvent.generatorId ? this.hisEvent.generatorId : 9
-      if (moment(moment(end, format)).diff(moment(moment(start, format)), 'days') < 0) {
-        this.$notification.warning({
-          message: '错误',
-          description: '请检查起始时间和结束时间'
-        })
-        return
-      }
-
-      query.station_id = this.userInfo.belongToDeptId
-      query.generator_id = gid
-      query.start = start
-      query.end = end
-
-      this.listLoading = true
-      getMeterLogs(query)
-        .then(res => {
-          this.listLoading = false
+          this.planningKWhListLoading = false
           //
-          this.totalLogs = res.total
-          this.listLogData = res.data
+          this.planningKWhListDate = date
+          this.planningKWhListData = this.transformPlanningKWhListData(res.data)
         })
         .catch((err) => {
-          this.listLoading = false
-          this.listLogData.splice(0, this.listLogData.length)
+          this.planningKWhListLoading = false
+          this.planningKWhListData.splice(0, this.planningKWhListData.length)
           if (err.response) {
           }
         })
     },
 
-    onReqDelEventLog (param) {
-      delGeneratorEvent(param)
+    // 修改计划
+    onUpdatePlanningKWhRecord (record) {
+      const data = { ...record }
+      data.station_id = this.userInfo.belongToDeptId
+      // 单位换算
+      data.planning = Math.floor(data.planning * 10000)
+      data.deal = Math.floor(data.deal * 10000)
+      updatePlanningKWhRecord(data)
         .then(() => {
-            this.handleQueryHisEvent()
-            this.queryThisYearStatistic()
-          })
-          //  网络异常，清空页面数据显示，防止错误的操作
-          .catch((err) => {
-            if (err.response) { }
-          })
-    },
-
-    onReqEditEventLog (param) {
-      param.creator = this.userInfo.username
-      saveMeterLogs(param)
-        .then(() => {
-            this.handleQueryHisEvent()
-            this.queryThisYearStatistic()
-          })
-          //  网络异常，清空页面数据显示，防止错误的操作
-          .catch((err) => {
-            if (err.response) { }
-          })
-    },
-
-    // bar 统计显示区
-    queryThisYearStatistic () {
-      const query2 = {
-        year: this.currentYear,
-        station_id: this.userInfo.belongToDeptId
-      }
-      this.barLoading = true
-      getGeneratorEventStatistic(query2)
-        .then(res => {
-          this.filterBarStatisticData(res.data)
-          this.barLoading = false
+          this.onQueryPlanningKWh(this.planningKWhListDate)
         })
         .catch((err) => {
-          this.barLoading = false
-          this.barStatisticRunNumber.splice(0, this.barStatisticRunNumber.length)
-          this.barStatisticRunTotalTime.splice(0, this.barStatisticRunTotalTime.length)
-          this.barStatisticLatestTime.splice(0, this.barStatisticLatestTime.length)
           if (err.response) {
           }
         })
-    },
-
-    filterBarStatisticData (data) {
-      this.barStatisticRunNumber.splice(0, this.barStatisticRunNumber.length)
-      this.barStatisticRunTotalTime.splice(0, this.barStatisticRunTotalTime.length)
-      this.barStatisticLatestTime.splice(0, this.barStatisticLatestTime.length)
-
-      data.forEach(element => {
-        const tempRunNumber = {
-          name: element.generator_id + 'G',
-          value: Number(element.run_num)
-        }
-        const tempRunTotalTime = {
-          name: element.generator_id + 'G',
-          value: element.run_total_time / 3600
-        }
-
-        this.barStatisticRunNumber.push(tempRunNumber)
-        this.barStatisticRunTotalTime.push(tempRunTotalTime)
-        this.barStatisticLatestTime.push(element.latest_time)
-      })
     },
 
     // 历史统计 显示区
     handleQueryHisStatistic () {
-      console.log('QueryHisStatistic')
-      this.$message.warning('暂不支持该功能')
+      this.$message.warning('暂不支持')
     },
 
     makeupMeterDataStructure () {
@@ -540,6 +414,7 @@ export default {
       return false
     },
 
+    // 单位换算
     floorMeterValue (data) {
       for (let i = 0; i < data.length; i++) {
         for (const x in data[i]) {
@@ -549,6 +424,16 @@ export default {
             data[i][x] = Math.floor(data[i][x] * 100)
           }
         }
+      }
+      return data
+    },
+
+    // 单位换算
+    transformPlanningKWhListData (data) {
+      for (let i = 0; i < data.length; i++) {
+        data[i].month = data[i].month + '月'
+        data[i].planning = data[i].planning / 10000
+        data[i].deal = data[i].deal / 10000
       }
       return data
     }

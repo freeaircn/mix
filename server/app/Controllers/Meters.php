@@ -4,13 +4,13 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-01 21:26:40
+ * @LastEditTime: 2021-09-03 20:44:30
  */
 
 namespace App\Controllers;
 
-use App\Models\Meter\KWhPlanningModel;
 use App\Models\Meter\MeterLogModel;
+use App\Models\Meter\PlanningKWhModel;
 use CodeIgniter\API\ResponseTrait;
 
 class Meters extends BaseController
@@ -33,7 +33,7 @@ class Meters extends BaseController
     protected $transformMeterRate;
 
     protected $meterLogModel;
-    protected $kWhPlanningModel;
+    protected $planningKWhModel;
 
     public function __construct()
     {
@@ -50,7 +50,7 @@ class Meters extends BaseController
         $this->transformMeterRate = 200;
 
         $this->meterLogModel    = new MeterLogModel();
-        $this->kWhPlanningModel = new KWhPlanningModel();
+        $this->planningKWhModel = new PlanningKWhModel();
     }
 
     public function newMeterLogs()
@@ -327,10 +327,10 @@ class Meters extends BaseController
 
     }
 
-    public function updateGeneratorEvent()
+    public function delMeterLogs()
     {
         // 检查请求数据
-        if (!$this->validate('GeneratorEventUpdate')) {
+        if (!$this->validate('MeterLogsDelete')) {
             $res['error'] = $this->validator->getErrors();
 
             $res['code'] = EXIT_ERROR;
@@ -343,106 +343,54 @@ class Meters extends BaseController
         // 与session比对
         $stationID = $this->session->get('belongToDeptId');
         if ($client['station_id'] != $stationID) {
-            $res['error'] = 'invalid station_id';
             $res['code']  = EXIT_ERROR;
             $res['msg']   = '请求数据无效';
+            $res['error'] = 'invalid station_id';
             return $this->respond($res);
         }
 
-        // 取出检验后的数据
-        $newEvent = [
-            'id'           => $client['id'],
-            'station_id'   => $client['station_id'],
-            'generator_id' => $client['generator_id'],
-            'event'        => $client['event'],
-            'event_at'     => $client['event_at'],
-            'creator'      => $client['creator'],
+        $id         = $client['id'];
+        $station_id = $client['station_id'];
+        $log_date   = $client['log_date'];
+        $log_time   = $client['log_time'];
+
+        // 根据id查找记录
+        $db = $this->meterLogModel->getById($id);
+        if (!isset($db[0])) {
+            $res['code']  = EXIT_ERROR;
+            $res['msg']   = '请求数据无效';
+            $res['error'] = 'invalid id';
+            return $this->respond($res);
+        }
+        // 对比
+        if ($db[0]['station_id'] !== $station_id || $db[0]['log_date'] !== $log_date || $db[0]['log_time'] !== $log_time || $db[0]['meter_id'] !== '1') {
+            $res['code']  = EXIT_ERROR;
+            $res['msg']   = '请求数据无效';
+            $res['error'] = 'invalid record';
+            return $this->respond($res);
+        }
+
+        // 检查记录时间是不是最近的
+        $query = [
+            'station_id' => $station_id,
+            'log_time'   => $log_time,
         ];
-
-        // 查找时间最近一条事件
-        $lastEvents = $this->eventModel->getLastEventLogByStationGen($client['station_id'], $client['generator_id'], 2);
-
-        // 对比
-        if ($lastEvents[0]['id'] != $client['id']) {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '只能修改某机组最新的一条记录';
-            return $this->respond($res);
-        }
-
-        if (($lastEvents[0]['station_id'] != $client['station_id']) || ($lastEvents[0]['generator_id'] != $client['generator_id']) || ($lastEvents[0]['event'] != $client['event'])) {
+        $columnName = ['log_date'];
+        $db         = $this->meterLogModel->getLastDateByStationTime($columnName, $query);
+        if ($db['log_date'] !== $log_date) {
             $res['code']  = EXIT_ERROR;
-            $res['msg']   = '请求数据无效';
-            $res['error'] = 'invalid params';
+            $res['msg']   = '不是时间最近的一条记录';
+            $res['error'] = 'not last record';
             return $this->respond($res);
         }
 
-        // 检查时间戳，事件的合理性
-        $validMsg = $this->validNewEvent($lastEvents[1], $newEvent);
-        if ($validMsg !== true) {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = $validMsg;
-            return $this->respond($res);
-        }
-
-        // 修改记录
-        if ($client['event'] == '1') {
-            $result = $this->updateEventGenStop($lastEvents[1], $newEvent);
-        } else if ($client['event'] == '2') {
-            $result = $this->eventModel->saveEventLog($newEvent);
-        }
-        // $result = $this->newEventProcess($lastEvent, $newEvent);
-
-        if ($result) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '修改一条记录';
-        } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '修改失败，稍后再试';
-        }
-
-        return $this->respond($res);
-    }
-
-    public function delGeneratorEvent()
-    {
-        // 检查请求数据
-        if (!$this->validate('GeneratorEventDelete')) {
-            $res['error'] = $this->validator->getErrors();
-
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '请求数据无效';
-            return $this->respond($res);
-        }
-
-        $client = $this->request->getJSON(true);
-
-        // 与session比对
-        $stationID = $this->session->get('belongToDeptId');
-        if ($client['station_id'] != $stationID) {
-            $res['code']  = EXIT_ERROR;
-            $res['msg']   = '请求数据无效';
-            $res['error'] = 'invalid station_id';
-            return $this->respond($res);
-        }
-
-        // 查找时间最进一条事件
-        $lastEvent = $this->eventModel->getLastEventLogByStationGen($client['station_id'], $client['generator_id']);
-
-        // 对比
-        if ($lastEvent['id'] != $client['id']) {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '只能删除某机组最新的一条记录';
-            return $this->respond($res);
-        }
-
-        if (($lastEvent['station_id'] != $client['station_id']) || ($lastEvent['generator_id'] != $client['generator_id']) || ($lastEvent['event'] != $client['event'])) {
-            $res['code']  = EXIT_ERROR;
-            $res['msg']   = '请求数据无效';
-            $res['error'] = 'invalid params';
-            return $this->respond($res);
-        }
-
-        $result = $this->eventModel->delEventLogById($client['id']);
+        // 执行删除，多块电表
+        $query = [
+            'station_id' => $station_id,
+            'log_date'   => $log_date,
+            'log_time'   => $log_time,
+        ];
+        $result = $this->meterLogModel->deleteByStationDateTime($query);
 
         if ($result === true) {
             $res['code'] = EXIT_SUCCESS;
@@ -455,11 +403,113 @@ class Meters extends BaseController
         return $this->respond($res);
     }
 
+    public function getPlanningKWh()
+    {
+        $param = $this->request->getGet();
+
+        // 检查请求数据
+        if (!$this->validate('MetersPlanningKWhGet')) {
+            $res['error'] = $this->validator->getErrors();
+
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '请求数据无效';
+            return $this->respond($res);
+        }
+
+        // 与session比对
+        $stationID = $this->session->get('belongToDeptId');
+        if ($param['station_id'] != $stationID) {
+            $res['error'] = 'invalid station_id';
+            $res['code']  = EXIT_ERROR;
+            $res['msg']   = '没有权限';
+            return $this->respond($res);
+        }
+
+        $date = $param['date'];
+
+        $query['station_id'] = $param['station_id'];
+        $query['year']       = substr($date, 0, 4);
+
+        $planning = $this->planningKWhModel->getByStationYear($query);
+
+        $res['code'] = EXIT_SUCCESS;
+        $res['data'] = ['data' => $planning];
+
+        return $this->respond($res);
+    }
+
+    public function updatePlanningKWhRecord()
+    {
+        // 检查请求数据
+        if (!$this->validate('MeterPlanningKWhRecordUpdate')) {
+            $res['error'] = $this->validator->getErrors();
+
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '请求数据无效';
+            return $this->respond($res);
+        }
+
+        $client = $this->request->getJSON(true);
+
+        if (!is_numeric($client['planning']) || !is_numeric($client['deal'])) {
+            $res['error'] = 'invalid planning or deal';
+
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '请求数据无效';
+            return $this->respond($res);
+        }
+
+        // 与session比对
+        $stationID = $this->session->get('belongToDeptId');
+        if ($client['station_id'] != $stationID) {
+            $res['error'] = 'invalid station_id';
+            $res['code']  = EXIT_ERROR;
+            $res['msg']   = '没有权限';
+            return $this->respond($res);
+        }
+
+        $id    = $client['id'];
+        $query = [
+            'station_id' => $client['station_id'],
+            'year'       => $client['year'],
+            'month'      => $client['month'],
+        ];
+
+        $data = [
+            'id'       => $client['id'],
+            'planning' => $client['planning'],
+            'deal'     => $client['deal'],
+            'creator'  => $this->session->get('username'),
+        ];
+
+        // 与库中的数据比较
+        $db = $this->planningKWhModel->getByStationYearMonth($query);
+        if ($id !== $db[0]['id']) {
+            $res['error'] = 'conflict with DB';
+            $res['code']  = EXIT_ERROR;
+            $res['msg']   = '请求数据无效';
+            return $this->respond($res);
+        }
+
+        // 修改
+        $result = $this->planningKWhModel->doSave($data);
+
+        if ($result) {
+            $res['code'] = EXIT_SUCCESS;
+            $res['msg']  = '修改一条记录';
+        } else {
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '修改失败，稍后再试';
+        }
+
+        return $this->respond($res);
+    }
+
     // 内部方法
     protected function getPlanningForDailyReport($query)
     {
 
-        $planning = $this->kWhPlanningModel->getByStationYear($query);
+        $planning = $this->planningKWhModel->getByStationYear($query);
 
         $totalMonthOfYear = 12;
         if (empty($planning) || count($planning) !== $totalMonthOfYear) {

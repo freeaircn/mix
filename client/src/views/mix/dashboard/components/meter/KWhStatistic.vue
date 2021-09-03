@@ -1,37 +1,44 @@
 <template>
   <div>
-    <a-card :title="year + '年'" :loading="loading" :bordered="false" :body-style="{marginBottom: '8px'}">
-      <div class="extra-wrapper" slot="extra">
+    <a-card title="发电量统计" :loading="loading" :bordered="false" :body-style="{marginBottom: '8px'}">
+      <!-- <div class="extra-wrapper" slot="extra">
         <div class="extra-item">
-          <a-button type="link" @click="handleChangeContent('month')">月度</a-button>
+          <a-button type="link" @click="handleChangeContent('month')">月</a-button>
           <a-button type="link" @click="handleChangeContent('quarter')">季度</a-button>
         </div>
-      </div>
+      </div> -->
       <div class="kwh-year-card-content">
         <a-row :gutter="16" type="flex">
-          <a-col :xl="16" :lg="24" :md="24" :sm="24" :xs="24" >
-            <div v-show="contentName == 'month'">
-              <div id="month-line" :style="{height: '300px'}"></div>
-            </div>
-
-            <div v-show="contentName == 'quarter'">
-              <div id="quarter-bar" :style="{height: '300px'}"></div>
-            </div>
-          </a-col>
-
           <a-col :xl="8" :lg="24" :md="24" :sm="24" :xs="24" >
             <a-table
               ref="table"
               rowKey="id"
               :columns="columns"
-              :data-source="completionRate"
+              :data-source="kWhStatisticData"
               :loading="loading"
               :pagination="false"
             >
-              <span slot="serial" slot-scope="text, record, index">
-                {{ index + 1 }}
-              </span>
+              <template slot="title" >
+                <span style="color: #303133;">截止2021-09-03 23:59 （万kWh）</span>
+              </template>
             </a-table>
+          </a-col>
+
+          <a-col :xl="16" :lg="24" :md="24" :sm="24" :xs="24" >
+            <div style="height: 53px; padding: 16px 0px;" >
+              <span style="color: #303133">发电量图表 - 2021年</span>
+              <span style="float:right">
+                <a-button type="link" @click="handleChangeContent('month')">月</a-button>
+                <a-button type="link" @click="handleChangeContent('quarter')">季度</a-button>
+              </span>
+            </div>
+            <div v-show="contentName == 'month'">
+              <div id="month-line" :style="{height: '430px'}"></div>
+            </div>
+
+            <div v-show="contentName == 'quarter'">
+              <div id="quarter-bar" :style="{height: '430px'}"></div>
+            </div>
           </a-col>
         </a-row>
       </div>
@@ -44,21 +51,6 @@
 import { Line, Column } from '@antv/g2plot'
 
 const DataSet = require('@antv/data-set')
-
-const columns = [
-  {
-    title: '#',
-    scopedSlots: { customRender: 'serial' }
-  },
-  {
-    title: '周期',
-    dataIndex: 'period'
-  },
-  {
-    title: '完成率',
-    dataIndex: 'value'
-  }
-]
 
 const monthDataTemp = [
   { month: '1月', plan: 7.0, real: 3.9 },
@@ -83,33 +75,55 @@ const quarterDataTemp = [
 ]
 
 export default {
-  name: 'RealKWhChart',
+  name: 'KWhStatistic',
   props: {
     loading: {
       type: Boolean,
       default: false
     },
-    year: {
+    date: {
       type: String,
       default: ''
     },
     monthData: {
-      type: Object,
-      default: () => {}
+      type: Array,
+      default: () => []
     },
     quarterData: {
-      type: Object,
-      default: () => {}
+      type: Array,
+      default: () => []
     }
   },
   data () {
-    this.columns = columns
     return {
+      columns: [
+        {
+          title: '#',
+          dataIndex: 'rowHeader'
+        },
+        {
+          title: '上网电量',
+          dataIndex: 'onGrid'
+        },
+        {
+          title: '发电量',
+          dataIndex: 'genEnergy'
+        },
+        {
+          title: '完成计划',
+          dataIndex: 'rate'
+        }
+      ],
       contentName: 'month',
-      completionRate: [
-        { id: 1, period: '本月', value: '10%' },
-        { id: 2, period: '本季度', value: '10%' },
-        { id: 3, period: '全年', value: '10%' }
+      kWhStatisticData: [
+        { id: 1, rowHeader: '今日', onGrid: '1000', genEnergy: '1200', rate: '/' },
+        { id: 2, rowHeader: '七日', onGrid: '10000', genEnergy: '12000', rate: '/' },
+        { id: 3, rowHeader: '本月', onGrid: '100000', genEnergy: '120000', rate: '10%' },
+        { id: 4, rowHeader: '本季度', onGrid: '200000', genEnergy: '220000', rate: '10%' },
+        { id: 5, rowHeader: '全年', onGrid: '2000000', genEnergy: '2200000', rate: '1.12%' },
+        { id: 6, rowHeader: '日高峰', onGrid: '/', genEnergy: '1000', rate: '/' },
+        { id: 7, rowHeader: '日低谷', onGrid: '/', genEnergy: '600', rate: '/' }
+
       ],
       //
       monthLineData: null,

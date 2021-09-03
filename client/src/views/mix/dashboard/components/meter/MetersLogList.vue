@@ -1,5 +1,19 @@
 <template>
   <div>
+    <a-form-model ref="queryForm" layout="inline" :model="query" @submit.native.prevent>
+      <a-form-model-item>
+        <a-month-picker v-model="query.date" valueFormat="YYYY-MM-DD" />
+      </a-form-model-item>
+
+      <a-form-model-item>
+        <a-button type="primary" @click="handleQuery">查询</a-button>
+      </a-form-model-item>
+
+      <!-- <a-form-model-item>
+        <a-button @click="handleExportHisEvent">导出</a-button>
+      </a-form-model-item> -->
+    </a-form-model>
+
     <a-table
       ref="table"
       rowKey="id"
@@ -21,49 +35,11 @@
       </span>
     </a-table>
 
-    <a-modal
-      title="修改"
-      v-model="editModalVisible"
-      :width="500"
-      :centered="true"
-      @ok="handleEditOk"
-    >
-      <a-form-model
-        ref="editForm"
-        :model="curRecord"
-        :rules="rules"
-        :label-col="labelCol"
-        :wrapper-col="wrapperCol"
-      >
-        <a-form-model-item label="机组" prop="generator_id">
-          <a-select v-model="curRecord.generator_id" disabled>
-            <a-select-option value="1">1G</a-select-option>
-            <a-select-option value="2">2G</a-select-option>
-            <a-select-option value="3">3G</a-select-option>
-          </a-select>
-        </a-form-model-item>
-
-        <a-form-model-item label="事件" prop="event">
-          <a-select v-model="curRecord.event" disabled>
-            <a-select-option value="1">停机</a-select-option>
-            <a-select-option value="2">开机</a-select-option>
-          </a-select>
-        </a-form-model-item>
-
-        <a-form-model-item label="日期/时间" prop="event_at">
-          <a-date-picker v-model="curRecord.event_at" valueFormat="YYYY-MM-DD HH:mm:ss" show-time placeholder="请选择" />
-        </a-form-model-item>
-
-        <a-form-model-item label="说明" prop="description">
-          <a-textarea v-model="curRecord.description"></a-textarea>
-        </a-form-model-item>
-      </a-form-model>
-    </a-modal>
   </div>
 </template>
 
 <script>
-// import moment from 'moment'
+import moment from 'moment'
 
 const columns = [
   {
@@ -96,6 +72,10 @@ export default {
       type: Boolean,
       default: false
     },
+    date: {
+      type: String,
+      default: ''
+    },
     listData: {
       type: Array,
       default: () => []
@@ -123,21 +103,20 @@ export default {
         total: 0
       },
 
-      // 修改表单对话框
-      labelCol: {
-        lg: { span: 7 }, sm: { span: 7 }
-      },
-      wrapperCol: {
-        lg: { span: 10 }, sm: { span: 17 }
-      },
-      editModalVisible: false,
-      curRecord: {},
-      rules: {
-        event_at: [{ required: true, message: '请选择日期和时间', trigger: ['change', 'blur'] }]
+      // 查询表单
+      query: {
+        // moment YYYY-MM-DD
+        date: null
       }
     }
   },
   watch: {
+    date: {
+      handler: function (val) {
+        this.query.date = val
+      },
+      immediate: true
+    },
     current: {
       handler: function (val) {
         this.pagination.current = val
@@ -158,7 +137,7 @@ export default {
     }
   },
   methods: {
-    // 分页切换
+    // 点击分页
     handleTableChange (value) {
       this.pagination.current = value.current
 
@@ -171,35 +150,26 @@ export default {
       this.$emit('paginationChange', queryParam)
     },
 
+    // 点击查询
+    handleQuery () {
+      if (this.query.date == null) {
+        this.query.date = moment().format('YYYY-MM-DD')
+      }
+      this.$emit('query', this.query.date)
+    },
+
     // 查看简报，消息码report
     onClickReport (record) {
       this.$emit('report', record)
     },
 
-    handleEdit (record) {
-      this.curRecord = { ...record }
-      this.editModalVisible = true
-    },
-
-    handleEditOk () {
-      this.editModalVisible = false
-      const param = { ...this.curRecord }
-      this.$emit('reqEdit', param)
-    },
-
     // 删除请求
     handleDel (record) {
-      const param = {
-        id: record.id,
-        station_id: record.station_id,
-        generator_id: record.generator_id,
-        event: record.event
-      }
+      const param = { ...record }
       this.$confirm({
         title: '确定删除吗?',
-        // content: '删除 ' + record.username,
         onOk: () => {
-          this.$emit('reqDelete', param)
+          this.$emit('delete', param)
         }
       })
     }

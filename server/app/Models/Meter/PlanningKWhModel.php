@@ -4,14 +4,14 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-08-31 23:07:23
+ * @LastEditTime: 2021-09-03 19:33:52
  */
 
 namespace App\Models\Meter;
 
 use CodeIgniter\Model;
 
-class KWhPlanningModel extends Model
+class PlanningKWhModel extends Model
 {
     protected $DBGroup = 'mix';
 
@@ -35,12 +35,36 @@ class KWhPlanningModel extends Model
             return false;
         }
 
-        $selectSql = 'id, month, planning, deal';
+        $selectSql = 'id, month, planning, deal, creator';
         $builder   = $this->select($selectSql);
 
         $builder->where($query);
         $res = $builder->findAll();
 
         return $res;
+    }
+
+    public function getByStationYearMonth($query)
+    {
+        if (empty($query)) {
+            return false;
+        }
+
+        $selectSql = 'id, month, planning, deal, creator';
+        $builder   = $this->select($selectSql);
+
+        $builder->where($query);
+        $res = $builder->findAll();
+
+        return $res;
+    }
+
+    public function doSave(array $data)
+    {
+        if (empty($data)) {
+            return false;
+        }
+
+        return $this->save($data);
     }
 }
