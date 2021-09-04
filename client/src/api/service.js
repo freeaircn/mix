@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-03 19:49:25
+ * @LastEditTime: 2021-09-04 17:16:43
  */
 import request from '@/utils/request'
 
@@ -13,6 +13,7 @@ const api = {
   generator_event_export: '/generator/event/export',
   meters: '/meters',
   meters_daily_report: '/meters/daily_report',
+  meters_basic_statistic: '/meters/basic_statistic',
   planning_kWh: '/meters/planning_kWh'
 }
 
@@ -86,6 +87,14 @@ export function delMeterLogs (data) {
 export function getMetersDailyReport (params) {
   return request({
     url: api.meters_daily_report,
+    method: 'get',
+    params: params
+  })
+}
+
+export function getMetersBasicStatistic (params) {
+  return request({
+    url: api.meters_basic_statistic,
     method: 'get',
     params: params
   })

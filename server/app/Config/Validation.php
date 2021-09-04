@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-03 19:55:05
+ * @LastEditTime: 2021-09-04 17:12:30
  */
 
 namespace Config;
@@ -149,6 +149,10 @@ class Validation
         'month'      => 'required|regex_match[/^([1-9]|10|11|12)$/]',
         'planning'   => 'required',
         'deal'       => 'required',
+    ];
+
+    public $MeterBasicStatisticGet = [
+        'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
     ];
 
     /**

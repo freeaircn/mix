@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-03 20:44:30
+ * @LastEditTime: 2021-09-04 21:37:54
  */
 
 namespace App\Controllers;
@@ -325,6 +325,81 @@ class Meters extends BaseController
         $res['msg']          = '测试';
         return $this->respond($res);
 
+    }
+
+    public function getBasicStatistic()
+    {
+        $param = $this->request->getGet();
+
+        // 检查请求数据
+        if (!$this->validate('MeterBasicStatisticGet')) {
+            $res['error'] = $this->validator->getErrors();
+
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '请求数据无效';
+            return $this->respond($res);
+        }
+
+        // 与session比对
+        $stationID = $this->session->get('belongToDeptId');
+        if ($param['station_id'] != $stationID) {
+            $res['error'] = 'invalid station_id';
+            $res['code']  = EXIT_ERROR;
+            $res['msg']   = '没有权限';
+            return $this->respond($res);
+        }
+
+        // 取查询参数
+        $station_id = $param['station_id'];
+        // $log_date   = $param['log_date'];
+        $log_time = '23:59:00';
+
+        // 查找最近一条23:59记录的日期
+        $query = [
+            'station_id' => $station_id,
+            'log_time'   => $log_time,
+        ];
+        $columnName = ['log_date'];
+        $db         = $this->meterLogModel->getLastDateByStationTime($columnName, $query);
+        // if (!isset($db['log_date'])) {
+        //     $res['code'] = EXIT_SUCCESS;
+        // }
+        $log_date = $db['log_date'];
+
+        // 查询年计划、月成交量
+        $query = [
+            'station_id' => $station_id,
+            'year'       => date('Y', strtotime($log_date)),
+        ];
+        $planning = $this->getPlanningForDailyReport($query);
+
+        // 计算发电量
+        $query = [
+            'station_id' => $station_id,
+            'log_date'   => $log_date,
+            'log_time'   => $log_time,
+        ];
+        $genEnergy = $this->getGenEnergyForDailyReport($query);
+
+        // 计算上网电量
+        $onGridEnergy = $this->getOnGridEnergyForDailyReport($query);
+
+        // 计算完成率
+        $rates = $this->getCompletionRate($log_date, $planning, $genEnergy, $onGridEnergy);
+
+        // 统计简表
+        $thirtyDaysGenEnergy = $this->getThirtyDaysDailyEnergyForBasicStatistic($query);
+
+        $statisticResult = $this->editBasicStatistic($rates, $genEnergy, $onGridEnergy, $thirtyDaysGenEnergy);
+
+        $res['code'] = EXIT_SUCCESS;
+        $res['data'] = [
+            'date'           => $log_date . ' ' . $log_time,
+            'statisticList'  => $statisticResult['statisticList'],
+            'thirtyDaysData' => $statisticResult['thirtyDaysData'],
+        ];
+
+        return $this->respond($res);
     }
 
     public function delMeterLogs()
@@ -706,6 +781,66 @@ class Meters extends BaseController
         return $res;
     }
 
+    protected function getThirtyDaysDailyEnergyForBasicStatistic($query)
+    {
+        $station_id = $query['station_id'];
+        $log_date   = $query['log_date'];
+        $log_time   = $query['log_time'];
+
+        $utils    = service('mixUtils');
+        $length   = 30;
+        $start_at = $utils->getPlusOffsetDay($log_date, -($length - 1));
+        $end_at   = $log_date;
+
+        // 初值0
+        $res = [];
+        for ($i = 0; $i < $length; $i++) {
+            $res[$i] = [
+                'date' => $utils->getPlusOffsetDay($log_date, -($length - 1 - $i)),
+                'real' => 0,
+            ];
+        }
+
+        $query2 = [
+            'station_id'     => $station_id,
+            'start_at'       => $start_at,
+            'end_at'         => $end_at,
+            'log_time'       => $log_time,
+            'first_meter_id' => $this->firstGenMeterId,
+            'last_meter_id'  => $this->lastGenMeterId,
+        ];
+        $columnName = ['log_date, fak_delta'];
+        $db         = $this->meterLogModel->getByStationDateTimeMeterIds($columnName, $query2);
+
+        $temp = [];
+        $his  = [];
+        for ($i = 0; $i < count($db); $i++) {
+            $dateKey = $db[$i]['date'];
+            $value   = 0;
+            if (isset($his[$dateKey])) {
+                continue;
+            } else {
+                for ($j = 0; $j < count($db); $j++) {
+                    if ($dateKey === $db[$j]['date']) {
+                        $value = $value + $db[$j]['real'];
+                    }
+                }
+                $temp[]        = ['date' => $dateKey, 'real' => $value];
+                $his[$dateKey] = $dateKey;
+            }
+        }
+
+        for ($i = 0; $i < count($res); $i++) {
+            for ($j = 0; $j < count($temp); $j++) {
+                if ($res[$i]['date'] === $temp[$j]['date']) {
+                    $res[$i]['real'] = $temp[$j]['real'];
+                }
+            }
+        }
+
+        return $res;
+    }
+
     protected function getCompletionRate($log_date, $planning, $genEnergy, $onGridEnergy)
     {
         if (empty($planning) || empty($genEnergy) || empty($onGridEnergy) || empty($log_date)) {
@@ -827,5 +962,92 @@ class Meters extends BaseController
             . '本年度发电量为' . $yearlyGenEnergy . '万千瓦时，完成年度发电计划的' . $rates['year'] . '。';
 
         return $res;
+    }
+
+    protected function editBasicStatistic($rates, $genEnergy, $onGridEnergy, $thirtyDaysGenEnergy)
+    {
+        if (empty($rates) || empty($genEnergy) || empty($onGridEnergy) || empty($thirtyDaysGenEnergy)) {
+            return false;
+        }
+
+        $precision = 4;
+
+        // 电表倍率，单位换算
+        $dailyGenEnergy       = round($genEnergy['daily'] * $this->genMeterRate / 10000, $precision);
+        $weeklyGenEnergy      = round($genEnergy['weekly'] * $this->genMeterRate / 10000, $precision);
+        $monthlyGenEnergy     = round($genEnergy['monthly'] * $this->genMeterRate / 10000, $precision);
+        $quarterlyGenEnergy   = round($genEnergy['quarterly'] * $this->genMeterRate / 10000, $precision);
+        $yearlyGenEnergy      = round($genEnergy['yearly'] * $this->genMeterRate / 10000, $precision);
+        $dailyPeakGenEnergy   = round($genEnergy['daily_peak'] * $this->genMeterRate / 10000, $precision);
+        $dailyValleyGenEnergy = round($genEnergy['daily_valley'] * $this->genMeterRate / 10000, $precision);
+
+        // 上网，电表倍率，单位换算
+        $dailyOnGridEnergy     = round($onGridEnergy['daily'] * $this->mainMeterRate / 10000, $precision);
+        $weeklyOnGridEnergy    = round($onGridEnergy['weekly'] * $this->mainMeterRate / 10000, $precision);
+        $monthlyOnGridEnergy   = round($onGridEnergy['monthly'] * $this->mainMeterRate / 10000, $precision);
+        $quarterlyOnGridEnergy = round($onGridEnergy['quarterly'] * $this->mainMeterRate / 10000, $precision);
+        $yearlyOnGridEnergy    = round($onGridEnergy['yearly'] * $this->mainMeterRate / 10000, $precision);
+
+        $statisticList = [
+            0 => [
+                'id'        => '1',
+                'rowHeader' => '今日',
+                'onGrid'    => $dailyOnGridEnergy,
+                'genEnergy' => $dailyGenEnergy,
+                'rate'      => '/',
+            ],
+            1 => [
+                'id'        => '2',
+                'rowHeader' => '七日',
+                'onGrid'    => $weeklyOnGridEnergy,
+                'genEnergy' => $weeklyGenEnergy,
+                'rate'      => '/',
+            ],
+            2 => [
+                'id'        => '3',
+                'rowHeader' => '本月',
+                'onGrid'    => $monthlyOnGridEnergy,
+                'genEnergy' => $monthlyGenEnergy,
+                'rate'      => $rates['month'],
+            ],
+            3 => [
+                'id'        => '4',
+                'rowHeader' => '本季度',
+                'onGrid'    => $quarterlyOnGridEnergy,
+                'genEnergy' => $quarterlyGenEnergy,
+                'rate'      => $rates['quarter'],
+            ],
+            4 => [
+                'id'        => '5',
+                'rowHeader' => '全年',
+                'onGrid'    => $yearlyOnGridEnergy,
+                'genEnergy' => $yearlyGenEnergy,
+                'rate'      => $rates['year'],
+            ],
+            5 => [
+                'id'        => '6',
+                'rowHeader' => '日高峰',
+                'onGrid'    => '/',
+                'genEnergy' => $dailyPeakGenEnergy,
+                'rate'      => '/',
+            ],
+            6 => [
+                'id'        => '7',
+                'rowHeader' => '日低谷',
+                'onGrid'    => '/',
+                'genEnergy' => $dailyValleyGenEnergy,
+                'rate'      => '/',
+            ],
+        ];
+
+        // 电表倍率，单位换算
+        for ($i = 0; $i < count($thirtyDaysGenEnergy); $i++) {
+            $thirtyDaysGenEnergy[$i]['real'] = round($thirtyDaysGenEnergy[$i]['real'] * $this->genMeterRate / 10000, $precision);
+        }
+
+        return [
+            'statisticList'  => $statisticList,
+            'thirtyDaysData' => $thirtyDaysGenEnergy,
+        ];
     }
 }

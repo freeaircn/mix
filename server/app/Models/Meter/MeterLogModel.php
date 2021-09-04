@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-03 20:44:26
+ * @LastEditTime: 2021-09-04 20:54:55
  */
 
 namespace App\Models\Meter;
@@ -145,6 +145,28 @@ class MeterLogModel extends Model
 
         $result = $builder->findAll();
         return isset($result[0]) ? $result[0] : [];
+    }
+
+    public function getByStationDateTimeMeterIds($columnName = [], $query = [])
+    {
+        if (empty($columnName)) {
+            return false;
+        }
+
+        $selectSql = 'log_date as date, fak_delta as real';
+        // foreach ($columnName as $key) {
+        //     $selectSql = $selectSql . $key . ', ';
+        // }
+        $builder = $this->select($selectSql);
+
+        $whereSql = "station_id = " . $query['station_id']
+            . " AND log_time = " . "'" . $query['log_time'] . "'"
+            . " AND Date(log_date) BETWEEN " . "'" . $query['start_at'] . "'" . " AND " . "'" . $query['end_at'] . "'"
+            . " AND meter_id BETWEEN " . $query['first_meter_id'] . " AND " . $query['last_meter_id'];
+        $builder->where($whereSql);
+
+        $result = $builder->findAll();
+        return $result;
     }
 
     public function getByStationDateTimeMeterId($columnName = [], $query = [])

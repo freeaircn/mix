@@ -1,56 +1,68 @@
 <template>
   <div>
-    <a-card title="发电量统计" :loading="loading" :bordered="false" :body-style="{marginBottom: '8px'}">
-      <!-- <div class="extra-wrapper" slot="extra">
-        <div class="extra-item">
-          <a-button type="link" @click="handleChangeContent('month')">月</a-button>
-          <a-button type="link" @click="handleChangeContent('quarter')">季度</a-button>
-        </div>
-      </div> -->
-      <div class="kwh-year-card-content">
-        <a-row :gutter="16" type="flex">
-          <a-col :xl="8" :lg="24" :md="24" :sm="24" :xs="24" >
-            <a-table
-              ref="table"
-              rowKey="id"
-              :columns="columns"
-              :data-source="kWhStatisticData"
-              :loading="loading"
-              :pagination="false"
-            >
-              <template slot="title" >
-                <span style="color: #303133;">截止2021-09-03 23:59 （万kWh）</span>
-              </template>
-            </a-table>
-          </a-col>
+    <div class="kwh-year-card-content">
+      <a-row :gutter="24" type="flex">
+        <a-col :xl="8" :lg="24" :md="24" :sm="24" :xs="24" >
+          <a-table
+            ref="table"
+            rowKey="id"
+            :columns="columns"
+            :data-source="statisticListData"
+            :loading="loading"
+            :pagination="false"
+          >
+            <template slot="title" >
+              <span style="color: #303133;">{{ '截止' + date + '（万kWh）' }}</span>
+            </template>
+          </a-table>
+        </a-col>
 
-          <a-col :xl="16" :lg="24" :md="24" :sm="24" :xs="24" >
-            <div style="height: 53px; padding: 16px 0px;" >
-              <span style="color: #303133">发电量图表 - 2021年</span>
-              <span style="float:right">
-                <a-button type="link" @click="handleChangeContent('month')">月</a-button>
-                <a-button type="link" @click="handleChangeContent('quarter')">季度</a-button>
-              </span>
-            </div>
-            <div v-show="contentName == 'month'">
-              <div id="month-line" :style="{height: '430px'}"></div>
-            </div>
+        <a-col :xl="16" :lg="24" :md="24" :sm="24" :xs="24" >
+          <div style="height: 53px; padding: 16px 0px;" >
+            <span style="color: #303133">发电量图表 - 2021年</span>
+            <span style="float:right">
+              <a type="link" @click="handleChangeContent('30Days')">30天</a>
+              <a-divider type="vertical" />
+              <a type="link" @click="handleChangeContent('month')">月度</a>
+              <a-divider type="vertical" />
+              <a type="link" @click="handleChangeContent('quarter')">季度</a>
+            </span>
+          </div>
 
-            <div v-show="contentName == 'quarter'">
-              <div id="quarter-bar" :style="{height: '430px'}"></div>
-            </div>
-          </a-col>
-        </a-row>
-      </div>
-    </a-card>
+          <div v-show="chartName == 'month'">
+            <div id="month-chart" :style="{height: '430px'}"></div>
+          </div>
+          <div v-show="chartName == '30Days'">
+            <div id="days-chart" :style="{height: '430px'}"></div>
+          </div>
+
+          <div v-show="chartName == 'quarter'">
+            <div id="quarter-chart" :style="{height: '430px'}"></div>
+          </div>
+        </a-col>
+      </a-row>
+    </div>
   </div>
 </template>
 
 <script>
 // import moment from 'moment'
+// import { Area, Line, Column } from '@antv/g2plot'
 import { Line, Column } from '@antv/g2plot'
 
 const DataSet = require('@antv/data-set')
+
+// const thirtyDaysDataTemp = [
+//   { date: '2021-08-01', real: 100 },
+//   { date: '2021-08-02', real: 200 },
+//   { date: '2021-08-03', real: 300 },
+//   { date: '2021-08-04', real: 400 },
+//   { date: '2021-08-05', real: 500 },
+//   { date: '2021-08-06', real: 400 },
+//   { date: '2021-08-07', real: 300 },
+//   { date: '2021-08-08', real: 200 },
+//   { date: '2021-08-09', real: 100 }
+// ]
 
 const monthDataTemp = [
   { month: '1月', plan: 7.0, real: 3.9 },
@@ -81,15 +93,27 @@ export default {
       type: Boolean,
       default: false
     },
+    changed: {
+      type: Boolean,
+      default: false
+    },
     date: {
       type: String,
       default: ''
     },
-    monthData: {
+    statisticListData: {
       type: Array,
       default: () => []
     },
-    quarterData: {
+    thirtyDaysData: {
+      type: Array,
+      default: () => []
+    },
+    monthlyData: {
+      type: Array,
+      default: () => []
+    },
+    quarterlyData: {
       type: Array,
       default: () => []
     }
@@ -114,189 +138,181 @@ export default {
           dataIndex: 'rate'
         }
       ],
-      contentName: 'month',
-      kWhStatisticData: [
-        { id: 1, rowHeader: '今日', onGrid: '1000', genEnergy: '1200', rate: '/' },
-        { id: 2, rowHeader: '七日', onGrid: '10000', genEnergy: '12000', rate: '/' },
-        { id: 3, rowHeader: '本月', onGrid: '100000', genEnergy: '120000', rate: '10%' },
-        { id: 4, rowHeader: '本季度', onGrid: '200000', genEnergy: '220000', rate: '10%' },
-        { id: 5, rowHeader: '全年', onGrid: '2000000', genEnergy: '2200000', rate: '1.12%' },
-        { id: 6, rowHeader: '日高峰', onGrid: '/', genEnergy: '1000', rate: '/' },
-        { id: 7, rowHeader: '日低谷', onGrid: '/', genEnergy: '600', rate: '/' }
-
-      ],
-      //
-      monthLineData: null,
-      //
-      quarterBarData: null
+      chartName: 'month',
+      mountedDone: false,
+      daysChart: null
     }
   },
   mounted () {
-    let dv = new DataSet.View().source(monthDataTemp)
-    dv.transform({
-      type: 'fold',
-      fields: ['plan', 'real'],
-      key: 'type',
-      value: 'kWh'
-    })
-    this.monthLineData = dv.rows
-
-    const monthLine = new Line('month-line', {
-      data: this.monthLineData,
-      xField: 'month',
-      yField: 'kWh',
-      seriesField: 'type',
-      point: {},
-      legend: {
-        position: 'bottom',
-        itemName: {
-          formatter: (text) => {
-            let alias = ''
-            if (text === 'plan') alias = '计划'
-            if (text === 'real') alias = '实际'
-            return alias
-          }
-        }
-      },
-      tooltip: {
-        formatter: (item) => {
-          let alias = ''
-          if (item.type === 'plan') alias = '计划'
-          if (item.type === 'real') alias = '实际'
-          return { name: alias, value: item.kWh }
-        },
-        customItems: (originalItems) => {
-          if (originalItems.length === 2) {
-            const rate = Object.assign({}, originalItems[1])
-            rate.name = '完成率'
-            if (originalItems[0].data.type === 'plan') {
-              rate.value = (originalItems[1].data.kWh / originalItems[0].data.kWh * 100).toPrecision(4) + '%'
-            } else {
-              rate.value = (originalItems[0].data.kWh / originalItems[1].data.kWh * 100).toPrecision(4) + '%'
-            }
-            originalItems.push(rate)
-          }
-
-          return originalItems
-        }
-      }
-      // xAxis: {
-      //   type: 'time',
-      // },
-      // yAxis: {
-      //   label: {
-      //     // 数值格式化为千分位
-      //     formatter: (v) => `${v}`.replace(/\d{1,3}(?=(\d{3})+$)/g, (s) => `${s},`),
-      //   },
-      // },
-    })
-    monthLine.render()
-
+    // 30天
+    this.initThirtyDaysChart()
+    // 月度
+    this.initMonthlyChart()
+    // 季度
+    this.initQuarterlyChart()
     //
-    dv = new DataSet.View().source(quarterDataTemp)
-    dv.transform({
-      type: 'fold',
-      fields: ['plan', 'real'],
-      key: 'type',
-      value: 'kWh'
-    })
-    this.quarterBarData = dv.rows
-
-    const quarterBar = new Column('quarter-bar', {
-      data: this.quarterBarData,
-      isGroup: true,
-      xField: 'quarter',
-      yField: 'kWh',
-      seriesField: 'type',
-      legend: {
-        position: 'bottom',
-        itemName: {
-          formatter: (text) => {
-            let alias = ''
-            if (text === 'plan') alias = '计划'
-            if (text === 'real') alias = '实际'
-            return alias
-          }
+    this.mountedDone = true
+  },
+  watch: {
+    changed: {
+      handler: function (val) {
+        if (this.mountedDone) {
+          this.daysChart.changeData(this.thirtyDaysData)
         }
       },
-      tooltip: {
-        formatter: (item) => {
-          let alias = ''
-          if (item.type === 'plan') alias = '计划'
-          if (item.type === 'real') alias = '实际'
-          return { name: alias, value: item.kWh }
-        },
-        customItems: (originalItems) => {
-          if (originalItems.length === 2) {
-            const rate = Object.assign({}, originalItems[1])
-            rate.name = '完成率'
-            if (originalItems[0].data.type === 'plan') {
-              rate.value = (originalItems[1].data.kWh / originalItems[0].data.kWh * 100).toPrecision(4) + '%'
-            } else {
-              rate.value = (originalItems[0].data.kWh / originalItems[1].data.kWh * 100).toPrecision(4) + '%'
-            }
-            originalItems.push(rate)
-          }
-          return originalItems
-        }
-      }
-    })
-    quarterBar.render()
+      immediate: true
+    }
   },
-  // watch: {
-  //   current: {
-  //     handler: function (val) {
-  //       this.pagination.current = val
-  //     },
-  //     immediate: true
-  //   }
-  // },
   methods: {
 
     handleChangeContent (type) {
       // this.$emit('reqData', type)
-      this.contentName = type
+      this.chartName = type
+    },
+
+    initThirtyDaysChart () {
+      this.daysChart = new Column('days-chart', {
+        data: this.thirtyDaysData,
+        xField: 'date',
+        yField: 'real',
+        xAxis: {
+          tickCount: 5
+        },
+        meta: {
+          date: {
+            alias: '日期'
+          },
+          real: {
+            alias: '发电量'
+          }
+        },
+        minColumnWidth: 20,
+        maxColumnWidth: 20,
+        animation: false,
+        slider: {
+          start: 0.7,
+          end: 1
+          // trendCfg: {
+          //   isArea: true
+          // }
+        }
+      })
+      this.daysChart.render()
+    },
+
+    initMonthlyChart () {
+      const dv = new DataSet.View().source(monthDataTemp)
+      dv.transform({
+        type: 'fold',
+        fields: ['plan', 'real'],
+        key: 'type',
+        value: 'kWh'
+      })
+      this.monthLineData = dv.rows
+
+      const monthLine = new Line('month-chart', {
+        data: this.monthLineData,
+        xField: 'month',
+        yField: 'kWh',
+        seriesField: 'type',
+        point: {},
+        legend: {
+          position: 'bottom',
+          itemName: {
+            formatter: (text) => {
+              let alias = ''
+              if (text === 'plan') alias = '计划'
+              if (text === 'real') alias = '实际'
+              return alias
+            }
+          }
+        },
+        tooltip: {
+          formatter: (item) => {
+            let alias = ''
+            if (item.type === 'plan') alias = '计划'
+            if (item.type === 'real') alias = '实际'
+            return { name: alias, value: item.kWh }
+          },
+          customItems: (originalItems) => {
+            if (originalItems.length === 2) {
+              const rate = Object.assign({}, originalItems[1])
+              rate.name = '完成率'
+              if (originalItems[0].data.type === 'plan') {
+                rate.value = (originalItems[1].data.kWh / originalItems[0].data.kWh * 100).toPrecision(4) + '%'
+              } else {
+                rate.value = (originalItems[0].data.kWh / originalItems[1].data.kWh * 100).toPrecision(4) + '%'
+              }
+              originalItems.push(rate)
+            }
+
+            return originalItems
+          }
+        }
+        // xAxis: {
+        //   type: 'time',
+        // },
+        // yAxis: {
+        //   label: {
+        //     // 数值格式化为千分位
+        //     formatter: (v) => `${v}`.replace(/\d{1,3}(?=(\d{3})+$)/g, (s) => `${s},`),
+        //   },
+        // },
+      })
+      monthLine.render()
+    },
+
+    initQuarterlyChart () {
+      const dv = new DataSet.View().source(quarterDataTemp)
+      dv.transform({
+        type: 'fold',
+        fields: ['plan', 'real'],
+        key: 'type',
+        value: 'kWh'
+      })
+      this.quarterBarData = dv.rows
+
+      const quarterBar = new Column('quarter-chart', {
+        data: this.quarterBarData,
+        isGroup: true,
+        xField: 'quarter',
+        yField: 'kWh',
+        seriesField: 'type',
+        legend: {
+          position: 'bottom',
+          itemName: {
+            formatter: (text) => {
+              let alias = ''
+              if (text === 'plan') alias = '计划'
+              if (text === 'real') alias = '实际'
+              return alias
+            }
+          }
+        },
+        tooltip: {
+          formatter: (item) => {
+            let alias = ''
+            if (item.type === 'plan') alias = '计划'
+            if (item.type === 'real') alias = '实际'
+            return { name: alias, value: item.kWh }
+          },
+          customItems: (originalItems) => {
+            if (originalItems.length === 2) {
+              const rate = Object.assign({}, originalItems[1])
+              rate.name = '完成率'
+              if (originalItems[0].data.type === 'plan') {
+                rate.value = (originalItems[1].data.kWh / originalItems[0].data.kWh * 100).toPrecision(4) + '%'
+              } else {
+                rate.value = (originalItems[0].data.kWh / originalItems[1].data.kWh * 100).toPrecision(4) + '%'
+              }
+              originalItems.push(rate)
+            }
+            return originalItems
+          }
+        }
+      })
+      quarterBar.render()
     }
-
-    // handleTableChange (value) {
-    //   this.pagination.current = value.current
-
-    //   // 向父组件发消息，更新数据区
-    //   const queryParam = {
-    //     limit: this.pagination.pageSize,
-    //     offset: this.pagination.current
-    //   }
-    //   this.$emit('update:current', value.current)
-    //   this.$emit('reqData', queryParam)
-    // },
-
-    // handleEdit (record) {
-    //   this.curRecord = { ...record }
-    //   this.editModalVisible = true
-    // },
-
-    // handleEditOk () {
-    //   this.editModalVisible = false
-    //   const param = { ...this.curRecord }
-    //   this.$emit('reqEdit', param)
-    // },
-
-    // // 删除请求
-    // handleDel (record) {
-    //   const param = {
-    //     id: record.id,
-    //     station_id: record.station_id,
-    //     generator_id: record.generator_id,
-    //     event: record.event
-    //   }
-    //   this.$confirm({
-    //     title: '确定删除吗?',
-    //     // content: '删除 ' + record.username,
-    //     onOk: () => {
-    //       this.$emit('reqDelete', param)
-    //     }
-    //   })
-    // }
   }
 }
 </script>

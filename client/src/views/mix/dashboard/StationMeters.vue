@@ -103,11 +103,21 @@
       </a-row>
     </div>
 
-    <KWhStatistic
-      :loading="kWhStatisticLoading"
-      :date="kWhStatisticDate"
-    >
-    </KWhStatistic>
+    <a-card title="发电量统计" :bordered="false" :body-style="{marginBottom: '8px'}">
+      <div class="extra-wrapper" slot="extra">
+        <div class="extra-item">
+          <a-button type="link" @click="onQueryBasicStatistic('month')">刷新</a-button>
+        </div>
+      </div>
+      <KWhStatistic
+        :loading="kWhStatisticLoading"
+        :changed="kWhStatisticChanged"
+        :date="kWhStatisticDate"
+        :statisticListData="kWhStatisticListData"
+        :thirtyDaysData="kWhStatistic30DaysData"
+      >
+      </KWhStatistic>
+    </a-card>
 
     <a-card :loading="false" title="历史统计" :bordered="false" :body-style="{padding: '0', marginBottom: '8px'}">
       <div style="padding: 8px">
@@ -134,7 +144,7 @@ import moment from 'moment'
 // import { deepMerge } from '@/utils/util'
 import { MetersLogList, PlanningKWhList, KWhStatistic } from './components/meter'
 import { mapGetters } from 'vuex'
-import { getMeterLogs, saveMeterLogs, getMetersDailyReport, delMeterLogs, getPlanningKWh, updatePlanningKWhRecord } from '@/api/service'
+import { getMeterLogs, saveMeterLogs, getMetersDailyReport, getMetersBasicStatistic, delMeterLogs, getPlanningKWh, updatePlanningKWhRecord } from '@/api/service'
 import { baseMixin } from '@/store/app-mixin'
 
 const availableYearRange = []
@@ -201,7 +211,10 @@ export default {
 
       // 统计显示
       kWhStatisticLoading: false,
+      kWhStatisticChanged: false,
       kWhStatisticDate: '',
+      kWhStatisticListData: [],
+      kWhStatistic30DaysData: [],
 
       // 历史统计显示
       availableYearRange
@@ -222,6 +235,9 @@ export default {
     // 记录显示
     this.onQueryMeterLog(this.logListDate)
     this.onQueryPlanningKWh(this.planningKWhListDate)
+
+    // 统计图表
+    this.onQueryBasicStatistic()
   },
   methods: {
 
@@ -316,7 +332,6 @@ export default {
 
     // 查看电量单日简报
     onReqDailyReport (param) {
-      console.log('report', param)
       const query = {
         station_id: param.station_id,
         log_date: param.log_date,
@@ -332,8 +347,28 @@ export default {
         })
     },
 
+    onQueryBasicStatistic () {
+      const query = {
+        station_id: this.userInfo.belongToDeptId
+      }
+      this.kWhStatisticLoading = true
+      getMetersBasicStatistic(query)
+        .then(res => {
+          this.kWhStatisticLoading = false
+          this.kWhStatisticChanged = !this.kWhStatisticChanged
+          //
+          this.kWhStatisticDate = res.date
+          this.kWhStatisticListData = res.statisticList
+          this.kWhStatistic30DaysData = res.thirtyDaysData
+        })
+        .catch((err) => {
+          this.kWhStatisticLoading = false
+          if (err.response) {
+          }
+        })
+    },
+
     onDeleteMeterLog (param) {
-      console.log('delete', param)
       delMeterLogs(param)
         .then(() => {
             this.onQueryMeterLog(this.logListDate)
