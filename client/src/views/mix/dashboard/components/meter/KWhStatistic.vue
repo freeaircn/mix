@@ -19,7 +19,14 @@
 
         <a-col :xl="16" :lg="24" :md="24" :sm="24" :xs="24" >
           <div style="height: 53px; padding: 16px 0px;" >
-            <span style="color: #303133">发电量图表 - 2021年</span>
+            <span style="color: #303133">
+              <a-tooltip>
+                <template slot="title">
+                  {{ '截止' + date }}
+                </template>
+                图表（万kWh）<a-icon type="info-circle" />
+              </a-tooltip>
+            </span>
             <span style="float:right">
               <a type="link" @click="handleChangeContent('30Days')">30天</a>
               <a-divider type="vertical" />
@@ -64,27 +71,27 @@ const DataSet = require('@antv/data-set')
 //   { date: '2021-08-09', real: 100 }
 // ]
 
-const monthDataTemp = [
-  { month: '1月', plan: 7.0, real: 3.9 },
-  { month: '2月', plan: 6.9, real: 4.2 },
-  { month: '3月', plan: 9.5, real: 5.7 },
-  { month: '4月', plan: 14.5, real: 8.5 },
-  { month: '5月', plan: 18.4, real: 11.9 },
-  { month: '6月', plan: 21.5, real: 15.2 },
-  { month: '7月', plan: 25.2, real: 17.0 },
-  { month: '8月', plan: 26.5, real: 16.6 },
-  { month: '9月', plan: 23.3, real: 0 },
-  { month: '10月', plan: 18.3, real: 0 },
-  { month: '11月', plan: 13.9, real: 0 },
-  { month: '12月', plan: 9.6, real: 0 }
-]
+// const monthDataTemp = [
+//   { month: '1月', plan: 7.0, real: 3.9 },
+//   { month: '2月', plan: 6.9, real: 4.2 },
+//   { month: '3月', plan: 9.5, real: 5.7 },
+//   { month: '4月', plan: 14.5, real: 8.5 },
+//   { month: '5月', plan: 18.4, real: 11.9 },
+//   { month: '6月', plan: 21.5, real: 15.2 },
+//   { month: '7月', plan: 25.2, real: 17.0 },
+//   { month: '8月', plan: 26.5, real: 16.6 },
+//   { month: '9月', plan: 23.3, real: 0 },
+//   { month: '10月', plan: 18.3, real: 0 },
+//   { month: '11月', plan: 13.9, real: 0 },
+//   { month: '12月', plan: 9.6, real: 0 }
+// ]
 
-const quarterDataTemp = [
-  { quarter: '1季度', plan: 7.0, real: 3.9 },
-  { quarter: '2季度', plan: 6.9, real: 4.2 },
-  { quarter: '3季度', plan: 9.5, real: 5.7 },
-  { quarter: '4季度', plan: 14.5, real: 0 }
-]
+// const quarterDataTemp = [
+//   { quarter: '1季度', plan: 7.0, real: 3.9 },
+//   { quarter: '2季度', plan: 6.9, real: 4.2 },
+//   { quarter: '3季度', plan: 9.5, real: 5.7 },
+//   { quarter: '4季度', plan: 14.5, real: 0 }
+// ]
 
 export default {
   name: 'KWhStatistic',
@@ -140,7 +147,9 @@ export default {
       ],
       chartName: 'month',
       mountedDone: false,
-      daysChart: null
+      daysChart: null,
+      monthlyChart: null,
+      quarterlyChart: null
     }
   },
   mounted () {
@@ -157,7 +166,9 @@ export default {
     changed: {
       handler: function (val) {
         if (this.mountedDone) {
-          this.daysChart.changeData(this.thirtyDaysData)
+          this.updateDaysChart()
+          this.updateMonthlyChart()
+          this.updateQuarterlyChart()
         }
       },
       immediate: true
@@ -166,7 +177,6 @@ export default {
   methods: {
 
     handleChangeContent (type) {
-      // this.$emit('reqData', type)
       this.chartName = type
     },
 
@@ -200,18 +210,22 @@ export default {
       this.daysChart.render()
     },
 
+    updateDaysChart () {
+      this.daysChart.changeData(this.thirtyDaysData)
+    },
+
     initMonthlyChart () {
-      const dv = new DataSet.View().source(monthDataTemp)
+      const dv = new DataSet.View().source(this.monthlyData)
       dv.transform({
         type: 'fold',
-        fields: ['plan', 'real'],
+        fields: ['planning', 'real'],
         key: 'type',
         value: 'kWh'
       })
-      this.monthLineData = dv.rows
+      const chartData = dv.rows
 
-      const monthLine = new Line('month-chart', {
-        data: this.monthLineData,
+      this.monthlyChart = new Line('month-chart', {
+        data: chartData,
         xField: 'month',
         yField: 'kWh',
         seriesField: 'type',
@@ -221,7 +235,7 @@ export default {
           itemName: {
             formatter: (text) => {
               let alias = ''
-              if (text === 'plan') alias = '计划'
+              if (text === 'planning') alias = '计划'
               if (text === 'real') alias = '实际'
               return alias
             }
@@ -230,7 +244,7 @@ export default {
         tooltip: {
           formatter: (item) => {
             let alias = ''
-            if (item.type === 'plan') alias = '计划'
+            if (item.type === 'planning') alias = '计划'
             if (item.type === 'real') alias = '实际'
             return { name: alias, value: item.kWh }
           },
@@ -238,7 +252,7 @@ export default {
             if (originalItems.length === 2) {
               const rate = Object.assign({}, originalItems[1])
               rate.name = '完成率'
-              if (originalItems[0].data.type === 'plan') {
+              if (originalItems[0].data.type === 'planning') {
                 rate.value = (originalItems[1].data.kWh / originalItems[0].data.kWh * 100).toPrecision(4) + '%'
               } else {
                 rate.value = (originalItems[0].data.kWh / originalItems[1].data.kWh * 100).toPrecision(4) + '%'
@@ -259,21 +273,34 @@ export default {
         //   },
         // },
       })
-      monthLine.render()
+      this.monthlyChart.render()
     },
 
-    initQuarterlyChart () {
-      const dv = new DataSet.View().source(quarterDataTemp)
+    updateMonthlyChart () {
+      const dv = new DataSet.View().source(this.monthlyData)
       dv.transform({
         type: 'fold',
-        fields: ['plan', 'real'],
+        fields: ['planning', 'real'],
         key: 'type',
         value: 'kWh'
       })
-      this.quarterBarData = dv.rows
+      const chartData = dv.rows
 
-      const quarterBar = new Column('quarter-chart', {
-        data: this.quarterBarData,
+      this.monthlyChart.changeData(chartData)
+    },
+
+    initQuarterlyChart () {
+      const dv = new DataSet.View().source(this.quarterlyData)
+      dv.transform({
+        type: 'fold',
+        fields: ['planning', 'real'],
+        key: 'type',
+        value: 'kWh'
+      })
+      const chartData = dv.rows
+
+      this.quarterlyChart = new Column('quarter-chart', {
+        data: chartData,
         isGroup: true,
         xField: 'quarter',
         yField: 'kWh',
@@ -283,7 +310,7 @@ export default {
           itemName: {
             formatter: (text) => {
               let alias = ''
-              if (text === 'plan') alias = '计划'
+              if (text === 'planning') alias = '计划'
               if (text === 'real') alias = '实际'
               return alias
             }
@@ -292,7 +319,7 @@ export default {
         tooltip: {
           formatter: (item) => {
             let alias = ''
-            if (item.type === 'plan') alias = '计划'
+            if (item.type === 'planning') alias = '计划'
             if (item.type === 'real') alias = '实际'
             return { name: alias, value: item.kWh }
           },
@@ -300,7 +327,7 @@ export default {
             if (originalItems.length === 2) {
               const rate = Object.assign({}, originalItems[1])
               rate.name = '完成率'
-              if (originalItems[0].data.type === 'plan') {
+              if (originalItems[0].data.type === 'planning') {
                 rate.value = (originalItems[1].data.kWh / originalItems[0].data.kWh * 100).toPrecision(4) + '%'
               } else {
                 rate.value = (originalItems[0].data.kWh / originalItems[1].data.kWh * 100).toPrecision(4) + '%'
@@ -311,7 +338,20 @@ export default {
           }
         }
       })
-      quarterBar.render()
+      this.quarterlyChart.render()
+    },
+
+    updateQuarterlyChart () {
+      const dv = new DataSet.View().source(this.quarterlyData)
+      dv.transform({
+        type: 'fold',
+        fields: ['planning', 'real'],
+        key: 'type',
+        value: 'kWh'
+      })
+      const chartData = dv.rows
+
+      this.quarterlyChart.changeData(chartData)
     }
   }
 }

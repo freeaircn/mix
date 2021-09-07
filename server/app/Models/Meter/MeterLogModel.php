@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-04 20:54:55
+ * @LastEditTime: 2021-09-07 20:37:33
  */
 
 namespace App\Models\Meter;
@@ -164,6 +164,32 @@ class MeterLogModel extends Model
             . " AND Date(log_date) BETWEEN " . "'" . $query['start_at'] . "'" . " AND " . "'" . $query['end_at'] . "'"
             . " AND meter_id BETWEEN " . $query['first_meter_id'] . " AND " . $query['last_meter_id'];
         $builder->where($whereSql);
+
+        $result = $builder->findAll();
+        return $result;
+    }
+
+    public function getByStationTimeDatesMeterIds($columnName = [], $query = [])
+    {
+        if (empty($columnName)) {
+            return false;
+        }
+
+        $selectSql = 'log_date as date, fak as real';
+        // foreach ($columnName as $key) {
+        //     $selectSql = $selectSql . $key . ', ';
+        // }
+        $builder = $this->select($selectSql);
+
+        // $whereSql = "station_id = " . $query['station_id']
+        //     . " AND log_time = " . "'" . $query['log_time'] . "'"
+        //     . " AND Date(log_date) BETWEEN " . "'" . $query['start_at'] . "'" . " AND " . "'" . $query['end_at'] . "'"
+        //     . " AND meter_id BETWEEN " . $query['first_meter_id'] . " AND " . $query['last_meter_id'];
+        $builder->where('station_id', $query['station_id']);
+        $builder->where('log_time', $query['log_time']);
+        $builder->whereIn('log_date', $query['log_date']);
+        $builder->whereIn('meter_id', $query['meter_id']);
+        $builder->orderBy('log_date', 'ASC');
 
         $result = $builder->findAll();
         return $result;

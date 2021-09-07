@@ -115,6 +115,8 @@
         :date="kWhStatisticDate"
         :statisticListData="kWhStatisticListData"
         :thirtyDaysData="kWhStatistic30DaysData"
+        :monthlyData="kWhStatisticMonthlyData"
+        :quarterlyData="kWhStatisticQuarterlyData"
       >
       </KWhStatistic>
     </a-card>
@@ -209,12 +211,14 @@ export default {
       // { id: 1, month: '1月', planning: 1000, deal: 1000 },
       planningKWhListData: [],
 
-      // 统计显示
+      // Basic统计显示
       kWhStatisticLoading: false,
       kWhStatisticChanged: false,
       kWhStatisticDate: '',
       kWhStatisticListData: [],
       kWhStatistic30DaysData: [],
+      kWhStatisticMonthlyData: [],
+      kWhStatisticQuarterlyData: [],
 
       // 历史统计显示
       availableYearRange
@@ -354,12 +358,14 @@ export default {
       this.kWhStatisticLoading = true
       getMetersBasicStatistic(query)
         .then(res => {
-          this.kWhStatisticLoading = false
-          this.kWhStatisticChanged = !this.kWhStatisticChanged
-          //
           this.kWhStatisticDate = res.date
           this.kWhStatisticListData = res.statisticList
           this.kWhStatistic30DaysData = res.thirtyDaysData
+          this.kWhStatisticMonthlyData = res.monthlyData
+          this.kWhStatisticQuarterlyData = res.quarterlyData
+          //
+          this.kWhStatisticLoading = false
+          this.kWhStatisticChanged = !this.kWhStatisticChanged
         })
         .catch((err) => {
           this.kWhStatisticLoading = false
