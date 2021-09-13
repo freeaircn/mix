@@ -142,12 +142,12 @@ export default {
       this.pagination.current = value.current
 
       // 向父组件发消息，更新数据区
-      const queryParam = {
+      const query = {
         limit: this.pagination.pageSize,
         offset: this.pagination.current
       }
       this.$emit('update:current', value.current)
-      this.$emit('paginationChange', queryParam)
+      this.$emit('paginationChange', query)
     },
 
     // 点击查询

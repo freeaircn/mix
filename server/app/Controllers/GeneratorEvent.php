@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-03 19:34:02
+ * @LastEditTime: 2021-09-13 21:13:41
  */
 
 namespace App\Controllers;
@@ -17,50 +17,29 @@ class GeneratorEvent extends BaseController
 {
     use ResponseTrait;
 
+    // 发电机编号
+    protected $firstGenId;
+    protected $lastGenId;
+    protected $genTotalNumber;
+    // 事件类型
+    protected $eventStart;
+    protected $eventStop;
+    //
     protected $eventModel;
 
     public function __construct()
     {
+        $this->firstGenId     = 1;
+        $this->lastGenId      = 3;
+        $this->genTotalNumber = 3;
+        //
+        $this->eventStop  = '1';
+        $this->eventStart = '2';
+        //
         $this->eventModel = new GenEventLogModel();
     }
 
-    public function getGeneratorEvent()
-    {
-        $param = $this->request->getGet();
-
-        // 检查请求数据
-        if (!$this->validate('GeneratorEventGet')) {
-            $res['error'] = $this->validator->getErrors();
-
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '请求数据无效';
-            return $this->respond($res);
-        }
-
-        // 与session比对
-        $stationID = $this->session->get('belongToDeptId');
-        if ($param['station_id'] != $stationID) {
-            $res['error'] = 'invalid station_id';
-            $res['code']  = EXIT_ERROR;
-            $res['msg']   = '请求数据无效';
-            return $this->respond($res);
-        }
-
-        $query['station_id']   = $param['station_id'];
-        $query['generator_id'] = $param['generator_id'];
-        $query['start']        = $param['start'];
-        $query['end']          = $param['end'];
-        $query['limit']        = $param['limit'];
-        $query['offset']       = $param['offset'];
-
-        $result = $this->eventModel->getEventLog([], $query);
-
-        $res['code'] = EXIT_SUCCESS;
-        $res['data'] = ['total' => $result['total'], 'data' => $result['result']];
-
-        return $this->respond($res);
-    }
-
+    // V
     public function newGeneratorEvent()
     {
         // 检查请求数据
@@ -74,17 +53,10 @@ class GeneratorEvent extends BaseController
 
         $client = $this->request->getJSON(true);
 
-        // 与session比对
-        $stationID = $this->session->get('belongToDeptId');
-        if ($client['station_id'] != $stationID) {
-            $res['error'] = 'invalid station_id';
-            $res['code']  = EXIT_ERROR;
-            $res['msg']   = '请求数据无效';
-            return $this->respond($res);
-        }
-
         // 取出检验后的数据
-        $newEvent = [
+        $station_id   = $client['station_id'];
+        $generator_id = $client['generator_id'];
+        $newEvent     = [
             'station_id'   => $client['station_id'],
             'generator_id' => $client['generator_id'],
             'event'        => $client['event'],
@@ -93,13 +65,13 @@ class GeneratorEvent extends BaseController
         ];
 
         // 查找时间最近一条事件
-        $lastEvent = $this->eventModel->getLastEventLogByStationGen($client['station_id'], $client['generator_id']);
+        $lastEvent = $this->eventModel->getLastLogByStationGen($station_id, $generator_id);
 
         // 检查时间戳，事件的合理性
-        $validMsg = $this->validNewEvent($lastEvent, $newEvent);
-        if ($validMsg !== true) {
+        $validateMsg = $this->validateNewEvent($lastEvent, $newEvent);
+        if ($validateMsg !== true) {
             $res['code'] = EXIT_ERROR;
-            $res['msg']  = $validMsg;
+            $res['msg']  = $validateMsg;
             return $this->respond($res);
         }
 
@@ -118,6 +90,42 @@ class GeneratorEvent extends BaseController
         return $this->respond($res);
     }
 
+    // V2
+    public function getGeneratorEvent()
+    {
+        $param = $this->request->getGet();
+
+        // 检查请求数据
+        if (!$this->validate('GeneratorEventGet')) {
+            $res['error'] = $this->validator->getErrors();
+
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '请求数据无效';
+            return $this->respond($res);
+        }
+
+        $utils = service('mixUtils');
+        $start = $utils->getFirstDayOfMonth($param['date']);
+        $end   = $utils->getLastDayOfMonth($param['date']);
+
+        $query = [
+            'station_id'   => $param['station_id'],
+            'generator_id' => $param['generator_id'],
+            'start'        => $start,
+            'end'          => $end,
+            'limit'        => $param['limit'],
+            'offset'       => $param['offset'],
+        ];
+
+        $columnName = ['id', 'station_id', 'generator_id', 'event', 'event_at', 'creator', 'description'];
+        $result     = $this->eventModel->getLogsForShowList($columnName, $query);
+
+        $res['code'] = EXIT_SUCCESS;
+        $res['data'] = ['total' => $result['total'], 'data' => $result['result']];
+
+        return $this->respond($res);
+    }
+
     public function updateGeneratorEvent()
     {
         // 检查请求数据
@@ -131,15 +139,6 @@ class GeneratorEvent extends BaseController
 
         $client = $this->request->getJSON(true);
 
-        // 与session比对
-        $stationID = $this->session->get('belongToDeptId');
-        if ($client['station_id'] != $stationID) {
-            $res['error'] = 'invalid station_id';
-            $res['code']  = EXIT_ERROR;
-            $res['msg']   = '请求数据无效';
-            return $this->respond($res);
-        }
-
         // 取出检验后的数据
         $newEvent = [
             'id'           => $client['id'],
@@ -151,7 +150,7 @@ class GeneratorEvent extends BaseController
         ];
 
         // 查找时间最近一条事件
-        $lastEvents = $this->eventModel->getLastEventLogByStationGen($client['station_id'], $client['generator_id'], 2);
+        $lastEvents = $this->eventModel->getLastLogByStationGen($client['station_id'], $client['generator_id'], 2);
 
         // 对比
         if ($lastEvents[0]['id'] != $client['id']) {
@@ -168,10 +167,10 @@ class GeneratorEvent extends BaseController
         }
 
         // 检查时间戳，事件的合理性
-        $validMsg = $this->validNewEvent($lastEvents[1], $newEvent);
-        if ($validMsg !== true) {
+        $validateMsg = $this->validateNewEvent($lastEvents[1], $newEvent);
+        if ($validateMsg !== true) {
             $res['code'] = EXIT_ERROR;
-            $res['msg']  = $validMsg;
+            $res['msg']  = $validateMsg;
             return $this->respond($res);
         }
 
@@ -207,17 +206,8 @@ class GeneratorEvent extends BaseController
 
         $client = $this->request->getJSON(true);
 
-        // 与session比对
-        $stationID = $this->session->get('belongToDeptId');
-        if ($client['station_id'] != $stationID) {
-            $res['code']  = EXIT_ERROR;
-            $res['msg']   = '请求数据无效';
-            $res['error'] = 'invalid station_id';
-            return $this->respond($res);
-        }
-
         // 查找时间最进一条事件
-        $lastEvent = $this->eventModel->getLastEventLogByStationGen($client['station_id'], $client['generator_id']);
+        $lastEvent = $this->eventModel->getLastLogByStationGen($client['station_id'], $client['generator_id']);
 
         // 对比
         if ($lastEvent['id'] != $client['id']) {
@@ -257,15 +247,6 @@ class GeneratorEvent extends BaseController
 
             $res['code'] = EXIT_ERROR;
             $res['msg']  = '请求数据无效';
-            return $this->respond($res);
-        }
-
-        // 与session比对
-        $stationID = $this->session->get('belongToDeptId');
-        if ($param['station_id'] != $stationID) {
-            $res['error'] = 'invalid station_id';
-            $res['code']  = EXIT_ERROR;
-            $res['msg']   = '请求数据无效';
             return $this->respond($res);
         }
 
@@ -354,6 +335,7 @@ class GeneratorEvent extends BaseController
         // return $this->respond($res);
     }
 
+    // V
     public function getGeneratorEventStatistic()
     {
         $param = $this->request->getGet();
@@ -370,19 +352,67 @@ class GeneratorEvent extends BaseController
             return $this->respond($res);
         }
 
-        $query['year']       = $param['year'];
-        $query['station_id'] = $param['station_id'];
+        // 初值
+        $res = [];
+        for ($i = 0; $i < $this->genTotalNumber; $i++) {
+            $res[] = [
+                'gid'          => ($i + 1) . 'G',
+                'start_num'    => 0,
+                'running_time' => 0,
+                'last_at'      => 'NULL',
+            ];
+        }
 
-        $result = $this->eventModel->getStatisticByYearAndStation($query);
+        $utils = service('mixUtils');
 
-        $res['code'] = EXIT_SUCCESS;
-        $res['data'] = ['data' => $result];
+        // 查询记录
+        $columnName = ['event', 'event_at'];
+        $query      = [
+            'year'         => $param['year'],
+            'station_id'   => $param['station_id'],
+            'generator_id' => 0,
+        ];
+        for ($i = 0; $i < $this->genTotalNumber; $i++) {
+            $query['generator_id'] = ($i + 1);
 
-        return $this->respond($res);
+            $db = $this->eventModel->getByStationDateGen($columnName, $query);
+            if (!empty($db)) {
+                $cnt          = count($db);
+                $start_num    = 0;
+                $running_time = 0;
+                $start_at     = '';
+                for ($j = 0; $j < $cnt; $j++) {
+                    if ($db[$j]['event'] == $this->eventStart) {
+                        $start_num += 1;
+                        $start_at = $db[$j]['event_at'];
+                        continue;
+                    }
+                    if ($j === 0 && $db[$j]['event'] == $this->eventStop) {
+                        $firstDayOfYear = $utils->getFirstDayOfYear($db[$j]['event_at'], 0, true);
+                        $running_time += (strtotime($db[$j]['event_at']) - strtotime($firstDayOfYear));
+                        continue;
+                    }
+                    if ($j !== 0 && $db[$j]['event'] == $this->eventStop) {
+                        $running_time += (strtotime($db[$j]['event_at']) - strtotime($start_at));
+                        continue;
+                    }
+                }
+                $res[$i]['start_num']    = $start_num;
+                $res[$i]['running_time'] = round($running_time / 3600, 2);
+                $res[$i]['last_at']      = $db[$cnt - 1]['event_at'];
+            }
+        }
+
+        $result2 = $this->eventModel->getStatisticByYearAndStation($query);
+
+        $response['code'] = EXIT_SUCCESS;
+        $response['data'] = $res;
+
+        return $this->respond($response);
     }
 
     // 内部方法
-    protected function validNewEvent(array $lastEvent = [], array $newEvent = [])
+    protected function validateNewEvent(array $lastEvent = [], array $newEvent = [])
     {
         if (empty($newEvent)) {
             return false;
@@ -397,11 +427,8 @@ class GeneratorEvent extends BaseController
                 return '请检查填写的日期、时间';
             }
 
-            if (($lastEvent['event'] === '1') && ($newEvent['event'] === '1')) {
-                return '最后一条记录是停机，请检查填写的事件';
-            }
-            if (($lastEvent['event'] === '2') && ($newEvent['event'] === '2')) {
-                return '最后一条记录是开机，请检查填写的事件';
+            if ($lastEvent['event'] == $newEvent['event']) {
+                return '与已保存的记录冲突';
             }
         } else {
             // 检查时间戳

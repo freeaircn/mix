@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-07 20:37:33
+ * @LastEditTime: 2021-09-08 22:09:41
  */
 
 namespace App\Models\Meter;
@@ -17,7 +17,7 @@ class MeterLogModel extends Model
 
     protected $table         = 'app_meter';
     protected $primaryKey    = 'id';
-    protected $allowedFields = ['station_id', 'meter_id', 'log_date', 'log_time', 'fak', 'bak', 'frk', 'brk', 'peak', 'valley', 'fak_delta', 'bak_delta', 'frk_delta', 'brk_delta', 'peak_delta', 'valley_delta', 'creator'];
+    protected $allowedFields = ['station_id', 'meter_id', 'log_date', 'log_time', 'fak', 'bak', 'frk', 'brk', 'peak', 'valley', 'creator'];
 
     protected $useAutoIncrement = true;
 
@@ -44,20 +44,20 @@ class MeterLogModel extends Model
         return $total > 0 ? true : false;
     }
 
-    public function getLogByStationDateTime($query)
-    {
-        if (empty($query)) {
-            return false;
-        }
+    // public function getLogByStationDateTime($query)
+    // {
+    //     if (empty($query)) {
+    //         return false;
+    //     }
 
-        $selectSql = 'id, station_id, meter_id, log_date, log_time, fak, bak, frk, brk, peak, valley, fak_delta, bak_delta, frk_delta, brk_delta, peak_delta, valley_delta, creator';
-        $builder   = $this->select($selectSql);
+    //     $selectSql = 'id, station_id, meter_id, log_date, log_time, fak, bak, frk, brk, peak, valley, creator';
+    //     $builder   = $this->select($selectSql);
 
-        $builder->where($query);
-        $res = $builder->findAll();
+    //     $builder->where($query);
+    //     $res = $builder->findAll();
 
-        return $res;
-    }
+    //     return $res;
+    // }
 
     public function getById($id)
     {
@@ -65,7 +65,7 @@ class MeterLogModel extends Model
             return false;
         }
 
-        $selectSql = 'id, station_id, meter_id, log_date, log_time, fak, bak, frk, brk, peak, valley, fak_delta, bak_delta, frk_delta, brk_delta, peak_delta, valley_delta, creator';
+        $selectSql = 'id, station_id, meter_id, log_date, log_time, fak, bak, frk, brk, peak, valley, creator';
         $builder   = $this->select($selectSql);
 
         $builder->where('id', $id);
@@ -125,7 +125,29 @@ class MeterLogModel extends Model
         return ['total' => $total, 'result' => $result];
     }
 
-    public function sumByStationDateTimeMeterIds($columnName = [], $query = [])
+    // public function sumByStationDateTimeMeterIds($columnName = [], $query = [])
+    // {
+    //     if (empty($columnName)) {
+    //         return false;
+    //     }
+
+    //     $selectSql = '';
+    //     foreach ($columnName as $key) {
+    //         $selectSql = $selectSql . 'SUM(`' . $key . '`) AS sum_' . $key . ', ';
+    //     }
+    //     $builder = $this->select($selectSql);
+
+    //     $whereSql = "station_id = " . $query['station_id']
+    //         . " AND log_date = " . "'" . $query['log_date'] . "'"
+    //         . " AND log_time = " . "'" . $query['log_time'] . "'"
+    //         . " AND meter_id BETWEEN " . $query['first_meter_id'] . " AND " . $query['last_meter_id'];
+    //     $builder->where($whereSql);
+
+    //     $result = $builder->findAll();
+    //     return isset($result[0]) ? $result[0] : [];
+    // }
+
+    public function getByStationDatesTimeMeters($columnName = [], $query = [])
     {
         if (empty($columnName)) {
             return false;
@@ -133,69 +155,43 @@ class MeterLogModel extends Model
 
         $selectSql = '';
         foreach ($columnName as $key) {
-            $selectSql = $selectSql . 'SUM(`' . $key . '`) AS sum_' . $key . ', ';
+            $selectSql = $selectSql . $key . ', ';
         }
         $builder = $this->select($selectSql);
 
-        $whereSql = "station_id = " . $query['station_id']
-            . " AND log_date = " . "'" . $query['log_date'] . "'"
-            . " AND log_time = " . "'" . $query['log_time'] . "'"
-            . " AND meter_id BETWEEN " . $query['first_meter_id'] . " AND " . $query['last_meter_id'];
-        $builder->where($whereSql);
-
-        $result = $builder->findAll();
-        return isset($result[0]) ? $result[0] : [];
-    }
-
-    public function getByStationDateTimeMeterIds($columnName = [], $query = [])
-    {
-        if (empty($columnName)) {
-            return false;
-        }
-
-        $selectSql = 'log_date as date, fak_delta as real';
-        // foreach ($columnName as $key) {
-        //     $selectSql = $selectSql . $key . ', ';
-        // }
-        $builder = $this->select($selectSql);
-
-        $whereSql = "station_id = " . $query['station_id']
-            . " AND log_time = " . "'" . $query['log_time'] . "'"
-            . " AND Date(log_date) BETWEEN " . "'" . $query['start_at'] . "'" . " AND " . "'" . $query['end_at'] . "'"
-            . " AND meter_id BETWEEN " . $query['first_meter_id'] . " AND " . $query['last_meter_id'];
-        $builder->where($whereSql);
-
-        $result = $builder->findAll();
-        return $result;
-    }
-
-    public function getByStationTimeDatesMeterIds($columnName = [], $query = [])
-    {
-        if (empty($columnName)) {
-            return false;
-        }
-
-        $selectSql = 'log_date as date, fak as real';
-        // foreach ($columnName as $key) {
-        //     $selectSql = $selectSql . $key . ', ';
-        // }
-        $builder = $this->select($selectSql);
-
-        // $whereSql = "station_id = " . $query['station_id']
-        //     . " AND log_time = " . "'" . $query['log_time'] . "'"
-        //     . " AND Date(log_date) BETWEEN " . "'" . $query['start_at'] . "'" . " AND " . "'" . $query['end_at'] . "'"
-        //     . " AND meter_id BETWEEN " . $query['first_meter_id'] . " AND " . $query['last_meter_id'];
         $builder->where('station_id', $query['station_id']);
         $builder->where('log_time', $query['log_time']);
         $builder->whereIn('log_date', $query['log_date']);
         $builder->whereIn('meter_id', $query['meter_id']);
-        $builder->orderBy('log_date', 'ASC');
 
         $result = $builder->findAll();
+
         return $result;
     }
 
-    public function getByStationDateTimeMeterId($columnName = [], $query = [])
+    public function getByStationDatesTimeMeter($columnName = [], $query = [])
+    {
+        if (empty($columnName)) {
+            return false;
+        }
+
+        $selectSql = '';
+        foreach ($columnName as $key) {
+            $selectSql = $selectSql . $key . ', ';
+        }
+        $builder = $this->select($selectSql);
+
+        $builder->where('station_id', $query['station_id']);
+        $builder->where('log_time', $query['log_time']);
+        $builder->where('meter_id', $query['meter_id']);
+        $builder->whereIn('log_date', $query['log_date']);
+
+        $result = $builder->findAll();
+
+        return $result;
+    }
+
+    public function getByStationDateRangeTimeMeters($columnName = [], $query = [])
     {
         if (empty($columnName)) {
             return false;
@@ -208,13 +204,13 @@ class MeterLogModel extends Model
         $builder = $this->select($selectSql);
 
         $whereSql = "station_id = " . $query['station_id']
-            . " AND log_date = " . "'" . $query['log_date'] . "'"
             . " AND log_time = " . "'" . $query['log_time'] . "'"
-            . " AND meter_id = " . $query['meter_id'];
+            . " AND Date(log_date) BETWEEN " . "'" . $query['start_at'] . "'" . " AND " . "'" . $query['end_at'] . "'"
+            . " AND meter_id BETWEEN " . $query['first_meter_id'] . " AND " . $query['last_meter_id'];
         $builder->where($whereSql);
 
         $result = $builder->findAll();
-        return isset($result[0]) ? $result[0] : [];
+        return $result;
     }
 
     public function getLastDateByStationTime($columnName = [], $query = [], $limit = 1)

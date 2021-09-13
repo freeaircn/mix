@@ -178,6 +178,21 @@ class MixUtils
             return '用户没有权限！';
         }
 
+        // 数据
+        $station_in_session = session('belongToDeptId');
+        $station_in_request = isset($_POST['station_id']) ? $_POST['station_id'] : null;
+        if ($station_in_request !== null) {
+            if ($station_in_request != $station_in_session) {
+                return '没有访问数据的权限';
+            }
+        }
+        $station_in_request = isset($_GET['station_id']) ? $_GET['station_id'] : null;
+        if ($station_in_request !== null) {
+            if ($station_in_request != $station_in_session) {
+                return '没有访问数据的权限';
+            }
+        }
+
         return true;
     }
 
@@ -204,7 +219,7 @@ class MixUtils
 
     public function getPlusOffsetDay(string $date = '', $offset = 0)
     {
-        return date("Y-m-d",strtotime($offset . " days", strtotime($date)));
+        return date("Y-m-d", strtotime($offset . " days", strtotime($date)));
     }
 
     public function getDayOfPreviousWeek(string $date = '')
@@ -240,6 +255,16 @@ class MixUtils
     {
         $year = date('Y', strtotime($date)) + $offset;
         return $year . '-12-31';
+    }
+
+    public function getFirstDayOfYear(string $date = '', $offset = 0, $include_time = false)
+    {
+        $year = date('Y', strtotime($date)) + $offset;
+        if ($include_time) {
+            return date('Y-m-d H:i:s', mktime(0, 0, 0, 1, 1, $year));
+        } else {
+            return date('Y-m-d', mktime(0, 0, 0, 1, 1, $year));
+        }
     }
 
     /**

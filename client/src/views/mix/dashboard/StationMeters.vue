@@ -103,6 +103,26 @@
       </a-row>
     </div>
 
+    <a-modal :visible="reportDiagVisible" title="简报" :closable="false">
+      <template slot="footer">
+        <a-button key="submit" type="primary" @click="() => {this.reportDiagVisible = false}">
+          关闭
+        </a-button>
+      </template>
+      <a-card size="small" title="今日1" style="margin-bottom: 8px">
+        <a-button slot="extra" type="link" @click="handleCopyReportContent('daily1')">复制</a-button>
+        <p>{{ reportContent.daily1 }}</p>
+      </a-card>
+      <a-card size="small" title="今日2" style="margin-bottom: 8px">
+        <a-button slot="extra" type="link" @click="handleCopyReportContent('daily2')">复制</a-button>
+        <p>{{ reportContent.daily2 }}</p>
+      </a-card>
+      <a-card size="small" title="一周">
+        <a-button slot="extra" type="link" @click="handleCopyReportContent('weekly')">复制</a-button>
+        <p>{{ reportContent.weekly }}</p>
+      </a-card>
+    </a-modal>
+
     <a-card title="发电量统计" :bordered="false" :body-style="{marginBottom: '8px'}">
       <div class="extra-wrapper" slot="extra">
         <div class="extra-item">
@@ -204,6 +224,12 @@ export default {
       totalLogs: 0,
       logListDate: '',
       logListData: [],
+      reportDiagVisible: false,
+      reportContent: {
+        daily1: '',
+        daily2: '',
+        weekly: ''
+      },
 
       // 年计划显示
       planningKWhListLoading: false,
@@ -341,13 +367,42 @@ export default {
         log_date: param.log_date,
         log_time: param.log_time
       }
+      this.reportDiagVisible = false
+      this.reportContent.daily1 = ''
+      this.reportContent.daily2 = ''
+      this.reportContent.weekly = ''
       getMetersDailyReport(query)
-        .then(res => {
-
+        .then(data => {
+          this.reportDiagVisible = true
+          this.reportContent.daily1 = data.daily1
+          this.reportContent.daily2 = data.daily2
+          this.reportContent.weekly = data.weekly
         })
         .catch((err) => {
+          this.reportDiagVisible = false
+          this.reportContent.daily1 = ''
+          this.reportContent.daily2 = ''
+          this.reportContent.weekly = ''
           if (err.response) {
           }
+        })
+    },
+
+    handleCopyReportContent (type) {
+      let text = ''
+      if (type === 'daily1') {
+        text = this.reportContent.daily1
+      } else if (type === 'daily2') {
+        text = this.reportContent.daily2
+      } else if (type === 'weekly') {
+        text = this.reportContent.weekly
+      }
+      this.$copyText(text).then(
+        () => {
+          this.$message.info('复制成功')
+        },
+        () => {
+          this.$message.info('复制失败')
         })
     },
 
@@ -361,8 +416,8 @@ export default {
           this.kWhStatisticDate = res.date
           this.kWhStatisticListData = res.statisticList
           this.kWhStatistic30DaysData = res.thirtyDaysData
-          this.kWhStatisticMonthlyData = res.monthlyData
-          this.kWhStatisticQuarterlyData = res.quarterlyData
+          this.kWhStatisticMonthlyData = res.monthData
+          this.kWhStatisticQuarterlyData = res.quarterData
           //
           this.kWhStatisticLoading = false
           this.kWhStatisticChanged = !this.kWhStatisticChanged

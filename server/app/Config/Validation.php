@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-04 17:12:30
+ * @LastEditTime: 2021-09-13 18:59:11
  */
 
 namespace Config;
@@ -90,9 +90,8 @@ class Validation
 
     public $GeneratorEventGet = [
         'station_id'   => 'required|regex_match[^[1-9]\d{0,2}$]',
-        'generator_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
-        'start'        => 'required|valid_date[Y-m-d]',
-        'end'          => 'required|valid_date[Y-m-d]',
+        'generator_id' => 'required|regex_match[^[0-9]\d{0,2}$]',
+        'date'         => 'required|valid_date[Y-m-d]',
         'limit'        => 'required|regex_match[^[1-9]\d{0,2}$]',
         'offset'       => 'required|regex_match[^[1-9]\d{0,9}$]',
     ];

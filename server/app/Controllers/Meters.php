@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-07 23:04:11
+ * @LastEditTime: 2021-09-13 09:56:23
  */
 
 namespace App\Controllers;
@@ -92,15 +92,6 @@ class Meters extends BaseController
             return $this->respond($res);
         }
 
-        // 与session比对
-        $stationID = $this->session->get('belongToDeptId');
-        if ($client['station_id'] != $stationID) {
-            $res['error'] = 'invalid station_id';
-            $res['code']  = EXIT_ERROR;
-            $res['msg']   = '没有权限';
-            return $this->respond($res);
-        }
-
         // 取出数据
         $meters = $client['meter'];
         $others = [
@@ -120,91 +111,6 @@ class Meters extends BaseController
             $res['code'] = EXIT_ERROR;
             $res['msg']  = '输入的日期已存在记录';
             return $this->respond($res);
-        }
-
-        // 查找前一天同一时间点记录
-        $utils   = service('mixUtils');
-        $prevDay = $utils->getPlusOffsetDay($log_date, -1);
-        $query   = [
-            'station_id' => $station_id,
-            'log_date'   => $prevDay,
-            'log_time'   => $log_time,
-        ];
-        $lastLogs = $this->meterLogModel->getLogByStationDateTime($query);
-        if (empty($lastLogs)) {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '没有前一天的记录，不允许新的记录';
-            return $this->respond($res);
-        }
-
-        // 无前一天数据
-        // if (count($lastLogs) === 0) {
-        //     $result = $this->meterLogModel->batchInsert($meters, $others);
-        //     if ($result) {
-        //         $res['code'] = EXIT_SUCCESS;
-        //         $res['msg']  = '添加新记录';
-        //     } else {
-        //         $res['code'] = EXIT_ERROR;
-        //         $res['msg']  = '添加失败，稍后再试';
-        //     }
-        //     return $this->respond($res);
-        // }
-
-        // 比对电表个数
-        if (count($lastLogs) != $this->meterNumber) {
-            $res['error'] = 'last log num != ' . $this->meterNumber;
-            $res['code']  = EXIT_ERROR;
-            $res['msg']   = '请求数据无效';
-            return $this->respond($res);
-        }
-
-        // 比较日期/时间
-        // if (strtotime($lastLogs[0]['log_date']) > strtotime($log_date)) {
-        //     $res['error'] = 'data early';
-        //     $res['code']  = EXIT_ERROR;
-        //     $res['msg']   = '输入的日期有误';
-        //     return $this->respond($res);
-        // }
-
-        // 非首次记录，计算日增量
-        for ($i = 0; $i < count($meters); $i++) {
-            // fak 正向有功
-            if ($meters[$i]['fak'] > $lastLogs[$i]['fak']) {
-                $meters[$i]['fak_delta'] = $meters[$i]['fak'] - $lastLogs[$i]['fak'];
-            } else {
-                $meters[$i]['bak'] = $lastLogs[$i]['bak'];
-            }
-            // bak 反向有功
-            if ($meters[$i]['bak'] > $lastLogs[$i]['bak']) {
-                $meters[$i]['bak_delta'] = $meters[$i]['bak'] - $lastLogs[$i]['bak'];
-            } else {
-                $meters[$i]['bak'] = $lastLogs[$i]['bak'];
-            }
-            // frk 正向无功
-            if ($meters[$i]['frk'] > $lastLogs[$i]['frk']) {
-                $meters[$i]['frk_delta'] = $meters[$i]['frk'] - $lastLogs[$i]['frk'];
-            } else {
-                $meters[$i]['frk'] = $lastLogs[$i]['frk'];
-            }
-            // brk 反向无功
-            if ($meters[$i]['brk'] > $lastLogs[$i]['brk']) {
-                $meters[$i]['brk_delta'] = $meters[$i]['brk'] - $lastLogs[$i]['brk'];
-            } else {
-                $meters[$i]['brk'] = $lastLogs[$i]['brk'];
-            }
-            // peak 高峰
-            if ($meters[$i]['peak'] > $lastLogs[$i]['peak']) {
-                $meters[$i]['peak_delta'] = $meters[$i]['peak'] - $lastLogs[$i]['peak'];
-            } else {
-                $meters[$i]['peak'] = $lastLogs[$i]['peak'];
-            }
-            // valley 低谷
-            if ($meters[$i]['valley'] > $lastLogs[$i]['valley']) {
-                $meters[$i]['valley_delta'] = $meters[$i]['valley'] - $lastLogs[$i]['valley'];
-            } else {
-                $meters[$i]['valley'] = $lastLogs[$i]['valley'];
-            }
-
         }
 
         //
@@ -231,15 +137,6 @@ class Meters extends BaseController
 
             $res['code'] = EXIT_ERROR;
             $res['msg']  = '请求数据无效';
-            return $this->respond($res);
-        }
-
-        // 与session比对
-        $stationID = $this->session->get('belongToDeptId');
-        if ($param['station_id'] != $stationID) {
-            $res['error'] = 'invalid station_id';
-            $res['code']  = EXIT_ERROR;
-            $res['msg']   = '没有权限';
             return $this->respond($res);
         }
 
@@ -282,15 +179,6 @@ class Meters extends BaseController
             return $this->respond($res);
         }
 
-        // 与session比对
-        $stationID = $this->session->get('belongToDeptId');
-        if ($param['station_id'] != $stationID) {
-            $res['error'] = 'invalid station_id';
-            $res['code']  = EXIT_ERROR;
-            $res['msg']   = '没有权限';
-            return $this->respond($res);
-        }
-
         // 取查询参数
         $station_id = $param['station_id'];
         $log_date   = $param['log_date'];
@@ -303,26 +191,30 @@ class Meters extends BaseController
         ];
         $planning = $this->getPlanningForDailyReport($query);
 
-        // 计算发电量
-        $genEnergy = $this->getGenEnergyForDailyReport($param);
+        $query = [
+            'station_id' => $station_id,
+            'log_date'   => $log_date,
+            'log_time'   => $log_time,
+        ];
+        // 发电量delta
+        $genEnergy = $this->getGenEnergyForDailyReport($query);
 
-        // 计算上网电量
-        $onGridEnergy = $this->getOnGridEnergyForDailyReport($param);
+        // 上网电量delta
+        $onGridEnergy = $this->getOnGridEnergyForDailyReport($query);
 
-        // 计算完成率
+        // 完成率
         $rates = $this->getCompletionRate($log_date, $planning, $genEnergy, $onGridEnergy);
 
-        // 写简报
+        // 简报
         $stationName = $this->session->get('belongToDeptName');
         $report      = $this->editDailyReports($stationName, $log_date, $rates, $genEnergy, $onGridEnergy);
 
-        $res['planning']     = $planning;
-        $res['genEnergy']    = $genEnergy;
-        $res['onGridEnergy'] = $onGridEnergy;
-        $res['rates']        = $rates;
-        $res['report']       = $report;
-        $res['code']         = EXIT_ERROR;
-        $res['msg']          = '测试';
+        // $res['planning']     = $planning;
+        // $res['genEnergy']    = $genEnergy;
+        // $res['onGridEnergy'] = $onGridEnergy;
+        // $res['rates']        = $rates;
+        $res['data'] = $report;
+        $res['code'] = EXIT_SUCCESS;
         return $this->respond($res);
 
     }
@@ -337,15 +229,6 @@ class Meters extends BaseController
 
             $res['code'] = EXIT_ERROR;
             $res['msg']  = '请求数据无效';
-            return $this->respond($res);
-        }
-
-        // 与session比对
-        $stationID = $this->session->get('belongToDeptId');
-        if ($param['station_id'] != $stationID) {
-            $res['error'] = 'invalid station_id';
-            $res['code']  = EXIT_ERROR;
-            $res['msg']   = '没有权限';
             return $this->respond($res);
         }
 
@@ -373,37 +256,38 @@ class Meters extends BaseController
         ];
         $planning = $this->getPlanningForDailyReport($query);
 
-        // 计算发电量
         $query = [
             'station_id' => $station_id,
             'log_date'   => $log_date,
             'log_time'   => $log_time,
         ];
+
+        // 发电量 delta
         $genEnergy = $this->getGenEnergyForDailyReport($query);
 
-        // 计算上网电量
+        // 上网电量 delta
         $onGridEnergy = $this->getOnGridEnergyForDailyReport($query);
 
-        // 计算完成率
+        // 完成率
         $rates = $this->getCompletionRate($log_date, $planning, $genEnergy, $onGridEnergy);
 
-        // 统计简表
+        // 统计图
         // 30天
         $thirtyDaysGenEnergy = $this->getThirtyDaysDataForBasicStatistic($query);
         // 每月
-        $monthlyData = $this->getMonthlyDataForBasicStatistic($query, $planning['month']);
+        $monthData = $this->getMonthDataForBasicStatistic($query, $planning['month']);
         // 每季度
-        $quarterlyData = $this->getQuarterlyDataForBasicStatistic($query, $planning['quarter']);
+        $quarterData = $this->getQuarterDataForBasicStatistic($query, $planning['quarter']);
 
-        $statisticResult = $this->editBasicStatistic($rates, $genEnergy, $onGridEnergy, $thirtyDaysGenEnergy, $monthlyData, $quarterlyData);
+        $statisticResult = $this->chgUnitForBasicStatistic($rates, $genEnergy, $onGridEnergy, $thirtyDaysGenEnergy, $monthData, $quarterData);
 
         $res['code'] = EXIT_SUCCESS;
         $res['data'] = [
             'date'           => $log_date . ' ' . $log_time,
             'statisticList'  => $statisticResult['statisticList'],
             'thirtyDaysData' => $statisticResult['thirtyDaysData'],
-            'monthlyData'    => $statisticResult['monthlyData'],
-            'quarterlyData'  => $statisticResult['quarterlyData'],
+            'monthData'      => $statisticResult['monthData'],
+            'quarterData'    => $statisticResult['quarterData'],
         ];
 
         return $this->respond($res);
@@ -421,15 +305,6 @@ class Meters extends BaseController
         }
 
         $client = $this->request->getJSON(true);
-
-        // 与session比对
-        $stationID = $this->session->get('belongToDeptId');
-        if ($client['station_id'] != $stationID) {
-            $res['code']  = EXIT_ERROR;
-            $res['msg']   = '请求数据无效';
-            $res['error'] = 'invalid station_id';
-            return $this->respond($res);
-        }
 
         $id         = $client['id'];
         $station_id = $client['station_id'];
@@ -498,15 +373,6 @@ class Meters extends BaseController
             return $this->respond($res);
         }
 
-        // 与session比对
-        $stationID = $this->session->get('belongToDeptId');
-        if ($param['station_id'] != $stationID) {
-            $res['error'] = 'invalid station_id';
-            $res['code']  = EXIT_ERROR;
-            $res['msg']   = '没有权限';
-            return $this->respond($res);
-        }
-
         $date = $param['date'];
 
         $query['station_id'] = $param['station_id'];
@@ -538,15 +404,6 @@ class Meters extends BaseController
 
             $res['code'] = EXIT_ERROR;
             $res['msg']  = '请求数据无效';
-            return $this->respond($res);
-        }
-
-        // 与session比对
-        $stationID = $this->session->get('belongToDeptId');
-        if ($client['station_id'] != $stationID) {
-            $res['error'] = 'invalid station_id';
-            $res['code']  = EXIT_ERROR;
-            $res['msg']   = '没有权限';
             return $this->respond($res);
         }
 
@@ -617,174 +474,186 @@ class Meters extends BaseController
 
     }
 
-    protected function getGenEnergyForDailyReport($param)
+    protected function getGenEnergyForDailyReport($query)
     {
-        $station_id = $param['station_id'];
-        $log_date   = $param['log_date'];
-        $log_time   = $param['log_time'];
+        $station_id = $query['station_id'];
+        $log_date   = $query['log_date'];
+        $log_time   = $query['log_time'];
 
         // 初值0
         $res = [
-            'daily'        => 0,
-            'weekly'       => 0,
-            'monthly'      => 0,
-            'quarterly'    => 0,
-            'yearly'       => 0,
-            'daily_peak'   => 0,
-            'daily_valley' => 0,
+            'day'        => 0,
+            'week'       => 0,
+            'month'      => 0,
+            'quarter'    => 0,
+            'year'       => 0,
+            'day_peak'   => 0,
+            'day_valley' => 0,
         ];
+
+        // 需查找的日期
         $utils = service('mixUtils');
 
-        // 查询给定日期：日电量，表读数，峰谷电量
-        $columnName = ['fak', 'fak_delta', 'peak_delta', 'valley_delta'];
-        $query      = [
-            'station_id'     => $station_id,
-            'log_date'       => $log_date,
-            'log_time'       => $log_time,
-            'first_meter_id' => $this->firstGenMeterId,
-            'last_meter_id'  => $this->lastGenMeterId,
-        ];
-        $currentDayLog = $this->meterLogModel->sumByStationDateTimeMeterIds($columnName, $query);
+        $today       = $log_date;
+        $prevDay     = $utils->getPlusOffsetDay($log_date, -1);
+        $prevWeek    = $utils->getDayOfPreviousWeek($log_date);
+        $prevMonth   = $utils->getLastDayOfMonth($log_date, -1);
+        $prevQuarter = $utils->getLastDayOfQuarter($log_date, -1);
+        $prevYear    = $utils->getLastDayOfYear($log_date, -1);
+        $dates       = [$today, $prevDay, $prevWeek, $prevMonth, $prevQuarter, $prevYear];
 
-        if (empty($currentDayLog)) {
+        $meter_ids = [];
+        for ($i = $this->firstGenMeterId; $i <= $this->lastGenMeterId; $i++) {
+            $meter_ids[] = $i;
+        }
+
+        // 查询给定日期：表读数，峰谷电量
+        $columnName = ['log_date', 'fak', 'peak', 'valley'];
+        $query2     = [
+            'station_id' => $station_id,
+            'log_date'   => $dates,
+            'log_time'   => $log_time,
+            'meter_id'   => $meter_ids,
+        ];
+        $db = $this->meterLogModel->getByStationDatesTimeMeters($columnName, $query2);
+        if (empty($db)) {
             return $res;
         }
-        // 日发电量
-        $res['daily'] = $currentDayLog['sum_fak_delta'];
-        // 日峰谷电量
-        $res['daily_peak']   = $currentDayLog['sum_peak_delta'];
-        $res['daily_valley'] = $currentDayLog['sum_valley_delta'];
 
-        // 表读数
-        $currentDayFak = $currentDayLog['sum_fak'];
-
-        // 查询上一周：表读数
-        $columnName        = ['fak'];
-        $query['log_date'] = $utils->getDayOfPreviousWeek($log_date);
-        $previousWeek      = $this->meterLogModel->sumByStationDateTimeMeterIds($columnName, $query);
-
-        if (!empty($previousWeek) && $previousWeek['sum_fak'] !== null) {
-            if ($previousWeek['sum_fak'] < $currentDayFak) {
-                $res['weekly'] = $currentDayFak - $previousWeek['sum_fak'];
+        // 表读数求和
+        $db2 = [];
+        for ($i = 0; $i < count($dates); $i++) {
+            $date   = $dates[$i];
+            $fak    = 0;
+            $peak   = 0;
+            $valley = 0;
+            for ($j = 0; $j < count($db); $j++) {
+                if ($db[$j]['log_date'] === $date) {
+                    $fak += $db[$j]['fak'];
+                    $peak += $db[$j]['peak'];
+                    $valley += $db[$j]['valley'];
+                }
             }
+            $db2[$date] = [
+                'fak'    => $fak,
+                'peak'   => $peak,
+                'valley' => $valley,
+            ];
         }
 
-        // 查询前一个月：表读数
-        $columnName        = ['fak'];
-        $query['log_date'] = $utils->getLastDayOfMonth($log_date, -1);
-        $previousMonth     = $this->meterLogModel->sumByStationDateTimeMeterIds($columnName, $query);
-
-        if (!empty($previousMonth) && $previousMonth['sum_fak'] !== null) {
-            if ($previousMonth['sum_fak'] < $currentDayFak) {
-                $res['monthly'] = $currentDayFak - $previousMonth['sum_fak'];
-            }
+        // 日
+        if (($db2[$today]['fak'] > $db2[$prevDay]['fak']) && ($db2[$prevDay]['fak'] > 0)) {
+            $res['day'] = $db2[$today]['fak'] - $db2[$prevDay]['fak'];
+        }
+        if (($db2[$today]['peak'] > $db2[$prevDay]['peak']) && ($db2[$prevDay]['peak'] > 0)) {
+            $res['day_peak'] = $db2[$today]['peak'] - $db2[$prevDay]['peak'];
+        }
+        if (($db2[$today]['valley'] > $db2[$prevDay]['valley']) && ($db2[$prevDay]['valley'] > 0)) {
+            $res['day_valley'] = $db2[$today]['valley'] - $db2[$prevDay]['valley'];
         }
 
-        // 查询前一个季度：表读数
-        $columnName        = ['fak'];
-        $query['log_date'] = $utils->getLastDayOfQuarter($log_date, -1);
-        $previousQuarter   = $this->meterLogModel->sumByStationDateTimeMeterIds($columnName, $query);
-
-        if (!empty($previousQuarter) && $previousQuarter['sum_fak'] !== null) {
-            if ($previousQuarter['sum_fak'] < $currentDayFak) {
-                $res['quarterly'] = $currentDayFak - $previousQuarter['sum_fak'];
-            }
+        // 七天
+        if (($db2[$today]['fak'] > $db2[$prevWeek]['fak']) && ($db2[$prevWeek]['fak'] > 0)) {
+            $res['week'] = $db2[$today]['fak'] - $db2[$prevWeek]['fak'];
         }
 
-        // 查询前一年：表读数
-        $columnName        = ['fak'];
-        $query['log_date'] = $utils->getLastDayOfYear($log_date, -1);
-        $previousYear      = $this->meterLogModel->sumByStationDateTimeMeterIds($columnName, $query);
-
-        if (!empty($previousYear) && $previousYear['sum_fak'] !== null) {
-            if ($previousYear['sum_fak'] < $currentDayFak) {
-                $res['yearly'] = $currentDayFak - $previousYear['sum_fak'];
-            }
+        // 月
+        if (($db2[$today]['fak'] > $db2[$prevMonth]['fak']) && ($db2[$prevMonth]['fak'] > 0)) {
+            $res['month'] = $db2[$today]['fak'] - $db2[$prevMonth]['fak'];
         }
 
-        // 计算结束
+        // 季度
+        if (($db2[$today]['fak'] > $db2[$prevQuarter]['fak']) && ($db2[$prevQuarter]['fak'] > 0)) {
+            $res['quarter'] = $db2[$today]['fak'] - $db2[$prevQuarter]['fak'];
+        }
+
+        // 年
+        if (($db2[$today]['fak'] > $db2[$prevYear]['fak']) && ($db2[$prevYear]['fak'] > 0)) {
+            $res['year'] = $db2[$today]['fak'] - $db2[$prevYear]['fak'];
+        }
+
         return $res;
     }
 
-    protected function getOnGridEnergyForDailyReport($param)
+    protected function getOnGridEnergyForDailyReport($query)
     {
-        $station_id = $param['station_id'];
-        $log_date   = $param['log_date'];
-        $log_time   = $param['log_time'];
+        $station_id = $query['station_id'];
+        $log_date   = $query['log_date'];
+        $log_time   = $query['log_time'];
 
         // 初值0
         $res = [
-            'daily'     => 0,
-            'weekly'    => 0,
-            'monthly'   => 0,
-            'quarterly' => 0,
-            'yearly'    => 0,
+            'day'     => 0,
+            'week'    => 0,
+            'month'   => 0,
+            'quarter' => 0,
+            'year'    => 0,
         ];
+
+        // 需查找的日期
         $utils = service('mixUtils');
 
+        $today       = $log_date;
+        $prevDay     = $utils->getPlusOffsetDay($log_date, -1);
+        $prevWeek    = $utils->getDayOfPreviousWeek($log_date);
+        $prevMonth   = $utils->getLastDayOfMonth($log_date, -1);
+        $prevQuarter = $utils->getLastDayOfQuarter($log_date, -1);
+        $prevYear    = $utils->getLastDayOfYear($log_date, -1);
+        $dates       = [$today, $prevDay, $prevWeek, $prevMonth, $prevQuarter, $prevYear];
+
         // 查询给定日期：日电量，表读数
-        $columnName = ['fak', 'fak_delta'];
-        $query      = [
+        $columnName = ['log_date', 'fak'];
+        $query2     = [
             'station_id' => $station_id,
-            'log_date'   => $log_date,
+            'log_date'   => $dates,
             'log_time'   => $log_time,
             'meter_id'   => $this->mainMeterId,
         ];
-        $currentDayLog = $this->meterLogModel->getByStationDateTimeMeterId($columnName, $query);
-
-        if (empty($currentDayLog)) {
+        $db = $this->meterLogModel->getByStationDatesTimeMeter($columnName, $query2);
+        if (empty($db)) {
             return $res;
         }
-        // 日发电量
-        $res['daily'] = $currentDayLog['fak_delta'];
+
         // 表读数
-        $currentDayFak = $currentDayLog['fak'];
-
-        // 查询上一周：表读数
-        $columnName        = ['fak'];
-        $query['log_date'] = $utils->getDayOfPreviousWeek($log_date);
-        $previousWeek      = $this->meterLogModel->getByStationDateTimeMeterId($columnName, $query);
-
-        if (!empty($previousWeek) && $previousWeek['fak'] !== null) {
-            if ($previousWeek['fak'] < $currentDayFak) {
-                $res['weekly'] = $currentDayFak - $previousWeek['fak'];
+        $db2 = [];
+        for ($i = 0; $i < count($dates); $i++) {
+            $date = $dates[$i];
+            $fak  = 0;
+            for ($j = 0; $j < count($db); $j++) {
+                if ($db[$j]['log_date'] === $date) {
+                    $fak = $db[$j]['fak'];
+                }
             }
+            $db2[$date] = [
+                'fak' => $fak,
+            ];
         }
 
-        // 查询前一个月：表读数
-        $columnName        = ['fak'];
-        $query['log_date'] = $utils->getLastDayOfMonth($log_date, -1);
-        $previousMonth     = $this->meterLogModel->getByStationDateTimeMeterId($columnName, $query);
-
-        if (!empty($previousMonth) && $previousMonth['fak'] !== null) {
-            if ($previousMonth['fak'] < $currentDayFak) {
-                $res['monthly'] = $currentDayFak - $previousMonth['fak'];
-            }
+        // 日
+        if (($db2[$today]['fak'] > $db2[$prevDay]['fak']) && ($db2[$prevDay]['fak'] > 0)) {
+            $res['day'] = $db2[$today]['fak'] - $db2[$prevDay]['fak'];
         }
 
-        // 查询前一个季度：表读数
-        $columnName        = ['fak'];
-        $query['log_date'] = $utils->getLastDayOfQuarter($log_date, -1);
-        $previousQuarter   = $this->meterLogModel->getByStationDateTimeMeterId($columnName, $query);
-
-        if (!empty($previousQuarter) && $previousQuarter['fak'] !== null) {
-            if ($previousQuarter['fak'] < $currentDayFak) {
-                $res['quarterly'] = $currentDayFak - $previousQuarter['fak'];
-            }
+        // 七天
+        if (($db2[$today]['fak'] > $db2[$prevWeek]['fak']) && ($db2[$prevWeek]['fak'] > 0)) {
+            $res['week'] = $db2[$today]['fak'] - $db2[$prevWeek]['fak'];
         }
 
-        // 查询前一年：表读数
-        $columnName        = ['fak'];
-        $query['log_date'] = $utils->getLastDayOfYear($log_date, -1);
-        $previousYear      = $this->meterLogModel->getByStationDateTimeMeterId($columnName, $query);
-
-        if (!empty($previousYear) && $previousYear['fak'] !== null) {
-            if ($previousYear['fak'] < $currentDayFak) {
-                $res['yearly'] = $currentDayFak - $previousYear['fak'];
-            }
+        // 月
+        if (($db2[$today]['fak'] > $db2[$prevMonth]['fak']) && ($db2[$prevMonth]['fak'] > 0)) {
+            $res['month'] = $db2[$today]['fak'] - $db2[$prevMonth]['fak'];
         }
 
-        // 计算结束
+        // 季度
+        if (($db2[$today]['fak'] > $db2[$prevQuarter]['fak']) && ($db2[$prevQuarter]['fak'] > 0)) {
+            $res['quarter'] = $db2[$today]['fak'] - $db2[$prevQuarter]['fak'];
+        }
+
+        // 年
+        if (($db2[$today]['fak'] > $db2[$prevYear]['fak']) && ($db2[$prevYear]['fak'] > 0)) {
+            $res['year'] = $db2[$today]['fak'] - $db2[$prevYear]['fak'];
+        }
+
         return $res;
     }
 
@@ -796,16 +665,19 @@ class Meters extends BaseController
 
         $utils    = service('mixUtils');
         $length   = 30;
-        $start_at = $utils->getPlusOffsetDay($log_date, -($length - 1));
+        $start_at = $utils->getPlusOffsetDay($log_date, -$length);
         $end_at   = $log_date;
 
         // 初值0
-        $res = [];
+        $res      = [];
+        $dates[0] = $utils->getPlusOffsetDay($log_date, -$length);
         for ($i = 0; $i < $length; $i++) {
+            $date    = $utils->getPlusOffsetDay($log_date, -($length - 1 - $i));
             $res[$i] = [
-                'date' => $utils->getPlusOffsetDay($log_date, -($length - 1 - $i)),
+                'date' => $date,
                 'real' => 0,
             ];
+            $dates[$i + 1] = $date;
         }
 
         $query2 = [
@@ -816,39 +688,40 @@ class Meters extends BaseController
             'first_meter_id' => $this->firstGenMeterId,
             'last_meter_id'  => $this->lastGenMeterId,
         ];
-        $columnName = ['log_date, fak_delta'];
-        $db         = $this->meterLogModel->getByStationDateTimeMeterIds($columnName, $query2);
-
-        $temp = [];
-        $his  = [];
-        for ($i = 0; $i < count($db); $i++) {
-            $dateKey = $db[$i]['date'];
-            $value   = 0;
-            if (isset($his[$dateKey])) {
-                continue;
-            } else {
-                for ($j = 0; $j < count($db); $j++) {
-                    if ($dateKey === $db[$j]['date']) {
-                        $value = $value + $db[$j]['real'];
-                    }
-                }
-                $temp[]        = ['date' => $dateKey, 'real' => $value];
-                $his[$dateKey] = $dateKey;
-            }
+        $columnName = ['log_date, fak'];
+        $db         = $this->meterLogModel->getByStationDateRangeTimeMeters($columnName, $query2);
+        if (empty($db)) {
+            return $res;
         }
 
-        for ($i = 0; $i < count($res); $i++) {
-            for ($j = 0; $j < count($temp); $j++) {
-                if ($res[$i]['date'] === $temp[$j]['date']) {
-                    $res[$i]['real'] = $temp[$j]['real'];
+        // 表读数求和
+        $db2 = [];
+        for ($i = 0; $i < count($dates); $i++) {
+            $date = $dates[$i];
+            $fak  = 0;
+            for ($j = 0; $j < count($db); $j++) {
+                if ($db[$j]['log_date'] === $date) {
+                    $fak += $db[$j]['fak'];
                 }
+            }
+            $db2[$date] = [
+                'fak' => $fak,
+            ];
+        }
+
+        // delta
+        for ($i = 0; $i < count($res); $i++) {
+            $a = $dates[$i];
+            $b = $dates[$i + 1];
+            if (($db2[$b]['fak'] > $db2[$a]['fak']) && ($db2[$a]['fak'] > 0)) {
+                $res[$i]['real'] = $db2[$b]['fak'] - $db2[$a]['fak'];
             }
         }
 
         return $res;
     }
 
-    protected function getMonthlyDataForBasicStatistic($query, $planning)
+    protected function getMonthDataForBasicStatistic($query, $planning)
     {
         $station_id = $query['station_id'];
         $log_date   = $query['log_date'];
@@ -875,30 +748,38 @@ class Meters extends BaseController
         }
         $dates[] = $log_date;
 
+        $meter_ids = [];
+        for ($i = $this->firstGenMeterId; $i <= $this->lastGenMeterId; $i++) {
+            $meter_ids[] = $i;
+        }
+
         $query2 = [
             'station_id' => $station_id,
             'log_date'   => $dates,
             'log_time'   => $log_time,
-            'meter_id'   => ['3', '4', '5'],
+            'meter_id'   => $meter_ids,
         ];
         $columnName = ['log_date, fak'];
-        $db         = $this->meterLogModel->getByStationTimeDatesMeterIds($columnName, $query2);
+        $db         = $this->meterLogModel->getByStationDatesTimeMeters($columnName, $query2);
+        if (empty($db)) {
+            return $res;
+        }
 
         // sum
         $db2 = [];
         for ($i = 0; $i < count($dates); $i++) {
             $temp = 0;
             for ($j = 0; $j < count($db); $j++) {
-                if ($dates[$i] === $db[$j]['date']) {
-                    $temp = $temp + $db[$j]['real'];
+                if ($dates[$i] === $db[$j]['log_date']) {
+                    $temp = $temp + $db[$j]['fak'];
                 }
             }
             $db2[] = ['date' => $dates[$i], 'real' => $temp];
         }
 
-        // 计算delta
+        // delta
         for ($i = 0; $i < (count($db2) - 1); $i++) {
-            if ($db2[$i]['real'] != 0 && $db2[$i + 1]['real'] != 0) {
+            if (($db2[$i + 1]['real'] > $db2[$i]['real']) && ($db2[$i]['real'] > 0)) {
                 $res[$i]['real'] = $db2[$i + 1]['real'] - $db2[$i]['real'];
             }
         }
@@ -907,7 +788,7 @@ class Meters extends BaseController
 
     }
 
-    protected function getQuarterlyDataForBasicStatistic($query, $planning)
+    protected function getQuarterDataForBasicStatistic($query, $planning)
     {
         $station_id = $query['station_id'];
         $log_date   = $query['log_date'];
@@ -934,30 +815,38 @@ class Meters extends BaseController
         }
         $dates[] = $log_date;
 
+        $meter_ids = [];
+        for ($i = $this->firstGenMeterId; $i <= $this->lastGenMeterId; $i++) {
+            $meter_ids[] = $i;
+        }
+
         $query2 = [
             'station_id' => $station_id,
             'log_date'   => $dates,
             'log_time'   => $log_time,
-            'meter_id'   => ['3', '4', '5'],
+            'meter_id'   => $meter_ids,
         ];
         $columnName = ['log_date, fak'];
-        $db         = $this->meterLogModel->getByStationTimeDatesMeterIds($columnName, $query2);
+        $db         = $this->meterLogModel->getByStationDatesTimeMeters($columnName, $query2);
+        if (empty($db)) {
+            return $res;
+        }
 
         // sum
         $db2 = [];
         for ($i = 0; $i < count($dates); $i++) {
             $temp = 0;
             for ($j = 0; $j < count($db); $j++) {
-                if ($dates[$i] === $db[$j]['date']) {
-                    $temp = $temp + $db[$j]['real'];
+                if ($dates[$i] === $db[$j]['log_date']) {
+                    $temp = $temp + $db[$j]['fak'];
                 }
             }
             $db2[] = ['date' => $dates[$i], 'real' => $temp];
         }
 
-        // 计算delta
+        // delta
         for ($i = 0; $i < (count($db2) - 1); $i++) {
-            if ($db2[$i]['real'] != 0 && $db2[$i + 1]['real'] != 0) {
+            if (($db2[$i + 1]['real'] > $db2[$i]['real']) && ($db2[$i]['real'] > 0)) {
                 $res[$i]['real'] = $db2[$i + 1]['real'] - $db2[$i]['real'];
             }
         }
@@ -966,13 +855,13 @@ class Meters extends BaseController
 
     }
 
-    protected function getCompletionRate($log_date, $planning, $genEnergy, $onGridEnergy)
+    protected function getCompletionRate($date, $planning, $genEnergy, $onGridEnergy)
     {
-        if (empty($planning) || empty($genEnergy) || empty($onGridEnergy) || empty($log_date)) {
+        if (empty($planning) || empty($genEnergy) || empty($onGridEnergy) || empty($date)) {
             return false;
         }
 
-        $month   = date('n', strtotime($log_date));
+        $month   = date('n', strtotime($date));
         $quarter = ceil($month / 3);
 
         // 初值0
@@ -985,29 +874,29 @@ class Meters extends BaseController
         $rate      = 0;
         $precision = 4;
 
-        // 数据库中，电表读数没有乘以表倍率，单位kWh；计划电量用户数据格式为4为小数 万kWh，入库前乘以10000，得到整数，单位kWh
+        // 数据库中，电表读数没有乘以表倍率，单位kWh；计划电量页面输入数据单位万kWh，4为小数，入库前乘以10000，取整数部分，单位kWh
 
         // 月计划完成率：机组 / 月计划发电量
         if (!empty($planning['month'][$month - 1]['planning'])) {
-            $rate         = round($genEnergy['monthly'] * $this->genMeterRate / $planning['month'][$month - 1]['planning'], $precision);
+            $rate         = round($genEnergy['month'] * $this->genMeterRate / $planning['month'][$month - 1]['planning'], $precision);
             $res['month'] = ($rate * 100) . '%';
         }
 
         // 月成交完成率：线路上网 / 月成交电量
         if (!empty($planning['month'][$month - 1]['deal'])) {
-            $rate              = round($onGridEnergy['monthly'] * $this->mainMeterRate / $planning['month'][$month - 1]['deal'], $precision);
+            $rate              = round($onGridEnergy['month'] * $this->mainMeterRate / $planning['month'][$month - 1]['deal'], $precision);
             $res['month_deal'] = ($rate * 100) . '%';
         }
 
         // 季度计划完成率：机组 / 季度计划发电量
         if (!empty($planning['quarter'][$quarter - 1])) {
-            $rate           = round($genEnergy['quarterly'] * $this->genMeterRate / $planning['quarter'][$quarter - 1], $precision);
+            $rate           = round($genEnergy['quarter'] * $this->genMeterRate / $planning['quarter'][$quarter - 1], $precision);
             $res['quarter'] = ($rate * 100) . '%';
         }
 
         // 年度计划完成率：机组 / 年度计划发电量
         if (!empty($planning['planning_total'])) {
-            $rate        = round($genEnergy['yearly'] * $this->genMeterRate / $planning['planning_total'], $precision);
+            $rate        = round($genEnergy['year'] * $this->genMeterRate / $planning['planning_total'], $precision);
             $res['year'] = ($rate * 100) . '%';
         }
 
@@ -1015,9 +904,9 @@ class Meters extends BaseController
 
     }
 
-    protected function editDailyReports($stationName, $log_date, $rates, $genEnergy, $onGridEnergy)
+    protected function editDailyReports($stationName, $date, $rates, $genEnergy, $onGridEnergy)
     {
-        if (empty($stationName) || empty($log_date) || empty($rates) || empty($genEnergy) || empty($onGridEnergy)) {
+        if (empty($stationName) || empty($date) || empty($rates) || empty($genEnergy) || empty($onGridEnergy)) {
             return false;
         }
 
@@ -1028,7 +917,7 @@ class Meters extends BaseController
         ];
 
         // 日期
-        $timestamp = strtotime($log_date);
+        $timestamp = strtotime($date);
         $year      = date('Y', $timestamp) . '年';
         $month     = date('m', $timestamp) . '月';
         $day       = date('d', $timestamp) . '日';
@@ -1038,129 +927,131 @@ class Meters extends BaseController
 
         $precision = 4;
 
-        // 电表倍率，单位换算
-        $dailyGenEnergy     = round($genEnergy['daily'] * $this->genMeterRate / 10000, $precision);
-        $monthlyGenEnergy   = round($genEnergy['monthly'] * $this->genMeterRate / 10000, $precision);
-        $quarterlyGenEnergy = round($genEnergy['quarterly'] * $this->genMeterRate / 10000, $precision);
-        $yearlyGenEnergy    = round($genEnergy['yearly'] * $this->genMeterRate / 10000, $precision);
+        // 电表倍率，单位 kWh -> 万kWh
+        $dayGenEnergy     = round($genEnergy['day'] * $this->genMeterRate / 10000, $precision);
+        $monthGenEnergy   = round($genEnergy['month'] * $this->genMeterRate / 10000, $precision);
+        $quarterGenEnergy = round($genEnergy['quarter'] * $this->genMeterRate / 10000, $precision);
+        $yearGenEnergy    = round($genEnergy['year'] * $this->genMeterRate / 10000, $precision);
 
         $res['daily1'] = $stationName . ' '
-            . $year . $month . $day . '，发电量为' . $dailyGenEnergy . '万千瓦时。'
-            . '截止' . $month . $day . '24时，电厂本月完成发电量' . $monthlyGenEnergy . '万千瓦时，完成月度发电计划的' . $rates['month'] . '，'
-            . $quarter . '季度累计完成发电量' . $quarterlyGenEnergy . '万千瓦时，完成季度发电计划的' . $rates['quarter'] . '，'
-            . '本年累计完成发电量' . $yearlyGenEnergy . '万千瓦时，完成年度发电计划的' . $rates['year'] . '。'
+            . $year . $month . $day . '，发电量为' . $dayGenEnergy . '万千瓦时。'
+            . '截止' . $month . $day . '24时，电厂本月完成发电量' . $monthGenEnergy . '万千瓦时，完成月度发电计划的' . $rates['month'] . '，'
+            . $quarter . '季度累计完成发电量' . $quarterGenEnergy . '万千瓦时，完成季度发电计划的' . $rates['quarter'] . '，'
+            . '本年累计完成发电量' . $yearGenEnergy . '万千瓦时，完成年度发电计划的' . $rates['year'] . '。'
             . '本日弃水电量为0万kWh，本月弃水电量累计0万kWh。';
 
-        $dailyOnGridEnergy   = round($onGridEnergy['daily'] * $this->mainMeterRate / 10000, $precision);
-        $monthlyOnGridEnergy = round($onGridEnergy['monthly'] * $this->mainMeterRate / 10000, $precision);
-        $yearlyOnGridEnergy  = round($onGridEnergy['yearly'] * $this->mainMeterRate / 10000, $precision);
+        //
+        $dayOnGridEnergy   = round($onGridEnergy['day'] * $this->mainMeterRate / 10000, $precision);
+        $monthOnGridEnergy = round($onGridEnergy['month'] * $this->mainMeterRate / 10000, $precision);
+        $yearOnGridEnergy  = round($onGridEnergy['year'] * $this->mainMeterRate / 10000, $precision);
 
         $res['daily2'] = $stationName . '：'
             . $year . $month . $day . '发电机组为#1、#2、#3机组，出力在0MW到161MW之间，'
-            . '机组日实际发电量为' . $dailyGenEnergy . '万kWh，'
-            . '日上网电量为' . $dailyOnGridEnergy . '万kWh。'
-            . '截止' . $month . $day . '24时，电厂本月完成上网电量' . $monthlyOnGridEnergy . '万kWh，完成月度成交电量的' . $rates['month_deal'] . '，'
-            . '本年完成上网电量' . $yearlyOnGridEnergy . '万kWh。'
+            . '机组日实际发电量为' . $dayGenEnergy . '万kWh，'
+            . '日上网电量为' . $dayOnGridEnergy . '万kWh。'
+            . '截止' . $month . $day . '24时，电厂本月完成上网电量' . $monthOnGridEnergy . '万kWh，完成月度成交电量的' . $rates['month_deal'] . '，'
+            . '本年完成上网电量' . $yearOnGridEnergy . '万kWh。'
             . '本日弃水电量为0万kWh，本月弃水电量累计0万kWh。';
 
+        //
         $utils        = service('mixUtils');
-        $previousWeek = $utils->getDayOfPreviousWeek($log_date);
+        $previousWeek = $utils->getDayOfPreviousWeek($date);
         $temp         = $utils->getPlusOffsetDay($previousWeek);
         $timestamp    = strtotime($temp);
         $year1        = date('Y', $timestamp) . '年';
         $month1       = date('m', $timestamp) . '月';
         $day1         = date('d', $timestamp) . '日';
 
-        $temp      = $utils->getPlusOffsetDay($log_date, 1);
+        $temp      = $utils->getPlusOffsetDay($date, 1);
         $timestamp = strtotime($temp);
         $year2     = date('Y', $timestamp) . '年';
         $month2    = date('m', $timestamp) . '月';
         $day2      = date('d', $timestamp) . '日';
 
-        $weeklyGenEnergy    = round($genEnergy['weekly'] * $this->genMeterRate / 10000, $precision);
-        $weeklyOnGirdEnergy = round($onGridEnergy['weekly'] * $this->mainMeterRate / 10000, $precision);
+        $weekGenEnergy    = round($genEnergy['week'] * $this->genMeterRate / 10000, $precision);
+        $weekOnGirdEnergy = round($onGridEnergy['week'] * $this->mainMeterRate / 10000, $precision);
 
         $res['weekly'] = $stationName . '本周(' . $year1 . $month1 . $day1 . '00点至' . $year2 . $month2 . $day2 . '00点)'
-            . '发电量为' . $weeklyGenEnergy . '万千瓦时，'
-            . '上网电量为' . $weeklyOnGirdEnergy . '万千瓦时；'
-            . '截止' . $month2 . $day2 . '00点，本月累计发电量为' . $monthlyGenEnergy . '万千瓦时，完成月度发电计划的' . $rates['month'] . '，'
-            . '本年度发电量为' . $yearlyGenEnergy . '万千瓦时，完成年度发电计划的' . $rates['year'] . '。';
+            . '发电量为' . $weekGenEnergy . '万千瓦时，'
+            . '上网电量为' . $weekOnGirdEnergy . '万千瓦时；'
+            . '截止' . $month2 . $day2 . '00点，本月累计发电量为' . $monthGenEnergy . '万千瓦时，完成月度发电计划的' . $rates['month'] . '，'
+            . '本年度发电量为' . $yearGenEnergy . '万千瓦时，完成年度发电计划的' . $rates['year'] . '。';
 
         return $res;
     }
 
-    protected function editBasicStatistic($rates, $genEnergy, $onGridEnergy, $thirtyDaysGenEnergy, $monthlyData, $quarterlyData)
+    protected function chgUnitForBasicStatistic($rates, $genEnergy, $onGridEnergy, $thirtyDaysGenEnergy, $monthData, $quarterData)
     {
-        if (empty($rates) || empty($genEnergy) || empty($onGridEnergy) || empty($thirtyDaysGenEnergy) || empty($monthlyData) || empty($quarterlyData)) {
+        if (empty($rates) || empty($genEnergy) || empty($onGridEnergy) || empty($thirtyDaysGenEnergy) || empty($monthData) || empty($quarterData)) {
             return false;
         }
 
         $precision = 4;
 
         // 电表倍率，单位换算
-        $dailyGenEnergy       = round($genEnergy['daily'] * $this->genMeterRate / 10000, $precision);
-        $weeklyGenEnergy      = round($genEnergy['weekly'] * $this->genMeterRate / 10000, $precision);
-        $monthlyGenEnergy     = round($genEnergy['monthly'] * $this->genMeterRate / 10000, $precision);
-        $quarterlyGenEnergy   = round($genEnergy['quarterly'] * $this->genMeterRate / 10000, $precision);
-        $yearlyGenEnergy      = round($genEnergy['yearly'] * $this->genMeterRate / 10000, $precision);
-        $dailyPeakGenEnergy   = round($genEnergy['daily_peak'] * $this->genMeterRate / 10000, $precision);
-        $dailyValleyGenEnergy = round($genEnergy['daily_valley'] * $this->genMeterRate / 10000, $precision);
+        $dayGenEnergy       = round($genEnergy['day'] * $this->genMeterRate / 10000, $precision);
+        $weekGenEnergy      = round($genEnergy['week'] * $this->genMeterRate / 10000, $precision);
+        $monthGenEnergy     = round($genEnergy['month'] * $this->genMeterRate / 10000, $precision);
+        $quarterGenEnergy   = round($genEnergy['quarter'] * $this->genMeterRate / 10000, $precision);
+        $yearGenEnergy      = round($genEnergy['year'] * $this->genMeterRate / 10000, $precision);
+        $dayPeakGenEnergy   = round($genEnergy['day_peak'] * $this->genMeterRate / 10000, $precision);
+        $dayValleyGenEnergy = round($genEnergy['day_valley'] * $this->genMeterRate / 10000, $precision);
 
         // 上网，电表倍率，单位换算
-        $dailyOnGridEnergy     = round($onGridEnergy['daily'] * $this->mainMeterRate / 10000, $precision);
-        $weeklyOnGridEnergy    = round($onGridEnergy['weekly'] * $this->mainMeterRate / 10000, $precision);
-        $monthlyOnGridEnergy   = round($onGridEnergy['monthly'] * $this->mainMeterRate / 10000, $precision);
-        $quarterlyOnGridEnergy = round($onGridEnergy['quarterly'] * $this->mainMeterRate / 10000, $precision);
-        $yearlyOnGridEnergy    = round($onGridEnergy['yearly'] * $this->mainMeterRate / 10000, $precision);
+        $dayOnGridEnergy     = round($onGridEnergy['day'] * $this->mainMeterRate / 10000, $precision);
+        $weekOnGridEnergy    = round($onGridEnergy['week'] * $this->mainMeterRate / 10000, $precision);
+        $monthOnGridEnergy   = round($onGridEnergy['month'] * $this->mainMeterRate / 10000, $precision);
+        $quarterOnGridEnergy = round($onGridEnergy['quarter'] * $this->mainMeterRate / 10000, $precision);
+        $yearOnGridEnergy    = round($onGridEnergy['year'] * $this->mainMeterRate / 10000, $precision);
 
         $statisticList = [
             0 => [
                 'id'        => '1',
                 'rowHeader' => '今日',
-                'onGrid'    => $dailyOnGridEnergy,
-                'genEnergy' => $dailyGenEnergy,
+                'onGrid'    => $dayOnGridEnergy,
+                'genEnergy' => $dayGenEnergy,
                 'rate'      => '/',
             ],
             1 => [
                 'id'        => '2',
                 'rowHeader' => '七日',
-                'onGrid'    => $weeklyOnGridEnergy,
-                'genEnergy' => $weeklyGenEnergy,
+                'onGrid'    => $weekOnGridEnergy,
+                'genEnergy' => $weekGenEnergy,
                 'rate'      => '/',
             ],
             2 => [
                 'id'        => '3',
                 'rowHeader' => '本月',
-                'onGrid'    => $monthlyOnGridEnergy,
-                'genEnergy' => $monthlyGenEnergy,
+                'onGrid'    => $monthOnGridEnergy,
+                'genEnergy' => $monthGenEnergy,
                 'rate'      => $rates['month'],
             ],
             3 => [
                 'id'        => '4',
                 'rowHeader' => '本季度',
-                'onGrid'    => $quarterlyOnGridEnergy,
-                'genEnergy' => $quarterlyGenEnergy,
+                'onGrid'    => $quarterOnGridEnergy,
+                'genEnergy' => $quarterGenEnergy,
                 'rate'      => $rates['quarter'],
             ],
             4 => [
                 'id'        => '5',
                 'rowHeader' => '全年',
-                'onGrid'    => $yearlyOnGridEnergy,
-                'genEnergy' => $yearlyGenEnergy,
+                'onGrid'    => $yearOnGridEnergy,
+                'genEnergy' => $yearGenEnergy,
                 'rate'      => $rates['year'],
             ],
             5 => [
                 'id'        => '6',
                 'rowHeader' => '日高峰',
                 'onGrid'    => '/',
-                'genEnergy' => $dailyPeakGenEnergy,
+                'genEnergy' => $dayPeakGenEnergy,
                 'rate'      => '/',
             ],
             6 => [
                 'id'        => '7',
                 'rowHeader' => '日低谷',
                 'onGrid'    => '/',
-                'genEnergy' => $dailyValleyGenEnergy,
+                'genEnergy' => $dayValleyGenEnergy,
                 'rate'      => '/',
             ],
         ];
@@ -1170,21 +1061,21 @@ class Meters extends BaseController
             $thirtyDaysGenEnergy[$i]['real'] = round($thirtyDaysGenEnergy[$i]['real'] * $this->genMeterRate / 10000, $precision);
         }
 
-        for ($i = 0; $i < count($monthlyData); $i++) {
-            $monthlyData[$i]['planning'] = round($monthlyData[$i]['planning'] / 10000, $precision);
-            $monthlyData[$i]['real']     = round($monthlyData[$i]['real'] * $this->genMeterRate / 10000, $precision);
+        for ($i = 0; $i < count($monthData); $i++) {
+            $monthData[$i]['planning'] = round($monthData[$i]['planning'] / 10000, $precision);
+            $monthData[$i]['real']     = round($monthData[$i]['real'] * $this->genMeterRate / 10000, $precision);
         }
 
-        for ($i = 0; $i < count($quarterlyData); $i++) {
-            $quarterlyData[$i]['planning'] = round($quarterlyData[$i]['planning'] / 10000, $precision);
-            $quarterlyData[$i]['real']     = round($quarterlyData[$i]['real'] * $this->genMeterRate / 10000, $precision);
+        for ($i = 0; $i < count($quarterData); $i++) {
+            $quarterData[$i]['planning'] = round($quarterData[$i]['planning'] / 10000, $precision);
+            $quarterData[$i]['real']     = round($quarterData[$i]['real'] * $this->genMeterRate / 10000, $precision);
         }
 
         return [
             'statisticList'  => $statisticList,
             'thirtyDaysData' => $thirtyDaysGenEnergy,
-            'monthlyData'    => $monthlyData,
-            'quarterlyData'  => $quarterlyData,
+            'monthData'      => $monthData,
+            'quarterData'    => $quarterData,
         ];
     }
 }

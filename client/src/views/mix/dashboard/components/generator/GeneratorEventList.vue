@@ -1,5 +1,27 @@
 <template>
   <div>
+    <a-form-model ref="queryForm" layout="inline" :model="query" @submit.native.prevent>
+      <a-form-model-item>
+        <a-month-picker v-model="query.date" valueFormat="YYYY-MM-DD" />
+      </a-form-model-item>
+
+      <a-form-model-item>
+        <a-select v-model="query.generator_id" placeholder="机组" allowClear style="width: 75px">
+          <a-select-option value="1">1G</a-select-option>
+          <a-select-option value="2">2G</a-select-option>
+          <a-select-option value="3">3G</a-select-option>
+        </a-select>
+      </a-form-model-item>
+
+      <a-form-model-item>
+        <a-button type="primary" @click="handleQuery">查询</a-button>
+      </a-form-model-item>
+
+      <a-form-model-item>
+        <a-button @click="handleExportExcel">导出</a-button>
+      </a-form-model-item>
+    </a-form-model>
+
     <a-table
       ref="table"
       rowKey="id"
@@ -69,7 +91,7 @@
 </template>
 
 <script>
-// import moment from 'moment'
+import moment from 'moment'
 
 const columns = [
   {
@@ -115,9 +137,7 @@ const generatorIdMap = {
 
 const eventMap = {
   1: { text: '停机' },
-  2: { text: '开机' },
-  3: { text: '检修开始' },
-  4: { text: '检修结束' }
+  2: { text: '开机' }
 }
 
 export default {
@@ -126,6 +146,10 @@ export default {
     loading: {
       type: Boolean,
       default: false
+    },
+    date: {
+      type: String,
+      default: ''
     },
     listData: {
       type: Array,
@@ -147,6 +171,11 @@ export default {
   data () {
     this.columns = columns
     return {
+      query: {
+        // moment YYYY-MM-DD
+        date: null
+      },
+
       // 事件列表显示区
       pagination: {
         current: 1,
@@ -177,6 +206,12 @@ export default {
     }
   },
   watch: {
+    date: {
+      handler: function (val) {
+        this.query.date = val
+      },
+      immediate: true
+    },
     current: {
       handler: function (val) {
         this.pagination.current = val
@@ -197,17 +232,40 @@ export default {
     }
   },
   methods: {
-
+    // 点击分页
     handleTableChange (value) {
       this.pagination.current = value.current
+      let gid = 0
+      if (this.query.generator_id !== undefined) {
+        gid = this.query.generator_id
+      }
 
       // 向父组件发消息，更新数据区
-      const queryParam = {
+      const query = {
         limit: this.pagination.pageSize,
-        offset: this.pagination.current
+        offset: this.pagination.current,
+        generator_id: gid
       }
       this.$emit('update:current', value.current)
-      this.$emit('reqData', queryParam)
+      this.$emit('paginationChange', query)
+    },
+
+    // 点击查询
+    handleQuery () {
+      let gid = 0
+      if (this.query.date == null) {
+        this.query.date = moment().format('YYYY-MM-DD')
+      }
+      if (this.query.generator_id !== undefined) {
+        gid = this.query.generator_id
+      }
+      this.$emit('update:date', this.query.date)
+      this.$emit('query', this.query.date, gid)
+    },
+
+    // 导出excel
+    handleExportExcel () {
+
     },
 
     handleEdit (record) {
@@ -218,7 +276,7 @@ export default {
     handleEditOk () {
       this.editModalVisible = false
       const param = { ...this.curRecord }
-      this.$emit('reqEdit', param)
+      this.$emit('edit', param)
     },
 
     // 删除请求
@@ -233,7 +291,7 @@ export default {
         title: '确定删除吗?',
         // content: '删除 ' + record.username,
         onOk: () => {
-          this.$emit('reqDelete', param)
+          this.$emit('delete', param)
         }
       })
     }
