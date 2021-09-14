@@ -7,9 +7,7 @@
             <a-tooltip slot="action">
               <template slot="title">
                 截至：
-                <div>1G：{{ statisticData[0].last_at }}</div>
-                <div>2G：{{ statisticData[1].last_at }}</div>
-                <div>3G：{{ statisticData[2].last_at }}</div>
+                <p v-for="(item) in last_at" :key="item.gid">{{ item.gid }}：{{ item.last_at }}</p>
               </template>
               <a-icon type="info-circle-o" />
             </a-tooltip>
@@ -50,7 +48,8 @@ export default {
       mountedDone: false,
       //
       runningTimeChart: null,
-      startNumChart: null
+      startNumChart: null,
+      last_at: []
     }
   },
   mounted () {
@@ -67,6 +66,7 @@ export default {
         if (this.mountedDone) {
           this.updateRunningTimeChart()
           this.updateStartNumChart()
+          this.updateLastAt()
         }
       },
       immediate: true
@@ -126,6 +126,19 @@ export default {
 
     updateStartNumChart () {
       this.startNumChart.changeData(this.statisticData)
+    },
+
+    updateLastAt () {
+      this.last_at.splice(0, this.last_at.length)
+      const len = this.statisticData.length
+      for (let i = 0; i < len; i++) {
+        let temp = {
+          gid: this.statisticData[i].gid,
+          last_at: this.statisticData[i].last_at
+        }
+        this.last_at.push(temp)
+        temp = {}
+      }
     }
   }
 }

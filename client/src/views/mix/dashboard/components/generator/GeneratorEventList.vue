@@ -265,7 +265,10 @@ export default {
 
     // 导出excel
     handleExportExcel () {
-
+      if (this.query.date == null) {
+        this.query.date = moment().format('YYYY-MM-DD')
+      }
+      this.$emit('export', this.query.date)
     },
 
     handleEdit (record) {

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-13 18:59:11
+ * @LastEditTime: 2021-09-14 10:14:40
  */
 
 namespace Config;
@@ -104,8 +104,7 @@ class Validation
 
     public $GeneratorEventExport = [
         'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
-        'start'      => 'required|valid_date[Y-m-d]',
-        'end'        => 'required|valid_date[Y-m-d]',
+        'date'       => 'required|valid_date[Y-m-d]',
     ];
 
     public $MeterLogsNew = [

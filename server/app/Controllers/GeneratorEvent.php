@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-13 21:13:41
+ * @LastEditTime: 2021-09-14 10:25:25
  */
 
 namespace App\Controllers;
@@ -21,7 +21,7 @@ class GeneratorEvent extends BaseController
     protected $firstGenId;
     protected $lastGenId;
     protected $genTotalNumber;
-    // 事件类型
+    // 事件类型编码
     protected $eventStart;
     protected $eventStop;
     //
@@ -39,7 +39,6 @@ class GeneratorEvent extends BaseController
         $this->eventModel = new GenEventLogModel();
     }
 
-    // V
     public function newGeneratorEvent()
     {
         // 检查请求数据
@@ -67,7 +66,7 @@ class GeneratorEvent extends BaseController
         // 查找时间最近一条事件
         $lastEvent = $this->eventModel->getLastLogByStationGen($station_id, $generator_id);
 
-        // 检查时间戳，事件的合理性
+        // 检查时间，事件的合理性
         $validateMsg = $this->validateNewEvent($lastEvent, $newEvent);
         if ($validateMsg !== true) {
             $res['code'] = EXIT_ERROR;
@@ -76,12 +75,14 @@ class GeneratorEvent extends BaseController
         }
 
         // 新事件处理
-        $result = $this->newEventProcess($lastEvent, $newEvent);
+        // $result = $this->newEventProcess($lastEvent, $newEvent);
+
+        // 添加 DB
+        $result = $this->eventModel->newEventLog($newEvent);
 
         if ($result) {
             $res['code'] = EXIT_SUCCESS;
             $res['msg']  = '添加一条新记录';
-            // $res['data'] = ['id' => $result];
         } else {
             $res['code'] = EXIT_ERROR;
             $res['msg']  = '添加失败，稍后再试';
@@ -90,7 +91,6 @@ class GeneratorEvent extends BaseController
         return $this->respond($res);
     }
 
-    // V2
     public function getGeneratorEvent()
     {
         $param = $this->request->getGet();
@@ -140,7 +140,10 @@ class GeneratorEvent extends BaseController
         $client = $this->request->getJSON(true);
 
         // 取出检验后的数据
-        $newEvent = [
+        $id           = $client['id'];
+        $station_id   = $client['station_id'];
+        $generator_id = $client['generator_id'];
+        $newEvent     = [
             'id'           => $client['id'],
             'station_id'   => $client['station_id'],
             'generator_id' => $client['generator_id'],
@@ -149,25 +152,25 @@ class GeneratorEvent extends BaseController
             'creator'      => $client['creator'],
         ];
 
-        // 查找时间最近一条事件
-        $lastEvents = $this->eventModel->getLastLogByStationGen($client['station_id'], $client['generator_id'], 2);
+        // 查找时间最近
+        $db = $this->eventModel->getLastLogByStationGen($station_id, $generator_id, 2);
 
         // 对比
-        if ($lastEvents[0]['id'] != $client['id']) {
+        if ($db[0]['id'] != $id) {
             $res['code'] = EXIT_ERROR;
-            $res['msg']  = '只能修改某机组最新的一条记录';
+            $res['msg']  = '只能修改某机组时间最近的一条记录';
             return $this->respond($res);
         }
 
-        if (($lastEvents[0]['station_id'] != $client['station_id']) || ($lastEvents[0]['generator_id'] != $client['generator_id']) || ($lastEvents[0]['event'] != $client['event'])) {
+        if ($db[0]['event'] != $client['event']) {
             $res['code']  = EXIT_ERROR;
             $res['msg']   = '请求数据无效';
-            $res['error'] = 'invalid params';
+            $res['error'] = 'invalid event';
             return $this->respond($res);
         }
 
         // 检查时间戳，事件的合理性
-        $validateMsg = $this->validateNewEvent($lastEvents[1], $newEvent);
+        $validateMsg = $this->validateNewEvent($db[1], $newEvent);
         if ($validateMsg !== true) {
             $res['code'] = EXIT_ERROR;
             $res['msg']  = $validateMsg;
@@ -175,12 +178,13 @@ class GeneratorEvent extends BaseController
         }
 
         // 修改记录
-        if ($client['event'] == '1') {
-            $result = $this->updateEventGenStop($lastEvents[1], $newEvent);
-        } else if ($client['event'] == '2') {
-            $result = $this->eventModel->saveEventLog($newEvent);
-        }
-        // $result = $this->newEventProcess($lastEvent, $newEvent);
+        $result = $this->eventModel->saveEventLog($newEvent);
+
+        // if ($client['event'] == '1') {
+        //     $result = $this->updateEventGenStop($db[1], $newEvent);
+        // } else if ($client['event'] == '2') {
+        //     $result = $this->eventModel->saveEventLog($newEvent);
+        // }
 
         if ($result) {
             $res['code'] = EXIT_SUCCESS;
@@ -206,20 +210,20 @@ class GeneratorEvent extends BaseController
 
         $client = $this->request->getJSON(true);
 
-        // 查找时间最进一条事件
-        $lastEvent = $this->eventModel->getLastLogByStationGen($client['station_id'], $client['generator_id']);
+        // 查找时间最近
+        $db = $this->eventModel->getLastLogByStationGen($client['station_id'], $client['generator_id']);
 
         // 对比
-        if ($lastEvent['id'] != $client['id']) {
+        if ($db['id'] != $client['id']) {
             $res['code'] = EXIT_ERROR;
-            $res['msg']  = '只能删除某机组最新的一条记录';
+            $res['msg']  = '只能删除某机组时间最近的一条记录';
             return $this->respond($res);
         }
 
-        if (($lastEvent['station_id'] != $client['station_id']) || ($lastEvent['generator_id'] != $client['generator_id']) || ($lastEvent['event'] != $client['event'])) {
+        if ($db['event'] != $client['event']) {
             $res['code']  = EXIT_ERROR;
             $res['msg']   = '请求数据无效';
-            $res['error'] = 'invalid params';
+            $res['error'] = 'invalid event';
             return $this->respond($res);
         }
 
@@ -251,18 +255,22 @@ class GeneratorEvent extends BaseController
         }
 
         // 查询数据
-        $query['station_id'] = $param['station_id'];
-        $query['start']      = $param['start'];
-        $query['end']        = $param['end'];
+        $columnName = ['event', 'event_at', 'creator', 'description'];
+        $query      = [
+            'station_id'   => $param['station_id'],
+            'year'         => substr($param['date'], 0, 4),
+            'generator_id' => 0,
+        ];
 
         $spreadsheet = new Spreadsheet();
         $sheetTitle  = ['序号', '机组', '事件', '时间', '记录人', '说明'];
 
-        for ($GID = 1; $GID < 4; $GID++) {
+        for ($GID = 1; $GID <= $this->genTotalNumber; $GID++) {
             $query['generator_id'] = $GID;
 
-            $result = $this->eventModel->getEventLog([], $query);
-            if ($result['total'] > 0) {
+            $db  = $this->eventModel->getByStationDateGen($columnName, $query);
+            $cnt = count($db);
+            if ($cnt > 0) {
                 $sheet  = $spreadsheet->createSheet($GID - 1)->setTitle($GID . 'G');
                 $column = 1;
                 $row    = 1;
@@ -285,7 +293,7 @@ class GeneratorEvent extends BaseController
                 $sheet->getColumnDimension('F')->setWidth(35);
                 // 填写数据
                 $row = 2;
-                foreach ($result['result'] as $item) {
+                foreach ($db as $item) {
                     $sheet->setCellValueByColumnAndRow(1, $row, $row - 1);
                     $sheet->setCellValueByColumnAndRow(2, $row, $GID . 'G');
                     if ($item['event'] == '1') {
@@ -335,7 +343,6 @@ class GeneratorEvent extends BaseController
         // return $this->respond($res);
     }
 
-    // V
     public function getGeneratorEventStatistic()
     {
         $param = $this->request->getGet();
@@ -403,8 +410,6 @@ class GeneratorEvent extends BaseController
             }
         }
 
-        $result2 = $this->eventModel->getStatisticByYearAndStation($query);
-
         $response['code'] = EXIT_SUCCESS;
         $response['data'] = $res;
 
@@ -423,134 +428,134 @@ class GeneratorEvent extends BaseController
             // 检查时间戳
             $lastEventAt = strtotime($lastEvent['event_at']);
             $newEventAt  = strtotime($newEvent['event_at']);
-            if ($newEventAt < $lastEventAt || $newEventAt > $now) {
-                return '请检查填写的日期、时间';
+            if ($newEventAt <= $lastEventAt || $newEventAt > $now) {
+                return '检查选择的日期、时间';
             }
 
             if ($lastEvent['event'] == $newEvent['event']) {
-                return '与已保存的记录冲突';
+                return '与保存的记录冲突';
             }
         } else {
             // 检查时间戳
             $newEventAt = strtotime($newEvent['event_at']);
             if ($newEventAt > $now) {
-                return '请检查填写的日期、时间';
+                return '检查选择的日期、时间';
             }
         }
 
         return true;
     }
 
-    protected function newEventProcess(array $lastEvent = [], array $newEvent = [])
-    {
-        if (empty($newEvent)) {
-            return false;
-        }
+    // protected function newEventProcess(array $lastEvent = [], array $newEvent = [])
+    // {
+    //     if (empty($newEvent)) {
+    //         return false;
+    //     }
 
-        $result = false;
-        switch ($newEvent['event']) {
-            // 事件：停机
-            case '1':
-                $result = $this->newEventGenStop($lastEvent, $newEvent);
-                break;
-            // 事件：开机
-            case '2':
-                $result = $this->newEventGenStart($newEvent);
-                break;
-            default:
-                return false;
-                break;
-        }
-        return $result;
-    }
+    //     $result = false;
+    //     switch ($newEvent['event']) {
+    //         // 事件：停机
+    //         case '1':
+    //             $result = $this->newEventGenStop($lastEvent, $newEvent);
+    //             break;
+    //         // 事件：开机
+    //         case '2':
+    //             $result = $this->newEventGenStart($newEvent);
+    //             break;
+    //         default:
+    //             return false;
+    //             break;
+    //     }
+    //     return $result;
+    // }
 
-    protected function newEventGenStart(array $newEvent = [])
-    {
-        if (empty($newEvent)) {
-            return false;
-        }
+    // protected function newEventGenStart(array $newEvent = [])
+    // {
+    //     if (empty($newEvent)) {
+    //         return false;
+    //     }
 
-        // 添加事件
-        $eventId = $this->eventModel->newEventLog($newEvent);
-        if ($eventId === false) {
-            return false;
-        }
-        return true;
-    }
+    //     // 添加事件
+    //     $eventId = $this->eventModel->newEventLog($newEvent);
+    //     if ($eventId === false) {
+    //         return false;
+    //     }
+    //     return true;
+    // }
 
-    protected function newEventGenStop(array $lastEvent = [], array $newEvent = [])
-    {
-        if (empty($newEvent)) {
-            return false;
-        }
+    // protected function newEventGenStop(array $lastEvent = [], array $newEvent = [])
+    // {
+    //     if (empty($newEvent)) {
+    //         return false;
+    //     }
 
-        if (!empty($lastEvent)) {
-            $lastEventYear = substr($lastEvent['event_at'], 0, 4);
-            $newEventYear  = substr($newEvent['event_at'], 0, 4);
+    //     if (!empty($lastEvent)) {
+    //         $lastEventYear = substr($lastEvent['event_at'], 0, 4);
+    //         $newEventYear  = substr($newEvent['event_at'], 0, 4);
 
-            $lastEventAt = strtotime($lastEvent['event_at']);
-            $newEventAt  = strtotime($newEvent['event_at']);
+    //         $lastEventAt = strtotime($lastEvent['event_at']);
+    //         $newEventAt  = strtotime($newEvent['event_at']);
 
-            if ($lastEventYear === $newEventYear) {
-                // 计算时长
-                $newEvent['run_time'] = $newEventAt - $lastEventAt;
-                // 添加事件
-                $eventId = $this->eventModel->newEventLog($newEvent);
-                if ($eventId === false) {
-                    return false;
-                }
-            } else if (($lastEventYear + 1) == $newEventYear) {
-                // 计算时长
-                $firstDay = mktime(0, 0, 0, 1, 1, $newEventYear);
-                // 事件：X年
-                $lastEvent['run_time'] = $firstDay - $lastEventAt;
-                // 事件：X+1年
-                $newEvent['run_time'] = $newEventAt - $firstDay;
+    //         if ($lastEventYear === $newEventYear) {
+    //             // 计算时长
+    //             $newEvent['run_time'] = $newEventAt - $lastEventAt;
+    //             // 添加事件
+    //             $eventId = $this->eventModel->newEventLog($newEvent);
+    //             if ($eventId === false) {
+    //                 return false;
+    //             }
+    //         } else if (($lastEventYear + 1) == $newEventYear) {
+    //             // 计算时长
+    //             $firstDay = mktime(0, 0, 0, 1, 1, $newEventYear);
+    //             // 事件：X年
+    //             $lastEvent['run_time'] = $firstDay - $lastEventAt;
+    //             // 事件：X+1年
+    //             $newEvent['run_time'] = $newEventAt - $firstDay;
 
-                $this->eventModel->transStart();
-                $this->eventModel->newEventLog($newEvent);
-                $this->eventModel->saveEventLog($lastEvent);
-                $this->eventModel->transComplete();
-                if ($this->eventModel->transStatus() === false) {
-                    return false;
-                }
-            }
-        } else {
-            // 添加事件
-            $eventId = $this->eventModel->newEventLog($newEvent);
-            if ($eventId === false) {
-                return false;
-            }
-        }
+    //             $this->eventModel->transStart();
+    //             $this->eventModel->newEventLog($newEvent);
+    //             $this->eventModel->saveEventLog($lastEvent);
+    //             $this->eventModel->transComplete();
+    //             if ($this->eventModel->transStatus() === false) {
+    //                 return false;
+    //             }
+    //         }
+    //     } else {
+    //         // 添加事件
+    //         $eventId = $this->eventModel->newEventLog($newEvent);
+    //         if ($eventId === false) {
+    //             return false;
+    //         }
+    //     }
 
-        return true;
-    }
+    //     return true;
+    // }
 
-    protected function updateEventGenStop(array $lastEvent = [], array $newEvent = [])
-    {
-        if (empty($newEvent)) {
-            return false;
-        }
+    // protected function updateEventGenStop(array $lastEvent = [], array $newEvent = [])
+    // {
+    //     if (empty($newEvent)) {
+    //         return false;
+    //     }
 
-        if (!empty($lastEvent)) {
-            $lastEventYear = substr($lastEvent['event_at'], 0, 4);
-            $newEventYear  = substr($newEvent['event_at'], 0, 4);
+    //     if (!empty($lastEvent)) {
+    //         $lastEventYear = substr($lastEvent['event_at'], 0, 4);
+    //         $newEventYear  = substr($newEvent['event_at'], 0, 4);
 
-            $lastEventAt = strtotime($lastEvent['event_at']);
-            $newEventAt  = strtotime($newEvent['event_at']);
+    //         $lastEventAt = strtotime($lastEvent['event_at']);
+    //         $newEventAt  = strtotime($newEvent['event_at']);
 
-            if ($lastEventYear === $newEventYear) {
-                // 计算时长
-                $newEvent['run_time'] = $newEventAt - $lastEventAt;
-            } else if (($lastEventYear + 1) == $newEventYear) {
-                // 计算时长
-                $firstDay = mktime(0, 0, 0, 1, 1, $newEventYear);
-                // 事件：X+1年
-                $newEvent['run_time'] = $newEventAt - $firstDay;
-            }
-        }
+    //         if ($lastEventYear === $newEventYear) {
+    //             // 计算时长
+    //             $newEvent['run_time'] = $newEventAt - $lastEventAt;
+    //         } else if (($lastEventYear + 1) == $newEventYear) {
+    //             // 计算时长
+    //             $firstDay = mktime(0, 0, 0, 1, 1, $newEventYear);
+    //             // 事件：X+1年
+    //             $newEvent['run_time'] = $newEventAt - $firstDay;
+    //         }
+    //     }
 
-        // 修改事件
-        return $this->eventModel->saveEventLog($newEvent);
-    }
+    //     // 修改事件
+    //     return $this->eventModel->saveEventLog($newEvent);
+    // }
 }

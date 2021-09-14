@@ -60,6 +60,7 @@
               @query="onQueryEventLog"
               @edit="onEditEventLog"
               @delete="onDelEventLog"
+              @export="onExportEventFile"
             >
             </GeneratorEventList>
           </a-card>
@@ -189,7 +190,7 @@ export default {
 
           saveGeneratorEvent(data)
             .then(() => {
-              this.onQueryEventLog(this.logListDate, 0)
+              this.onQueryEventLog(this.logListDate, data.generator_id)
             })
             //  网络异常，清空页面数据显示，防止错误的操作
             .catch((err) => {
@@ -252,7 +253,7 @@ export default {
     onDelEventLog (param) {
       delGeneratorEvent(param)
         .then(() => {
-            this.onQueryEventLog(this.logListDate, 0)
+            this.onQueryEventLog(this.logListDate, param.generator_id)
           })
           //  网络异常，清空页面数据显示，防止错误的操作
           .catch((err) => {
@@ -264,7 +265,7 @@ export default {
       param.creator = this.userInfo.username
       saveGeneratorEvent(param)
         .then(() => {
-            this.onQueryEventLog(this.logListDate, 0)
+            this.onQueryEventLog(this.logListDate, param.generator_id)
           })
           //  网络异常，清空页面数据显示，防止错误的操作
           .catch((err) => {
@@ -273,24 +274,10 @@ export default {
     },
 
     // 导出excel文件
-    handleExportHisEvent () {
-      // 检查输入日期
-      const format = 'YYYY-MM-DD'
-      const start = this.hisEvent.startAt ? this.hisEvent.startAt : moment().format('YYYY') + '-01-01'
-      const end = this.hisEvent.endAt ? this.hisEvent.endAt : moment().format(format)
-      const diffDays = moment(moment(end, format)).diff(moment(moment(start, format)), 'days')
-      if (diffDays < 0 || diffDays > 366) {
-        this.$notification.warning({
-          message: '错误',
-          description: '检查起始、结束时间（365天以内）'
-        })
-        return
-      }
-
+    onExportEventFile (date) {
       const query = {
         station_id: this.userInfo.belongToDeptId,
-        start: start,
-        end: end
+        date: date
       }
 
       getExportGeneratorEvent(query)
@@ -313,6 +300,7 @@ export default {
           this.$message.info('已导出文件')
         })
         .catch((err) => {
+          this.$message.info('导出文件失败')
           if (err.response) {
           }
         })
