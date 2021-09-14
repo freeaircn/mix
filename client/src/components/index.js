@@ -3,20 +3,20 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-14 09:38:42
+ * @LastEditTime: 2021-09-14 11:10:32
  */
 // chart
-import Bar from '@/components/Charts/Bar'
-import ChartCard from '@/components/Charts/ChartCard'
-import Liquid from '@/components/Charts/Liquid'
-import MiniArea from '@/components/Charts/MiniArea'
-import MiniSmoothArea from '@/components/Charts/MiniSmoothArea'
-import MiniBar from '@/components/Charts/MiniBar'
-import MiniProgress from '@/components/Charts/MiniProgress'
-import Radar from '@/components/Charts/Radar'
-import RankList from '@/components/Charts/RankList'
-import TransferBar from '@/components/Charts/TransferBar'
-import TagCloud from '@/components/Charts/TagCloud'
+// import Bar from '@/components/Charts/Bar'
+// import ChartCard from '@/components/Charts/ChartCard'
+// import Liquid from '@/components/Charts/Liquid'
+// import MiniArea from '@/components/Charts/MiniArea'
+// import MiniSmoothArea from '@/components/Charts/MiniSmoothArea'
+// import MiniBar from '@/components/Charts/MiniBar'
+// import MiniProgress from '@/components/Charts/MiniProgress'
+// import Radar from '@/components/Charts/Radar'
+// import RankList from '@/components/Charts/RankList'
+// import TransferBar from '@/components/Charts/TransferBar'
+// import TagCloud from '@/components/Charts/TagCloud'
 
 // pro components
 import AvatarList from '@/components/AvatarList'
@@ -36,17 +36,17 @@ import Dialog from '@/components/Dialog'
 
 export {
   AvatarList,
-  Bar,
-  ChartCard,
-  Liquid,
-  MiniArea,
-  MiniSmoothArea,
-  MiniBar,
-  MiniProgress,
-  Radar,
-  TagCloud,
-  RankList,
-  TransferBar,
+  // Bar,
+  // ChartCard,
+  // Liquid,
+  // MiniArea,
+  // MiniSmoothArea,
+  // MiniBar,
+  // MiniProgress,
+  // Radar,
+  // TagCloud,
+  // RankList,
+  // TransferBar,
   Trend,
   Ellipsis,
   FooterToolbar,

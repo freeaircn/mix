@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-06 19:38:33
+ * @LastEditTime: 2021-09-14 10:36:36
  */
 // with polyfills
 import 'core-js/stable'
@@ -28,16 +28,13 @@ import './permission' // permission control
 import './utils/filter' // global filter
 import './global.less' // global style
 
-import { FormModel, Tree, TreeSelect, Cascader } from 'ant-design-vue'
+// import { FormModel, Tree, TreeSelect, Cascader } from 'ant-design-vue'
 
 Vue.config.productionTip = false
 
 // mount axios to `Vue.$http` and `this.$http`
 Vue.use(VueAxios)
-Vue.use(FormModel)
-Vue.use(Tree)
-Vue.use(TreeSelect)
-Vue.use(Cascader)
+
 // use pro-layout components
 Vue.component('pro-layout', ProLayout)
 Vue.component('page-container', PageHeaderWrapper)

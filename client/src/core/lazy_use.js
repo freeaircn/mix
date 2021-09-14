@@ -45,17 +45,22 @@ import {
   Descriptions,
   Space,
   message,
-  notification
+  notification,
+  // Mix
+  FormModel,
+  Tree,
+  TreeSelect,
+  Cascader
 } from 'ant-design-vue'
-import Viser from 'viser-vue'
+// import Viser from 'viser-vue'
 
 // ext library
 import VueCropper from 'vue-cropper'
 import Dialog from '@/components/Dialog'
 import MultiTab from '@/components/MultiTab'
 import PageLoading from '@/components/PageLoading'
-import PermissionHelper from '@/core/permission/permission'
-import './directives/action'
+// import PermissionHelper from '@/core/permission/permission'
+// import './directives/action'
 import VueClipboard from 'vue-clipboard2'
 
 Vue.use(ConfigProvider)
@@ -100,6 +105,11 @@ Vue.use(Result)
 Vue.use(Statistic)
 Vue.use(Descriptions)
 Vue.use(Space)
+// Mix
+Vue.use(FormModel)
+Vue.use(Tree)
+Vue.use(TreeSelect)
+Vue.use(Cascader)
 
 Vue.prototype.$confirm = Modal.confirm
 Vue.prototype.$message = message
@@ -109,11 +119,11 @@ Vue.prototype.$success = Modal.success
 Vue.prototype.$error = Modal.error
 Vue.prototype.$warning = Modal.warning
 
-Vue.use(Viser)
+// Vue.use(Viser)
 Vue.use(Dialog) // this.$dialog func
 Vue.use(MultiTab)
 Vue.use(PageLoading)
-Vue.use(PermissionHelper)
+// Vue.use(PermissionHelper)
 Vue.use(VueCropper)
 Vue.use(VueClipboard)
 

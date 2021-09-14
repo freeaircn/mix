@@ -100,7 +100,7 @@ import { timeFix } from '@/utils/util'
 // import { mapState } from 'vuex'
 import { mapState, mapGetters } from 'vuex'
 import { PageHeaderWrapper } from '@ant-design-vue/pro-layout'
-import { Radar } from '@/components'
+// import { Radar } from '@/components'
 
 // import { getRoleList, getServiceList } from '@/api/manage'
 
@@ -109,8 +109,8 @@ import { Radar } from '@/components'
 export default {
   name: 'Workplace',
   components: {
-    PageHeaderWrapper,
-    Radar
+    PageHeaderWrapper
+    // Radar
   },
   data () {
     return {
