@@ -24,7 +24,7 @@
                 <template slot="title">
                   {{ '截止' + date }}
                 </template>
-                图表（万kWh）<a-icon type="info-circle" />
+                {{ year }}年（万kWh）<a-icon type="info-circle" />
               </a-tooltip>
             </span>
             <span style="float:right">
@@ -37,14 +37,14 @@
           </div>
 
           <div v-show="chartName == 'month'">
-            <div id="month-chart" :style="{height: '430px'}"></div>
+            <div id="kwh-basic-month-chart" :style="{height: '430px'}"></div>
           </div>
           <div v-show="chartName == '30Days'">
-            <div id="days-chart" :style="{height: '430px'}"></div>
+            <div id="kwh-basic-days-chart" :style="{height: '430px'}"></div>
           </div>
 
           <div v-show="chartName == 'quarter'">
-            <div id="quarter-chart" :style="{height: '430px'}"></div>
+            <div id="kwh-basic-quarter-chart" :style="{height: '430px'}"></div>
           </div>
         </a-col>
       </a-row>
@@ -53,45 +53,10 @@
 </template>
 
 <script>
-// import moment from 'moment'
-// import { Area, Line, Column } from '@antv/g2plot'
-import { Line, Column } from '@antv/g2plot'
+
+import { Area, Column } from '@antv/g2plot'
 
 const DataSet = require('@antv/data-set')
-
-// const thirtyDaysDataTemp = [
-//   { date: '2021-08-01', real: 100 },
-//   { date: '2021-08-02', real: 200 },
-//   { date: '2021-08-03', real: 300 },
-//   { date: '2021-08-04', real: 400 },
-//   { date: '2021-08-05', real: 500 },
-//   { date: '2021-08-06', real: 400 },
-//   { date: '2021-08-07', real: 300 },
-//   { date: '2021-08-08', real: 200 },
-//   { date: '2021-08-09', real: 100 }
-// ]
-
-// const monthDataTemp = [
-//   { month: '1月', plan: 7.0, real: 3.9 },
-//   { month: '2月', plan: 6.9, real: 4.2 },
-//   { month: '3月', plan: 9.5, real: 5.7 },
-//   { month: '4月', plan: 14.5, real: 8.5 },
-//   { month: '5月', plan: 18.4, real: 11.9 },
-//   { month: '6月', plan: 21.5, real: 15.2 },
-//   { month: '7月', plan: 25.2, real: 17.0 },
-//   { month: '8月', plan: 26.5, real: 16.6 },
-//   { month: '9月', plan: 23.3, real: 0 },
-//   { month: '10月', plan: 18.3, real: 0 },
-//   { month: '11月', plan: 13.9, real: 0 },
-//   { month: '12月', plan: 9.6, real: 0 }
-// ]
-
-// const quarterDataTemp = [
-//   { quarter: '1季度', plan: 7.0, real: 3.9 },
-//   { quarter: '2季度', plan: 6.9, real: 4.2 },
-//   { quarter: '3季度', plan: 9.5, real: 5.7 },
-//   { quarter: '4季度', plan: 14.5, real: 0 }
-// ]
 
 export default {
   name: 'KWhStatistic',
@@ -145,6 +110,7 @@ export default {
           dataIndex: 'rate'
         }
       ],
+      year: '',
       chartName: 'month',
       mountedDone: false,
       daysChart: null,
@@ -172,6 +138,14 @@ export default {
         }
       },
       immediate: true
+    },
+    date: {
+      handler: function (val) {
+        if (this.mountedDone) {
+          this.year = val.substring(0, 4)
+        }
+      },
+      immediate: true
     }
   },
   methods: {
@@ -181,7 +155,7 @@ export default {
     },
 
     initThirtyDaysChart () {
-      this.daysChart = new Column('days-chart', {
+      this.daysChart = new Column('kwh-basic-days-chart', {
         data: this.thirtyDaysData,
         xField: 'date',
         yField: 'real',
@@ -196,11 +170,11 @@ export default {
             alias: '发电量'
           }
         },
-        minColumnWidth: 20,
+        minColumnWidth: 5,
         maxColumnWidth: 20,
         animation: false,
         slider: {
-          start: 0.7,
+          start: 0.3,
           end: 1
           // trendCfg: {
           //   isArea: true
@@ -224,11 +198,12 @@ export default {
       })
       const chartData = dv.rows
 
-      this.monthlyChart = new Line('month-chart', {
+      this.monthlyChart = new Area('kwh-basic-month-chart', {
         data: chartData,
         xField: 'month',
         yField: 'kWh',
         seriesField: 'type',
+        isStack: false,
         point: {},
         legend: {
           position: 'bottom',
@@ -263,16 +238,8 @@ export default {
             return originalItems
           }
         }
-        // xAxis: {
-        //   type: 'time',
-        // },
-        // yAxis: {
-        //   label: {
-        //     // 数值格式化为千分位
-        //     formatter: (v) => `${v}`.replace(/\d{1,3}(?=(\d{3})+$)/g, (s) => `${s},`),
-        //   },
-        // },
       })
+
       this.monthlyChart.render()
     },
 
@@ -299,7 +266,7 @@ export default {
       })
       const chartData = dv.rows
 
-      this.quarterlyChart = new Column('quarter-chart', {
+      this.quarterlyChart = new Column('kwh-basic-quarter-chart', {
         data: chartData,
         isGroup: true,
         xField: 'quarter',

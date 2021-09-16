@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-13 09:56:23
+ * @LastEditTime: 2021-09-17 03:50:43
  */
 
 namespace App\Controllers;
@@ -35,6 +35,11 @@ class Meters extends BaseController
     protected $meterLogModel;
     protected $planningKWhModel;
 
+    // 最近的日期
+    protected $cacheLatestDate;
+    // 第一条记录日期
+    protected $first_at;
+
     public function __construct()
     {
         $this->meterNumber     = 9;
@@ -48,6 +53,8 @@ class Meters extends BaseController
         $this->genMeterRate = 5000;
         // 20000 kWh，2位小数，入库前乘以100，得到整数
         $this->transformMeterRate = 200;
+
+        $this->first_at = '2012-12-31';
 
         $this->meterLogModel    = new MeterLogModel();
         $this->planningKWhModel = new PlanningKWhModel();
@@ -293,6 +300,51 @@ class Meters extends BaseController
         return $this->respond($res);
     }
 
+    public function getOverallStatistic()
+    {
+        $param = $this->request->getGet();
+
+        // 检查请求数据
+        if (!$this->validate('MeterBasicStatisticGet')) {
+            $res['error'] = $this->validator->getErrors();
+
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '请求数据无效';
+            return $this->respond($res);
+        }
+
+        // 取查询参数
+        $station_id = $param['station_id'];
+        $log_time   = '23:59:00';
+
+        // 查找最近一条23:59记录的日期
+        $query = [
+            'station_id' => $station_id,
+            'log_time'   => $log_time,
+        ];
+        $columnName = ['log_date'];
+        $db         = $this->meterLogModel->getLastDateByStationTime($columnName, $query);
+        $log_date   = $db['log_date'];
+
+        $query = [
+            'station_id' => $station_id,
+            'log_date'   => $log_date,
+            'log_time'   => $log_time,
+            'meter_id'   => $this->mainMeterId,
+        ];
+
+        $db        = $this->getForOverallStatistic($query);
+        $yearData  = $db['yearData'];
+        $monthData = $db['monthData'];
+
+        $result = $this->chgUnitForOverallStatistic($yearData, $monthData);
+
+        $res['code'] = EXIT_SUCCESS;
+        $res['data'] = $result;
+
+        return $this->respond($res);
+    }
+
     public function delMeterLogs()
     {
         // 检查请求数据
@@ -447,16 +499,36 @@ class Meters extends BaseController
     // 内部方法
     protected function getPlanningForDailyReport($query)
     {
+        // 初值0
+        $totalMonthOfYear = 12;
+        $temp             = [];
+        for ($i = 0; $i < $totalMonthOfYear; $i++) {
+            $temp[$i] = [
+                'id'       => 0,
+                'month'    => ($i + 1) . '月',
+                'planning' => 0,
+                'real'     => 0,
+            ];
+        }
+        $quarter[0] = 0;
+        $quarter[1] = 0;
+        $quarter[2] = 0;
+        $quarter[3] = 0;
 
+        //
         $planning = $this->planningKWhModel->getByStationYear($query);
 
-        $totalMonthOfYear = 12;
         if (empty($planning) || count($planning) !== $totalMonthOfYear) {
-            return false;
+            return [
+                'month'          => $temp,
+                'planning_total' => 0,
+                'quarter'        => $quarter,
+            ];
         }
 
         $planning_total = 0;
-        for ($i = 0; $i < count($planning); $i++) {
+        $cnt            = count($planning);
+        for ($i = 0; $i < $cnt; $i++) {
             $planning[$i]['month'] = $planning[$i]['month'] . '月';
             $planning_total        = $planning_total + $planning[$i]['planning'];
         }
@@ -521,13 +593,15 @@ class Meters extends BaseController
         }
 
         // 表读数求和
-        $db2 = [];
-        for ($i = 0; $i < count($dates); $i++) {
+        $db2  = [];
+        $cnt  = count($dates);
+        $cnt2 = count($db);
+        for ($i = 0; $i < $cnt; $i++) {
             $date   = $dates[$i];
             $fak    = 0;
             $peak   = 0;
             $valley = 0;
-            for ($j = 0; $j < count($db); $j++) {
+            for ($j = 0; $j < $cnt2; $j++) {
                 if ($db[$j]['log_date'] === $date) {
                     $fak += $db[$j]['fak'];
                     $peak += $db[$j]['peak'];
@@ -615,11 +689,13 @@ class Meters extends BaseController
         }
 
         // 表读数
-        $db2 = [];
-        for ($i = 0; $i < count($dates); $i++) {
+        $db2  = [];
+        $cnt  = count($dates);
+        $cnt2 = count($db);
+        for ($i = 0; $i < $cnt; $i++) {
             $date = $dates[$i];
             $fak  = 0;
-            for ($j = 0; $j < count($db); $j++) {
+            for ($j = 0; $j < $cnt2; $j++) {
                 if ($db[$j]['log_date'] === $date) {
                     $fak = $db[$j]['fak'];
                 }
@@ -695,11 +771,13 @@ class Meters extends BaseController
         }
 
         // 表读数求和
-        $db2 = [];
-        for ($i = 0; $i < count($dates); $i++) {
+        $db2  = [];
+        $cnt  = count($dates);
+        $cnt2 = count($db);
+        for ($i = 0; $i < $cnt; $i++) {
             $date = $dates[$i];
             $fak  = 0;
-            for ($j = 0; $j < count($db); $j++) {
+            for ($j = 0; $j < $cnt2; $j++) {
                 if ($db[$j]['log_date'] === $date) {
                     $fak += $db[$j]['fak'];
                 }
@@ -710,7 +788,8 @@ class Meters extends BaseController
         }
 
         // delta
-        for ($i = 0; $i < count($res); $i++) {
+        $cnt = count($res);
+        for ($i = 0; $i < $cnt; $i++) {
             $a = $dates[$i];
             $b = $dates[$i + 1];
             if (($db2[$b]['fak'] > $db2[$a]['fak']) && ($db2[$a]['fak'] > 0)) {
@@ -766,10 +845,12 @@ class Meters extends BaseController
         }
 
         // sum
-        $db2 = [];
-        for ($i = 0; $i < count($dates); $i++) {
+        $db2  = [];
+        $cnt  = count($dates);
+        $cnt2 = count($db);
+        for ($i = 0; $i < $cnt; $i++) {
             $temp = 0;
-            for ($j = 0; $j < count($db); $j++) {
+            for ($j = 0; $j < $cnt2; $j++) {
                 if ($dates[$i] === $db[$j]['log_date']) {
                     $temp = $temp + $db[$j]['fak'];
                 }
@@ -778,7 +859,8 @@ class Meters extends BaseController
         }
 
         // delta
-        for ($i = 0; $i < (count($db2) - 1); $i++) {
+        $cnt = count($db2);
+        for ($i = 0; $i < ($cnt - 1); $i++) {
             if (($db2[$i + 1]['real'] > $db2[$i]['real']) && ($db2[$i]['real'] > 0)) {
                 $res[$i]['real'] = $db2[$i + 1]['real'] - $db2[$i]['real'];
             }
@@ -833,10 +915,12 @@ class Meters extends BaseController
         }
 
         // sum
-        $db2 = [];
-        for ($i = 0; $i < count($dates); $i++) {
+        $db2  = [];
+        $cnt  = count($dates);
+        $cnt2 = count($db);
+        for ($i = 0; $i < $cnt; $i++) {
             $temp = 0;
-            for ($j = 0; $j < count($db); $j++) {
+            for ($j = 0; $j < $cnt2; $j++) {
                 if ($dates[$i] === $db[$j]['log_date']) {
                     $temp = $temp + $db[$j]['fak'];
                 }
@@ -845,7 +929,8 @@ class Meters extends BaseController
         }
 
         // delta
-        for ($i = 0; $i < (count($db2) - 1); $i++) {
+        $cnt = count($db2);
+        for ($i = 0; $i < ($cnt - 1); $i++) {
             if (($db2[$i + 1]['real'] > $db2[$i]['real']) && ($db2[$i]['real'] > 0)) {
                 $res[$i]['real'] = $db2[$i + 1]['real'] - $db2[$i]['real'];
             }
@@ -1057,16 +1142,19 @@ class Meters extends BaseController
         ];
 
         // 电表倍率，单位换算 kWh -> 万kWh
-        for ($i = 0; $i < count($thirtyDaysGenEnergy); $i++) {
+        $cnt = count($thirtyDaysGenEnergy);
+        for ($i = 0; $i < $cnt; $i++) {
             $thirtyDaysGenEnergy[$i]['real'] = round($thirtyDaysGenEnergy[$i]['real'] * $this->genMeterRate / 10000, $precision);
         }
 
-        for ($i = 0; $i < count($monthData); $i++) {
+        $cnt = count($monthData);
+        for ($i = 0; $i < $cnt; $i++) {
             $monthData[$i]['planning'] = round($monthData[$i]['planning'] / 10000, $precision);
             $monthData[$i]['real']     = round($monthData[$i]['real'] * $this->genMeterRate / 10000, $precision);
         }
 
-        for ($i = 0; $i < count($quarterData); $i++) {
+        $cnt = count($quarterData);
+        for ($i = 0; $i < $cnt; $i++) {
             $quarterData[$i]['planning'] = round($quarterData[$i]['planning'] / 10000, $precision);
             $quarterData[$i]['real']     = round($quarterData[$i]['real'] * $this->genMeterRate / 10000, $precision);
         }
@@ -1077,5 +1165,153 @@ class Meters extends BaseController
             'monthData'      => $monthData,
             'quarterData'    => $quarterData,
         ];
+    }
+
+    protected function getForOverallStatistic($query)
+    {
+        $station_id = $query['station_id'];
+        $log_date   = $query['log_date'];
+        $log_time   = $query['log_time'];
+        $meter_id   = $query['meter_id'];
+
+        $utils = service('mixUtils');
+
+        // 每月最后一天的日期
+        $first_at = $this->first_at;
+        $month    = [];
+        $month[]  = $first_at;
+
+        $target   = $utils->getLastDayOfMonth($log_date);
+        $i        = 1;
+        $continue = true;
+        do {
+            $temp = $utils->getLastDayOfMonth($first_at, $i);
+            if ($temp === $target) {
+                $continue = false;
+                $month[]  = $log_date;
+            } else {
+                $month[] = $temp;
+            }
+            $i++;
+        } while ($continue);
+
+        // 月 初值0
+        $monthData = [];
+        for ($j = 0; $j < ($i - 1); $j++) {
+            $monthData[$j] = [
+                'date'  => substr($month[$j + 1], 0, 7),
+                'value' => 0,
+            ];
+        }
+
+        // 每年最后一天的日期
+        $first_at = $this->first_at;
+        $year     = [];
+        $year[]   = $first_at;
+
+        $target   = $utils->getLastDayOfYear($log_date);
+        $i        = 1;
+        $continue = true;
+        do {
+            $temp = $utils->getLastDayOfYear($first_at, $i);
+            if ($temp === $target) {
+                $continue = false;
+                $year[]   = $log_date;
+            } else {
+                $year[] = $temp;
+            }
+            $i++;
+        } while ($continue);
+
+        // 年 初值0
+        $yearData = [];
+        for ($j = 0; $j < ($i - 1); $j++) {
+            $yearData[$j] = [
+                'date'  => substr($year[$j + 1], 0, 4),
+                'value' => 0,
+            ];
+        }
+
+        // 查询
+        $query2 = [
+            'station_id' => $station_id,
+            'log_date'   => $month,
+            'log_time'   => $log_time,
+            'meter_id'   => $meter_id,
+        ];
+        $columnName = ['log_date, fak'];
+        $db         = $this->meterLogModel->getByStationDatesTimeMeter($columnName, $query2);
+        if (empty($db)) {
+            return ['yearData' => $yearData, 'monthData' => $monthData];
+        }
+
+        // 插入
+        $db2  = [];
+        $cnt  = count($month);
+        $cnt2 = count($db);
+        for ($i = 0; $i < $cnt; $i++) {
+            $temp = 0;
+            for ($j = 0; $j < $cnt2; $j++) {
+                if ($month[$i] === $db[$j]['log_date']) {
+                    $temp = $db[$j]['fak'];
+                    break;
+                }
+            }
+            $db2[] = $temp;
+        }
+
+        // delta
+        $cnt = count($db2);
+        for ($i = 0; $i < ($cnt - 1); $i++) {
+            if (($db2[$i + 1] > $db2[$i]) && ($db2[$i] > 0)) {
+                $monthData[$i]['value'] = $db2[$i + 1] - $db2[$i];
+            }
+        }
+
+        // 插入
+        $db2  = [];
+        $cnt  = count($year);
+        $cnt2 = count($db);
+        for ($i = 0; $i < $cnt; $i++) {
+            $temp = 0;
+            for ($j = 0; $j < $cnt2; $j++) {
+                if ($year[$i] === $db[$j]['log_date']) {
+                    $temp = $db[$j]['fak'];
+                    break;
+                }
+            }
+            $db2[] = $temp;
+        }
+
+        // delta
+        $cnt = count($db2);
+        for ($i = 0; $i < ($cnt - 1); $i++) {
+            if (($db2[$i + 1] > $db2[$i]) && ($db2[$i] > 0)) {
+                $yearData[$i]['value'] = $db2[$i + 1] - $db2[$i];
+            }
+        }
+
+        return ['yearData' => $yearData, 'monthData' => $monthData];
+    }
+
+    protected function chgUnitForOverallStatistic($yearData, $monthData)
+    {
+        $precision = 4;
+
+        // 上网，电表倍率，单位换算 kWh -> 万kWh
+        // $total = round($total2 * $this->mainMeterRate / 10000, $precision);
+
+        $cnt = count($yearData);
+        for ($i = 0; $i < $cnt; $i++) {
+            $yearData[$i]['value'] = round($yearData[$i]['value'] * $this->mainMeterRate / 10000, $precision);
+        }
+
+        $cnt = count($monthData);
+        for ($i = 0; $i < $cnt; $i++) {
+            $monthData[$i]['value'] = round($monthData[$i]['value'] * $this->mainMeterRate / 10000, $precision);
+        }
+
+        return ['yearData' => $yearData, 'monthData' => $monthData];
+
     }
 }

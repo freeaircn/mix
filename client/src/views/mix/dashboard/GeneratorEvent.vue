@@ -41,7 +41,7 @@
               </a-form-model-item>
 
               <a-form-model-item :wrapperCol="{ span: 24 }" style="text-align: center">
-                <a-button type="primary" html-type="submit">提交</a-button>
+                <a-button type="primary" html-type="submit" :disabled="disableBtn">提交</a-button>
               </a-form-model-item>
             </a-form-model>
           </a-card>
@@ -138,6 +138,7 @@ export default {
         event: [{ required: true, message: '请选择事件名称', trigger: 'change' }],
         event_at: [{ required: true, message: '请选择日期和时间', trigger: ['change', 'blur'] }]
       },
+      disableBtn: false,
 
       // 记录 列表显示
       listLoading: false,
@@ -188,12 +189,16 @@ export default {
           data.station_id = this.userInfo.belongToDeptId
           data.creator = this.userInfo.username
 
+          this.disableBtn = true
           saveGeneratorEvent(data)
             .then(() => {
+              this.$refs.eventForm.resetFields()
+              this.disableBtn = false
               this.onQueryEventLog(this.logListDate, data.generator_id)
             })
             //  网络异常，清空页面数据显示，防止错误的操作
             .catch((err) => {
+              setTimeout(() => { this.disableBtn = false }, 3000)
               if (err.response) { }
             })
         } else {

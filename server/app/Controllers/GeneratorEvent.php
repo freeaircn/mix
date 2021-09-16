@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-14 10:25:25
+ * @LastEditTime: 2021-09-14 16:18:13
  */
 
 namespace App\Controllers;
@@ -74,9 +74,6 @@ class GeneratorEvent extends BaseController
             return $this->respond($res);
         }
 
-        // 新事件处理
-        // $result = $this->newEventProcess($lastEvent, $newEvent);
-
         // 添加 DB
         $result = $this->eventModel->newEventLog($newEvent);
 
@@ -122,6 +119,39 @@ class GeneratorEvent extends BaseController
 
         $res['code'] = EXIT_SUCCESS;
         $res['data'] = ['total' => $result['total'], 'data' => $result['result']];
+
+        // 导入
+        // $gid = 3;
+        // $G   = 'G' . $gid;
+
+        // $reader      = new Xlsx();
+        // $spreadsheet = $reader->load("D:/kkx/G2021.xlsx");
+        // $temp        = $spreadsheet->getSheetByName($G)->toArray();
+        // $len         = count($temp);
+        // for ($i = 1; $i < $len; $i++) {
+        //     if ($temp[$i][1] !== null) {
+        //         $newEvent = [
+        //             'station_id'   => 2,
+        //             'generator_id' => $gid,
+        //             'event'        => 2,
+        //             'event_at'     => $temp[$i][1],
+        //             'creator'      => '系统',
+        //         ];
+        //         $this->eventModel->newEventLog($newEvent);
+        //     }
+        //     if ($temp[$i][2] !== null) {
+        //         $newEvent = [
+        //             'station_id'   => 2,
+        //             'generator_id' => $gid,
+        //             'event'        => 1,
+        //             'event_at'     => $temp[$i][2],
+        //             'creator'      => '系统',
+        //         ];
+        //         $this->eventModel->newEventLog($newEvent);
+        //     }
+        // }
+
+        // $res['extra'] = $temp;
 
         return $this->respond($res);
     }

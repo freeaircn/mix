@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-04 17:15:57
+ * @LastEditTime: 2021-09-16 23:08:09
  */
 
 namespace Config;
@@ -105,6 +105,7 @@ $routes->group('api', function ($routes) {
     $routes->delete('meters', 'Meters::delMeterLogs');
     $routes->get('meters/daily_report', 'Meters::getDailyReport');
     $routes->get('meters/basic_statistic', 'Meters::getBasicStatistic');
+    $routes->get('meters/overall_statistic', 'Meters::getOverallStatistic');
     //
     $routes->get('meters/planning_kWh', 'Meters::getPlanningKWh');
     $routes->put('meters/planning_kWh', 'Meters::updatePlanningKWhRecord');

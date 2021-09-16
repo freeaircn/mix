@@ -58,7 +58,7 @@
               <a-form-model-item :wrapper-col="{ lg: { span: 14, offset: 4 }, sm: { span: 14 } }">
                 <div>
                   <a-button v-if="logMeterStepIndex < logMeterSteps.length - 1" type="primary" block @click="handleLogMeterStepNext">下一步</a-button>
-                  <a-button v-if="logMeterStepIndex == logMeterSteps.length - 1" type="primary" block @click="handleLogMeters">提交</a-button>
+                  <a-button v-if="logMeterStepIndex == logMeterSteps.length - 1" type="primary" :disabled="disableBtn" block @click="handleLogMeters">提交</a-button>
                 </div>
                 <div>
                   <a-button v-if="logMeterStepIndex > 0" style="margin-top: 8px" block @click="handleLogMeterStepPrev">上一步</a-button>
@@ -123,7 +123,7 @@
       </a-card>
     </a-modal>
 
-    <a-card title="发电量统计" :bordered="false" :body-style="{marginBottom: '8px'}">
+    <a-card title="统计图表" :bordered="false" :body-style="{marginBottom: '8px'}">
       <div class="extra-wrapper" slot="extra">
         <div class="extra-item">
           <a-button type="link" @click="onQueryBasicStatistic('month')">刷新</a-button>
@@ -141,21 +141,21 @@
       </KWhStatistic>
     </a-card>
 
-    <a-card :loading="false" title="历史统计" :bordered="false" :body-style="{padding: '0', marginBottom: '8px'}">
-      <div style="padding: 8px">
-        <a-select style="width: 100px" placeholder="起始" >
-          <a-select-option v-for="d in availableYearRange" :key="d.value" :value="d.value" >
-            {{ d.name }}
-          </a-select-option>
-        </a-select>
-        <span style="margin: 0 18px">至</span>
-        <a-select style="width: 100px" placeholder="结束" >
-          <a-select-option v-for="d in availableYearRange" :key="d.value" :value="d.value" >
-            {{ d.name }}
-          </a-select-option>
-        </a-select>
-        <span style="margin: 0 18px"><a-button type="primary" @click="handleQueryHisStatistic">查询</a-button></span>
+    <a-card :loading="false" title="全景" :bordered="false" :body-style="{marginBottom: '8px'}">
+      <div class="extra-wrapper" slot="extra">
+        <div class="extra-item">
+          <a-button type="link" @click="onQueryOverallStatistic">刷新</a-button>
+        </div>
       </div>
+
+      <KWhOverallStatistic
+        :loading="kWhOverallStatLoading"
+        :changed="kWhOverallStatChanged"
+        :yearData="kWhOverallStatYearData"
+        :monthData="kWhOverallStatMonthData"
+      >
+      </KWhOverallStatistic>
+
     </a-card>
 
   </page-header-wrapper>
@@ -164,18 +164,10 @@
 <script>
 import moment from 'moment'
 // import { deepMerge } from '@/utils/util'
-import { MetersLogList, PlanningKWhList, KWhStatistic } from './components/meter'
+import { MetersLogList, PlanningKWhList, KWhStatistic, KWhOverallStatistic } from './components/meter'
 import { mapGetters } from 'vuex'
-import { getMeterLogs, saveMeterLogs, getMetersDailyReport, getMetersBasicStatistic, delMeterLogs, getPlanningKWh, updatePlanningKWhRecord } from '@/api/service'
+import { getMeterLogs, saveMeterLogs, getMetersDailyReport, getMetersBasicStatistic, delMeterLogs, getPlanningKWh, updatePlanningKWhRecord, getMetersOverallStatistic } from '@/api/service'
 import { baseMixin } from '@/store/app-mixin'
-
-const availableYearRange = []
-for (let i = 2018; i <= moment().year(); i++) {
-  availableYearRange.push({
-    name: i + '年',
-    value: i
-  })
-}
 
 export default {
   name: 'StationMeters',
@@ -183,7 +175,8 @@ export default {
   components: {
     MetersLogList,
     PlanningKWhList,
-    KWhStatistic
+    KWhStatistic,
+    KWhOverallStatistic
   },
   data () {
     return {
@@ -216,6 +209,7 @@ export default {
         log_date: [{ required: true, message: '请选择日期', trigger: ['change'] }],
         log_time: [{ required: true, message: '请选择时间', trigger: ['change'] }]
       },
+      disableBtn: false,
 
       // 记录显示
       logListLoading: false,
@@ -246,9 +240,11 @@ export default {
       kWhStatisticMonthlyData: [],
       kWhStatisticQuarterlyData: [],
 
-      // 历史统计显示
-      availableYearRange
-
+      // 全景统计显示
+      kWhOverallStatLoading: false,
+      kWhOverallStatChanged: false,
+      kWhOverallStatYearData: [],
+      kWhOverallStatMonthData: []
     }
   },
   computed: {
@@ -268,6 +264,9 @@ export default {
 
     // 统计图表
     this.onQueryBasicStatistic()
+
+    // 全景统计
+    this.onQueryOverallStatistic()
   },
   methods: {
 
@@ -297,12 +296,16 @@ export default {
           data.station_id = this.userInfo.belongToDeptId
           data.creator = this.userInfo.username
 
+          this.disableBtn = true
           saveMeterLogs(data)
             .then(() => {
-              // this.handleQueryHisLogs()
+              this.logMeterStepIndex = 0
+              this.disableBtn = false
+              this.onQueryMeterLog(this.logListDate)
             })
             //  网络异常，清空页面数据显示，防止错误的操作
             .catch((err) => {
+              setTimeout(() => { this.disableBtn = false }, 3000)
               if (err.response) { }
             })
         } else {
@@ -406,29 +409,6 @@ export default {
         })
     },
 
-    onQueryBasicStatistic () {
-      const query = {
-        station_id: this.userInfo.belongToDeptId
-      }
-      this.kWhStatisticLoading = true
-      getMetersBasicStatistic(query)
-        .then(res => {
-          this.kWhStatisticDate = res.date
-          this.kWhStatisticListData = res.statisticList
-          this.kWhStatistic30DaysData = res.thirtyDaysData
-          this.kWhStatisticMonthlyData = res.monthData
-          this.kWhStatisticQuarterlyData = res.quarterData
-          //
-          this.kWhStatisticLoading = false
-          this.kWhStatisticChanged = !this.kWhStatisticChanged
-        })
-        .catch((err) => {
-          this.kWhStatisticLoading = false
-          if (err.response) {
-          }
-        })
-    },
-
     onDeleteMeterLog (param) {
       delMeterLogs(param)
         .then(() => {
@@ -481,9 +461,49 @@ export default {
         })
     },
 
-    // 历史统计 显示区
-    handleQueryHisStatistic () {
-      this.$message.warning('暂不支持')
+    // 基本统计
+    onQueryBasicStatistic () {
+      const query = {
+        station_id: this.userInfo.belongToDeptId
+      }
+      this.kWhStatisticLoading = true
+      getMetersBasicStatistic(query)
+        .then(res => {
+          this.kWhStatisticDate = res.date
+          this.kWhStatisticListData = res.statisticList
+          this.kWhStatistic30DaysData = res.thirtyDaysData
+          this.kWhStatisticMonthlyData = res.monthData
+          this.kWhStatisticQuarterlyData = res.quarterData
+          //
+          this.kWhStatisticLoading = false
+          this.kWhStatisticChanged = !this.kWhStatisticChanged
+        })
+        .catch((err) => {
+          this.kWhStatisticLoading = false
+          if (err.response) {
+          }
+        })
+    },
+
+    // 全景
+    onQueryOverallStatistic () {
+      const query = {
+        station_id: this.userInfo.belongToDeptId
+      }
+      this.kWhOverallStatLoading = true
+      getMetersOverallStatistic(query)
+        .then((res) => {
+          this.kWhOverallStatYearData = res.yearData
+          this.kWhOverallStatMonthData = res.monthData
+          //
+          this.kWhOverallStatLoading = false
+          this.kWhOverallStatChanged = !this.kWhOverallStatChanged
+          })
+          .catch((err) => {
+            this.kWhOverallStatLoading = false
+            if (err.response) {
+            }
+          })
     },
 
     makeupMeterDataStructure () {

@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-04 17:16:43
+ * @LastEditTime: 2021-09-16 23:05:24
  */
 import request from '@/utils/request'
 
@@ -14,6 +14,7 @@ const api = {
   meters: '/meters',
   meters_daily_report: '/meters/daily_report',
   meters_basic_statistic: '/meters/basic_statistic',
+  meters_overall_statistic: 'meters/overall_statistic',
   planning_kWh: '/meters/planning_kWh'
 }
 
@@ -113,5 +114,13 @@ export function updatePlanningKWhRecord (data) {
     url: api.planning_kWh,
     method: 'put',
     data: data
+  })
+}
+
+export function getMetersOverallStatistic (params) {
+  return request({
+    url: api.meters_overall_statistic,
+    method: 'get',
+    params: params
   })
 }
