@@ -3,7 +3,26 @@
 export function timeFix () {
   const time = new Date()
   const hour = time.getHours()
-  return hour < 9 ? '早上好' : hour <= 11 ? '上午好' : hour <= 13 ? '中午好' : hour < 20 ? '下午好' : '晚上好'
+  let msg = ''
+  if (hour >= 6 && hour < 9) {
+    msg = '早上好'
+  }
+  if (hour >= 9 && hour <= 11) {
+    msg = '上午好'
+  }
+  if (hour > 11 && hour <= 13) {
+    msg = '中午好'
+  }
+  if (hour > 13 && hour <= 19) {
+    msg = '下午好'
+  }
+  if (hour > 19 && hour <= 24) {
+    msg = '晚上好'
+  }
+  if (hour >= 0 && hour < 6) {
+    msg = '晚上好'
+  }
+  return msg
 }
 
 export function welcome () {

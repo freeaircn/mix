@@ -151,6 +151,7 @@
       <KWhOverallStatistic
         :loading="kWhOverallStatLoading"
         :changed="kWhOverallStatChanged"
+        :total="kWhOverallStatTotal"
         :yearData="kWhOverallStatYearData"
         :monthData="kWhOverallStatMonthData"
       >
@@ -228,7 +229,6 @@ export default {
       // 年计划显示
       planningKWhListLoading: false,
       planningKWhListDate: '',
-      // { id: 1, month: '1月', planning: 1000, deal: 1000 },
       planningKWhListData: [],
 
       // Basic统计显示
@@ -243,6 +243,10 @@ export default {
       // 全景统计显示
       kWhOverallStatLoading: false,
       kWhOverallStatChanged: false,
+      kWhOverallStatTotal: {
+        onGridEnergy: 0,
+        genEnergy: 0
+      },
       kWhOverallStatYearData: [],
       kWhOverallStatMonthData: []
     }
@@ -493,6 +497,7 @@ export default {
       this.kWhOverallStatLoading = true
       getMetersOverallStatistic(query)
         .then((res) => {
+          this.kWhOverallStatTotal = { ...res.total }
           this.kWhOverallStatYearData = res.yearData
           this.kWhOverallStatMonthData = res.monthData
           //

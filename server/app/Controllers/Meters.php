@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-17 03:50:43
+ * @LastEditTime: 2021-09-17 15:59:21
  */
 
 namespace App\Controllers;
@@ -318,14 +318,39 @@ class Meters extends BaseController
         $log_time   = '23:59:00';
 
         // 查找最近一条23:59记录的日期
+        $meter_ids   = [];
+        $meter_ids[] = $this->mainMeterId;
+        for ($i = $this->firstGenMeterId; $i <= $this->lastGenMeterId; $i++) {
+            $meter_ids[] = $i;
+        }
+
         $query = [
             'station_id' => $station_id,
             'log_time'   => $log_time,
+            'meter_id'   => $meter_ids,
         ];
-        $columnName = ['log_date'];
-        $db         = $this->meterLogModel->getLastDateByStationTime($columnName, $query);
-        $log_date   = $db['log_date'];
+        $columnName = ['log_date', 'meter_id', 'fak'];
+        $db3        = $this->meterLogModel->getLastDateByStationTimeMeters($columnName, $query, count($meter_ids));
 
+        $log_date = $db3[0]['log_date'];
+
+        // 自投运
+        $total = [
+            'onGridEnergy' => 0,
+            'genEnergy'    => 0,
+        ];
+        $cnt  = count($db3);
+        $temp = 0;
+        for ($i = 0; $i < $cnt; $i++) {
+            if ($db3[$i]['meter_id'] == $this->mainMeterId) {
+                $total['onGridEnergy'] = $db3[$i]['fak'];
+            } else {
+                $temp = $temp + $db3[$i]['fak'];
+            }
+        }
+        $total['genEnergy'] = $temp;
+
+        // 查找全景数据
         $query = [
             'station_id' => $station_id,
             'log_date'   => $log_date,
@@ -337,10 +362,12 @@ class Meters extends BaseController
         $yearData  = $db['yearData'];
         $monthData = $db['monthData'];
 
-        $result = $this->chgUnitForOverallStatistic($yearData, $monthData);
+        $result = $this->chgUnitForOverallStatistic($total, $yearData, $monthData);
 
         $res['code'] = EXIT_SUCCESS;
         $res['data'] = $result;
+        // $res['extra'] = $db3;
+        // $res['total'] = $total;
 
         return $this->respond($res);
     }
@@ -1294,12 +1321,13 @@ class Meters extends BaseController
         return ['yearData' => $yearData, 'monthData' => $monthData];
     }
 
-    protected function chgUnitForOverallStatistic($yearData, $monthData)
+    protected function chgUnitForOverallStatistic($total, $yearData, $monthData)
     {
         $precision = 4;
 
         // 上网，电表倍率，单位换算 kWh -> 万kWh
-        // $total = round($total2 * $this->mainMeterRate / 10000, $precision);
+        $total['onGridEnergy'] = round($total['onGridEnergy'] * $this->mainMeterRate / 10000, $precision);
+        $total['genEnergy']    = round($total['genEnergy'] * $this->genMeterRate / 10000, $precision);
 
         $cnt = count($yearData);
         for ($i = 0; $i < $cnt; $i++) {
@@ -1311,7 +1339,7 @@ class Meters extends BaseController
             $monthData[$i]['value'] = round($monthData[$i]['value'] * $this->mainMeterRate / 10000, $precision);
         }
 
-        return ['yearData' => $yearData, 'monthData' => $monthData];
+        return ['total' => $total, 'yearData' => $yearData, 'monthData' => $monthData];
 
     }
 }

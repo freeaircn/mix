@@ -61,7 +61,7 @@ import { CONTENT_WIDTH_TYPE, SIDEBAR_TYPE, TOGGLE_MOBILE_TYPE } from '@/store/mu
 import defaultSettings from '@/config/defaultSettings'
 import RightContent from '@/components/GlobalHeader/RightContent'
 import GlobalFooter from '@/components/GlobalFooter'
-import Ads from '@/components/Other/CarbonAds'
+// import Ads from '@/components/Other/CarbonAds'
 import LogoSvg from '../assets/logo.svg?inline'
 
 export default {
@@ -70,8 +70,7 @@ export default {
     SettingDrawer,
     RightContent,
     GlobalFooter,
-    LogoSvg,
-    Ads
+    LogoSvg
   },
   data () {
     return {
@@ -189,4 +188,10 @@ export default {
 
 <style lang="less">
 @import "./BasicLayout.less";
+</style>
+
+<style lang="less" scoped>
+/deep/ .ant-pro-page-header-wrap-children-content {
+  margin: 8px 8px 0;
+}
 </style>

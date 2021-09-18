@@ -23,80 +23,75 @@
     </template>
 
     <div>
-      <a-row :gutter="24">
-        <a-col :xl="24" :lg="24" :md="24" :sm="24" :xs="24">
-          <a-card
-            class="project-list"
-            style="margin-bottom: 24px;"
-            :bordered="false"
-            title="快速开始"
-            :body-style="{ padding: 0 }">
-            <div>
-              <a-card-grid class="project-card-grid">
-                <a-card :bordered="false" :body-style="{ padding: 0 }">
-                  <a-card-meta>
-                    <div slot="title" class="card-title">
-                      <!-- <a-avatar size="small" :src="item.cover"/> -->
-                      <a>机组事件统计</a>
-                    </div>
-                    <div slot="description" class="card-description">
-                      发电机启停次数，运行时间，检修时间统计
-                    </div>
-                  </a-card-meta>
-                </a-card>
-              </a-card-grid>
 
-              <a-card-grid class="project-card-grid">
-                <a-card :bordered="false" :body-style="{ padding: 0 }">
-                  <a-card-meta>
-                    <div slot="title" class="card-title">
-                      <!-- <a-avatar size="small" :src="item.cover"/> -->
-                      <a>电量统计</a>
-                    </div>
-                    <div slot="description" class="card-description">
-                      站点和机组发电量统计
-                    </div>
-                  </a-card-meta>
-                </a-card>
-              </a-card-grid>
+      <a-card class="project-list" style="margin-bottom: 16px;" :bordered="false" title="快速开始" :body-style="{ padding: 0 }">
+        <a-row :gutter="0">
+          <a-col :xl="8" :lg="8" :md="8" :sm="24" :xs="24">
+            <a-card :bordered="true" >
+              <a-card-meta>
+                <div slot="title" class="card-title">
+                  <!-- <a-avatar size="small" :src="item.cover"/> -->
+                  <a-icon :component="letterRoundSolidJSVG"/>
+                  <a>机组事件</a>
+                </div>
+                <div slot="description" class="card-description">
+                  机组开停机，运行时间统计
+                </div>
+              </a-card-meta>
+            </a-card>
+          </a-col>
 
-              <a-card-grid class="project-card-grid">
-                <a-card :bordered="false" :body-style="{ padding: 0 }">
-                  <a-card-meta>
-                    <div slot="title" class="card-title">
-                      <!-- <a-avatar size="small" :src="item.cover"/> -->
-                      <a>站点文档</a>
-                    </div>
-                    <div slot="description" class="card-description">
-                      站点建设文档和图册检索，借阅管理
-                    </div>
-                  </a-card-meta>
-                </a-card>
-              </a-card-grid>
-            </div>
-          </a-card>
+          <a-col :xl="8" :lg="8" :md="8" :sm="24" :xs="24">
+            <a-card :bordered="true" >
+              <a-card-meta>
+                <div slot="title" class="card-title">
+                  <!-- <a-avatar size="small" :src="item.cover"/> -->
+                  <a>电度表</a>
+                </div>
+                <div slot="description" class="card-description">
+                  电度表记录，发电量统计
+                </div>
+              </a-card-meta>
+            </a-card>
+          </a-col>
 
-          <a-card title="动态" :bordered="false">
-            <a-list>
-              <a-list-item>
-                <a-list-item-meta>
-                  <!-- <a-avatar slot="avatar" :src="item.user.avatar"/> -->
-                  <div slot="title">
-                    <span>xxx</span>&nbsp;
-                  </div>
-                  <div slot="description">xxx</div>
-                </a-list-item-meta>
-              </a-list-item>
-            </a-list>
-          </a-card>
-        </a-col>
-      </a-row>
+          <a-col :xl="8" :lg="8" :md="8" :sm="24" :xs="24">
+            <a-card :bordered="true" >
+              <a-card-meta>
+                <div slot="title" class="card-title">
+                  <!-- <a-avatar size="small" :src="item.cover"/> -->
+                  <a>站点文档</a>
+                </div>
+                <div slot="description" class="card-description">
+                  档案、图册检索，借阅记录
+                </div>
+              </a-card-meta>
+            </a-card>
+          </a-col>
+        </a-row>
+      </a-card>
+
+      <a-card title="动态" :bordered="false">
+        <a-list>
+          <a-list-item>
+            <a-list-item-meta>
+              <!-- <a-avatar slot="avatar" :src="item.user.avatar"/> -->
+              <div slot="title">
+                <span>xxx</span>&nbsp;
+              </div>
+              <div slot="description">xxx</div>
+            </a-list-item-meta>
+          </a-list-item>
+        </a-list>
+      </a-card>
+
     </div>
   </page-header-wrapper>
 </template>
 
 <script>
 import { timeFix } from '@/utils/util'
+import { letterRoundSolidJSVG } from '@/core/icons'
 // import { mapState } from 'vuex'
 import { mapState, mapGetters } from 'vuex'
 import { PageHeaderWrapper } from '@ant-design-vue/pro-layout'
@@ -161,7 +156,9 @@ export default {
         { item: '热度', a: 60, b: 70, c: 40 },
         { item: '引用', a: 70, b: 50, c: 40 }
       ],
-      radarData: []
+      radarData: [],
+      //
+      letterRoundSolidJSVG
     }
   },
   computed: {
@@ -274,37 +271,37 @@ export default {
       overflow: hidden;
     }
 
-    .project-item {
-      display: flex;
-      margin-top: 8px;
-      overflow: hidden;
-      font-size: 12px;
-      height: 20px;
-      line-height: 20px;
+    // .project-item {
+    //   display: flex;
+    //   margin-top: 8px;
+    //   overflow: hidden;
+    //   font-size: 12px;
+    //   height: 20px;
+    //   line-height: 20px;
 
-      a {
-        color: rgba(0, 0, 0, 0.45);
-        display: inline-block;
-        flex: 1 1 0;
+    //   a {
+    //     color: rgba(0, 0, 0, 0.45);
+    //     display: inline-block;
+    //     flex: 1 1 0;
 
-        &:hover {
-          color: #1890ff;
-        }
-      }
+    //     &:hover {
+    //       color: #1890ff;
+    //     }
+    //   }
 
-      .datetime {
-        color: rgba(0, 0, 0, 0.25);
-        flex: 0 0 auto;
-        float: right;
-      }
-    }
+    //   .datetime {
+    //     color: rgba(0, 0, 0, 0.25);
+    //     flex: 0 0 auto;
+    //     float: right;
+    //   }
+    // }
 
-    .ant-card-meta-description {
-      color: rgba(0, 0, 0, 0.45);
-      height: 44px;
-      line-height: 22px;
-      overflow: hidden;
-    }
+    // .ant-card-meta-description {
+    //   color: rgba(0, 0, 0, 0.45);
+    //   height: 44px;
+    //   line-height: 22px;
+    //   overflow: hidden;
+    // }
   }
 
   .item-group {

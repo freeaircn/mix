@@ -265,10 +265,18 @@ export default {
 
     // 导出excel
     handleExportExcel () {
-      if (this.query.date == null) {
-        this.query.date = moment().format('YYYY-MM-DD')
-      }
-      this.$emit('export', this.query.date)
+      this.$confirm({
+        title: '执行导出吗',
+        content: h => <div style="color:rgba(0, 0, 0, 0.65);">导出Excel文件，请点确定按钮</div>,
+        onOk: () => {
+          if (this.query.date == null) {
+            this.query.date = moment().format('YYYY-MM-DD')
+          }
+          this.$emit('export', this.query.date)
+        },
+        onCancel () {
+        }
+      })
     },
 
     handleEdit (record) {

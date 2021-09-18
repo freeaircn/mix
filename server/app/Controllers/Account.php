@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-29 22:58:15
+ * @LastEditTime: 2021-09-18 15:10:32
  */
 
 namespace App\Controllers;
@@ -68,7 +68,7 @@ class Account extends BaseController
             $res['data'] = ['menus' => $result];
         } else {
             $res['code'] = EXIT_ERROR;
-            $res['msg']  = '用户授权空！';
+            $res['msg']  = '用户没有授权';
         }
 
         return $this->respond($res);

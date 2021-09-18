@@ -24,7 +24,7 @@
                 <template slot="title">
                   {{ '截止' + date }}
                 </template>
-                {{ year }}年（万kWh）<a-icon type="info-circle" />
+                {{ year }}年发电（万kWh）<a-icon type="info-circle" />
               </a-tooltip>
             </span>
             <span style="float:right">
@@ -162,6 +162,7 @@ export default {
         xAxis: {
           tickCount: 5
         },
+        color: '#61DDAA',
         meta: {
           date: {
             alias: '日期'
@@ -174,7 +175,7 @@ export default {
         maxColumnWidth: 20,
         animation: false,
         slider: {
-          start: 0.3,
+          start: 0,
           end: 1
           // trendCfg: {
           //   isArea: true

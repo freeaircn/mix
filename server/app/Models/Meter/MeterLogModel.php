@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-17 00:19:27
+ * @LastEditTime: 2021-09-17 10:56:08
  */
 
 namespace App\Models\Meter;
@@ -226,6 +226,32 @@ class MeterLogModel extends Model
         $builder = $this->select($selectSql);
 
         $builder->where($query);
+
+        $res = $builder->orderBy('log_date', 'DESC')
+            ->findAll($limit);
+
+        if ($limit === 1) {
+            return isset($res[0]) ? $res[0] : [];
+        } else {
+            return $res;
+        }
+    }
+
+    public function getLastDateByStationTimeMeters($columnName = [], $query = [], $limit = 1)
+    {
+        if (empty($columnName)) {
+            return false;
+        }
+
+        $selectSql = '';
+        foreach ($columnName as $key) {
+            $selectSql = $selectSql . $key . ', ';
+        }
+        $builder = $this->select($selectSql);
+
+        $builder->where('station_id', $query['station_id']);
+        $builder->where('log_time', $query['log_time']);
+        $builder->whereIn('meter_id', $query['meter_id']);
 
         $res = $builder->orderBy('log_date', 'DESC')
             ->findAll($limit);

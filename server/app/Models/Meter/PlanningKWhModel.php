@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-03 19:33:52
+ * @LastEditTime: 2021-09-17 22:42:36
  */
 
 namespace App\Models\Meter;
@@ -17,7 +17,7 @@ class PlanningKWhModel extends Model
 
     protected $table         = 'app_kwh_planning';
     protected $primaryKey    = 'id';
-    protected $allowedFields = ['station_id', 'year', 'type', 'month', 'planning', 'deal', 'creator'];
+    protected $allowedFields = ['station_id', 'year', 'month', 'planning', 'deal', 'creator'];
 
     protected $useAutoIncrement = true;
 

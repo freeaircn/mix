@@ -6,14 +6,14 @@
           <div style="margin: 12px 0px">
             <a-row :gutter="16" >
               <a-col :span="12">
-                <a-statistic title="投产上网电量" value="500000000">
+                <a-statistic title="投产发电" :value="genEnergyTotal" :value-style="{ color: '#cf1322' }">
                   <template #suffix>
                     <span> / 万kWh</span>
                   </template>
                 </a-statistic>
               </a-col>
               <a-col :span="12">
-                <a-statistic title="投产发电电量" value="600000000">
+                <a-statistic title="投产上网" :value="onGridEnergyTotal" :value-style="{ color: '#cf1322' }">
                   <template #suffix>
                     <span> / 万kWh</span>
                   </template>
@@ -54,6 +54,10 @@ export default {
       type: String,
       default: ''
     },
+    total: {
+      type: Object,
+      default: () => {}
+    },
     yearData: {
       type: Array,
       default: () => []
@@ -67,6 +71,8 @@ export default {
     return {
       year: '',
       mountedDone: false,
+      onGridEnergyTotal: 0,
+      genEnergyTotal: 0,
       yearChart: null,
       monthChart: null
     }
@@ -83,6 +89,7 @@ export default {
     changed: {
       handler: function (val) {
         if (this.mountedDone) {
+          this.updateTotal()
           this.updateYearChart()
           this.updateMonthChart()
         }
@@ -99,6 +106,10 @@ export default {
     }
   },
   methods: {
+    updateTotal () {
+      this.genEnergyTotal = this.total.genEnergy
+      this.onGridEnergyTotal = this.total.onGridEnergy
+    },
 
     initYearChart () {
       this.yearChart = new Column('kwh-overall-year-chart', {
@@ -154,7 +165,7 @@ export default {
         },
         animation: false,
         slider: {
-          start: 0.4,
+          start: 0,
           end: 1,
           trendCfg: {
             isArea: true

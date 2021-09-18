@@ -1,8 +1,11 @@
 // eslint-disable-next-line
 import * as loginService from '@/api/login'
 // eslint-disable-next-line
-import { BasicLayout, BlankLayout, PageView, RouteView } from '@/layouts'
-const _import = require('@/utils/_import_' + process.env.NODE_ENV) // 获取组件的方法
+import { BasicLayout, BlankLayout, PageView, RouteView } from '@/layouts' // 获取组件的方法
+// import { letterRoundY } from '@/core/icons'
+const _import = require('@/utils/_import_' + process.env.NODE_ENV)
+// const _getIcon = file => () => import('@/assets/icons/' + file + '.svg?inline')
+// import letterRoundY from '@/assets/icons/Y_round.svg?inline'
 
 // 前端路由表
 // const constantRouterComponents = {
@@ -198,6 +201,9 @@ export const filterDynamicRouter = (routers) => { // 遍历后台传来的路由
     }
 
     // meta - title, icon, noCache, breadcrumb
+    // if (router.meta.icon) {
+    //   router.meta.icon = letterRoundY
+    // }
     if (router.meta.keepAlive) {
       router.meta.keepAlive = router.meta.keepAlive === '1'
     }
