@@ -21,6 +21,7 @@
       :data-source="listData"
       :pagination="pagination"
       :loading="loading"
+      :customRow="onRowClick"
       @change="handleTableChange"
     >
       <span slot="serial" slot-scope="text, record, index">
@@ -33,6 +34,9 @@
           <a @click="handleDel(record)">删除</a>
         </template>
       </span>
+      <template slot="footer">
+        注：双击某一行，查看记录的电表读数
+      </template>
     </a-table>
 
   </div>
@@ -156,6 +160,22 @@ export default {
         this.query.date = moment().format('YYYY-MM-DD')
       }
       this.$emit('query', this.query.date)
+    },
+
+    // 双击行，弹出对话框
+    onRowClick (record) {
+      return {
+        on: {
+          dblclick: () => {
+            const temp = {
+              station_id: record.station_id,
+              log_date: record.log_date,
+              log_time: record.log_time
+            }
+            this.$emit('queryDetail', temp)
+          }
+        }
+      }
     },
 
     // 查看简报，消息码report

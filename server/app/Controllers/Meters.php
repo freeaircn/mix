@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-17 15:59:21
+ * @LastEditTime: 2021-09-21 19:32:22
  */
 
 namespace App\Controllers;
@@ -18,7 +18,7 @@ class Meters extends BaseController
     use ResponseTrait;
 
     // 电表的个数
-    protected $meterNumber;
+    protected $meterTotalNumber;
 
     // 主表的编号，全厂电量统计取线路主表记录
     protected $mainMeterId;
@@ -42,10 +42,10 @@ class Meters extends BaseController
 
     public function __construct()
     {
-        $this->meterNumber     = 9;
-        $this->mainMeterId     = 1;
-        $this->firstGenMeterId = 3;
-        $this->lastGenMeterId  = 5;
+        $this->meterTotalNumber = 9;
+        $this->mainMeterId      = 1;
+        $this->firstGenMeterId  = 3;
+        $this->lastGenMeterId   = 5;
 
         // 1320000 kWh，4位小数，入库前乘以10000，得到整数
         $this->mainMeterRate = 132;
@@ -76,10 +76,10 @@ class Meters extends BaseController
         // 检查数据
         $valid = true;
         if (isset($client['meter'])) {
-            if (count($client['meter']) !== $this->meterNumber) {
+            if (count($client['meter']) !== $this->meterTotalNumber) {
                 $valid = false;
             } else {
-                for ($i = 0; $i < $this->meterNumber; $i++) {
+                for ($i = 0; $i < $this->meterTotalNumber; $i++) {
                     foreach ($client['meter'][$i] as $value) {
                         if (!is_numeric($value)) {
                             $valid = false;
@@ -166,6 +166,42 @@ class Meters extends BaseController
         if ($result) {
             $res['code'] = EXIT_SUCCESS;
             $res['data'] = ['total' => $result['total'], 'data' => $result['result']];
+        } else {
+            $res['code'] = EXIT_ERROR;
+        }
+
+        return $this->respond($res);
+    }
+
+    public function getMetersLogDetail()
+    {
+        $param = $this->request->getGet();
+
+        // 检查请求数据
+        if (!$this->validate('MeterDailyReportGet')) {
+            $res['error'] = $this->validator->getErrors();
+
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '请求数据无效';
+            return $this->respond($res);
+        }
+
+        $query['station_id'] = $param['station_id'];
+        $query['log_date']   = $param['log_date'];
+        $query['log_time']   = $param['log_time'];
+
+        $columnName = ['meter_id', 'fak', 'bak', 'frk', 'brk', 'peak', 'valley'];
+        $db         = $this->meterLogModel->getByStationDateTime($columnName, $query);
+
+        $result = $this->editMetersLogDetail($db);
+
+        // $res['code']  = EXIT_SUCCESS;
+        // $res['extra'] = $db;
+
+        if (!empty($result)) {
+            $res['code']  = EXIT_SUCCESS;
+            $res['data']  = $result;
+            $res['extra'] = $db;
         } else {
             $res['code'] = EXIT_ERROR;
         }
@@ -1341,5 +1377,127 @@ class Meters extends BaseController
 
         return ['total' => $total, 'yearData' => $yearData, 'monthData' => $monthData];
 
+    }
+
+    protected function editMetersLogDetail($db)
+    {
+        if (empty($db)) {
+            return false;
+        }
+
+        // 初值
+        $res['tab1Data'] = [
+            ['id' => 1, 'rowHeader' => '正向有功', 'value1' => '/', 'value2' => '/'],
+            ['id' => 2, 'rowHeader' => '反向有功', 'value1' => '/', 'value2' => '/'],
+            ['id' => 3, 'rowHeader' => '正向无功', 'value1' => '/', 'value2' => '/'],
+            ['id' => 4, 'rowHeader' => '反向无功', 'value1' => '/', 'value2' => '/'],
+            ['id' => 5, 'rowHeader' => '高峰', 'value1' => '/', 'value2' => '/'],
+            ['id' => 6, 'rowHeader' => '低谷', 'value1' => '/', 'value2' => '/'],
+        ];
+
+        $res['tab2Data'] = [
+            ['id' => 1, 'rowHeader' => '正向有功', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
+            ['id' => 2, 'rowHeader' => '反向有功', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
+            ['id' => 3, 'rowHeader' => '正向无功', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
+            ['id' => 4, 'rowHeader' => '反向无功', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
+            ['id' => 5, 'rowHeader' => '高峰', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
+            ['id' => 6, 'rowHeader' => '低谷', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
+        ];
+
+        $res['tab3Data'] = [
+            ['id' => 1, 'rowHeader' => '正向有功', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
+            ['id' => 2, 'rowHeader' => '反向有功', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
+            ['id' => 3, 'rowHeader' => '正向无功', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
+            ['id' => 4, 'rowHeader' => '反向无功', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
+            ['id' => 5, 'rowHeader' => '高峰', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
+            ['id' => 6, 'rowHeader' => '低谷', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
+        ];
+
+        $res['tab4Data'] = [
+            ['id' => 1, 'rowHeader' => '正向有功', 'value1' => '/'],
+            ['id' => 2, 'rowHeader' => '反向有功', 'value1' => '/'],
+            ['id' => 3, 'rowHeader' => '正向无功', 'value1' => '/'],
+            ['id' => 4, 'rowHeader' => '反向无功', 'value1' => '/'],
+            ['id' => 5, 'rowHeader' => '高峰', 'value1' => '/'],
+            ['id' => 6, 'rowHeader' => '低谷', 'value1' => '/'],
+        ];
+
+        //
+        $cnt = count($db);
+        for ($i = 0; $i < $cnt; $i++) {
+            if ($db[$i]['meter_id'] === '1') {
+                $res['tab1Data'][0]['value1'] = $db[$i]['fak'] / 10000;
+                $res['tab1Data'][1]['value1'] = $db[$i]['bak'] / 10000;
+                $res['tab1Data'][2]['value1'] = $db[$i]['frk'] / 10000;
+                $res['tab1Data'][3]['value1'] = $db[$i]['brk'] / 10000;
+            }
+            if ($db[$i]['meter_id'] === '2') {
+                $res['tab1Data'][0]['value2'] = $db[$i]['fak'] / 10000;
+                $res['tab1Data'][1]['value2'] = $db[$i]['bak'] / 10000;
+                $res['tab1Data'][2]['value2'] = $db[$i]['frk'] / 10000;
+                $res['tab1Data'][3]['value2'] = $db[$i]['brk'] / 10000;
+            }
+            //
+            if ($db[$i]['meter_id'] === '3') {
+                $res['tab2Data'][0]['value1'] = $db[$i]['fak'] / 100;
+                // $res['tab2Data'][1]['value1'] = $db[$i]['bak'] / 100;
+                $res['tab2Data'][2]['value1'] = $db[$i]['frk'] / 100;
+                $res['tab2Data'][3]['value1'] = $db[$i]['brk'] / 100;
+                $res['tab2Data'][4]['value1'] = $db[$i]['peak'] / 100;
+                $res['tab2Data'][5]['value1'] = $db[$i]['valley'] / 100;
+            }
+            if ($db[$i]['meter_id'] === '4') {
+                $res['tab2Data'][0]['value2'] = $db[$i]['fak'] / 100;
+                // $res['tab2Data'][1]['value2'] = $db[$i]['bak'] / 100;
+                $res['tab2Data'][2]['value2'] = $db[$i]['frk'] / 100;
+                $res['tab2Data'][3]['value2'] = $db[$i]['brk'] / 100;
+                $res['tab2Data'][4]['value2'] = $db[$i]['peak'] / 100;
+                $res['tab2Data'][5]['value2'] = $db[$i]['valley'] / 100;
+            }
+            if ($db[$i]['meter_id'] === '5') {
+                $res['tab2Data'][0]['value3'] = $db[$i]['fak'] / 100;
+                // $res['tab2Data'][1]['value3'] = $db[$i]['bak'] / 100;
+                $res['tab2Data'][2]['value3'] = $db[$i]['frk'] / 100;
+                $res['tab2Data'][3]['value3'] = $db[$i]['brk'] / 100;
+                $res['tab2Data'][4]['value3'] = $db[$i]['peak'] / 100;
+                $res['tab2Data'][5]['value3'] = $db[$i]['valley'] / 100;
+            }
+            //
+            if ($db[$i]['meter_id'] === '6') {
+                $res['tab3Data'][0]['value1'] = $db[$i]['fak'] / 100;
+                // $res['tab2Data'][1]['value1'] = $db[$i]['bak'] / 100;
+                // $res['tab3Data'][2]['value1'] = $db[$i]['frk'] / 100;
+                // $res['tab3Data'][3]['value1'] = $db[$i]['brk'] / 100;
+                // $res['tab3Data'][4]['value1'] = $db[$i]['peak'] / 100;
+                // $res['tab3Data'][5]['value1'] = $db[$i]['valley'] / 100;
+            }
+            if ($db[$i]['meter_id'] === '7') {
+                $res['tab3Data'][0]['value2'] = $db[$i]['fak'] / 100;
+                // $res['tab2Data'][1]['value1'] = $db[$i]['bak'] / 100;
+                // $res['tab3Data'][2]['value1'] = $db[$i]['frk'] / 100;
+                // $res['tab3Data'][3]['value1'] = $db[$i]['brk'] / 100;
+                // $res['tab3Data'][4]['value1'] = $db[$i]['peak'] / 100;
+                // $res['tab3Data'][5]['value1'] = $db[$i]['valley'] / 100;
+            }
+            if ($db[$i]['meter_id'] === '8') {
+                $res['tab3Data'][0]['value3'] = $db[$i]['fak'] / 100;
+                // $res['tab2Data'][1]['value1'] = $db[$i]['bak'] / 100;
+                // $res['tab3Data'][2]['value1'] = $db[$i]['frk'] / 100;
+                // $res['tab3Data'][3]['value1'] = $db[$i]['brk'] / 100;
+                // $res['tab3Data'][4]['value1'] = $db[$i]['peak'] / 100;
+                // $res['tab3Data'][5]['value1'] = $db[$i]['valley'] / 100;
+            }
+            //
+            if ($db[$i]['meter_id'] === '9') {
+                $res['tab4Data'][0]['value1'] = $db[$i]['fak'] / 100;
+                // $res['tab2Data'][1]['value1'] = $db[$i]['bak'] / 100;
+                // $res['tab3Data'][2]['value1'] = $db[$i]['frk'] / 100;
+                // $res['tab3Data'][3]['value1'] = $db[$i]['brk'] / 100;
+                // $res['tab3Data'][4]['value1'] = $db[$i]['peak'] / 100;
+                // $res['tab3Data'][5]['value1'] = $db[$i]['valley'] / 100;
+            }
+        }
+
+        return $res;
     }
 }

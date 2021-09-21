@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-16 23:05:24
+ * @LastEditTime: 2021-09-21 18:44:01
  */
 import request from '@/utils/request'
 
@@ -12,6 +12,7 @@ const api = {
   generator_event_statistic: '/generator/event/statistic',
   generator_event_export: '/generator/event/export',
   meters: '/meters',
+  meters_log_detail: '/meters/log_detail',
   meters_daily_report: '/meters/daily_report',
   meters_basic_statistic: '/meters/basic_statistic',
   meters_overall_statistic: 'meters/overall_statistic',
@@ -72,6 +73,14 @@ export function saveMeterLogs (data) {
 export function getMeterLogs (params) {
   return request({
     url: api.meters,
+    method: 'get',
+    params: params
+  })
+}
+
+export function getMetersLogDetail (params) {
+  return request({
+    url: api.meters_log_detail,
     method: 'get',
     params: params
   })

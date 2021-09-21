@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-17 10:56:08
+ * @LastEditTime: 2021-09-21 18:58:08
  */
 
 namespace App\Models\Meter;
@@ -44,20 +44,26 @@ class MeterLogModel extends Model
         return $total > 0 ? true : false;
     }
 
-    // public function getLogByStationDateTime($query)
-    // {
-    //     if (empty($query)) {
-    //         return false;
-    //     }
+    public function getByStationDateTime($columnName = [], $query)
+    {
+        if (empty($columnName)) {
+            return false;
+        }
 
-    //     $selectSql = 'id, station_id, meter_id, log_date, log_time, fak, bak, frk, brk, peak, valley, creator';
-    //     $builder   = $this->select($selectSql);
+        $selectSql = '';
+        foreach ($columnName as $key) {
+            $selectSql = $selectSql . $key . ', ';
+        }
+        $builder = $this->select($selectSql);
 
-    //     $builder->where($query);
-    //     $res = $builder->findAll();
+        $builder->where('station_id', $query['station_id']);
+        $builder->where('log_date', $query['log_date']);
+        $builder->where('log_time', $query['log_time']);
 
-    //     return $res;
-    // }
+        $result = $builder->findAll();
+
+        return $result;
+    }
 
     public function getById($id)
     {

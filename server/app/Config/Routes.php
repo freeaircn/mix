@@ -102,6 +102,7 @@ $routes->group('api', function ($routes) {
     //
     $routes->post('meters', 'Meters::newMeterLogs');
     $routes->get('meters', 'Meters::getMeterLogs');
+    $routes->get('meters/log_detail', 'Meters::getMetersLogDetail');
     $routes->delete('meters', 'Meters::delMeterLogs');
     $routes->get('meters/daily_report', 'Meters::getDailyReport');
     $routes->get('meters/basic_statistic', 'Meters::getBasicStatistic');

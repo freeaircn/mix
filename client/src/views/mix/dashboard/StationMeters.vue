@@ -80,6 +80,7 @@
                 :total="totalLogs"
                 @paginationChange="onLogListPageChange"
                 @query="onQueryMeterLog"
+                @queryDetail="onQueryMetersLogDetail"
                 @report="onReqDailyReport"
                 @delete="onDeleteMeterLog"
               >
@@ -103,7 +104,25 @@
       </a-row>
     </div>
 
-    <a-modal :visible="reportDiagVisible" title="简报" :closable="false">
+    <a-modal
+      :title="logDetailDiagTitle"
+      v-model="logDetailDiagVisible"
+    >
+      <template slot="footer">
+        <a-button key="submit" type="primary" @click="() => {this.logDetailDiagVisible = false}">
+          关闭
+        </a-button>
+      </template>
+      <MetersLogDetail
+        :tab1Data="logDetailTab1Data"
+        :tab2Data="logDetailTab2Data"
+        :tab3Data="logDetailTab3Data"
+        :tab4Data="logDetailTab4Data"
+      >
+      </MetersLogDetail>
+    </a-modal>
+
+    <a-modal v-model="reportDiagVisible" title="简报" >
       <template slot="footer">
         <a-button key="submit" type="primary" @click="() => {this.reportDiagVisible = false}">
           关闭
@@ -165,9 +184,9 @@
 <script>
 import moment from 'moment'
 // import { deepMerge } from '@/utils/util'
-import { MetersLogList, PlanningKWhList, KWhStatistic, KWhOverallStatistic } from './components/meter'
+import { MetersLogList, PlanningKWhList, KWhStatistic, KWhOverallStatistic, MetersLogDetail } from './components/meter'
 import { mapGetters } from 'vuex'
-import { getMeterLogs, saveMeterLogs, getMetersDailyReport, getMetersBasicStatistic, delMeterLogs, getPlanningKWh, updatePlanningKWhRecord, getMetersOverallStatistic } from '@/api/service'
+import { getMeterLogs, getMetersLogDetail, saveMeterLogs, getMetersDailyReport, getMetersBasicStatistic, delMeterLogs, getPlanningKWh, updatePlanningKWhRecord, getMetersOverallStatistic } from '@/api/service'
 import { baseMixin } from '@/store/app-mixin'
 
 export default {
@@ -177,7 +196,8 @@ export default {
     MetersLogList,
     PlanningKWhList,
     KWhStatistic,
-    KWhOverallStatistic
+    KWhOverallStatistic,
+    MetersLogDetail
   },
   data () {
     return {
@@ -225,6 +245,13 @@ export default {
         daily2: '',
         weekly: ''
       },
+
+      logDetailDiagTitle: '',
+      logDetailDiagVisible: false,
+      logDetailTab1Data: [],
+      logDetailTab2Data: [],
+      logDetailTab3Data: [],
+      logDetailTab4Data: [],
 
       // 年计划显示
       planningKWhListLoading: false,
@@ -362,6 +389,35 @@ export default {
         .catch((err) => {
           this.logListLoading = false
           this.logListData.splice(0, this.logListData.length)
+          if (err.response) {
+          }
+        })
+    },
+
+    onQueryMetersLogDetail (param) {
+      this.logDetailTab1Data.splice(0, this.logDetailTab1Data.length)
+      this.logDetailTab2Data.splice(0, this.logDetailTab2Data.length)
+      this.logDetailTab3Data.splice(0, this.logDetailTab3Data.length)
+      this.logDetailTab4Data.splice(0, this.logDetailTab4Data.length)
+      //
+      this.logDetailDiagTitle = param.log_date + ' ' + param.log_time
+      this.logDetailDiagVisible = false
+      getMetersLogDetail(param)
+        .then((data) => {
+          this.logDetailTab1Data = data.tab1Data
+          this.logDetailTab2Data = data.tab2Data
+          this.logDetailTab3Data = data.tab3Data
+          this.logDetailTab4Data = data.tab4Data
+          //
+          this.logDetailDiagVisible = true
+        })
+        .catch((err) => {
+          this.logDetailTab1Data.splice(0, this.logDetailTab1Data.length)
+          this.logDetailTab2Data.splice(0, this.logDetailTab2Data.length)
+          this.logDetailTab3Data.splice(0, this.logDetailTab3Data.length)
+          this.logDetailTab4Data.splice(0, this.logDetailTab4Data.length)
+          //
+          this.logDetailDiagVisible = false
           if (err.response) {
           }
         })
