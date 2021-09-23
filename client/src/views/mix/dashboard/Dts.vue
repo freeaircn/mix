@@ -1,9 +1,9 @@
 <!--
  * @Description:
  * @Author: freeair
- * @Date: 2021-07-04 23:05:30
+ * @Date: 2021-09-23 10:54:38
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-23 20:08:32
+ * @LastEditTime: 2021-09-23 19:40:44
 -->
 <template>
   <route-view></route-view>
@@ -13,8 +13,13 @@
 import { RouteView } from '@/layouts'
 
 export default {
+  name: 'Dts',
   components: {
     RouteView
+  },
+  data () {
+    return {
+    }
   }
 }
 </script>

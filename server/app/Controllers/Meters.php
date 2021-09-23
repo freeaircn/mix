@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-21 19:32:22
+ * @LastEditTime: 2021-09-22 18:33:34
  */
 
 namespace App\Controllers;
@@ -168,6 +168,7 @@ class Meters extends BaseController
             $res['data'] = ['total' => $result['total'], 'data' => $result['result']];
         } else {
             $res['code'] = EXIT_ERROR;
+            $res['msg']  = '稍后再试';
         }
 
         return $this->respond($res);
@@ -195,15 +196,12 @@ class Meters extends BaseController
 
         $result = $this->editMetersLogDetail($db);
 
-        // $res['code']  = EXIT_SUCCESS;
-        // $res['extra'] = $db;
-
         if (!empty($result)) {
-            $res['code']  = EXIT_SUCCESS;
-            $res['data']  = $result;
-            $res['extra'] = $db;
+            $res['code'] = EXIT_SUCCESS;
+            $res['data'] = $result;
         } else {
             $res['code'] = EXIT_ERROR;
+            $res['msg']  = '稍后再试';
         }
 
         return $this->respond($res);
@@ -256,8 +254,10 @@ class Meters extends BaseController
         // $res['genEnergy']    = $genEnergy;
         // $res['onGridEnergy'] = $onGridEnergy;
         // $res['rates']        = $rates;
-        $res['data'] = $report;
+
         $res['code'] = EXIT_SUCCESS;
+        $res['data'] = $report;
+
         return $this->respond($res);
 
     }
@@ -443,18 +443,18 @@ class Meters extends BaseController
         }
 
         // 检查记录时间是不是最近的
-        $query = [
-            'station_id' => $station_id,
-            'log_time'   => $log_time,
-        ];
-        $columnName = ['log_date'];
-        $db         = $this->meterLogModel->getLastDateByStationTime($columnName, $query);
-        if ($db['log_date'] !== $log_date) {
-            $res['code']  = EXIT_ERROR;
-            $res['msg']   = '不是时间最近的一条记录';
-            $res['error'] = 'not last record';
-            return $this->respond($res);
-        }
+        // $query = [
+        //     'station_id' => $station_id,
+        //     'log_time'   => $log_time,
+        // ];
+        // $columnName = ['log_date'];
+        // $db         = $this->meterLogModel->getLastDateByStationTime($columnName, $query);
+        // if ($db['log_date'] !== $log_date) {
+        //     $res['code']  = EXIT_ERROR;
+        //     $res['msg']   = '不是时间最近的一条记录';
+        //     $res['error'] = 'not last record';
+        //     return $this->respond($res);
+        // }
 
         // 执行删除，多块电表
         $query = [
