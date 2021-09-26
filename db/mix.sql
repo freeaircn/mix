@@ -57,6 +57,35 @@ INSERT INTO `app_dept` (`id`, `name`, `pid`, `status`, `description`, `dataMask`
 -- --------------------------------------------------------
 
 --
+-- 表的结构 `app_equipment_unit`
+--
+
+DROP TABLE IF EXISTS `app_equipment_unit`;
+CREATE TABLE IF NOT EXISTS `app_equipment_unit` (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'ID',
+  `name` varchar(63) NOT NULL COMMENT '名称',
+  `pid` int(11) UNSIGNED NOT NULL COMMENT '上级节点',
+  `description` varchar(127) DEFAULT NULL COMMENT '说明',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE,
+  KEY `pid` (`pid`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='部门' ROW_FORMAT=COMPACT;
+
+--
+-- 转存表中的数据 `app_equipment_unit`
+--
+
+INSERT INTO `app_equipment_unit` (`id`, `name`, `pid`, `description`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, '松山河口电厂', 0, '无', '2021-06-27 20:00:00', '2021-06-27 20:00:00', NULL),
+(2, '苏家河口电厂', 0, '无', '2021-06-27 20:00:00', '2021-06-27 20:00:00', NULL),
+(3, '1#发变组', 1, '无', '2021-06-27 20:00:00', '2021-06-27 20:00:00', NULL);
+
+
+-- --------------------------------------------------------
+
+--
 -- 表的结构 `app_generator_event_log`
 --
 

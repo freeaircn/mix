@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-13 22:49:02
+ * @LastEditTime: 2021-09-26 22:07:37
  */
 import request from '@/utils/request'
 
@@ -17,12 +17,13 @@ const api = {
   title: '/title',
   politic: '/politic',
   userRole: '/user_role',
+  equipmentUnit: '/equipment_unit'
   // user: '/user',
   //
-  service: '/service',
-  permission: '/permission',
-  permissionNoPager: '/permission/no-pager',
-  orgTree: '/org/tree'
+  // service: '/service',
+  // permission: '/permission',
+  // permissionNoPager: '/permission/no-pager',
+  // orgTree: '/org/tree'
 }
 
 export default api
@@ -43,39 +44,39 @@ export function getRoleList (parameter) {
   })
 }
 
-export function getServiceList (parameter) {
-  return request({
-    url: api.service,
-    method: 'get',
-    params: parameter
-  })
-}
+// export function getServiceList (parameter) {
+//   return request({
+//     url: api.service,
+//     method: 'get',
+//     params: parameter
+//   })
+// }
 
-export function getPermissions (parameter) {
-  return request({
-    url: api.permissionNoPager,
-    method: 'get',
-    params: parameter
-  })
-}
+// export function getPermissions (parameter) {
+//   return request({
+//     url: api.permissionNoPager,
+//     method: 'get',
+//     params: parameter
+//   })
+// }
 
-export function getOrgTree (parameter) {
-  return request({
-    url: api.orgTree,
-    method: 'get',
-    params: parameter
-  })
-}
+// export function getOrgTree (parameter) {
+//   return request({
+//     url: api.orgTree,
+//     method: 'get',
+//     params: parameter
+//   })
+// }
 
 // id == 0 add     post
 // id != 0 update  put
-export function saveService (parameter) {
-  return request({
-    url: api.service,
-    method: parameter.id === 0 ? 'post' : 'put',
-    data: parameter
-  })
-}
+// export function saveService (parameter) {
+//   return request({
+//     url: api.service,
+//     method: parameter.id === 0 ? 'post' : 'put',
+//     data: parameter
+//   })
+// }
 
 export function saveSub (sub) {
   return request({
@@ -267,5 +268,30 @@ export function getUserRole (parameter) {
     url: api.userRole,
     method: 'get',
     params: parameter
+  })
+}
+
+//
+export function getEquipmentUnit (params) {
+  return request({
+    url: api.equipmentUnit,
+    method: 'get',
+    params: params
+  })
+}
+
+export function saveEquipmentUnit (data) {
+  return request({
+    url: api.equipmentUnit,
+    method: data.id && data.id > 0 ? 'put' : 'post',
+    data: data
+  })
+}
+
+export function deleteEquipmentUnit (id) {
+  return request({
+    url: api.equipmentUnit,
+    method: 'delete',
+    data: { id }
   })
 }

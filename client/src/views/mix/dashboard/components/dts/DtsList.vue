@@ -144,7 +144,7 @@ export default {
       columns: [
         {
           title: '单号',
-          dataIndex: 'ticket_num'
+          dataIndex: 'ticket_id'
         },
         {
           title: '类型',
@@ -178,7 +178,7 @@ export default {
         },
         {
           title: '状态',
-          dataIndex: 'place'
+          dataIndex: 'place_at'
         },
         {
           title: '操作',
@@ -196,8 +196,8 @@ export default {
       loading: false,
 
       listData: [
-        { id: '1', ticket_num: '20210923001', type: '2', description: 'xx导致xx故障', level: '1', place: 'posted', created_at: '2021-09-23 10:00:00', updated_at: '2021-09-23 10:00:00', creator: '小强', owner: 'XX' },
-        { id: '2', ticket_num: '20210923002', type: '1', description: 'xx导致xx故障', level: '3', place: 'posted', created_at: '2021-09-23 10:00:00', updated_at: '2021-09-23 10:00:00', creator: '小强', owner: 'XX' }
+        { id: '1', ticket_id: '20210923001', type: '2', description: 'xx导致xx故障', level: '1', place_at: 'posted', created_at: '2021-09-23 10:00:00', updated_at: '2021-09-23 10:00:00', creator: '小强', owner: 'XX' },
+        { id: '2', ticket_id: '20210923002', type: '1', description: 'xx导致xx故障', level: '3', place_at: 'posted', created_at: '2021-09-23 10:00:00', updated_at: '2021-09-23 10:00:00', creator: '小强', owner: 'XX' }
       ]
 
     }

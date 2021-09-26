@@ -4,22 +4,22 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-29 22:59:38
+ * @LastEditTime: 2021-09-26 20:11:57
  */
 
 namespace App\Controllers;
 
+use App\Models\admin\AvatarModel;
+use App\Models\admin\DeptModel;
+use App\Models\admin\JobModel;
+use App\Models\admin\MenuModel;
+use App\Models\admin\PoliticModel;
+use App\Models\admin\RoleMenuModel;
+use App\Models\admin\TitleModel;
+use App\Models\admin\UserModel;
+use App\Models\admin\UserRoleModel;
 use App\Models\AuthModel;
-use App\Models\AvatarModel;
-use App\Models\DeptModel;
-use App\Models\JobModel;
-use App\Models\MenuModel;
-use App\Models\PoliticModel;
-use App\Models\RoleMenuModel;
 use App\Models\SmsCodeModel;
-use App\Models\TitleModel;
-use App\Models\UserModel;
-use App\Models\UserRoleModel;
 use CodeIgniter\API\ResponseTrait;
 
 class Auth extends BaseController

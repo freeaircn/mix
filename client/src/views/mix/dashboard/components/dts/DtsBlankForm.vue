@@ -3,15 +3,14 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-23 20:07:08
+ * @LastEditTime: 2021-09-25 21:29:10
 -->
 <template>
   <page-header-wrapper :title="false">
     <a-card :title="userInfo.belongToDeptName" :bordered="false" :headStyle="{marginBottom: '8px'}">
     </a-card>
 
-    <a-card title="新建" :bordered="false" :body-style="{marginBottom: '8px'}" >
-      <!-- <a-button slot="extra" type="link" @click="handleNewDtsBlankForm">新建</a-button> -->
+    <a-card title="新问题单" :bordered="false" :body-style="{marginBottom: '8px'}" >
       <router-link slot="extra" to="/dashboard/dts">返回</router-link>
 
       <a-form-model
@@ -21,50 +20,24 @@
         :label-col="labelCol"
         :wrapper-col="wrapperCol"
       >
-        <a-form-model-item label="姓名" prop="username">
-          <a-input v-model="record.username"></a-input>
-        </a-form-model-item>
-
-        <a-form-model-item label="性别" prop="sex">
-          <a-radio-group name="radioGroup" v-model="record.sex">
-            <a-radio value="男">男</a-radio>
-            <a-radio value="女">女</a-radio>
+        <a-form-model-item label="类别" prop="type">
+          <a-radio-group name="radioGroup1" v-model="record.type">
+            <a-radio value="1">隐患</a-radio>
+            <a-radio value="2">故障</a-radio>
           </a-radio-group>
         </a-form-model-item>
-
-        <a-form-model-item label="工号" prop="workID">
-          <a-input v-model="record.workID"></a-input>
+        <a-form-model-item label="标题" prop="title">
+          <a-input v-model="record.title"></a-input>
         </a-form-model-item>
-        <a-form-model-item label="身份证" prop="IdCard">
-          <a-input v-model="record.IdCard"></a-input>
-        </a-form-model-item>
-        <a-form-model-item label="手机号" prop="phone">
-          <a-input v-model="record.phone"></a-input>
-        </a-form-model-item>
-        <a-form-model-item label="电子邮箱" prop="email">
-          <a-input v-model="record.email"></a-input>
-        </a-form-model-item>
-
-        <a-form-model-item label="状态" prop="status">
-          <a-radio-group name="radioGroup2" v-model="record.status">
-            <a-radio value="0">禁用</a-radio>
-            <a-radio value="1">启用</a-radio>
-          </a-radio-group>
-        </a-form-model-item>
-
-        <a-form-model-item label="密码" prop="password" >
-          <a-input v-model="record.password"></a-input>
-        </a-form-model-item>
-
-        <a-form-model-item label="政治面貌" prop="politic">
-          <a-select v-model="record.politic" placeholder="请选择" >
-            <a-select-option v-for="d in politicOptions" :key="d.id" :value="d.id" :disabled="d.status === '0'">
-              {{ d.name }}
-            </a-select-option>
+        <a-form-model-item label="影响程度" prop="level">
+          <a-select v-model="record.level" placeholder="请选择" >
+            <a-select-option value="1">紧急</a-select-option>
+            <a-select-option value="2">严重</a-select-option>
+            <a-select-option value="3">一般</a-select-option>
           </a-select>
         </a-form-model-item>
 
-        <a-form-model-item label="部门" prop="department">
+        <a-form-model-item label="所属单元" prop="unit">
           <a-cascader
             :options="departmentOptions"
             v-model="record.department"
@@ -76,31 +49,13 @@
           />
         </a-form-model-item>
 
-        <a-form-model-item label="岗位" prop="job">
-          <a-select v-model="record.job" placeholder="请选择" >
-            <a-select-option v-for="d in jobOptions" :key="d.id" :value="d.id" :disabled="d.status === '0'">
-              {{ d.name }}
-            </a-select-option>
-          </a-select>
-        </a-form-model-item>
-        <a-form-model-item label="职称" prop="title">
-          <a-select v-model="record.title" placeholder="请选择" >
-            <a-select-option v-for="d in titleOptions" :key="d.id" :value="d.id" :disabled="d.status === '0'">
-              {{ d.name }}
-            </a-select-option>
-          </a-select>
-        </a-form-model-item>
-        <a-form-model-item label="用户角色" prop="role">
-          <a-select v-model="record.role" mode="multiple" placeholder="请选择" >
-            <a-select-option v-for="d in roleOptions" :key="d.id" :value="d.id" :disabled="d.status === '0'">
-              {{ d.name }}
-            </a-select-option>
-          </a-select>
+        <a-form-model-item label="进展" prop="progress">
+          <a-textarea v-model="record.progress" :rows="8" />
         </a-form-model-item>
 
         <a-form-model-item :wrapperCol="{ span: 24 }" style="text-align: center">
-          <a-button htmlType="submit" type="primary" @click="onSubmit">{{ btnLabel }}</a-button>
-          <a-button style="margin-left: 8px">保存</a-button>
+          <a-button >保存</a-button>
+          <a-button type="primary" @click="onSubmit" style="margin-left: 8px">提交</a-button>
         </a-form-model-item>
       </a-form-model>
     </a-card>

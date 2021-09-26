@@ -4,20 +4,20 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-18 15:10:32
+ * @LastEditTime: 2021-09-26 20:11:26
  */
 
 namespace App\Controllers;
 
 use App\Models\AccountModel;
-use App\Models\AvatarModel;
-use App\Models\DeptModel;
-use App\Models\JobModel;
-use App\Models\MenuModel;
-use App\Models\PoliticModel;
+use App\Models\admin\AvatarModel;
+use App\Models\admin\DeptModel;
+use App\Models\admin\JobModel;
+use App\Models\admin\MenuModel;
+use App\Models\admin\PoliticModel;
+use App\Models\admin\TitleModel;
+use App\Models\admin\UserModel;
 use App\Models\SmsCodeModel;
-use App\Models\TitleModel;
-use App\Models\UserModel;
 use CodeIgniter\API\ResponseTrait;
 
 class Account extends BaseController

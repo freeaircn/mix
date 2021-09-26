@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-16 23:08:09
+ * @LastEditTime: 2021-09-26 22:09:33
  */
 
 namespace Config;
@@ -92,6 +92,11 @@ $routes->group('api', function ($routes) {
     $routes->delete('user', 'Admin::delUser');
     //
     $routes->get('user_role', 'Admin::getUserRole');
+    //
+    $routes->get('equipment_unit', 'Admin::getEquipmentUnit');
+    $routes->post('equipment_unit', 'Admin::newEquipmentUnit');
+    $routes->put('equipment_unit', 'Admin::updateEquipmentUnit');
+    $routes->delete('equipment_unit', 'Admin::deleteEquipmentUnit');
     //
     $routes->get('generator/event', 'GeneratorEvent::getGeneratorEvent');
     $routes->post('generator/event', 'GeneratorEvent::newGeneratorEvent');

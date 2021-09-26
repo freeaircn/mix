@@ -41,7 +41,7 @@
         :columns="columns"
         :data-source="tableData"
         :defaultExpandedRowKeys="['1']"
-        :pagination="pagination"
+        :pagination="false"
         :loading="loading"
       >
         <span slot="serial" slot-scope="text, record, index">
@@ -134,7 +134,6 @@ export default {
       tableData: [],
       // 查询参数
       queryParam: {},
-      pagination: {},
       loading: false,
       visibleRoleForm: false,
       tempRecord: {},

@@ -4,21 +4,22 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-30 09:38:38
+ * @LastEditTime: 2021-09-26 22:10:13
  */
 
 namespace App\Controllers;
 
-use App\Models\AvatarModel;
-use App\Models\DeptModel;
-use App\Models\JobModel;
-use App\Models\MenuModel;
-use App\Models\PoliticModel;
-use App\Models\RoleMenuModel;
-use App\Models\RoleMode;
-use App\Models\TitleModel;
-use App\Models\UserModel;
-use App\Models\UserRoleModel;
+use App\Models\Admin\AvatarModel;
+use App\Models\Admin\DeptModel;
+use App\Models\Admin\EquipmentUnitModel;
+use App\Models\Admin\JobModel;
+use App\Models\Admin\MenuModel;
+use App\Models\Admin\PoliticModel;
+use App\Models\Admin\RoleMenuModel;
+use App\Models\Admin\RoleMode;
+use App\Models\Admin\TitleModel;
+use App\Models\Admin\UserModel;
+use App\Models\Admin\UserRoleModel;
 use CodeIgniter\API\ResponseTrait;
 
 class Admin extends BaseController
@@ -598,6 +599,92 @@ class Admin extends BaseController
         } else {
             $res['code'] = EXIT_SUCCESS;
             $res['data'] = ['data' => []];
+        }
+
+        return $this->respond($res);
+    }
+
+    // 设备单元
+    public function getEquipmentUnit()
+    {
+        $params = $this->request->getGet();
+
+        $model = new EquipmentUnitModel();
+
+        $columnName = ['id', 'pid', 'name', 'description', 'updated_at'];
+
+        if (isset($params['select'])) {
+            $query = [
+                'id >' => 0,
+            ];
+        } else {
+            $query = [
+                'id >' => 1,
+            ];
+        }
+
+        $result = $model->get($columnName, $query);
+
+        if (empty($result)) {
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '请稍后查询';
+        } else {
+            $res['code'] = EXIT_SUCCESS;
+            $res['data'] = $result;
+        }
+
+        return $this->respond($res);
+    }
+
+    public function newEquipmentUnit()
+    {
+        $client = $this->request->getJSON(true);
+
+        $model  = new EquipmentUnitModel();
+        $result = $model->insert($client);
+
+        if (is_numeric($result)) {
+            $res['code'] = EXIT_SUCCESS;
+            $res['msg']  = '新建成功';
+        } else {
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '新建失败，稍后再试';
+        }
+
+        return $this->respond($res);
+    }
+
+    public function updateEquipmentUnit()
+    {
+        $client = $this->request->getJSON(true);
+
+        $model  = new EquipmentUnitModel();
+        $result = $model->save($client);
+
+        if ($result) {
+            $res['code'] = EXIT_SUCCESS;
+            $res['msg']  = '修改成功';
+        } else {
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '修改失败，稍后再试';
+        }
+
+        return $this->respond($res);
+    }
+
+    public function deleteEquipmentUnit()
+    {
+        $client = $this->request->getJSON(true);
+
+        $model  = new EquipmentUnitModel();
+        $result = $model->delete($client['id']);
+
+        if ($result === true) {
+            $res['code'] = EXIT_SUCCESS;
+            $res['msg']  = '已删除';
+        } else {
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '删除失败，稍后再试';
         }
 
         return $this->respond($res);
