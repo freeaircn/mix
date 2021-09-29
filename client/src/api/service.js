@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-21 18:44:01
+ * @LastEditTime: 2021-09-29 20:30:03
  */
 import request from '@/utils/request'
 
@@ -16,7 +16,9 @@ const api = {
   meters_daily_report: '/meters/daily_report',
   meters_basic_statistic: '/meters/basic_statistic',
   meters_overall_statistic: 'meters/overall_statistic',
-  planning_kWh: '/meters/planning_kWh'
+  planning_kWh: '/meters/planning_kWh',
+  dts_draft: '/dts/draft',
+  dts_list: '/dts/list'
 }
 
 // 机组事件
@@ -129,6 +131,23 @@ export function updatePlanningKWhRecord (data) {
 export function getMetersOverallStatistic (params) {
   return request({
     url: api.meters_overall_statistic,
+    method: 'get',
+    params: params
+  })
+}
+
+// Dts
+export function postDtsDraft (data) {
+  return request({
+    url: api.dts_draft,
+    method: 'post',
+    data: data
+  })
+}
+
+export function getDtsList (params) {
+  return request({
+    url: api.dts_list,
     method: 'get',
     params: params
   })

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-14 10:14:40
+ * @LastEditTime: 2021-09-29 21:13:17
  */
 
 namespace Config;
@@ -151,6 +151,18 @@ class Validation
 
     public $MeterBasicStatisticGet = [
         'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
+    ];
+
+    public $DtsDraftPost = [
+        'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
+        'type'       => 'required|regex_match[^[1-9]$]',
+        'level'      => 'required|regex_match[^[1-9]$]',
+    ];
+
+    public $DtsTicketsGet = [
+        'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
+        'limit'      => 'required|regex_match[^[1-9]\d{0,2}$]',
+        'offset'     => 'required|regex_match[^[1-9]\d{0,9}$]',
     ];
 
     /**

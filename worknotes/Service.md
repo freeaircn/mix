@@ -344,7 +344,7 @@
 2 问题单号：日期+3位数
 
 3 流程：
-  提单 - 检查 -  主管审核 - 解决 - 关闭。 挂起
+  提单 - 检查 -  复核 - 解决。 挂起，
   
   问题单转需求
   
@@ -404,7 +404,7 @@
     进展
     关联工作单
     关联需求单
-    关联技改单
+    //关联技改单
     关联奖励
     
   2 流程记录
@@ -414,6 +414,31 @@
     内容
     创建时间
     更新时间
+    
+DROP TABLE IF EXISTS `app_dts`;
+CREATE TABLE IF NOT EXISTS `app_dts` (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `ticket_id` bigint(16) UNSIGNED DEFAULT 0 COMMENT '问题单号',
+  `station_id` tinyint(3) UNSIGNED DEFAULT 0 COMMENT '站点',
+  `type` tinyint(3) UNSIGNED DEFAULT 0 COMMENT '类型',
+  `title` varchar(63) DEFAULT NULL COMMENT '标题',
+  `level` tinyint(3) UNSIGNED DEFAULT 0 COMMENT '影响程度',
+  `equipment_unit` varchar(63) DEFAULT NULL COMMENT '设备单元',
+  `progress` varchar(2000) DEFAULT NULL COMMENT '设备单元',
+  
+  `creator` varchar(7) DEFAULT NULL COMMENT '创建人',
+  `handler` varchar(7) DEFAULT NULL COMMENT '处理人',
+  `place_at` varchar(15) DEFAULT NULL COMMENT '流程',
+  
+  `task_id` bigint(16) UNSIGNED DEFAULT 0 COMMENT '工作单号',
+  `rm_id` bigint(16) UNSIGNED DEFAULT 0 COMMENT '需求单号',
+  `score` tinyint(3) UNSIGNED DEFAULT 0 COMMENT '加分',
+  
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='DTS' ROW_FORMAT=COMPACT;
  
 
 4 录入时，检查事件日期，确保正确性，避免 修改，删除操作。

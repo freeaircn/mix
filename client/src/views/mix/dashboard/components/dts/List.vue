@@ -58,7 +58,7 @@
             </template>
             <a-col :md="!advanced && 8 || 24" :sm="24">
               <span class="table-page-search-submitButtons" :style="advanced && { float: 'right', overflow: 'hidden' } || {} ">
-                <a-button type="primary" @click="$refs.table.refresh(true)">查询</a-button>
+                <a-button type="primary" @click="onQuery">查询</a-button>
                 <a-button style="margin-left: 8px" @click="() => this.queryParam = {}">重置</a-button>
                 <a @click="toggleAdvanced" style="margin-left: 8px">
                   {{ advanced ? '收起' : '展开' }}
@@ -78,8 +78,6 @@
         :pagination="pagination"
         :loading="loading"
       >
-        <!-- :customRow="onRowClick"
-          @change="handleTableChange" -->
         <span slot="type" slot-scope="text">
           {{ text | typeFilter }}
         </span>
@@ -93,19 +91,11 @@
             <a @click="handleDel(record)">删除</a> -->
           </template>
         </span>
-        <!-- <template slot="footer">
-            注：双击某一行，查看记录的电表读数
-          </template> -->
+
       </a-table>
     </a-card>
-    <!-- </div> -->
 
-    <a-card title="统计图表" :bordered="false" :body-style="{marginBottom: '8px'}">
-      <!-- <div class="extra-wrapper" slot="extra">
-        <div class="extra-item">
-          <a-button type="link" @click="onQueryBasicStatistic('month')">刷新</a-button>
-        </div>
-      </div> -->
+    <a-card title="统计分析" :bordered="false" :body-style="{marginBottom: '8px'}">
       xxxx
     </a-card>
 
@@ -116,8 +106,7 @@
 // import moment from 'moment'
 import { mapGetters } from 'vuex'
 import { baseMixin } from '@/store/app-mixin'
-// import { MetersLogList } from './components/meter'
-// import { getMeterLogs } from '@/api/service'
+import { getDtsList } from '@/api/service'
 
 const typeMap = {
   '1': { text: '隐患' },
@@ -133,9 +122,9 @@ const levelMap = {
 export default {
   name: 'DTS',
   mixins: [baseMixin],
-  components: {
+  // components: {
 
-  },
+  // },
   data () {
     return {
       advanced: false,
@@ -152,8 +141,8 @@ export default {
           scopedSlots: { customRender: 'type' }
         },
         {
-          title: '问题描述',
-          dataIndex: 'description'
+          title: '标题',
+          dataIndex: 'title'
         },
         {
           title: '影响程度',
@@ -169,8 +158,8 @@ export default {
           dataIndex: 'created_at'
         },
         {
-          title: '当前处理人',
-          dataIndex: 'owner'
+          title: '处理人',
+          dataIndex: 'handler'
         },
         {
           title: '更新日期',
@@ -189,17 +178,12 @@ export default {
 
       pagination: {
         current: 1,
-        pageSize: 5,
+        pageSize: 8,
         total: 0
       },
 
       loading: false,
-
-      listData: [
-        { id: '1', ticket_id: '20210923001', type: '2', description: 'xx导致xx故障', level: '1', place_at: 'posted', created_at: '2021-09-23 10:00:00', updated_at: '2021-09-23 10:00:00', creator: '小强', owner: 'XX' },
-        { id: '2', ticket_id: '20210923002', type: '1', description: 'xx导致xx故障', level: '3', place_at: 'posted', created_at: '2021-09-23 10:00:00', updated_at: '2021-09-23 10:00:00', creator: '小强', owner: 'XX' }
-      ]
-
+      listData: [ ]
     }
   },
   filters: {
@@ -215,21 +199,39 @@ export default {
       'userInfo'
     ])
   },
-  created () {
+  // created () {
 
-  },
-  mounted () {
+  // },
+  // mounted () {
 
-  },
+  // },
   methods: {
     toggleAdvanced () {
       this.advanced = !this.advanced
     },
 
-    // 新建
-    handleNewDtsBlankForm () {
-      // const uid = 0
-      // this.$router.push({ path: `/app/user/save/${uid}` })
+    // 查询
+    onQuery () {
+      const query = {
+        station_id: this.userInfo.belongToDeptId,
+        limit: this.pagination.pageSize,
+        offset: 1
+      }
+      this.pagination.current = 1
+      this.loading = true
+      getDtsList(query)
+        .then(res => {
+          this.loading = false
+          //
+          this.pagination.total = res.total
+          this.listData = res.data
+        })
+        .catch((err) => {
+          this.loading = false
+          this.listData.splice(0, this.listData.length)
+          if (err.response) {
+          }
+        })
     }
 
   }

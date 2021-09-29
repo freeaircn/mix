@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-26 22:09:33
+ * @LastEditTime: 2021-09-29 20:42:47
  */
 
 namespace Config;
@@ -115,6 +115,9 @@ $routes->group('api', function ($routes) {
     //
     $routes->get('meters/planning_kWh', 'Meters::getPlanningKWh');
     $routes->put('meters/planning_kWh', 'Meters::updatePlanningKWhRecord');
+    //
+    $routes->post('dts/draft', 'Dts::postDraft');
+    $routes->get('dts/list', 'Dts::getForList');
     //
     $routes->add('(:any)', '404');
 });

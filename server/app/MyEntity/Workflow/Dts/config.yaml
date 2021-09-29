@@ -1,0 +1,61 @@
+# 'draft', 'posted', 'handled', 'resolved', 'canceled'
+
+workflows:
+    dts:
+        metadata:
+            title: 'DTS 流程'
+        places:
+            post:
+                metadata:
+                    name: '提交'
+            check:
+                metadata:
+                    name: '检查'
+                    handler: '检修班'
+            review:
+                metadata:
+                    name: '审核'
+                    handler: '主管'
+            resolve:
+                metadata:
+                    name: '解决'
+            close:
+                metadata:
+                    name: '关闭'
+            suspend:
+                metadata:
+                    name: '挂起'
+            reject:
+                metadata:
+                    name: '拒绝'
+        transitions:
+            post_to_check:
+                from: post
+                to:   check
+                metadata:
+                    role: 'WF_ALL'
+            check_to_review:
+                from: check
+                to:   review
+                metadata:
+                    role: 'WF_ALL'
+            review_to_resolve:
+                from: review
+                to:   resolve
+                metadata:
+                    role: 'WF_ALL'
+            resolve_to_close:
+                from: resolve
+                to:   close
+                metadata:
+                    role: 'WF_ALL'
+            to_suspend:
+                from: check
+                to:   suspend
+                metadata:
+                    role: 'WF_ALL'
+            to_reject:
+                from: [check, review]
+                to:   reject
+                metadata:
+                    role: 'WF_ALL'
