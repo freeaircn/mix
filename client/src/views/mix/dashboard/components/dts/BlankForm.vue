@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-28 20:22:36
+ * @LastEditTime: 2021-09-30 21:04:18
 -->
 <template>
   <page-header-wrapper :title="false">
@@ -50,7 +50,7 @@
         </a-form-model-item>
 
         <a-form-model-item label="进展" prop="progress">
-          <a-textarea v-model="record.progress" :rows="8" />
+          <a-textarea v-model="record.progress" :rows="10" />
         </a-form-model-item>
 
         <a-form-model-item :wrapperCol="{ span: 24 }" style="text-align: center">
@@ -65,7 +65,7 @@
 <script>
 import { mapGetters } from 'vuex'
 import { getEquipmentUnit } from '@/api/manage'
-import { postDtsDraft } from '@/api/service'
+import { getDtsProgressTemplate, postDtsDraft } from '@/api/service'
 import { listToTree } from '@/utils/util'
 
 export default {
@@ -83,21 +83,15 @@ export default {
       cascaderOptions: [],
       equipmentUnit: [],
       //
-      record: {},
+      record: {
+        progress: ''
+      },
       rules: {}
     }
   },
   created: function () {
-    // const uid = (this.$route.params.uid) ? this.$route.params.uid : '0'
-    // if (uid === '0') {
-    //   this.isNewUserPage = true
-    //   this.btnLabel = '新建'
-    //   this.record = Object.assign({}, { password: '666' })
-    // } else {
-    //   this.isNewUserPage = false
-    //   this.btnLabel = '修改'
-    // }
     this.ready = false
+    this.getProgressTemplate()
     this.getFormItems()
   },
   computed: {
@@ -115,6 +109,19 @@ export default {
           //  网络异常，清空页面数据显示，防止错误的操作
           .catch((err) => {
             this.cascaderOptions.splice(0, this.cascaderOptions.length)
+            if (err.response) {
+            }
+          })
+    },
+
+    getProgressTemplate () {
+      getDtsProgressTemplate()
+        .then((data) => {
+            this.record.progress = data
+          })
+          //  网络异常，清空页面数据显示，防止错误的操作
+          .catch((err) => {
+            this.record.progress = ''
             if (err.response) {
             }
           })

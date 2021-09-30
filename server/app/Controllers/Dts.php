@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-29 21:24:54
+ * @LastEditTime: 2021-09-30 20:43:03
  */
 
 namespace App\Controllers;
@@ -19,11 +19,16 @@ class Dts extends BaseController
     use ResponseTrait;
 
     //
+    protected $progressTemplate;
     protected $workflowPlaces;
     protected $ticketIdTailStartAt;
 
     public function __construct()
     {
+        $this->progressTemplate = [
+            'draft' => "\n【问题描述】\n\n【发生时间】\n\n【问题影响】\n\n【已采取措施】\n\n",
+        ];
+
         $this->workflowPlaces = [
             'post'    => 'post',
             'check'   => 'check',
@@ -35,6 +40,16 @@ class Dts extends BaseController
         ];
 
         $this->ticketIdTailStartAt = 1001;
+    }
+
+    public function getProgressTemplate()
+    {
+        $text = date('Y-m-d H:i', time()) . ' ' . session('username') . $this->progressTemplate['draft'];
+
+        $res['code'] = EXIT_SUCCESS;
+        $res['data'] = $text;
+
+        return $this->respond($res);
     }
 
     public function postDraft()
@@ -132,6 +147,15 @@ class Dts extends BaseController
             $res['code'] = EXIT_ERROR;
             $res['msg']  = '稍后再试';
         }
+
+        return $this->respond($res);
+    }
+
+    public function getTicketDetails()
+    {
+
+        $res['code'] = EXIT_SUCCESS;
+        $res['msg']  = '测试...';
 
         return $this->respond($res);
     }

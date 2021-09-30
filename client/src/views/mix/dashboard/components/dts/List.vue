@@ -4,9 +4,7 @@
     <a-card :title="userInfo.belongToDeptName" :bordered="false" :headStyle="{marginBottom: '8px'}">
     </a-card>
 
-    <!-- <div class="antd-pro-pages-dashboard-analysis-twoColLayout" :class="!isMobile && 'desktop'"> -->
     <a-card :bordered="false" title="问题单" :body-style="{marginBottom: '8px'}">
-      <!-- <a-button slot="extra" type="link" @click="handleNewDtsBlankForm">新建</a-button> -->
       <router-link slot="extra" to="/dashboard/dts/new">新建</router-link>
 
       <div class="table-page-search-wrapper">
@@ -86,7 +84,7 @@
         </span>
         <span slot="action" slot-scope="text, record">
           <template>
-            <a @click="onClickReport(record)">详情</a>
+            <a @click="onQueryDetails(record)">详情</a>
             <!-- <a-divider type="vertical" />
             <a @click="handleDel(record)">删除</a> -->
           </template>
@@ -103,7 +101,6 @@
 </template>
 
 <script>
-// import moment from 'moment'
 import { mapGetters } from 'vuex'
 import { baseMixin } from '@/store/app-mixin'
 import { getDtsList } from '@/api/service'
@@ -166,7 +163,7 @@ export default {
           dataIndex: 'updated_at'
         },
         {
-          title: '状态',
+          title: '进度',
           dataIndex: 'place_at'
         },
         {
@@ -202,9 +199,9 @@ export default {
   // created () {
 
   // },
-  // mounted () {
-
-  // },
+  mounted () {
+    this.onQuery()
+  },
   methods: {
     toggleAdvanced () {
       this.advanced = !this.advanced
@@ -232,54 +229,15 @@ export default {
           if (err.response) {
           }
         })
+    },
+
+    onQueryDetails (record) {
+      if (record.ticket_id) {
+        const ticketId = record.ticket_id
+        this.$router.push({ path: `/dashboard/dts/details/${ticketId}` })
+      }
     }
 
   }
 }
 </script>
-
-<style lang="less" scoped>
-  .extra-wrapper {
-    // line-height: 55px;
-    padding-right: 8px;
-
-    .extra-item {
-      display: inline-block;
-      margin-right: 8px;
-
-      a {
-        margin-left: 8px;
-      }
-    }
-  }
-
-  .antd-pro-pages-dashboard-analysis-twoColLayout {
-    position: relative;
-    display: flex;
-    display: block;
-    flex-flow: row wrap;
-  }
-
-  .antd-pro-pages-dashboard-analysis-salesCard {
-    height: calc(100% - 24px);
-    /deep/ .ant-card-head {
-      position: relative;
-    }
-  }
-
-  .dashboard-analysis-iconGroup {
-    i {
-      margin-left: 16px;
-      color: rgba(0,0,0,.45);
-      cursor: pointer;
-      transition: color .32s;
-      color: black;
-    }
-  }
-  .analysis-salesTypeRadio {
-    position: absolute;
-    right: 54px;
-    bottom: 12px;
-  }
-
-</style>

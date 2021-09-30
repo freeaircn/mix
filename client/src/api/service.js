@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-29 20:30:03
+ * @LastEditTime: 2021-09-30 21:42:38
  */
 import request from '@/utils/request'
 
@@ -17,8 +17,10 @@ const api = {
   meters_basic_statistic: '/meters/basic_statistic',
   meters_overall_statistic: 'meters/overall_statistic',
   planning_kWh: '/meters/planning_kWh',
+  dts_progress_template: '/dts/progress/template',
   dts_draft: '/dts/draft',
-  dts_list: '/dts/list'
+  dts_list: '/dts/list',
+  dts_ticket_details: '/dts/ticket/details'
 }
 
 // 机组事件
@@ -137,6 +139,14 @@ export function getMetersOverallStatistic (params) {
 }
 
 // Dts
+export function getDtsProgressTemplate (params) {
+  return request({
+    url: api.dts_progress_template,
+    method: 'get',
+    params: params
+  })
+}
+
 export function postDtsDraft (data) {
   return request({
     url: api.dts_draft,
@@ -148,6 +158,14 @@ export function postDtsDraft (data) {
 export function getDtsList (params) {
   return request({
     url: api.dts_list,
+    method: 'get',
+    params: params
+  })
+}
+
+export function getDtsTicketDetails (params) {
+  return request({
+    url: api.dts_ticket_details,
     method: 'get',
     params: params
   })
