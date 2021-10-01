@@ -3,12 +3,13 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-26 22:07:37
+ * @LastEditTime: 2021-10-01 19:18:30
  */
 import request from '@/utils/request'
 
 const api = {
   user: '/user',
+  user_handler: '/user/handler',
   role: '/role',
   menu: '/menu',
   roleMenu: '/role_menu',
@@ -293,5 +294,13 @@ export function deleteEquipmentUnit (id) {
     url: api.equipmentUnit,
     method: 'delete',
     data: { id }
+  })
+}
+
+export function getHandler (parameter) {
+  return request({
+    url: api.user_handler,
+    method: 'get',
+    params: parameter
   })
 }

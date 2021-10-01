@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-30 21:44:24
+ * @LastEditTime: 2021-10-01 19:19:43
  */
 
 namespace Config;
@@ -87,6 +87,7 @@ $routes->group('api', function ($routes) {
     $routes->delete('politic', 'Admin::delPolitic');
     //
     $routes->get('user', 'Admin::getUser');
+    $routes->get('user/handler', 'Admin::getHandler');
     $routes->post('user', 'Admin::newUser');
     $routes->put('user', 'Admin::updateUser');
     $routes->delete('user', 'Admin::delUser');

@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-16 16:22:30
+ * @LastEditTime: 2021-10-01 21:04:14
 -->
 <template>
   <!-- hidden PageHeaderWrapper title demo -->
@@ -99,7 +99,6 @@
 
         <a-form-model-item :wrapperCol="{ span: 24 }" style="text-align: center">
           <a-button htmlType="submit" type="primary" @click="onSubmit">{{ btnLabel }}</a-button>
-          <a-button style="margin-left: 8px">保存</a-button>
         </a-form-model-item>
       </a-form-model>
     </a-card>
@@ -176,9 +175,9 @@ export default {
           //  网络异常，清空页面数据显示，防止错误的操作
           .catch((err) => {
             if (err.response) {
-              setTimeout(() => {
-                this.getAllFormParams(this.isNewUserPage)
-              }, 1000)
+              // setTimeout(() => {
+              //   this.getAllFormParams(this.isNewUserPage)
+              // }, 1000)
             }
           })
       } else {
@@ -210,31 +209,17 @@ export default {
             //
             const role = res[6].data.slice(0)
             // 合并数据
-            this.fillRecordObj(user, role)
+            this.record = Object.assign({}, user, { role: role })
           })
           //  网络异常，清空页面数据显示，防止错误的操作
           .catch((err) => {
             if (err.response) {
-              setTimeout(() => {
-                this.getAllFormParams(this.isNewUserPage, uid)
-              }, 1000)
+              // setTimeout(() => {
+              //   this.getAllFormParams(this.isNewUserPage, uid)
+              // }, 1000)
             }
           })
       }
-    },
-
-    fillRecordObj (user, role) {
-      const temp = {}
-      temp.department = []
-      for (var p in user) {
-        if ((p.indexOf('deptLev') === -1) && user.hasOwnProperty(p)) {
-          temp[p] = user[p]
-        }
-        if (p.indexOf('deptLev') !== -1 && user[p] !== '0') {
-          temp.department.push(user[p])
-        }
-      }
-      this.record = Object.assign({}, temp, { role: role })
     },
 
     onSubmit () {
@@ -263,14 +248,11 @@ export default {
                 this.$router.push({ path: `/app/user/list` })
               }
             })
-            //  网络异常，清空页面数据显示，防止错误的操作
-            // .catch((err) => {
-            //   if (err.response) {
-            //     setTimeout(() => {
-            //       this.getAllFormParams()
-            //     }, 1000)
-            //   }
-            // })
+            // 网络异常，清空页面数据显示，防止错误的操作
+            .catch((err) => {
+              if (err.response) {
+              }
+            })
         } else {
           return false
         }

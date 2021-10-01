@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-23 21:39:25
+ * @LastEditTime: 2021-10-01 21:40:19
  */
 
 namespace App\Models;
@@ -17,8 +17,7 @@ class AccountModel extends Model
 
     protected $table         = 'app_user';
     protected $primaryKey    = 'id';
-    protected $allowedFields = ['workID', 'username', 'sex', 'IdCard', 'phone', 'email', 'status', 'password', 'forceChgPwd', 'avatar',
-        'deptLev0', 'deptLev1', 'deptLev2', 'deptLev3', 'deptLev4', 'deptLev5', 'deptLev6', 'deptLev7', 'job', 'title', 'politic', 'last_login', 'ip_address'];
+    protected $allowedFields = ['workID', 'username', 'sex', 'IdCard', 'phone', 'email', 'status', 'password', 'forceChgPwd', 'avatar', 'dept_ids', 'job', 'title', 'politic', 'last_login', 'ip_address'];
 
     protected $useAutoIncrement = true;
 
@@ -47,19 +46,12 @@ class AccountModel extends Model
             }
         }
 
-        // 提取department
-        for ($index = 0; $index < 8; $index++) {
-            $key        = 'deptLev' . $index;
-            $user[$key] = '0';
+        // 拼接部门id
+        $temp = '+';
+        foreach ($department as $value) {
+            $temp = $temp . $value . '+';
         }
-        foreach ($department as $index => $value) {
-            $key = 'deptLev' . $index;
-            if (is_numeric($value)) {
-                $user[$key] = $value;
-            } else {
-                log_message('error', '{file}:{line} --> department filed invalid, expecting number');
-            }
-        }
+        $user['dept_ids'] = $temp;
 
         $result = $this->save($user);
         return $result;

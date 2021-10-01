@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2019-12-29 14:06:12
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-28 21:48:39
+ * @LastEditTime: 2021-10-01 20:25:40
  */
 
 namespace App\MyEntity\Workflow\Dts;
@@ -31,7 +31,7 @@ class WorkflowCore
         $this->ticket = $ticket;
 
         // $paths  = new Config\Paths();
-        $config = rtrim(APPPATH) . DIRECTORY_SEPARATOR . 'MyEntity/Workflow/Dts/config.yaml';
+        $config = rtrim(APPPATH, '\\/ ') . DIRECTORY_SEPARATOR . 'MyEntity/Workflow/Dts/config.yaml';
         $this->init($config);
     }
 

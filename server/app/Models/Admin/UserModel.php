@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-26 20:05:11
+ * @LastEditTime: 2021-10-01 21:07:29
  */
 
 namespace App\Models\Admin;
@@ -17,8 +17,7 @@ class UserModel extends Model
 
     protected $table         = 'app_user';
     protected $primaryKey    = 'id';
-    protected $allowedFields = ['workID', 'username', 'sex', 'IdCard', 'phone', 'email', 'status', 'password', 'forceChgPwd', 'avatar',
-        'deptLev0', 'deptLev1', 'deptLev2', 'deptLev3', 'deptLev4', 'deptLev5', 'deptLev6', 'deptLev7', 'job', 'title', 'politic', 'last_login', 'ip_address'];
+    protected $allowedFields = ['workID', 'username', 'sex', 'IdCard', 'phone', 'email', 'status', 'password', 'forceChgPwd', 'avatar', 'dept_ids', 'job', 'title', 'politic', 'last_login', 'ip_address'];
 
     protected $useAutoIncrement = true;
 
@@ -36,7 +35,7 @@ class UserModel extends Model
             return false;
         }
 
-        $res = $this->select('id, workID, username, sex, IdCard, phone, email, status, deptLev0, deptLev1, deptLev2, deptLev3, deptLev4, deptLev5, deptLev6, deptLev7, job, title, politic')
+        $res = $this->select('id, workID, username, sex, IdCard, phone, email, status, dept_ids, job, title, politic')
             ->where('id', $id)
             ->findAll();
 
@@ -45,8 +44,7 @@ class UserModel extends Model
 
     public function getUserByQueryParam($dept = [], $job = [], $title = [], $politic = [], $queryParam = [])
     {
-        $builder = $this->select('id, workID, username, sex, IdCard, phone, email, status, avatar, deptLev0,
-            deptLev1, deptLev2, deptLev3, deptLev4, deptLev5, deptLev6, deptLev7, job, title, politic, updated_at');
+        $builder = $this->select('id, workID, username, sex, IdCard, phone, email, status, avatar, dept_ids, job, title, politic, updated_at');
 
         if (isset($queryParam['username']) && $queryParam['username'] !== '') {
             $builder->like('username', $queryParam['username']);
@@ -61,12 +59,11 @@ class UserModel extends Model
             $builder->where('status', $queryParam['status']);
         }
         if (isset($queryParam['department'])) {
-            $department = $queryParam['department'];
-            foreach ($department as $index => $value) {
-                $key = 'deptLev' . $index;
-
-                $builder->where($key, $value);
+            $temp = '+';
+            foreach ($queryParam['department'] as $value) {
+                $temp = $temp . $value . '+';
             }
+            $builder->like('dept_ids', $temp);
         }
 
         $total = $builder->countAllResults(false);
@@ -87,17 +84,16 @@ class UserModel extends Model
             foreach ($res as &$user) {
                 // 部门名称
                 $department = '';
-                for ($cnt = 0; $cnt < 8; $cnt++) {
-                    $index = 'deptLev' . strval($cnt);
-                    if ($user[$index] !== 0) {
-                        foreach ($dept as $value) {
-                            if ($value['id'] === $user[$index]) {
-                                $department = $department . $value['name'] . ' / ';
-                            }
+                $temp       = explode("+", trim($user['dept_ids'], '+'));
+                $cnt        = count($temp);
+                for ($i = 0; $i < $cnt; $i++) {
+                    foreach ($dept as $value) {
+                        if ($value['id'] === $temp[$i]) {
+                            $department = $department . $value['name'] . ' / ';
                         }
                     }
                 }
-                $user['department'] = substr($department, 0, strlen($department) - 3);
+                $user['department'] = rtrim($department, " / ");
 
                 // 岗位名称
                 foreach ($job as $x) {
@@ -193,15 +189,12 @@ class UserModel extends Model
             }
         }
 
-        // 提取department
-        for ($index = 0; $index < 8; $index++) {
-            $key        = 'deptLev' . $index;
-            $user[$key] = '0';
+        // 拼接部门id
+        $temp = '+';
+        foreach ($department as $value) {
+            $temp = $temp . $value . '+';
         }
-        foreach ($department as $index => $value) {
-            $key        = 'deptLev' . $index;
-            $user[$key] = $value;
-        }
+        $user['dept_ids'] = $temp;
 
         // 密码hash
         if (isset($user['password'])) {
@@ -238,15 +231,12 @@ class UserModel extends Model
             }
         }
 
-        // 提取department
-        for ($index = 0; $index < 8; $index++) {
-            $key        = 'deptLev' . $index;
-            $user[$key] = '0';
+        // 拼接部门id
+        $temp = '+';
+        foreach ($department as $value) {
+            $temp = $temp . $value . '+';
         }
-        foreach ($department as $index => $value) {
-            $key        = 'deptLev' . $index;
-            $user[$key] = $value;
-        }
+        $user['dept_ids'] = $temp;
 
         // 密码hash
         if (isset($user['password'])) {

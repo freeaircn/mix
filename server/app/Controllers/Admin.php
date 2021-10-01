@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-26 22:10:13
+ * @LastEditTime: 2021-10-01 21:02:50
  */
 
 namespace App\Controllers;
@@ -429,6 +429,9 @@ class Admin extends BaseController
             $model  = new UserModel();
             $result = $model->getUserById($queryParam['uid']);
 
+            $result[0]['department'] = explode("+", trim($result[0]['dept_ids'], '+'));
+            unset($result[0]['dept_ids']);
+
             $res['code'] = EXIT_SUCCESS;
             $res['data'] = ['data' => $result];
 
@@ -686,6 +689,30 @@ class Admin extends BaseController
             $res['code'] = EXIT_ERROR;
             $res['msg']  = '删除失败，稍后再试';
         }
+
+        return $this->respond($res);
+    }
+
+    public function getHandler()
+    {
+        $queryParam = $this->request->getGet();
+
+        // 1 由uid查询单个用户信息
+        if (isset($queryParam['uid'])) {
+            $model  = new UserModel();
+            $result = $model->getUserById($queryParam['uid']);
+
+            $res['code'] = EXIT_SUCCESS;
+            $res['data'] = ['data' => $result];
+
+            return $this->respond($res);
+        }
+
+        // 2 组合多条件查询：用户名、状态、部门
+        $result = $this->getUserList($queryParam);
+
+        $res['code'] = EXIT_SUCCESS;
+        $res['data'] = ['total' => $result['total'], 'data' => $result['result']];
 
         return $this->respond($res);
     }

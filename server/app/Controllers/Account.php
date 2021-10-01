@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-26 20:11:26
+ * @LastEditTime: 2021-10-01 21:37:59
  */
 
 namespace App\Controllers;
@@ -127,6 +127,7 @@ class Account extends BaseController
         }
 
         // 修改session
+        $user['dept_ids'] = explode("+", trim($user['dept_ids'], '+'));
         $this->session->set($user);
 
         $res['code'] = EXIT_SUCCESS;

@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-30 21:04:18
+ * @LastEditTime: 2021-10-01 20:15:24
 -->
 <template>
   <page-header-wrapper :title="false">
@@ -49,6 +49,14 @@
           />
         </a-form-model-item>
 
+        <a-form-model-item label="指派" prop="handler">
+          <a-select v-model="record.handler" placeholder="请选择" >
+            <a-select-option value="1">紧急</a-select-option>
+            <a-select-option value="2">严重</a-select-option>
+            <a-select-option value="3">一般</a-select-option>
+          </a-select>
+        </a-form-model-item>
+
         <a-form-model-item label="进展" prop="progress">
           <a-textarea v-model="record.progress" :rows="10" />
         </a-form-model-item>
@@ -64,7 +72,7 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { getEquipmentUnit } from '@/api/manage'
+import { getEquipmentUnit, getHandler } from '@/api/manage'
 import { getDtsProgressTemplate, postDtsDraft } from '@/api/service'
 import { listToTree } from '@/utils/util'
 
@@ -91,7 +99,6 @@ export default {
   },
   created: function () {
     this.ready = false
-    this.getProgressTemplate()
     this.getFormItems()
   },
   computed: {
@@ -101,40 +108,50 @@ export default {
   },
   methods: {
     getFormItems () {
-      getEquipmentUnit()
+      const query = {
+        station_id: this.userInfo.belongToDeptId,
+        type: 'dts_check'
+      }
+      Promise.all([getEquipmentUnit(), getHandler(query), getDtsProgressTemplate()])
         .then((data) => {
             this.ready = true
-            listToTree(data, this.cascaderOptions, '1')
+            //
+            const equipmentUnit = data[0]
+            listToTree(equipmentUnit, this.cascaderOptions, '1')
+            //
+            this.record.progress = data = data[2]
           })
           //  网络异常，清空页面数据显示，防止错误的操作
           .catch((err) => {
             this.cascaderOptions.splice(0, this.cascaderOptions.length)
-            if (err.response) {
-            }
-          })
-    },
-
-    getProgressTemplate () {
-      getDtsProgressTemplate()
-        .then((data) => {
-            this.record.progress = data
-          })
-          //  网络异常，清空页面数据显示，防止错误的操作
-          .catch((err) => {
             this.record.progress = ''
             if (err.response) {
             }
           })
     },
 
+    // getProgressTemplate () {
+    //   getDtsProgressTemplate()
+    //     .then((data) => {
+    //         this.record.progress = data
+    //       })
+    //       //  网络异常，清空页面数据显示，防止错误的操作
+    //       .catch((err) => {
+    //         this.record.progress = ''
+    //         if (err.response) {
+    //         }
+    //       })
+    // },
+
     onSubmit () {
       this.$refs.form.validate(valid => {
         if (valid) {
-          let temp = ''
+          let temp = '+'
           this.equipmentUnit.forEach(element => {
-            temp = temp + '+' + element
+            // temp = temp + '+' + element
+            temp = temp + element + '+'
           })
-          temp = temp + '+'
+          // temp = temp + '+'
           //
           const data = { ...this.record }
           data.equipment_unit = temp

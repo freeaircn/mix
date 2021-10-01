@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-26 20:11:57
+ * @LastEditTime: 2021-10-01 21:41:11
  */
 
 namespace App\Controllers;
@@ -113,16 +113,12 @@ class Auth extends BaseController
         }
 
         // 获取用户所属部门
-        $deptLevPath      = [];
+        $deptIds          = explode("+", trim($user['dept_ids'], '+'));
         $belongToDeptId   = '0';
         $belongToDeptName = '';
-        foreach ($user as $key => $value) {
-            if (strpos($key, 'deptLev') !== false && $value != 0) {
-                $deptLevPath[] = $value;
-            }
-        }
+
         $deptModel = new DeptModel();
-        $belongTo  = $deptModel->getDept(['id', 'name', 'dataMask'], ['ids' => $deptLevPath]);
+        $belongTo  = $deptModel->getDept(['id', 'name', 'dataMask'], ['ids' => $deptIds]);
         foreach ($belongTo as $value) {
             if ($value['dataMask'] != 0) {
                 $belongToDeptId   = $value['id'];
@@ -131,6 +127,7 @@ class Auth extends BaseController
         }
 
         // 写入session数据
+        $user['dept_ids']                = explode("+", trim($user['dept_ids'], '+'));
         $sessionData                     = $user;
         $sessionData['acl']              = $userACL;
         $sessionData['pageId']           = $userPageId;

@@ -232,12 +232,7 @@ export default {
 
     // 内部方法
     filterUserInfo (user) {
-      const department = []
-      for (var p in user) {
-        if (p.indexOf('deptLev') !== -1 && user[p] !== '0') {
-          department.push(user[p])
-        }
-      }
+      const department = user.dept_ids
       const { id, username, sex, IdCard, politic, job, title } = user
 
       this.record = { id, username, sex, IdCard, politic, job, title, department }
