@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-01 21:02:50
+ * @LastEditTime: 2021-10-02 22:13:26
  */
 
 namespace App\Controllers;
@@ -17,9 +17,11 @@ use App\Models\Admin\MenuModel;
 use App\Models\Admin\PoliticModel;
 use App\Models\Admin\RoleMenuModel;
 use App\Models\Admin\RoleMode;
+use App\Models\Admin\RoleWorkflowHandlerModel;
 use App\Models\Admin\TitleModel;
 use App\Models\Admin\UserModel;
 use App\Models\Admin\UserRoleModel;
+use App\Models\Admin\WorkflowHandlerModel;
 use CodeIgniter\API\ResponseTrait;
 
 class Admin extends BaseController
@@ -115,7 +117,7 @@ class Admin extends BaseController
         $model  = new RoleMenuModel();
         $result = $model->getMenuByRole($role_id);
 
-        $res['code']   = 0;
+        $res['code']   = EXIT_SUCCESS;
         $res['data']   = ['menu' => $result];
         $res['client'] = $client;
 
@@ -693,26 +695,55 @@ class Admin extends BaseController
         return $this->respond($res);
     }
 
-    public function getHandler()
+    public function getWorkflowHandler()
     {
-        $queryParam = $this->request->getGet();
+        $model = new WorkflowHandlerModel();
 
-        // 1 由uid查询单个用户信息
-        if (isset($queryParam['uid'])) {
-            $model  = new UserModel();
-            $result = $model->getUserById($queryParam['uid']);
+        $columnName = ['id', 'pid', 'name', 'alias'];
+        $db         = $model->get($columnName);
 
+        if (empty($db)) {
+            $res['code'] = EXIT_ERROR;
+        } else {
             $res['code'] = EXIT_SUCCESS;
-            $res['data'] = ['data' => $result];
-
-            return $this->respond($res);
+            $res['data'] = $db;
         }
 
-        // 2 组合多条件查询：用户名、状态、部门
-        $result = $this->getUserList($queryParam);
+        return $this->respond($res);
+    }
+
+    public function getRoleWorkflowHandler()
+    {
+        $client = $this->request->getGet();
+
+        $role_id = $client['role_id'];
+
+        $model = new RoleWorkflowHandlerModel();
+        $db    = $model->getByRole($role_id);
 
         $res['code'] = EXIT_SUCCESS;
-        $res['data'] = ['total' => $result['total'], 'data' => $result['result']];
+        $res['data'] = $db;
+
+        return $this->respond($res);
+    }
+
+    public function saveRoleWorkflowHandler()
+    {
+        $client = $this->request->getJSON(true);
+
+        $role_id              = $client['role_id'];
+        $workflow_handler_ids = $client['workflow_handler_ids'];
+
+        $model  = new RoleWorkflowHandlerModel();
+        $result = $model->saveByRole($role_id, $workflow_handler_ids);
+
+        if ($result === true) {
+            $res['code'] = EXIT_SUCCESS;
+            $res['msg']  = '权限已更新！';
+        } else {
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '权限配置失败，稍后再试';
+        }
 
         return $this->respond($res);
     }

@@ -3,13 +3,12 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-01 19:18:30
+ * @LastEditTime: 2021-10-02 22:00:48
  */
 import request from '@/utils/request'
 
 const api = {
   user: '/user',
-  user_handler: '/user/handler',
   role: '/role',
   menu: '/menu',
   roleMenu: '/role_menu',
@@ -18,7 +17,9 @@ const api = {
   title: '/title',
   politic: '/politic',
   userRole: '/user_role',
-  equipmentUnit: '/equipment_unit'
+  equipmentUnit: '/equipment_unit',
+  WorkflowHandler: '/workflow/handler',
+  roleWorkflowHandler: '/role_workflow_handler'
   // user: '/user',
   //
   // service: '/service',
@@ -297,10 +298,27 @@ export function deleteEquipmentUnit (id) {
   })
 }
 
-export function getHandler (parameter) {
+export function getWorkflowHandler (parameter) {
   return request({
-    url: api.user_handler,
+    url: api.WorkflowHandler,
     method: 'get',
     params: parameter
+  })
+}
+
+//
+export function getRoleWorkflowHandler (parameter) {
+  return request({
+    url: api.roleWorkflowHandler,
+    method: 'get',
+    params: parameter
+  })
+}
+
+export function saveRoleWorkflowHandler (data) {
+  return request({
+    url: api.roleWorkflowHandler,
+    method: 'post',
+    data: data
   })
 }

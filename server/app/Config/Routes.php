@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-01 19:19:43
+ * @LastEditTime: 2021-10-02 22:04:57
  */
 
 namespace Config;
@@ -66,6 +66,11 @@ $routes->group('api', function ($routes) {
     $routes->get('role_menu', 'Admin::getRoleMenu');
     $routes->post('role_menu', 'Admin::saveRoleMenu');
     //
+    $routes->get('workflow/handler', 'Admin::getWorkflowHandler');
+    //
+    $routes->get('role_workflow_handler', 'Admin::getRoleWorkflowHandler');
+    $routes->post('role_workflow_handler', 'Admin::saveRoleWorkflowHandler');
+    //
     $routes->get('dept', 'Admin::getDept');
     $routes->post('dept', 'Admin::newDept');
     $routes->put('dept', 'Admin::UpdateDept');
@@ -87,7 +92,6 @@ $routes->group('api', function ($routes) {
     $routes->delete('politic', 'Admin::delPolitic');
     //
     $routes->get('user', 'Admin::getUser');
-    $routes->get('user/handler', 'Admin::getHandler');
     $routes->post('user', 'Admin::newUser');
     $routes->put('user', 'Admin::updateUser');
     $routes->delete('user', 'Admin::delUser');
@@ -118,6 +122,7 @@ $routes->group('api', function ($routes) {
     $routes->put('meters/planning_kWh', 'Meters::updatePlanningKWhRecord');
     //
     $routes->get('dts/progress/template', 'Dts::getProgressTemplate');
+    $routes->get('dts/handler', 'Dts::getHandler');
     $routes->post('dts/draft', 'Dts::postDraft');
     $routes->get('dts/list', 'Dts::getForList');
     $routes->get('dts/ticket/details', 'Dts::getTicketDetails');

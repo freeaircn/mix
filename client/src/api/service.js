@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-30 21:42:38
+ * @LastEditTime: 2021-10-02 19:35:53
  */
 import request from '@/utils/request'
 
@@ -18,6 +18,7 @@ const api = {
   meters_overall_statistic: 'meters/overall_statistic',
   planning_kWh: '/meters/planning_kWh',
   dts_progress_template: '/dts/progress/template',
+  dts_handler: '/dts/handler',
   dts_draft: '/dts/draft',
   dts_list: '/dts/list',
   dts_ticket_details: '/dts/ticket/details'
@@ -144,6 +145,14 @@ export function getDtsProgressTemplate (params) {
     url: api.dts_progress_template,
     method: 'get',
     params: params
+  })
+}
+
+export function getDtsHandler (parameter) {
+  return request({
+    url: api.dts_handler,
+    method: 'get',
+    params: parameter
   })
 }
 

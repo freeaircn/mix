@@ -54,8 +54,13 @@
             <a @click="handleEdit(record)">编辑</a>
             <a-divider type="vertical" />
             <a @click="handleDel(record)">删除</a>
+          </template>
+        </span>
+        <span slot="action2" slot-scope="text, record">
+          <template>
+            <a @click="handleAccessAuth(record)">访问</a>
             <a-divider type="vertical" />
-            <a @click="handleAssign(record)">配置</a>
+            <a @click="handleWorkflowAuth(record)">流程</a>
           </template>
         </span>
       </a-table>
@@ -69,8 +74,17 @@
         :treeData="treeData"
         :allCheckableId="allCheckableMenuId"
         :checkedKeys="checkedKeys"
-        @submitPermission="handleSubmitPermission">
+        @submitPermission="handleSubmitAccessAuth">
       </permission-tree>
+
+      <WorkflowTree
+        :visible.sync="visibleWorkflowTree"
+        :role="tempRole2"
+        :treeData="treeData2"
+        :allCheckableId="allCheckableMenuId2"
+        :checkedKeys="checkedKeys2"
+        @submit="handleSubmitWorkflowAuth">
+      </WorkflowTree>
 
     </a-card>
   </page-header-wrapper>
@@ -79,7 +93,8 @@
 <script>
 import BlankForm from './modules/BlankForm'
 import PermissionTree from './modules/PermissionTree'
-import { getRoleTbl, saveRole, delRole, getMenu, getRoleMenu, saveRoleMenu } from '@/api/manage'
+import WorkflowTree from './modules/WorkflowTree'
+import { getRoleTbl, saveRole, delRole, getMenu, getRoleMenu, saveRoleMenu, getWorkflowHandler, getRoleWorkflowHandler, saveRoleWorkflowHandler } from '@/api/manage'
 import { listToTree, newTimestamp } from '@/utils/util'
 
 const columns = [
@@ -117,6 +132,12 @@ const columns = [
     dataIndex: 'action',
     width: '150px',
     scopedSlots: { customRender: 'action' }
+  },
+  {
+    title: '定义权限',
+    dataIndex: 'action2',
+    width: '150px',
+    scopedSlots: { customRender: 'action2' }
   }
 ]
 
@@ -135,7 +156,8 @@ export default {
   name: 'StandardList',
   components: {
     BlankForm,
-    PermissionTree
+    PermissionTree,
+    WorkflowTree
   },
   data () {
     this.columns = columns
@@ -153,7 +175,13 @@ export default {
       tempRole: {},
       allCheckableMenuId: [],
       treeData: [],
-      checkedKeys: []
+      checkedKeys: [],
+      //
+      visibleWorkflowTree: false,
+      tempRole2: {},
+      allCheckableMenuId2: [],
+      treeData2: [],
+      checkedKeys2: []
     }
   },
   filters: {
@@ -162,14 +190,6 @@ export default {
     }
   },
   created () {
-    // const { pageNo } = this.$route.params
-    // const localPageNum = this.pageURI && (pageNo && parseInt(pageNo)) || this.pageNum
-    // this.localPagination = ['auto', true].includes(this.showPagination) && Object.assign({}, this.localPagination, {
-    //   current: localPageNum,
-    //   pageSize: this.pageSize,
-    //   showSizeChanger: this.showSizeChanger
-    // }) || false
-    // this.needTotalList = this.initTotalList(this.columns)
     this.loadData()
   },
   methods: {
@@ -232,13 +252,13 @@ export default {
       })
     },
 
-    handleAssign (role) {
+    handleAccessAuth (role) {
       this.tempRole = Object.assign({}, role)
       this.checkedKeys = []
       Promise.all([getMenu(), getRoleMenu({ role_id: role.id })])
         .then(function (res) {
           this.treeData.splice(0)
-          const menuList = this.formatMenuData(res[0].menu.slice(0))
+          const menuList = this.filterTreeData(res[0].menu.slice(0))
           listToTree(menuList, this.treeData)
           //
           res[1].menu.forEach(element => {
@@ -252,14 +272,55 @@ export default {
         }.bind(this))
     },
 
-    handleSubmitPermission (permission) {
+    handleSubmitAccessAuth (permission) {
       saveRoleMenu(permission)
        .then(() => {
 
        })
+       .catch((err) => {
+          if (err.response) {
+          }
+        })
     },
 
-    formatMenuData (menu) {
+    handleWorkflowAuth (record) {
+      this.visibleWorkflowTree = false
+      //
+      this.tempRole2 = Object.assign({}, record)
+      this.checkedKeys = []
+      Promise.all([getWorkflowHandler(), getRoleWorkflowHandler({ role_id: record.id })])
+        .then((res) => {
+          this.treeData2.splice(0)
+          const temp = this.filterTreeData2(res[0].slice(0))
+          listToTree(temp, this.treeData2)
+          //
+          res[1].forEach(element => {
+            this.checkedKeys2.push(element.workflow_handler_id)
+          })
+
+          this.$nextTick(() => {
+            this.visibleWorkflowTree = true
+          })
+        })
+        .catch((err) => {
+          this.visibleWorkflowTree = false
+          if (err.response) {
+          }
+        })
+    },
+
+    handleSubmitWorkflowAuth (result) {
+      saveRoleWorkflowHandler(result)
+        .then(() => {
+
+        })
+        .catch((err) => {
+          if (err.response) {
+          }
+        })
+    },
+
+    filterTreeData (menu) {
       this.allCheckableMenuId.splice(0)
       menu.forEach(element => {
         if (element.type && element.type === '0') {
@@ -276,6 +337,20 @@ export default {
         }
       })
       return menu
+    },
+
+    filterTreeData2 (tree) {
+      this.allCheckableMenuId2.splice(0)
+      tree.forEach(element => {
+        if (element.alias && element.alias === 'null') {
+          element.disableCheckbox = true
+          element.checkable = false
+        }
+        if (element.alias && element.type !== 'null') {
+          this.allCheckableMenuId2.push(element['id'])
+        }
+      })
+      return tree
     }
   }
 }

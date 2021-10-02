@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-01 20:15:24
+ * @LastEditTime: 2021-10-02 22:17:01
 -->
 <template>
   <page-header-wrapper :title="false">
@@ -72,8 +72,8 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { getEquipmentUnit, getHandler } from '@/api/manage'
-import { getDtsProgressTemplate, postDtsDraft } from '@/api/service'
+import { getEquipmentUnit } from '@/api/manage'
+import { getDtsProgressTemplate, getDtsHandler, postDtsDraft } from '@/api/service'
 import { listToTree } from '@/utils/util'
 
 export default {
@@ -110,9 +110,9 @@ export default {
     getFormItems () {
       const query = {
         station_id: this.userInfo.belongToDeptId,
-        type: 'dts_check'
+        place: 'post'
       }
-      Promise.all([getEquipmentUnit(), getHandler(query), getDtsProgressTemplate()])
+      Promise.all([getEquipmentUnit(), getDtsHandler(query), getDtsProgressTemplate()])
         .then((data) => {
             this.ready = true
             //
