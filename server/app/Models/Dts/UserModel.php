@@ -4,20 +4,20 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-02 21:34:01
+ * @LastEditTime: 2021-10-04 21:31:26
  */
 
-namespace App\Models\Admin;
+namespace App\Models\Dts;
 
 use CodeIgniter\Model;
 
-class WorkflowHandlerModel extends Model
+class UserModel extends Model
 {
     protected $DBGroup = 'mix';
 
-    protected $table         = 'app_workflow_handler';
+    protected $table         = 'app_user';
     protected $primaryKey    = 'id';
-    protected $allowedFields = ['pid', 'name', 'alias', 'description', 'created_at', 'updated_at', 'deleted_at'];
+    protected $allowedFields = ['workID', 'username', 'sex', 'IdCard', 'phone', 'email', 'status', 'password', 'forceChgPwd', 'avatar', 'dept_ids', 'job', 'title', 'politic', 'last_login', 'ip_address'];
 
     protected $useAutoIncrement = true;
 
@@ -29,10 +29,10 @@ class WorkflowHandlerModel extends Model
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
 
-    public function get($columnName = [], $query = [])
+    public function getUserWhereId($columnName = [], $id = [])
     {
-        if (empty($columnName)) {
-            return false;
+        if (empty($columnName) || empty($id)) {
+            return [];
         }
 
         $selectSql = '';
@@ -41,9 +41,14 @@ class WorkflowHandlerModel extends Model
         }
         $builder = $this->select($selectSql);
 
-        $builder->orderBy('id', 'ASC');
-        $data = $builder->findAll();
+        $builder->whereIn('id', $id);
+        $db = $builder->findAll();
 
-        return $data;
+        // $res = [];
+        // foreach ($db as $value) {
+        //     $res[] = $value['username'];
+        // }
+
+        return $db;
     }
 }

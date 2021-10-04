@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-02 22:04:57
+ * @LastEditTime: 2021-10-04 20:01:47
  */
 
 namespace Config;
@@ -66,10 +66,10 @@ $routes->group('api', function ($routes) {
     $routes->get('role_menu', 'Admin::getRoleMenu');
     $routes->post('role_menu', 'Admin::saveRoleMenu');
     //
-    $routes->get('workflow/handler', 'Admin::getWorkflowHandler');
+    $routes->get('workflow/authority', 'Admin::getWorkflowAuthority');
     //
-    $routes->get('role_workflow_handler', 'Admin::getRoleWorkflowHandler');
-    $routes->post('role_workflow_handler', 'Admin::saveRoleWorkflowHandler');
+    $routes->get('role_workflow_authority', 'Admin::getRoleWorkflowAuthority');
+    $routes->post('role_workflow_authority', 'Admin::saveRoleWorkflowAuthority');
     //
     $routes->get('dept', 'Admin::getDept');
     $routes->post('dept', 'Admin::newDept');

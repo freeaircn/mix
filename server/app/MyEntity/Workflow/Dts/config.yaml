@@ -8,15 +8,15 @@ workflows:
             post:
                 metadata:
                     name: '提交'
-                    assignTo: 'dts_check'
+                    assignTo: 'dts_auth_check'
             check:
                 metadata:
                     name: '检查'
-                    handler: 'dts_check'
+                    handler: 'dts_auth_check'
             review:
                 metadata:
                     name: '审核'
-                    handler: 'dts_director'
+                    handler: 'dts_auth_director'
             resolve:
                 metadata:
                     name: '解决'

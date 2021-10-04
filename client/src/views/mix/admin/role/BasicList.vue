@@ -94,7 +94,7 @@
 import BlankForm from './modules/BlankForm'
 import PermissionTree from './modules/PermissionTree'
 import WorkflowTree from './modules/WorkflowTree'
-import { getRoleTbl, saveRole, delRole, getMenu, getRoleMenu, saveRoleMenu, getWorkflowHandler, getRoleWorkflowHandler, saveRoleWorkflowHandler } from '@/api/manage'
+import { getRoleTbl, saveRole, delRole, getMenu, getRoleMenu, saveRoleMenu, getWorkflowAuthority, getRoleWorkflowAuthority, saveRoleWorkflowAuthority } from '@/api/manage'
 import { listToTree, newTimestamp } from '@/utils/util'
 
 const columns = [
@@ -288,14 +288,14 @@ export default {
       //
       this.tempRole2 = Object.assign({}, record)
       this.checkedKeys = []
-      Promise.all([getWorkflowHandler(), getRoleWorkflowHandler({ role_id: record.id })])
+      Promise.all([getWorkflowAuthority(), getRoleWorkflowAuthority({ role_id: record.id })])
         .then((res) => {
           this.treeData2.splice(0)
           const temp = this.filterTreeData2(res[0].slice(0))
           listToTree(temp, this.treeData2)
           //
           res[1].forEach(element => {
-            this.checkedKeys2.push(element.workflow_handler_id)
+            this.checkedKeys2.push(element.workflow_authority_id)
           })
 
           this.$nextTick(() => {
@@ -310,7 +310,7 @@ export default {
     },
 
     handleSubmitWorkflowAuth (result) {
-      saveRoleWorkflowHandler(result)
+      saveRoleWorkflowAuthority(result)
         .then(() => {
 
         })

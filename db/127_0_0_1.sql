@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- 主机： 127.0.0.1:3306
--- 生成日期： 2021-10-01 13:51:20
+-- 生成日期： 2021-10-04 13:45:45
 -- 服务器版本： 10.3.14-MariaDB
 -- PHP 版本： 7.3.5
 
@@ -689,7 +689,7 @@ CREATE TABLE IF NOT EXISTS `app_dts` (
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 COMMENT='DTS' ROW_FORMAT=COMPACT;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8 COMMENT='DTS' ROW_FORMAT=COMPACT;
 
 --
 -- 转存表中的数据 `app_dts`
@@ -697,7 +697,9 @@ CREATE TABLE IF NOT EXISTS `app_dts` (
 
 INSERT INTO `app_dts` (`id`, `ticket_id`, `station_id`, `type`, `title`, `level`, `equipment_unit`, `progress`, `creator`, `handler`, `place_at`, `task_id`, `rm_id`, `score`, `created_at`, `updated_at`, `deleted_at`) VALUES
 (1, 20210930001, 2, 2, '11', 1, '+2+4+', '2021-09-30 20:22 小强\n【问题描述】\n\n【发生时间】\n\n【问题影响】\n\n【已采取措施】\n\n', '小强', '检修班', 'check', 0, 0, 0, '2021-09-30 20:24:25', '2021-09-30 20:24:25', NULL),
-(2, 20210930002, 2, 1, 'www', 3, '+3+', '2021-09-30 20:38:49 小强\n【问题描述】\nxxxx\n【发生时间】\n2222\n【问题影响】\ngdg\n【已采取措施】\nsdgag\n\n', '小强', '检修班', 'check', 0, 0, 0, '2021-09-30 20:41:37', '2021-09-30 20:41:37', NULL);
+(2, 20210930002, 2, 1, 'www', 3, '+3+', '2021-09-30 20:38:49 小强\n【问题描述】\nxxxx\n【发生时间】\n2222\n【问题影响】\ngdg\n【已采取措施】\nsdgag\n\n', '小强', '检修班', 'check', 0, 0, 0, '2021-09-30 20:41:37', '2021-09-30 20:41:37', NULL),
+(4, 20211004003, 2, 2, 'eee', 2, '+3+', '2021-10-04 21:32 小强\n【问题描述】\n\n【发生时间】\n\n【问题影响】\n\n【已采取措施】\n\n', '小强', '小强', 'check', 0, 0, 0, '2021-10-04 21:32:54', '2021-10-04 21:32:54', NULL),
+(5, 20211004004, 2, 2, 'xxx', 3, '+2+', '2021-10-04 21:44 小强\n【问题描述】\n\n【发生时间】\n\n【问题影响】\n\n【已采取措施】\n\n', '小强', '小强', 'check', 0, 0, 0, '2021-10-04 21:44:45', '2021-10-04 21:44:45', NULL);
 
 -- --------------------------------------------------------
 
@@ -2034,7 +2036,7 @@ CREATE TABLE IF NOT EXISTS `app_menu` (
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   KEY `key_menu_pid` (`pid`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=101 DEFAULT CHARSET=utf8 COMMENT='路由' ROW_FORMAT=COMPACT;
+) ENGINE=InnoDB AUTO_INCREMENT=107 DEFAULT CHARSET=utf8 COMMENT='路由' ROW_FORMAT=COMPACT;
 
 --
 -- 转存表中的数据 `app_menu`
@@ -2138,7 +2140,13 @@ INSERT INTO `app_menu` (`id`, `type`, `pid`, `name`, `path`, `component`, `redir
 (97, 2, 95, 'get', NULL, NULL, NULL, b'0', b'0', b'0', '查询问题列表', NULL, b'0', b'0', NULL, NULL, 'dts/list:get', '2021-06-27 20:00:00', NULL, NULL),
 (98, 2, 95, 'get', NULL, NULL, NULL, b'0', b'0', b'0', '进展模板', NULL, b'0', b'0', NULL, NULL, 'dts/progress/template:get', '2021-06-27 20:00:00', NULL, NULL),
 (99, 1, 86, 'DtsDetails', '/dashboard/dts/details/:ticketId', 'mix/dashboard/components/dts/Details', '', b'1', b'0', b'0', '问题单详情', '', b'0', b'0', '', '', '', '2021-06-27 20:00:00', NULL, NULL),
-(100, 2, 95, 'get', NULL, NULL, NULL, b'0', b'0', b'0', '查看详情', NULL, b'0', b'0', NULL, NULL, 'dts/ticket/details:get', '2021-06-27 20:00:00', NULL, NULL);
+(100, 2, 95, 'get', NULL, NULL, NULL, b'0', b'0', b'0', '查看详情', NULL, b'0', b'0', NULL, NULL, 'dts/ticket/details:get', '2021-06-27 20:00:00', NULL, NULL),
+(101, 2, 95, 'get', NULL, NULL, NULL, b'0', b'0', b'0', '获取处理人', NULL, b'0', b'0', NULL, NULL, 'dts/handler:get', '2021-06-27 20:00:00', NULL, NULL),
+(102, 0, 2, 'DataWorkflowHandler', NULL, NULL, NULL, b'0', b'0', b'0', '工作流处理人', NULL, b'0', b'0', NULL, NULL, '', '2021-06-27 20:00:00', NULL, NULL),
+(103, 2, 102, 'Get', NULL, NULL, NULL, b'0', b'0', b'0', '查询', NULL, b'0', b'0', NULL, NULL, 'workflow/authority:get', '2021-06-27 20:00:00', NULL, NULL),
+(104, 0, 2, 'DataWorkflowHandler', NULL, NULL, NULL, b'0', b'0', b'0', '角色-工作流处理人', NULL, b'0', b'0', NULL, NULL, '', '2021-06-27 20:00:00', NULL, NULL),
+(105, 2, 104, 'Get', NULL, NULL, NULL, b'0', b'0', b'0', '查询', NULL, b'0', b'0', NULL, NULL, 'role_workflow_authority:get', '2021-06-27 20:00:00', NULL, NULL),
+(106, 2, 104, 'Post', NULL, NULL, NULL, b'0', b'0', b'0', '修改', NULL, b'0', b'0', NULL, NULL, 'role_workflow_authority:post', '2021-06-27 20:00:00', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -29796,7 +29804,7 @@ CREATE TABLE IF NOT EXISTS `app_role` (
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8 COMMENT='角色表' ROW_FORMAT=COMPACT;
+) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8 COMMENT='角色表' ROW_FORMAT=COMPACT;
 
 --
 -- 转存表中的数据 `app_role`
@@ -29804,7 +29812,9 @@ CREATE TABLE IF NOT EXISTS `app_role` (
 
 INSERT INTO `app_role` (`id`, `name`, `alias`, `status`, `description`, `created_at`, `updated_at`, `deleted_at`) VALUES
 (1, '管理组', 'admin_group', '1', '具有管理员权限', '2021-06-27 20:00:00', '2021-07-03 15:29:25', NULL),
-(2, '开发组', 'develop_group', '0', '具有开发员的权限', '2021-06-27 20:00:00', '2021-07-15 17:14:37', NULL);
+(2, '开发组', 'develop_group', '0', '具有开发员的权限', '2021-06-27 20:00:00', '2021-07-15 17:14:37', NULL),
+(23, 'WF-DTS-检查', 'dts_wf_check_gp', '1', 'DTS工作流处理权限：检查', '2021-10-02 21:24:08', '2021-10-02 21:57:17', NULL),
+(24, 'WF-DTS-审核', 'dts_auth_check_review', '1', NULL, '2021-10-04 20:46:22', '2021-10-04 20:46:22', NULL);
 
 -- --------------------------------------------------------
 
@@ -29907,7 +29917,35 @@ INSERT INTO `app_role_menu` (`role_id`, `menu_id`) VALUES
 (1, 97),
 (1, 98),
 (1, 99),
-(1, 100);
+(1, 100),
+(1, 101),
+(1, 103),
+(1, 105),
+(1, 106);
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `app_role_workflow_authority`
+--
+
+DROP TABLE IF EXISTS `app_role_workflow_authority`;
+CREATE TABLE IF NOT EXISTS `app_role_workflow_authority` (
+  `role_id` int(11) UNSIGNED NOT NULL COMMENT '角色ID',
+  `workflow_authority_id` int(11) UNSIGNED NOT NULL COMMENT '工作流处理人ID',
+  PRIMARY KEY (`role_id`,`workflow_authority_id`) USING BTREE,
+  KEY `fk_role_workflow_handler_ref_role_id` (`role_id`) USING BTREE,
+  KEY `fk_role_workflow_handler_ref_workflow_authority_id` (`workflow_authority_id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='角色-工作流权限关联' ROW_FORMAT=COMPACT;
+
+--
+-- 转存表中的数据 `app_role_workflow_authority`
+--
+
+INSERT INTO `app_role_workflow_authority` (`role_id`, `workflow_authority_id`) VALUES
+(23, 3),
+(24, 3),
+(24, 4);
 
 -- --------------------------------------------------------
 
@@ -30054,7 +30092,7 @@ CREATE TABLE IF NOT EXISTS `app_user` (
 --
 
 INSERT INTO `app_user` (`id`, `workID`, `username`, `sex`, `IdCard`, `phone`, `email`, `status`, `forceChgPwd`, `avatar`, `dept_ids`, `job`, `title`, `politic`, `ip_address`, `last_login`, `created_at`, `updated_at`, `deleted_at`, `id01`, `id02`, `id03`, `id04`, `id05`, `id06`, `id07`, `id08`, `id09`, `id10`, `id11`, `id12`, `id13`, `id14`, `id15`, `id16`, `str01`, `str02`, `str03`, `str04`, `str05`, `str06`, `str07`, `str08`, `str09`, `str10`, `str11`, `str12`, `str13`, `str14`, `str15`, `str16`, `password`, `forgotten_password_selector`, `forgotten_password_code`, `forgotten_password_time`) VALUES
-(1, '1', '小强', '男', '', '13812345678', '1@1.1', '1', '0', 1, '+1+2+4+', 1, 1, 2, '127.0.0.1', '2021-10-01 21:47:06', '2021-06-27 20:00:00', '2021-10-01 21:47:06', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '$argon2i$v=19$m=16384,t=4,p=2$Q0ZXc2NIWFJrcUxKSzA5UQ$Qt//SEIMKQDKVKsLzztLnTbVZQs/ysxKKhls908T0hQ', NULL, NULL, NULL);
+(1, '1', '小强', '男', '', '13812345678', '1@1.1', '1', '0', 1, '+1+2+4+', 1, 1, 2, '127.0.0.1', '2021-10-04 20:03:37', '2021-06-27 20:00:00', '2021-10-04 20:03:37', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '$argon2i$v=19$m=16384,t=4,p=2$Q0ZXc2NIWFJrcUxKSzA5UQ$Qt//SEIMKQDKVKsLzztLnTbVZQs/ysxKKhls908T0hQ', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -30105,9 +30143,37 @@ CREATE TABLE IF NOT EXISTS `app_user_role` (
 INSERT INTO `app_user_role` (`user_id`, `role_id`) VALUES
 (1, 1),
 (1, 2),
-(2, 1),
-(3, 1),
-(19, 1);
+(1, 23);
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `app_workflow_authority`
+--
+
+DROP TABLE IF EXISTS `app_workflow_authority`;
+CREATE TABLE IF NOT EXISTS `app_workflow_authority` (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'ID',
+  `name` varchar(63) NOT NULL COMMENT '名称',
+  `alias` varchar(63) NOT NULL COMMENT '别名',
+  `pid` int(11) UNSIGNED NOT NULL COMMENT '上级节点',
+  `description` varchar(127) DEFAULT NULL COMMENT '说明',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE,
+  KEY `pid` (`pid`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8 COMMENT='工作流权限' ROW_FORMAT=COMPACT;
+
+--
+-- 转存表中的数据 `app_workflow_authority`
+--
+
+INSERT INTO `app_workflow_authority` (`id`, `name`, `alias`, `pid`, `description`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, '顶层', 'null', 0, '无', '2021-06-27 20:00:00', '2021-06-27 20:00:00', NULL),
+(2, 'DTS', 'null', 1, 'DTS工作流程', '2021-06-27 20:00:00', '2021-06-27 20:00:00', NULL),
+(3, '检查', 'dts_auth_check', 2, 'DTS工作流程中，检查权限', '2021-06-27 20:00:00', '2021-06-27 20:00:00', NULL),
+(4, '审核', 'dts_auth_review', 2, 'DTS工作流程中，审核权限', '2021-06-27 20:00:00', '2021-06-27 20:00:00', NULL);
 --
 -- 数据库： `test`
 --

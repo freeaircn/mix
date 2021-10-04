@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-29 21:13:17
+ * @LastEditTime: 2021-10-04 19:44:47
  */
 
 namespace Config;
@@ -163,6 +163,11 @@ class Validation
         'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
         'limit'      => 'required|regex_match[^[1-9]\d{0,2}$]',
         'offset'     => 'required|regex_match[^[1-9]\d{0,9}$]',
+    ];
+
+    public $DtsGetHandler = [
+        'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
+        'place'      => 'required|in_list[post, check, review, resolve, close, suspend, reject]',
     ];
 
     /**

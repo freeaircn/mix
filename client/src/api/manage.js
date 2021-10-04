@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-02 22:00:48
+ * @LastEditTime: 2021-10-04 19:59:52
  */
 import request from '@/utils/request'
 
@@ -18,8 +18,8 @@ const api = {
   politic: '/politic',
   userRole: '/user_role',
   equipmentUnit: '/equipment_unit',
-  WorkflowHandler: '/workflow/handler',
-  roleWorkflowHandler: '/role_workflow_handler'
+  WorkflowAuthority: '/workflow/authority',
+  roleWorkflowAuthority: '/role_workflow_authority'
   // user: '/user',
   //
   // service: '/service',
@@ -298,26 +298,26 @@ export function deleteEquipmentUnit (id) {
   })
 }
 
-export function getWorkflowHandler (parameter) {
+export function getWorkflowAuthority (parameter) {
   return request({
-    url: api.WorkflowHandler,
+    url: api.WorkflowAuthority,
     method: 'get',
     params: parameter
   })
 }
 
 //
-export function getRoleWorkflowHandler (parameter) {
+export function getRoleWorkflowAuthority (parameter) {
   return request({
-    url: api.roleWorkflowHandler,
+    url: api.roleWorkflowAuthority,
     method: 'get',
     params: parameter
   })
 }
 
-export function saveRoleWorkflowHandler (data) {
+export function saveRoleWorkflowAuthority (data) {
   return request({
-    url: api.roleWorkflowHandler,
+    url: api.roleWorkflowAuthority,
     method: 'post',
     data: data
   })

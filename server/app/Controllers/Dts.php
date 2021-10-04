@@ -4,13 +4,16 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-02 22:26:50
+ * @LastEditTime: 2021-10-04 21:42:44
  */
 
 namespace App\Controllers;
 
+use App\Models\Dts\RoleWorkflowAuthorityModel;
 use App\Models\Dts\TicketModel;
-use App\MyEntity\Workflow\Dts\Ticket;
+use App\Models\Dts\UserModel;
+use App\Models\Dts\UserRoleModel;
+use App\Models\Dts\WorkflowAuthorityModel;
 use App\MyEntity\Workflow\Dts\WorkflowCore;
 use CodeIgniter\API\ResponseTrait;
 
@@ -20,8 +23,6 @@ class Dts extends BaseController
 
     // 进展模板
     protected $progressTemplate;
-    // 流程节点名
-    protected $workflowPlaces;
     // 单号末尾几位
     protected $ticketIdTailStartAt;
 
@@ -29,16 +30,6 @@ class Dts extends BaseController
     {
         $this->progressTemplate = [
             'draft' => "\n【问题描述】\n\n【发生时间】\n\n【问题影响】\n\n【已采取措施】\n\n",
-        ];
-
-        $this->workflowPlaces = [
-            'post'    => 'post',
-            'check'   => 'check',
-            'review'  => 'review',
-            'resolve' => 'resolve',
-            'close'   => 'close',
-            'suspend' => 'suspend',
-            'reject'  => 'reject',
         ];
 
         $this->ticketIdTailStartAt = 1001;
@@ -58,17 +49,65 @@ class Dts extends BaseController
     {
         $params = $this->request->getGet();
 
+        // 检查请求数据
+        if (!$this->validate('DtsGetHandler')) {
+            $res['error'] = $this->validator->getErrors();
+
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '请求数据无效';
+            return $this->respond($res);
+        }
+
         $station_id = $params['station_id'];
         $place      = $params['place'];
 
-        $ticket   = new Ticket($this->workflowPlaces[$place]);
-        $wf       = new WorkflowCore($ticket);
-        $metadata = $wf->getPlaceMetadata($this->workflowPlaces[$place]);
-        $assignTo = $metadata['assignTo'];
+        $wf       = new WorkflowCore();
+        $metadata = $wf->getPlaceMetadata($place);
+        if (!isset($metadata['assignTo'])) {
+            $res['code'] = EXIT_ERROR;
+            return $this->respond($res);
+        }
 
-        $res['code'] = EXIT_SUCCESS;
-        $res['msg']  = '测试...';
-        // $res['data'] = ['total' => $result['total'], 'data' => $result['result']];
+        // 获取流程权限
+        $model      = new WorkflowAuthorityModel();
+        $columnName = ['id'];
+        $query      = ['alias' => $metadata['assignTo']];
+        $wfAuthId   = $model->getByAlias($columnName, $query);
+
+        // 获取角色，多个id
+        $model  = new RoleWorkflowAuthorityModel();
+        $roleId = $model->getByWFAuthority($wfAuthId['id']);
+
+        // 获取用户Id
+        $model  = new UserRoleModel();
+        $userId = $model->getWhereInRole($roleId);
+
+        // 获取用户
+        $model      = new UserModel();
+        $columnName = ['id', 'username', 'status', 'dept_ids'];
+        $db         = $model->getUserWhereId($columnName, $userId);
+
+        // 过滤用户
+        $user = [];
+        $cnt  = count($db);
+        $find = '+' . $station_id . '+';
+        for ($i = 0; $i < $cnt; $i++) {
+            if (strpos($db[$i]['dept_ids'], $find) !== false) {
+                $user[] = [
+                    'id'       => $db[$i]['id'],
+                    'username' => $db[$i]['username'],
+                    'status'   => $db[$i]['status'],
+                ];
+            }
+        }
+
+        if (!empty($user)) {
+            $res['code'] = EXIT_SUCCESS;
+            $res['data'] = $user;
+
+        } else {
+            $res['code'] = EXIT_ERROR;
+        }
 
         return $this->respond($res);
     }
@@ -95,26 +134,21 @@ class Dts extends BaseController
             'level'          => $client['level'],
             'equipment_unit' => $client['equipment_unit'],
             'progress'       => $client['progress'],
+            'handler'        => $client['handler'],
             'creator'        => session('username'),
         ];
 
-        $ticket = new Ticket($this->workflowPlaces['check']);
-        $wf     = new WorkflowCore($ticket);
-        $wf->toReject();
-
         // 单号
-        $time = time();
-
-        $columnName = ['ticket_id'];
-        $query      = ['created_at' => date('Y-m-d', $time)];
-        $db         = $model->countByCreateDate($columnName, $query);
-
+        $time               = time();
+        $columnName         = ['ticket_id'];
+        $query              = ['created_at' => date('Y-m-d', $time)];
+        $db                 = $model->countByCreateDate($columnName, $query);
         $temp               = (string) ($this->ticketIdTailStartAt + $db);
         $draft['ticket_id'] = date('Ymd', $time) . substr($temp, 1);
+
         // 工作流
-        $draft['place_at'] = $this->workflowPlaces['check'];
-        $metadata          = $wf->getPlaceMetadata($this->workflowPlaces['check']);
-        $draft['handler']  = $metadata['handler'];
+        $place             = 'check';
+        $draft['place_at'] = $place;
 
         $result = $model->newDraft($draft);
         if ($result) {
@@ -152,8 +186,9 @@ class Dts extends BaseController
         $db         = $model->getByLimitOffset($columnName, $query);
 
         // 工作流
-        $ticket = new Ticket($this->workflowPlaces['post']);
-        $wf     = new WorkflowCore($ticket);
+        // $place  = 'post';
+        // $ticket = new Ticket($place);
+        $wf = new WorkflowCore();
         for ($i = 0; $i < $db['total']; $i++) {
             $metadata = $wf->getPlaceMetadata($db['data'][$i]['place_at']);
             if (!empty($metadata)) {

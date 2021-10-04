@@ -4,19 +4,19 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-02 22:15:08
+ * @LastEditTime: 2021-10-04 21:06:27
  */
 
-namespace App\Models\Admin;
+namespace App\Models\Dts;
 
 use CodeIgniter\Model;
 
-class RoleWorkflowHandlerModel extends Model
+class RoleWorkflowAuthorityModel extends Model
 {
     protected $DBGroup = 'mix';
 
-    protected $table         = 'app_role_workflow_handler';
-    protected $allowedFields = ['role_id', 'workflow_handler_id'];
+    protected $table         = 'app_role_workflow_authority';
+    protected $allowedFields = ['role_id', 'workflow_authority_id'];
 
     protected $returnType     = 'array';
     protected $useSoftDeletes = false;
@@ -29,9 +29,9 @@ class RoleWorkflowHandlerModel extends Model
             return false;
         }
 
-        $res = $this->select('workflow_handler_id')
+        $res = $this->select('workflow_authority_id')
             ->where('role_id', $role_id)
-            ->orderBy('workflow_handler_id', 'ASC')
+            ->orderBy('workflow_authority_id', 'ASC')
             ->findAll();
 
         return $res;
@@ -50,8 +50,8 @@ class RoleWorkflowHandlerModel extends Model
         foreach ($workflow_handler_ids as $v) {
             if (is_numeric($v)) {
                 $data = [
-                    'role_id'             => $role_id,
-                    'workflow_handler_id' => $v,
+                    'role_id'               => $role_id,
+                    'workflow_authority_id' => $v,
                 ];
                 $this->insert($data);
                 $cnt++;
@@ -61,24 +61,22 @@ class RoleWorkflowHandlerModel extends Model
         return ($cnt == $num) ? true : false;
     }
 
-    public function getMenuIdForAuthority(array $roleId = null)
+    public function getByWFAuthority($workflow_authority_id = null)
     {
-        if (!is_array($roleId) || empty($roleId)) {
+        if (!is_numeric($workflow_authority_id)) {
             return [];
         }
 
-        $temp = $this->select('menu_id')
-            ->whereIn('role_id', $roleId)
-            ->orderBy('menu_id', 'ASC')
+        $db = $this->select('role_id')
+            ->where('workflow_authority_id', $workflow_authority_id)
+            ->orderBy('role_id', 'ASC')
             ->findAll();
 
         $res = [];
-        foreach ($temp as $value) {
-            $res[] = $value['menu_id'];
+        foreach ($db as $value) {
+            $res[] = $value['role_id'];
         }
 
-        // 多个角色，允许有相同的menu id，去除重复
-        return array_unique($res);
+        return $res;
     }
-
 }

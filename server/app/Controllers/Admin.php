@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-02 22:13:26
+ * @LastEditTime: 2021-10-04 20:02:23
  */
 
 namespace App\Controllers;
@@ -17,11 +17,11 @@ use App\Models\Admin\MenuModel;
 use App\Models\Admin\PoliticModel;
 use App\Models\Admin\RoleMenuModel;
 use App\Models\Admin\RoleMode;
-use App\Models\Admin\RoleWorkflowHandlerModel;
+use App\Models\Admin\RoleWorkflowAuthorityModel;
 use App\Models\Admin\TitleModel;
 use App\Models\Admin\UserModel;
 use App\Models\Admin\UserRoleModel;
-use App\Models\Admin\WorkflowHandlerModel;
+use App\Models\Admin\WorkflowAuthorityModel;
 use CodeIgniter\API\ResponseTrait;
 
 class Admin extends BaseController
@@ -695,9 +695,9 @@ class Admin extends BaseController
         return $this->respond($res);
     }
 
-    public function getWorkflowHandler()
+    public function getWorkflowAuthority()
     {
-        $model = new WorkflowHandlerModel();
+        $model = new WorkflowAuthorityModel();
 
         $columnName = ['id', 'pid', 'name', 'alias'];
         $db         = $model->get($columnName);
@@ -712,13 +712,13 @@ class Admin extends BaseController
         return $this->respond($res);
     }
 
-    public function getRoleWorkflowHandler()
+    public function getRoleWorkflowAuthority()
     {
         $client = $this->request->getGet();
 
         $role_id = $client['role_id'];
 
-        $model = new RoleWorkflowHandlerModel();
+        $model = new RoleWorkflowAuthorityModel();
         $db    = $model->getByRole($role_id);
 
         $res['code'] = EXIT_SUCCESS;
@@ -727,14 +727,14 @@ class Admin extends BaseController
         return $this->respond($res);
     }
 
-    public function saveRoleWorkflowHandler()
+    public function saveRoleWorkflowAuthority()
     {
         $client = $this->request->getJSON(true);
 
         $role_id              = $client['role_id'];
         $workflow_handler_ids = $client['workflow_handler_ids'];
 
-        $model  = new RoleWorkflowHandlerModel();
+        $model  = new RoleWorkflowAuthorityModel();
         $result = $model->saveByRole($role_id, $workflow_handler_ids);
 
         if ($result === true) {

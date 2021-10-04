@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-02 22:17:01
+ * @LastEditTime: 2021-10-04 21:20:42
 -->
 <template>
   <page-header-wrapper :title="false">
@@ -51,9 +51,9 @@
 
         <a-form-model-item label="指派" prop="handler">
           <a-select v-model="record.handler" placeholder="请选择" >
-            <a-select-option value="1">紧急</a-select-option>
-            <a-select-option value="2">严重</a-select-option>
-            <a-select-option value="3">一般</a-select-option>
+            <a-select-option v-for="d in handlerOptions" :key="d.id" :value="d.username" :disabled="d.status === '0'">
+              {{ d.username }}
+            </a-select-option>
           </a-select>
         </a-form-model-item>
 
@@ -89,6 +89,7 @@ export default {
       //
       ready: false,
       cascaderOptions: [],
+      handlerOptions: [],
       equipmentUnit: [],
       //
       record: {
@@ -119,11 +120,13 @@ export default {
             const equipmentUnit = data[0]
             listToTree(equipmentUnit, this.cascaderOptions, '1')
             //
-            this.record.progress = data = data[2]
+            this.handlerOptions = data[1]
+            this.record.progress = data[2]
           })
           //  网络异常，清空页面数据显示，防止错误的操作
           .catch((err) => {
             this.cascaderOptions.splice(0, this.cascaderOptions.length)
+            this.handlerOptions = []
             this.record.progress = ''
             if (err.response) {
             }

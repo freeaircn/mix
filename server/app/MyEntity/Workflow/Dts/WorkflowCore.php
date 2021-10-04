@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2019-12-29 14:06:12
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-01 20:25:40
+ * @LastEditTime: 2021-10-04 20:27:56
  */
 
 namespace App\MyEntity\Workflow\Dts;
@@ -26,9 +26,10 @@ class WorkflowCore
     private $transitionsMetadata;
     private $event;
 
-    public function __construct(Ticket $ticket)
+    // public function __construct(Ticket $ticket)
+    public function __construct()
     {
-        $this->ticket = $ticket;
+        // $this->ticket = $ticket;
 
         // $paths  = new Config\Paths();
         $config = rtrim(APPPATH, '\\/ ') . DIRECTORY_SEPARATOR . 'MyEntity/Workflow/Dts/config.yaml';
@@ -102,6 +103,11 @@ class WorkflowCore
         if ($transitionsMetadata) {
             $this->transitionsMetadata = $transitionsMetadata;
         }
+    }
+
+    public function bindTicket(Ticket $ticket)
+    {
+        $this->ticket = $ticket;
     }
 
     public function getTicket()
