@@ -92,6 +92,10 @@ const app = {
           reject(e)
         })
       })
+    },
+
+    setMobileType ({ commit }, isMobile) {
+      commit(TOGGLE_MOBILE_TYPE, isMobile)
     }
   }
 }

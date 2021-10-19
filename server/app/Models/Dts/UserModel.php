@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-04 21:31:26
+ * @LastEditTime: 2021-10-10 09:44:59
  */
 
 namespace App\Models\Dts;
@@ -48,6 +48,24 @@ class UserModel extends Model
         // foreach ($db as $value) {
         //     $res[] = $value['username'];
         // }
+
+        return $db;
+    }
+
+    public function getUserByStation($columnName = [], $station = '')
+    {
+        if (empty($columnName) || empty($station)) {
+            return [];
+        }
+
+        $selectSql = '';
+        foreach ($columnName as $name) {
+            $selectSql = $selectSql . $name . ', ';
+        }
+        $builder = $this->select($selectSql);
+
+        $builder->like('dept_ids', $station);
+        $db = $builder->findAll();
 
         return $db;
     }

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2019-12-29 14:06:12
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-04 20:27:56
+ * @LastEditTime: 2021-10-19 11:01:25
  */
 
 namespace App\MyEntity\Workflow\Dts;
@@ -130,10 +130,121 @@ class WorkflowCore
         return $this->transitionsMetadata[$transition] ?? [];
     }
 
-    public function toReject()
+    //
+    public function getFirstPlace()
+    {
+        $temp = $this->placesMetadata;
+
+        foreach ($temp as $key => $value) {
+            return $key;
+        }
+    }
+
+    public function getNextPlace(string $place = '')
+    {
+        if (empty($place)) {
+            return false;
+        }
+
+        $temp = $this->placesMetadata;
+        $next = false;
+
+        foreach ($temp as $key => $value) {
+            if ($next) {
+                return $key;
+            }
+            if ($key === $place) {
+                $next = true;
+            }
+        }
+        return false;
+    }
+
+    public function getPlaceMetaOfName(string $branch = 'branchA'): array
+    {
+        $temp = $this->placesMetadata;
+        $res  = [];
+
+        if (!empty($branch)) {
+            foreach ($temp as $key => $value) {
+                if (isset($value[$branch])) {
+                    $res[] = [
+                        'name'  => $value['name'],
+                        'alias' => $key,
+                    ];
+                }
+            }
+        } else {
+            foreach ($temp as $key => $value) {
+                $res[] = [
+                    'name'  => $value['name'],
+                    'alias' => $key,
+                ];
+            }
+        }
+
+        return $res;
+    }
+
+    public function getPlaceMetaOfView(string $place = ''): array
+    {
+        if (empty($place)) {
+            return [];
+        }
+
+        $meta = $this->placesMetadata[$place];
+
+        if (isset($meta['view'])) {
+            return $meta['view'];
+        } else {
+            return [];
+        }
+    }
+
+    public function isCheckPlace(string $place = '')
+    {
+        if ($place === 'check') {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public function isReviewPlace(string $place = '')
+    {
+        if ($place === 'review') {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public function getReviewPlace()
+    {
+        // $meta = $this->placesMetadata['review'];
+
+        return 'review';
+    }
+
+    public function toReview()
     {
         try {
-            $this->workflow->apply($this->ticket, 'to_reject');
+            if ($this->workflow->can($this->ticket, 'to_review')) {
+                $this->workflow->apply($this->ticket, 'to_review');
+                return true;
+            } else {
+                return false;
+            }
+        } catch (LogicException $exception) {
+            // print($exception);
+            return false;
+        }
+    }
+
+    public function toCancel()
+    {
+        try {
+            $this->workflow->apply($this->ticket, 'to_cancel');
         } catch (LogicException $exception) {
             print($exception);
         }

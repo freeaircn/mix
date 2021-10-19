@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-06-26 16:22:04
+ * @LastEditTime: 2021-10-15 00:12:38
  */
 import antd from 'ant-design-vue/es/locale-provider/zh_CN'
 import momentCN from 'moment/locale/zh-cn'
@@ -27,8 +27,8 @@ export default {
   message: '-',
 
   'layouts.usermenu.dialog.title': '信息',
-  'layouts.usermenu.dialog.content': '您确定要注销吗？',
-  'layouts.userLayout.title': '面向站点多业务应用',
+  'layouts.usermenu.dialog.content': '您想退出吗？',
+  'layouts.userLayout.title': '业务数据驱动生产力',
   ...components,
   ...global,
   ...menu,

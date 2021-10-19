@@ -4,10 +4,10 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-08 20:07:24
+ * @LastEditTime: 2021-10-08 20:07:31
  */
 
-namespace App\Models\Admin;
+namespace App\Models\Dts;
 
 use CodeIgniter\Model;
 
@@ -46,5 +46,22 @@ class EquipmentUnitModel extends Model
         $res = $builder->findAll();
 
         return $res;
+    }
+
+    public function getByIds($columnName = [], $query = [])
+    {
+        if (empty($columnName) || empty($query)) {
+            return [];
+        }
+
+        $selectSql = '';
+        foreach ($columnName as $key) {
+            $selectSql = $selectSql . $key . ', ';
+        }
+        $builder = $this->select($selectSql);
+        $builder->whereIn('id', $query['ids']);
+        $builder->orderBy('id', 'ASC');
+
+        return $builder->findAll();
     }
 }

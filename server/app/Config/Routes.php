@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-04 20:01:47
+ * @LastEditTime: 2021-10-18 22:56:10
  */
 
 namespace Config;
@@ -121,11 +121,13 @@ $routes->group('api', function ($routes) {
     $routes->get('meters/planning_kWh', 'Meters::getPlanningKWh');
     $routes->put('meters/planning_kWh', 'Meters::updatePlanningKWhRecord');
     //
-    $routes->get('dts/progress/template', 'Dts::getProgressTemplate');
-    $routes->get('dts/handler', 'Dts::getHandler');
     $routes->post('dts/draft', 'Dts::postDraft');
     $routes->get('dts/list', 'Dts::getForList');
+    $routes->get('dts/ticket/blank_form', 'Dts::getTicketBlankForm');
     $routes->get('dts/ticket/details', 'Dts::getTicketDetails');
+    $routes->put('dts/ticket/progress', 'Dts::putTicketProgress');
+    $routes->put('dts/ticket/handler', 'Dts::putTicketHandler');
+    $routes->post('dts/ticket/toReview', 'Dts::postTicketToReview');
     //
     $routes->add('(:any)', '404');
 });

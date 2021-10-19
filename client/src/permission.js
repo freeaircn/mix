@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-18 15:48:04
+ * @LastEditTime: 2021-10-08 10:57:45
  */
 import router from './router'
 import store from './store'
@@ -25,6 +25,9 @@ const defaultRoutePath = '/dashboard/workplace'
 router.beforeEach((to, from, next) => {
   NProgress.start() // start progress bar
   to.meta && (typeof to.meta.title !== 'undefined' && setDocumentTitle(`${i18nRender(to.meta.title)} - ${domTitle}`))
+  //
+  const isMobile = (/android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(navigator.userAgent.toLowerCase()))
+  store.dispatch('setMobileType', isMobile)
   /* has token */
   // if (storage.get(ACCESS_TOKEN)) {
   if (Cookies.get(ACCESS_TOKEN)) {
@@ -36,8 +39,7 @@ router.beforeEach((to, from, next) => {
       // check login user.roles is null
       if (store.getters.roles && store.getters.roles.length === 0) {
         // request login userInfo
-        store
-          .dispatch('GetInfo')
+        store.dispatch('GetInfo')
           .then(res => {
             // const roles = res.result && res.result.role
             // // generate dynamic router

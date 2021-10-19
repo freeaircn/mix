@@ -672,24 +672,25 @@ INSERT INTO `app_dept` (`id`, `name`, `pid`, `status`, `description`, `dataMask`
 DROP TABLE IF EXISTS `app_dts`;
 CREATE TABLE IF NOT EXISTS `app_dts` (
   `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `ticket_id` bigint(16) UNSIGNED DEFAULT 0 COMMENT '问题单号',
+  `ticket_id` int(11) UNSIGNED DEFAULT 0 COMMENT '问题单号',
   `station_id` tinyint(3) UNSIGNED DEFAULT 0 COMMENT '站点',
   `type` tinyint(3) UNSIGNED DEFAULT 0 COMMENT '类型',
   `title` varchar(63) DEFAULT NULL COMMENT '标题',
   `level` tinyint(3) UNSIGNED DEFAULT 0 COMMENT '影响程度',
   `equipment_unit` varchar(63) DEFAULT NULL COMMENT '设备单元',
   `progress` varchar(2000) DEFAULT NULL COMMENT '设备单元',
-  `creator` varchar(7) DEFAULT NULL COMMENT '创建人',
-  `handler` varchar(7) DEFAULT NULL COMMENT '处理人',
+  `creator` int(11) UNSIGNED DEFAULT 0 COMMENT '创建人',
+  `handler` int(11) UNSIGNED DEFAULT 0 COMMENT '处理人',
   `place_at` varchar(15) DEFAULT NULL COMMENT '流程',
   `task_id` bigint(16) UNSIGNED DEFAULT 0 COMMENT '工作单号',
   `rm_id` bigint(16) UNSIGNED DEFAULT 0 COMMENT '需求单号',
   `score` tinyint(3) UNSIGNED DEFAULT 0 COMMENT '加分',
+  `score_comment` varchar(500) DEFAULT NULL COMMENT '加分评语',
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8 COMMENT='DTS' ROW_FORMAT=COMPACT;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='DTS' ROW_FORMAT=COMPACT;
 
 --
 -- 转存表中的数据 `app_dts`

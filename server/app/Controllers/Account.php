@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-01 21:37:59
+ * @LastEditTime: 2021-10-12 19:55:05
  */
 
 namespace App\Controllers;
@@ -31,11 +31,15 @@ class Account extends BaseController
 
         // 去掉acl和pageId
         if (isset($sessionData['acl'])) {
-            $sessionData['acl'] = '';
+            unset($sessionData['acl']);
         }
 
         if (isset($sessionData['pageId'])) {
-            $sessionData['pageId'] = '';
+            unset($sessionData['pageId']);
+        }
+
+        if (isset($sessionData['wfAuthority'])) {
+            unset($sessionData['wfAuthority']);
         }
 
         array_shift($sessionData);

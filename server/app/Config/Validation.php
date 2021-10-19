@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-04 19:44:47
+ * @LastEditTime: 2021-10-19 10:03:44
  */
 
 namespace Config;
@@ -165,9 +165,30 @@ class Validation
         'offset'     => 'required|regex_match[^[1-9]\d{0,9}$]',
     ];
 
-    public $DtsGetHandler = [
+    public $DtsGetTicketBlankForm = [
         'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
-        'place'      => 'required|in_list[post, check, review, resolve, close, suspend, reject]',
+    ];
+
+    public $DtsGetTicketDetails = [
+        'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
+        'ticket_id'  => 'required|regex_match[/^\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])[0-9]{3}$/]',
+    ];
+
+    public $DtsProgressPut = [
+        'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
+        'ticket_id'  => 'required|regex_match[/^\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])[0-9]{3}$/]',
+    ];
+
+    public $DtsHandlerPut = [
+        'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
+        'ticket_id'  => 'required|regex_match[/^\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])[0-9]{3}$/]',
+        'handler'    => 'required|is_natural_no_zero',
+    ];
+
+    public $DtsToReviewPost = [
+        'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
+        'ticket_id'  => 'required|regex_match[/^\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])[0-9]{3}$/]',
+        'reviewer'   => 'required|is_natural_no_zero',
     ];
 
     /**

@@ -1,4 +1,4 @@
-# 'draft', 'posted', 'handled', 'resolved', 'canceled'
+#
 
 workflows:
     dts:
@@ -7,56 +7,78 @@ workflows:
         places:
             post:
                 metadata:
-                    name: '提交'
-                    assignTo: 'dts_auth_check'
+                    name: '创建'
+                    auth: 'dts_auth_any'
+                    branchA: 'A'
+                    view:
+                        isCheck: false
+                        isReview: false
+                        isCreator: false
             check:
                 metadata:
                     name: '检查'
-                    handler: 'dts_auth_check'
+                    auth: 'dts_auth_check'
+                    branchA: 'A'
+                    view:
+                        isCheck: true
+                        isReview: false
+                        isCreator: false
             review:
                 metadata:
                     name: '审核'
-                    handler: 'dts_auth_director'
+                    auth: 'dts_auth_review'
+                    branchA: 'A'
+                    view:
+                        isCheck: false
+                        isReview: true
+                        isCreator: false
             resolve:
                 metadata:
                     name: '解决'
+                    branchA: 'A'
+                    view:
+                        isCheck: false
+                        isReview: false
+                        isCreator: true
             close:
                 metadata:
                     name: '关闭'
-            suspend:
+                    branchA: 'A'
+                    view:
+                        isCheck: false
+                        isReview: false
+                        isCreator: false
+            cancel:
                 metadata:
-                    name: '挂起'
-            reject:
-                metadata:
-                    name: '拒绝'
+                    name: '取消'
+                    auth: 'dts_auth_review'
+                    view:
+                        isCheck: false
+                        isReview: false
+                        isCreator: false
         transitions:
-            post_to_check:
+            to_check:
                 from: post
                 to:   check
                 metadata:
                     role: 'WF_ALL'
-            check_to_review:
+            to_review:
                 from: check
                 to:   review
                 metadata:
                     role: 'WF_ALL'
-            review_to_resolve:
+            to_resolve:
                 from: review
                 to:   resolve
                 metadata:
                     role: 'WF_ALL'
-            resolve_to_close:
+            to_close:
                 from: resolve
                 to:   close
                 metadata:
                     role: 'WF_ALL'
-            to_suspend:
-                from: check
-                to:   suspend
-                metadata:
-                    role: 'WF_ALL'
-            to_reject:
+            to_cancel:
                 from: [check, review]
-                to:   reject
+                to:   cancel
                 metadata:
                     role: 'WF_ALL'

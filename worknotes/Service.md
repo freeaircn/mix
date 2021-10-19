@@ -441,18 +441,14 @@ CREATE TABLE IF NOT EXISTS `app_dts` (
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='DTS' ROW_FORMAT=COMPACT;
  
 
-4 录入时，检查事件日期，确保正确性，避免 修改，删除操作。
+4 工作流角色及操作
+  1 创建人
+    查看，关闭
+  2 检查人
+    查看，更新进展，更换处理人，提交审核
+  3 审核人
+    查看，更新进展，加分，解决，拒绝
 
-5 录入：
-  1 新增事件：
-    开机：
-      检查事件日期，确保正确性
-    
-    停机：
-      检查事件日期，确保正确性
-
-  2 查询统计：
-    按年份，站点 统计开机次数和运行总时长。
 
 
 ```

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-01 21:41:11
+ * @LastEditTime: 2021-10-12 19:51:04
  */
 
 namespace App\Controllers;
@@ -18,7 +18,9 @@ use App\Models\admin\RoleMenuModel;
 use App\Models\admin\TitleModel;
 use App\Models\admin\UserModel;
 use App\Models\admin\UserRoleModel;
-use App\Models\AuthModel;
+use App\Models\Auth\AuthModel;
+use App\Models\Auth\RoleWorkflowAuthorityModel;
+use App\Models\Auth\WorkflowAuthorityModel;
 use App\Models\SmsCodeModel;
 use CodeIgniter\API\ResponseTrait;
 
@@ -103,6 +105,15 @@ class Auth extends BaseController
         $userACL    = $menuModel->getApiAclByMenuId($menuId);
         $userPageId = $menuModel->getPageIdByMenuId($menuId);
 
+        // 查询用户拥有的流程权限
+        $model         = new RoleWorkflowAuthorityModel();
+        $wfAuthorityId = $model->getByRoles($roleId);
+
+        $model       = new WorkflowAuthorityModel();
+        $columnName  = ['alias'];
+        $query       = $wfAuthorityId;
+        $wfAuthority = $model->getAliasByWhereInId($columnName, $query);
+
         // 取用户头像文件
         if (isset($user['avatar']) && is_numeric($user['avatar'])) {
             $avatarModel = new AvatarModel();
@@ -131,6 +142,7 @@ class Auth extends BaseController
         $sessionData                     = $user;
         $sessionData['acl']              = $userACL;
         $sessionData['pageId']           = $userPageId;
+        $sessionData['wfAuthority']      = $wfAuthority;
         $sessionData['belongToDeptId']   = $belongToDeptId;
         $sessionData['belongToDeptName'] = $belongToDeptName;
         $this->session->set($sessionData);

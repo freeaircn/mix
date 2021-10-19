@@ -4,10 +4,10 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-15 23:49:33
+ * @LastEditTime: 2021-10-12 19:46:02
  */
 
-namespace App\Models;
+namespace App\Models\Auth;
 
 use CodeIgniter\Model;
 

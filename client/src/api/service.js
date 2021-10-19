@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-02 19:35:53
+ * @LastEditTime: 2021-10-18 22:55:26
  */
 import request from '@/utils/request'
 
@@ -17,11 +17,14 @@ const api = {
   meters_basic_statistic: '/meters/basic_statistic',
   meters_overall_statistic: 'meters/overall_statistic',
   planning_kWh: '/meters/planning_kWh',
-  dts_progress_template: '/dts/progress/template',
-  dts_handler: '/dts/handler',
+  //
   dts_draft: '/dts/draft',
   dts_list: '/dts/list',
-  dts_ticket_details: '/dts/ticket/details'
+  dts_ticket_blank_form: '/dts/ticket/blank_form',
+  dts_ticket_details: '/dts/ticket/details',
+  dts_ticket_progress: '/dts/ticket/progress',
+  dts_ticket_handler: '/dts/ticket/handler',
+  dts_ticket_toReview: '/dts/ticket/toReview'
 }
 
 // 机组事件
@@ -139,23 +142,7 @@ export function getMetersOverallStatistic (params) {
   })
 }
 
-// Dts
-export function getDtsProgressTemplate (params) {
-  return request({
-    url: api.dts_progress_template,
-    method: 'get',
-    params: params
-  })
-}
-
-export function getDtsHandler (parameter) {
-  return request({
-    url: api.dts_handler,
-    method: 'get',
-    params: parameter
-  })
-}
-
+// DTS
 export function postDtsDraft (data) {
   return request({
     url: api.dts_draft,
@@ -172,10 +159,42 @@ export function getDtsList (params) {
   })
 }
 
+export function getDtsTicketBlankForm (params) {
+  return request({
+    url: api.dts_ticket_blank_form,
+    method: 'get',
+    params: params
+  })
+}
+
 export function getDtsTicketDetails (params) {
   return request({
     url: api.dts_ticket_details,
     method: 'get',
     params: params
+  })
+}
+
+export function putDtsTicketProgress (data) {
+  return request({
+    url: api.dts_ticket_progress,
+    method: 'put',
+    data: data
+  })
+}
+
+export function putDtsTicketHandler (data) {
+  return request({
+    url: api.dts_ticket_handler,
+    method: 'put',
+    data: data
+  })
+}
+
+export function postDtsTicketToReview (data) {
+  return request({
+    url: api.dts_ticket_toReview,
+    method: 'post',
+    data: data
   })
 }

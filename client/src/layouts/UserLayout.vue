@@ -27,7 +27,7 @@
             <a href="#">条款</a>
           </div>
           <div class="copyright">
-            Copyright &copy; 2021 Sang Yu
+            松山河口 &copy; 2021 Sang Yu
           </div>
         </div>
       </div>

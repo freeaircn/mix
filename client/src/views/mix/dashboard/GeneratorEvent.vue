@@ -5,7 +5,7 @@
     </a-card>
 
     <div class="antd-pro-pages-dashboard-analysis-twoColLayout" :class="!isMobile && 'desktop'">
-      <a-row :gutter="8" type="flex" :style="{ marginBottom: '8px' }">
+      <a-row :gutter="[8,8]" type="flex" :style="{ marginBottom: '8px' }">
         <a-col :xl="8" :lg="24" :md="24" :sm="24" :xs="24" >
           <a-card :bordered="false" title="事件录入" :style="{height: '100%'}">
             <a-form-model
@@ -36,7 +36,7 @@
                 <a-date-picker v-model="objEvent.event_at" valueFormat="YYYY-MM-DD HH:mm:ss" show-time placeholder="请选择" />
               </a-form-model-item>
 
-              <a-form-model-item label="说明" prop="description">
+              <a-form-model-item label="补充说明" prop="description">
                 <a-textarea v-model="objEvent.description"></a-textarea>
               </a-form-model-item>
 
@@ -68,32 +68,34 @@
       </a-row>
     </div>
 
-    <a-card :title=" '统计图表-' + genEventBasicStatDate " :bordered="false" :body-style="{marginBottom: '8px'}">
-      <a-button slot="extra" type="link" @click="onQueryBasicStatistic">刷新</a-button>
-      <GenEventBasicStatistic
-        :loading="genEventBasicStatLoading"
-        :changed="genEventBasicStatChanged"
-        :statisticData="genEventBasicStatData"
-      >
-      </GenEventBasicStatistic>
-    </a-card>
+    <div v-if="!isMobile">
+      <a-card :title=" '统计图表-' + genEventBasicStatDate " :bordered="false" :body-style="{marginBottom: '8px'}">
+        <a-button slot="extra" type="link" @click="onQueryBasicStatistic">刷新</a-button>
+        <GenEventBasicStatistic
+          :loading="genEventBasicStatLoading"
+          :changed="genEventBasicStatChanged"
+          :statisticData="genEventBasicStatData"
+        >
+        </GenEventBasicStatistic>
+      </a-card>
 
-    <a-card :loading="false" title="历史统计" :bordered="false" :body-style="{padding: '0', marginBottom: '8px'}">
-      <div style="padding: 8px">
-        <a-select style="width: 100px" placeholder="起始" >
-          <a-select-option v-for="d in availableYearRange" :key="d.value" :value="d.value" >
-            {{ d.name }}
-          </a-select-option>
-        </a-select>
-        <span style="margin: 0 18px">至</span>
-        <a-select style="width: 100px" placeholder="结束" >
-          <a-select-option v-for="d in availableYearRange" :key="d.value" :value="d.value" >
-            {{ d.name }}
-          </a-select-option>
-        </a-select>
-        <span style="margin: 0 18px"><a-button type="primary" @click="handleQueryHisStatistic">查询</a-button></span>
-      </div>
-    </a-card>
+      <a-card :loading="false" title="历史统计" :bordered="false" :body-style="{padding: '0', marginBottom: '8px'}">
+        <div style="padding: 8px">
+          <a-select style="width: 100px" placeholder="起始" >
+            <a-select-option v-for="d in availableYearRange" :key="d.value" :value="d.value" >
+              {{ d.name }}
+            </a-select-option>
+          </a-select>
+          <span style="margin: 0 18px">至</span>
+          <a-select style="width: 100px" placeholder="结束" >
+            <a-select-option v-for="d in availableYearRange" :key="d.value" :value="d.value" >
+              {{ d.name }}
+            </a-select-option>
+          </a-select>
+          <span style="margin: 0 18px"><a-button type="primary" @click="handleQueryHisStatistic">查询</a-button></span>
+        </div>
+      </a-card>
+    </div>
 
   </page-header-wrapper>
 </template>
@@ -177,7 +179,9 @@ export default {
     this.onQueryEventLog(this.logListDate, 0)
 
     // 统计图表
-    this.onQueryBasicStatistic()
+    if (!this.isMobile) {
+      this.onQueryBasicStatistic()
+    }
   },
   methods: {
 

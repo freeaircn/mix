@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-04 21:20:42
+ * @LastEditTime: 2021-10-12 19:25:11
 -->
 <template>
   <page-header-wrapper :title="false">
@@ -51,7 +51,7 @@
 
         <a-form-model-item label="指派" prop="handler">
           <a-select v-model="record.handler" placeholder="请选择" >
-            <a-select-option v-for="d in handlerOptions" :key="d.id" :value="d.username" :disabled="d.status === '0'">
+            <a-select-option v-for="d in handlerOptions" :key="d.id" :value="d.id" :disabled="d.status === '0'">
               {{ d.username }}
             </a-select-option>
           </a-select>
@@ -62,7 +62,6 @@
         </a-form-model-item>
 
         <a-form-model-item :wrapperCol="{ span: 24 }" style="text-align: center">
-          <!-- <a-button :disabled="!ready">保存</a-button> -->
           <a-button type="primary" @click="onSubmit" :disabled="!ready" style="margin-left: 8px">提交</a-button>
         </a-form-model-item>
       </a-form-model>
@@ -72,8 +71,7 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { getEquipmentUnit } from '@/api/manage'
-import { getDtsProgressTemplate, getDtsHandler, postDtsDraft } from '@/api/service'
+import { getDtsTicketBlankForm, postDtsDraft } from '@/api/service'
 import { listToTree } from '@/utils/util'
 
 export default {
@@ -100,7 +98,7 @@ export default {
   },
   created: function () {
     this.ready = false
-    this.getFormItems()
+    this.loadBlankForm()
   },
   computed: {
     ...mapGetters([
@@ -108,20 +106,19 @@ export default {
     ])
   },
   methods: {
-    getFormItems () {
+    loadBlankForm () {
       const query = {
-        station_id: this.userInfo.belongToDeptId,
-        place: 'post'
+        station_id: this.userInfo.belongToDeptId
       }
-      Promise.all([getEquipmentUnit(), getDtsHandler(query), getDtsProgressTemplate()])
+      getDtsTicketBlankForm(query)
         .then((data) => {
             this.ready = true
             //
-            const equipmentUnit = data[0]
-            listToTree(equipmentUnit, this.cascaderOptions, '1')
+            this.record.progress = data.progressText
             //
-            this.handlerOptions = data[1]
-            this.record.progress = data[2]
+            this.handlerOptions = data.handler
+            //
+            listToTree(data.equipmentUnit, this.cascaderOptions, '1')
           })
           //  网络异常，清空页面数据显示，防止错误的操作
           .catch((err) => {
@@ -132,19 +129,6 @@ export default {
             }
           })
     },
-
-    // getProgressTemplate () {
-    //   getDtsProgressTemplate()
-    //     .then((data) => {
-    //         this.record.progress = data
-    //       })
-    //       //  网络异常，清空页面数据显示，防止错误的操作
-    //       .catch((err) => {
-    //         this.record.progress = ''
-    //         if (err.response) {
-    //         }
-    //       })
-    // },
 
     onSubmit () {
       this.$refs.form.validate(valid => {

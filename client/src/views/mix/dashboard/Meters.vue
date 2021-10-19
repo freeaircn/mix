@@ -5,7 +5,7 @@
     </a-card>
 
     <div class="antd-pro-pages-dashboard-analysis-twoColLayout" :class="!isMobile && 'desktop'">
-      <a-row :gutter="8" type="flex" :style="{ marginBottom: '8px' }">
+      <a-row :gutter="[8,8]" type="flex" :style="{ marginBottom: '8px' }">
         <a-col :xl="8" :lg="24" :md="24" :sm="24" :xs="24" >
           <a-card :bordered="false" title="电表读数" :style="{height: '100%'}">
             <a-form-model
@@ -15,9 +15,6 @@
               :label-col="labelCol"
               :wrapper-col="wrapperCol"
             >
-              <a-form-model-item :wrapper-col="{ lg: { span: 14, offset: 4 }, sm: { span: 14 } }">
-                <div style="font-size: 16px; font-weight:bold">{{ logMeterSteps[logMeterStepIndex].title }}</div>
-              </a-form-model-item>
               <a-form-model-item label="日期" prop="log_date">
                 <a-date-picker v-model="metersForm.log_date" valueFormat="YYYY-MM-DD" placeholder="请选择" />
               </a-form-model-item>
@@ -31,6 +28,10 @@
                     23:59
                   </a-radio>
                 </a-radio-group>
+              </a-form-model-item>
+
+              <a-form-model-item :wrapper-col="{ lg: { span: 14, offset: 4 }, sm: { span: 14 } }">
+                <div style="font-size: 16px; font-weight:bold">{{ logMeterSteps[logMeterStepIndex].title }}</div>
               </a-form-model-item>
 
               <div v-for="(item, i) in metersForm.meter" :key="item.prop+'_'+i" v-show="logMeterStepIndex == i" >
@@ -67,9 +68,8 @@
             </a-form-model>
           </a-card>
         </a-col>
-
         <a-col :xl="8" :lg="24" :md="24" :sm="24" :xs="24">
-          <a-card class="antd-pro-pages-dashboard-analysis-salesCard" :bordered="false" title="电表记录" :style="{ height: '100%' }">
+          <a-card :bordered="false" title="电表记录" :style="{ height: '100%' }">
             <div>
               <!-- style="width: calc(100% - 240px);" -->
               <LogList
@@ -142,41 +142,43 @@
       </a-card>
     </a-modal>
 
-    <a-card title="统计图表" :bordered="false" :body-style="{marginBottom: '8px'}">
-      <div class="extra-wrapper" slot="extra">
-        <div class="extra-item">
-          <a-button type="link" @click="onQueryBasicStatistic('month')">刷新</a-button>
+    <div v-if="!isMobile">
+      <a-card title="统计图表" :bordered="false" :body-style="{marginBottom: '8px'}">
+        <div class="extra-wrapper" slot="extra">
+          <div class="extra-item">
+            <a-button type="link" @click="onQueryBasicStatistic('month')">刷新</a-button>
+          </div>
         </div>
-      </div>
-      <BasicStatistic
-        :loading="basicStatLoading"
-        :changed="basicStatChanged"
-        :date="basicStatDate"
-        :statisticListData="basicStatListData"
-        :thirtyDaysData="basicStat30DaysData"
-        :monthlyData="basicStatMonthlyData"
-        :quarterlyData="basicStatQuarterlyData"
-      >
-      </BasicStatistic>
-    </a-card>
+        <BasicStatistic
+          :loading="basicStatLoading"
+          :changed="basicStatChanged"
+          :date="basicStatDate"
+          :statisticListData="basicStatListData"
+          :thirtyDaysData="basicStat30DaysData"
+          :monthlyData="basicStatMonthlyData"
+          :quarterlyData="basicStatQuarterlyData"
+        >
+        </BasicStatistic>
+      </a-card>
 
-    <a-card :loading="false" title="全景" :bordered="false" :body-style="{marginBottom: '8px'}">
-      <div class="extra-wrapper" slot="extra">
-        <div class="extra-item">
-          <a-button type="link" @click="onQueryOverallStatistic">刷新</a-button>
+      <a-card :loading="false" title="全景" :bordered="false" :body-style="{marginBottom: '8px'}">
+        <div class="extra-wrapper" slot="extra">
+          <div class="extra-item">
+            <a-button type="link" @click="onQueryOverallStatistic">刷新</a-button>
+          </div>
         </div>
-      </div>
 
-      <OverallStatistic
-        :loading="overallStatLoading"
-        :changed="overallStatChanged"
-        :total="overallStatTotal"
-        :yearData="overallStatYearData"
-        :monthData="overallStatMonthData"
-      >
-      </OverallStatistic>
+        <OverallStatistic
+          :loading="overallStatLoading"
+          :changed="overallStatChanged"
+          :total="overallStatTotal"
+          :yearData="overallStatYearData"
+          :monthData="overallStatMonthData"
+        >
+        </OverallStatistic>
 
-    </a-card>
+      </a-card>
+    </div>
 
   </page-header-wrapper>
 </template>
@@ -293,11 +295,13 @@ export default {
     this.onQueryMeterLog(this.logListDate)
     this.onQueryPlanning(this.planningListDate)
 
-    // 统计图表
-    // this.onQueryBasicStatistic()
+    if (!this.isMobile) {
+      // 统计图表
+    this.onQueryBasicStatistic()
 
     // 全景统计
-    // this.onQueryOverallStatistic()
+    this.onQueryOverallStatistic()
+    }
   },
   methods: {
 
@@ -633,33 +637,18 @@ export default {
     }
   }
 
-  .antd-pro-pages-dashboard-analysis-twoColLayout {
-    position: relative;
-    display: flex;
-    display: block;
-    flex-flow: row wrap;
-  }
+  // .antd-pro-pages-dashboard-analysis-twoColLayout {
+  //   position: relative;
+  //   display: flex;
+  //   display: block;
+  //   flex-flow: row wrap;
+  // }
 
-  .antd-pro-pages-dashboard-analysis-salesCard {
-    height: calc(100% - 24px);
-    /deep/ .ant-card-head {
-      position: relative;
-    }
-  }
-
-  .dashboard-analysis-iconGroup {
-    i {
-      margin-left: 16px;
-      color: rgba(0,0,0,.45);
-      cursor: pointer;
-      transition: color .32s;
-      color: black;
-    }
-  }
-  .analysis-salesTypeRadio {
-    position: absolute;
-    right: 54px;
-    bottom: 12px;
-  }
+  // .antd-pro-pages-dashboard-analysis-salesCard {
+  //   height: calc(100% - 24px);
+  //   /deep/ .ant-card-head {
+  //     position: relative;
+  //   }
+  // }
 
 </style>

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-29 21:30:29
+ * @LastEditTime: 2021-10-19 10:33:00
  */
 
 namespace App\Models\Dts;
@@ -17,7 +17,7 @@ class TicketModel extends Model
 
     protected $table         = 'app_dts';
     protected $primaryKey    = 'id';
-    protected $allowedFields = ['station_id', 'ticket_id', 'type', 'title', 'level', 'equipment_unit', 'progress', 'creator', 'handler', 'place_at', 'task_id', 'rm_id', 'score'];
+    protected $allowedFields = ['station_id', 'ticket_id', 'type', 'title', 'level', 'equipment_unit', 'progress', 'creator', 'handler', 'reviewer', 'place_at', 'task_id', 'rm_id', 'score', 'score_comment', 'cause'];
 
     protected $useAutoIncrement = true;
 
@@ -29,7 +29,7 @@ class TicketModel extends Model
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
 
-    public function countByCreateDate($columnName = [], $query)
+    public function getLastOneByCreateDate($columnName = [], $query = [])
     {
         if (empty($columnName) || empty($query)) {
             return false;
@@ -43,20 +43,41 @@ class TicketModel extends Model
 
         $whereSql = "Date(created_at) = " . "'" . $query['created_at'] . "'";
         $builder->where($whereSql);
+        $builder->orderBy('created_at', 'DESC');
+        $builder->limit(1);
 
-        // $result = $builder->findAll();
+        $db = $builder->findAll();
 
-        return $builder->countAll();
+        return isset($db[0]) ? $db[0] : [];
     }
 
-    public function newDraft(array $draft)
+    public function newDraft(array $draft, int $ticketIdTailLength = 3)
     {
         if (empty($draft)) {
             return false;
         }
 
+        // 单号
+        $time       = time();
+        $columnName = ['ticket_id'];
+        $query      = ['created_at' => date('Y-m-d', $time)];
+
+        $this->transStart();
+        $db = $this->getLastOneByCreateDate($columnName, $query);
+        if (empty($db)) {
+            $draft['ticket_id'] = date('ymd', $time) . substr('00000001', -$ticketIdTailLength);
+        } else {
+            $id                 = (int) $db['ticket_id'] + 1;
+            $draft['ticket_id'] = date('ymd', $time) . substr((string) $id, -$ticketIdTailLength);
+        }
         $result = $this->insert($draft);
-        return is_numeric($result) ? $result : false;
+
+        $this->transComplete();
+        if ($this->transStatus() === false) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
     public function getByLimitOffset($columnName = [], $query = [])
@@ -70,7 +91,7 @@ class TicketModel extends Model
             $selectSql = $selectSql . $key . ', ';
         }
         $builder = $this->select($selectSql);
-        $builder = $this->where('station_id', $query['station_id']);
+        $builder->where('station_id', $query['station_id']);
 
         $total = $builder->countAllResults(false);
 
@@ -80,26 +101,10 @@ class TicketModel extends Model
         return ['total' => $total, 'data' => $db];
     }
 
-    // ------
-    public function hasSameLogByStationAndDateTime($station_id, $log_date = '', $log_time = '')
+    public function getByTicketId($columnName = [], $query = [])
     {
-        if (!is_numeric($station_id) || $log_date === '' || $log_time === '') {
-            return true;
-        }
-
-        $builder = $this->where('station_id', $station_id);
-        $builder->where('log_date', $log_date);
-        $builder->where('log_time', $log_time);
-
-        $total = $builder->countAllResults();
-
-        return $total > 0 ? true : false;
-    }
-
-    public function getByStationDateTime($columnName = [], $query)
-    {
-        if (empty($columnName)) {
-            return false;
+        if (empty($columnName) || empty($query)) {
+            return [];
         }
 
         $selectSql = '';
@@ -108,49 +113,29 @@ class TicketModel extends Model
         }
         $builder = $this->select($selectSql);
 
-        $builder->where('station_id', $query['station_id']);
-        $builder->where('log_date', $query['log_date']);
-        $builder->where('log_time', $query['log_time']);
+        $builder->where('ticket_id', $query['ticket_id']);
 
-        $result = $builder->findAll();
+        $db = $builder->findAll();
 
-        return $result;
+        return isset($db[0]) ? $db[0] : [];
     }
 
-    public function getById($id)
+    public function updateProgress(string $progress = '', $where = [])
     {
-        if (!is_numeric($id) || $id < 0) {
+        if (empty($progress) || empty($where)) {
             return false;
         }
 
-        $selectSql = 'id, station_id, meter_id, log_date, log_time, fak, bak, frk, brk, peak, valley, creator';
-        $builder   = $this->select($selectSql);
-
-        $builder->where('id', $id);
-        $res = $builder->findAll();
-
-        return $res;
-    }
-
-    public function batchInsert(array $meters, array $others)
-    {
-        if (empty($meters) || empty($others)) {
-            return false;
-        }
-
+        $columnName = ['id', 'progress'];
         $this->transStart();
-        for ($i = 0; $i < count($meters); $i++) {
-            $db_data = $others;
-
-            $db_data['meter_id'] = $i + 1;
-            foreach ($meters[$i] as $key => $value) {
-                $db_data[$key] = $value;
-            }
-            $result = $this->insert($db_data);
-            unset($db_data);
+        $db = $this->getByTicketId($columnName, $where);
+        if (empty($db)) {
+            return false;
         }
-        $this->transComplete();
+        $db['progress'] = $progress . "\n" . $db['progress'];
+        $this->save($db);
 
+        $this->transComplete();
         if ($this->transStatus() === false) {
             return false;
         } else {
@@ -158,175 +143,27 @@ class TicketModel extends Model
         }
     }
 
-    public function getLogsForShowList($columnName = [], $query = [])
+    public function updateHandler($handler = '', $where = [])
     {
-        $selectSql = '';
-        if (empty($columnName)) {
-            $selectSql = 'id, log_date, log_time, creator';
-        } else {
-            foreach ($columnName as $key) {
-                $selectSql = $selectSql . $key . ', ';
-            }
-        }
-        $builder = $this->select($selectSql);
-
-        $whereSql = "station_id = " . $query['station_id']
-            . " AND meter_id = " . "1"
-            . " AND Date(log_date) BETWEEN " . "'" . $query['start'] . "'" . " AND " . "'" . $query['end'] . "'";
-        $builder->where($whereSql);
-
-        $total = $builder->countAllResults(false);
-
-        $builder->orderBy('log_date', 'DESC');
-        $result = $builder->findAll($query['limit'], ($query['offset'] - 1) * $query['limit']);
-
-        return ['total' => $total, 'result' => $result];
-    }
-
-    // public function sumByStationDateTimeMeterIds($columnName = [], $query = [])
-    // {
-    //     if (empty($columnName)) {
-    //         return false;
-    //     }
-
-    //     $selectSql = '';
-    //     foreach ($columnName as $key) {
-    //         $selectSql = $selectSql . 'SUM(`' . $key . '`) AS sum_' . $key . ', ';
-    //     }
-    //     $builder = $this->select($selectSql);
-
-    //     $whereSql = "station_id = " . $query['station_id']
-    //         . " AND log_date = " . "'" . $query['log_date'] . "'"
-    //         . " AND log_time = " . "'" . $query['log_time'] . "'"
-    //         . " AND meter_id BETWEEN " . $query['first_meter_id'] . " AND " . $query['last_meter_id'];
-    //     $builder->where($whereSql);
-
-    //     $result = $builder->findAll();
-    //     return isset($result[0]) ? $result[0] : [];
-    // }
-
-    public function getByStationDatesTimeMeters($columnName = [], $query = [])
-    {
-        if (empty($columnName)) {
+        if (!is_numeric($handler) || empty($where)) {
             return false;
         }
 
-        $selectSql = '';
-        foreach ($columnName as $key) {
-            $selectSql = $selectSql . $key . ', ';
-        }
-        $builder = $this->select($selectSql);
-
-        $builder->where('station_id', $query['station_id']);
-        $builder->where('log_time', $query['log_time']);
-        $builder->whereIn('log_date', $query['log_date']);
-        $builder->whereIn('meter_id', $query['meter_id']);
-
-        $result = $builder->findAll();
-
-        return $result;
+        $data = [
+            'handler' => $handler,
+        ];
+        $builder = $this->where('ticket_id', $where['ticket_id']);
+        $builder->set($data);
+        return $builder->update();
     }
 
-    public function getByStationDatesTimeMeter($columnName = [], $query = [])
+    public function myUpdate($data = [])
     {
-        if (empty($columnName)) {
+        if (empty($data)) {
             return false;
         }
 
-        $selectSql = '';
-        foreach ($columnName as $key) {
-            $selectSql = $selectSql . $key . ', ';
-        }
-        $builder = $this->select($selectSql);
-
-        $builder->where('station_id', $query['station_id']);
-        $builder->where('log_time', $query['log_time']);
-        $builder->where('meter_id', $query['meter_id']);
-        $builder->whereIn('log_date', $query['log_date']);
-
-        $result = $builder->findAll();
-
-        return $result;
+        return $this->save($data);
     }
 
-    public function getByStationDateRangeTimeMeters($columnName = [], $query = [])
-    {
-        if (empty($columnName)) {
-            return false;
-        }
-
-        $selectSql = '';
-        foreach ($columnName as $key) {
-            $selectSql = $selectSql . $key . ', ';
-        }
-        $builder = $this->select($selectSql);
-
-        $whereSql = "station_id = " . $query['station_id']
-            . " AND log_time = " . "'" . $query['log_time'] . "'"
-            . " AND Date(log_date) BETWEEN " . "'" . $query['start_at'] . "'" . " AND " . "'" . $query['end_at'] . "'"
-            . " AND meter_id BETWEEN " . $query['first_meter_id'] . " AND " . $query['last_meter_id'];
-        $builder->where($whereSql);
-
-        $result = $builder->findAll();
-        return $result;
-    }
-
-    public function getLastDateByStationTime($columnName = [], $query = [], $limit = 1)
-    {
-        if (empty($columnName)) {
-            return false;
-        }
-
-        $selectSql = '';
-        foreach ($columnName as $key) {
-            $selectSql = $selectSql . $key . ', ';
-        }
-        $builder = $this->select($selectSql);
-
-        $builder->where($query);
-
-        $res = $builder->orderBy('log_date', 'DESC')
-            ->findAll($limit);
-
-        if ($limit === 1) {
-            return isset($res[0]) ? $res[0] : [];
-        } else {
-            return $res;
-        }
-    }
-
-    public function getLastDateByStationTimeMeters($columnName = [], $query = [], $limit = 1)
-    {
-        if (empty($columnName)) {
-            return false;
-        }
-
-        $selectSql = '';
-        foreach ($columnName as $key) {
-            $selectSql = $selectSql . $key . ', ';
-        }
-        $builder = $this->select($selectSql);
-
-        $builder->where('station_id', $query['station_id']);
-        $builder->where('log_time', $query['log_time']);
-        $builder->whereIn('meter_id', $query['meter_id']);
-
-        $res = $builder->orderBy('log_date', 'DESC')
-            ->findAll($limit);
-
-        if ($limit === 1) {
-            return isset($res[0]) ? $res[0] : [];
-        } else {
-            return $res;
-        }
-    }
-
-    public function deleteByStationDateTime($query)
-    {
-        if (empty($query)) {
-            return false;
-        }
-
-        return $this->where($query)->delete();
-    }
 }
