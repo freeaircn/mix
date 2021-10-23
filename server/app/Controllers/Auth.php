@@ -4,20 +4,20 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-12 19:51:04
+ * @LastEditTime: 2021-10-23 21:42:51
  */
 
 namespace App\Controllers;
 
-use App\Models\admin\AvatarModel;
-use App\Models\admin\DeptModel;
-use App\Models\admin\JobModel;
-use App\Models\admin\MenuModel;
-use App\Models\admin\PoliticModel;
-use App\Models\admin\RoleMenuModel;
-use App\Models\admin\TitleModel;
-use App\Models\admin\UserModel;
-use App\Models\admin\UserRoleModel;
+use App\Models\Admin\AvatarModel;
+use App\Models\Admin\DeptModel;
+use App\Models\Admin\JobModel;
+use App\Models\Admin\MenuModel;
+use App\Models\Admin\PoliticModel;
+use App\Models\Admin\RoleMenuModel;
+use App\Models\Admin\TitleModel;
+use App\Models\Admin\UserModel;
+use App\Models\Admin\UserRoleModel;
 use App\Models\Auth\AuthModel;
 use App\Models\Auth\RoleWorkflowAuthorityModel;
 use App\Models\Auth\WorkflowAuthorityModel;

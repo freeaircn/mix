@@ -43,9 +43,9 @@ const vueConfig = {
   // html header src路径
   publicPath: process.env.NODE_ENV === 'development' ? '/' : '/dist/',
   // 存放路径
-  outputDir: process.env.NODE_ENV === 'development' ? 'dist' : 'D:/www/mix/server/mix/public/dist',
+  outputDir: process.env.NODE_ENV === 'development' ? 'dist' : 'D:/www/mix/server/public/dist',
   // html首页路径
-  indexPath: process.env.NODE_ENV === 'development' ? 'index.html' : 'D:/www/mix/server/mix/app/Views/home.html',
+  indexPath: process.env.NODE_ENV === 'development' ? 'index.html' : 'D:/www/mix/server/app/Views/home.html',
 
   configureWebpack: {
     // webpack plugins

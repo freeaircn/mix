@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-17 01:28:50
+ * @LastEditTime: 2021-10-23 21:02:13
  */
 
 namespace Config;
@@ -40,7 +40,7 @@ class Filters extends BaseConfig
         'before' => [
             // 'honeypot',
             // 'csrf',
-            'auth' => ['except' => ['api/auth/*']],
+            'auth' => ['except' => ['api/auth/*', '/']],
         ],
         'after'  => [
             'toolbar',
