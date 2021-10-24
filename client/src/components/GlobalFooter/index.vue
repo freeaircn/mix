@@ -3,13 +3,13 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-06-29 14:26:02
+ * @LastEditTime: 2021-10-24 10:55:52
 -->
 <template>
   <global-footer class="footer custom-render">
     <template v-slot:links>
       <!-- <a href="https://www.github.com/vueComponent/pro-layout" target="_blank">Pro Layout</a> -->
-      <a href="https://www.github.com/" target="_blank">Github</a>
+      <a href="#" >松山河口</a>
       <!-- <a href="https://www.github.com/sendya/" target="_blank">@Sendya</a> -->
     </template>
     <template v-slot:copyright>

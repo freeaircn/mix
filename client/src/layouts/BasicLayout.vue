@@ -194,4 +194,8 @@ export default {
 /deep/ .ant-pro-page-header-wrap-children-content {
   margin: 8px 8px 0;
 }
+
+/deep/ .ant-pro-basicLayout-content {
+  margin: 8px 8px 0;
+}
 </style>

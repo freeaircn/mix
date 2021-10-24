@@ -293,20 +293,25 @@ export default {
         .then(res => {
           const { data, headers } = res
 
-          // 下载excel文件
-          const blob = new Blob([data], { type: headers['content-type'] })
-          const dom = document.createElement('a')
-          const url = window.URL.createObjectURL(blob)
-          const filename = this.userInfo.belongToDeptName + '_开停机记录_' + moment().format('YYYY-MM-DD') + '.xlsx'
-          dom.href = url
-          dom.download = decodeURI(filename)
-          dom.style.display = 'none'
-          document.body.appendChild(dom)
-          dom.click()
-          dom.parentNode.removeChild(dom)
-          window.URL.revokeObjectURL(url)
+          const str = headers['content-type']
+          if (str.indexOf('json') !== -1) {
+            this.$message.warning('没有权限')
+          } else {
+            // 下载excel文件
+            const blob = new Blob([data], { type: headers['content-type'] })
+            const dom = document.createElement('a')
+            const url = window.URL.createObjectURL(blob)
+            const filename = this.userInfo.belongToDeptName + '_开停机记录_' + moment().format('YYYY-MM-DD') + '.xlsx'
+            dom.href = url
+            dom.download = decodeURI(filename)
+            dom.style.display = 'none'
+            document.body.appendChild(dom)
+            dom.click()
+            dom.parentNode.removeChild(dom)
+            window.URL.revokeObjectURL(url)
 
-          this.$message.info('已导出文件')
+            this.$message.info('已导出文件')
+          }
         })
         .catch((err) => {
           this.$message.info('导出文件失败')

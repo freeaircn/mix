@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-23 21:53:46
+ * @LastEditTime: 2021-10-24 10:40:09
  */
 
 namespace App\Controllers;
@@ -29,25 +29,28 @@ class Account extends BaseController
         // 取session保存的用户数据
         $sessionData = $this->session->get();
 
-        // 去掉acl和pageId
-        if (isset($sessionData['acl'])) {
-            unset($sessionData['acl']);
-        }
+        // 过滤 内部字段
+        $data = [];
+        foreach ($sessionData as $key => $value) {
+            if (strpos($key, '_ci_') !== false) {
+                continue;
+            }
+            if ($key === 'acl') {
+                continue;
+            }
+            if ($key === 'pageId') {
+                continue;
+            }
+            if ($key === 'wfAuthority') {
+                continue;
+            }
 
-        if (isset($sessionData['pageId'])) {
-            unset($sessionData['pageId']);
+            $data[$key] = $value;
         }
-
-        if (isset($sessionData['wfAuthority'])) {
-            unset($sessionData['wfAuthority']);
-        }
-
-        array_shift($sessionData);
-        array_pop($sessionData);
 
         if (isset($sessionData['phone'])) {
             $res['code'] = EXIT_SUCCESS;
-            $res['data'] = ['info' => $sessionData];
+            $res['data'] = ['info' => $data];
         } else {
             $res['code'] = EXIT_ERROR;
             $res['msg']  = '用户信息空！';

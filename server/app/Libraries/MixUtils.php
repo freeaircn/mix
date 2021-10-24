@@ -143,16 +143,23 @@ class MixUtils
 
     public function accessAuth(RequestInterface $request)
     {
+        $url = $request->uri->getSegments();
+
+        // 方法：登录，登出，重置密码，返回true
+        if (isset($url[0]) && $url[0] === 'api' && isset($url[1]) && $url[1] === 'auth') {
+            return true;
+        }
+
         // 检查是否存在session数据。存在 - 已登录；不存在 - 未登录。
         $phone = session('phone');
         if (is_null($phone)) {
-            return '用户还未登录！';
+            return 'xx用户还未登录！';
         }
 
         // ！！！超级用户，仅测试使用。
-        if ($phone == '13812345679') {
-            return true;
-        }
+        // if ($phone == '13812345679') {
+        //     return true;
+        // }
 
         // API鉴权
         $acl = session('acl');
@@ -161,11 +168,6 @@ class MixUtils
         }
         $wanted = '';
         $method = $request->getMethod();
-        $url    = $request->uri->getSegments();
-
-        // if (isset($url[0]) && $url[0] === 'api') {
-        //     $wanted = $url[1] . ':' . $method;
-        // }
 
         if (isset($url[0]) && $url[0] === 'api') {
             for ($i = 1; $i < count($url); $i++) {

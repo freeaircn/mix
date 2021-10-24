@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-22 18:33:34
+ * @LastEditTime: 2021-10-24 11:25:24
  */
 
 namespace App\Controllers;
@@ -1000,7 +1000,6 @@ class Meters extends BaseController
         }
 
         return $res;
-
     }
 
     protected function getCompletionRate($date, $planning, $genEnergy, $onGridEnergy)
