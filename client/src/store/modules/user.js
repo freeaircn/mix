@@ -132,13 +132,15 @@ const user = {
 
     Logout ({ commit, state }) {
       return new Promise((resolve, reject) => {
-        logout(state.token).then(() => {
-          preLogout(commit)
-          resolve()
-        }).catch((error) => {
-          preLogout(commit)
-          reject(error)
-        })
+        logout(state.token)
+          .then(() => {
+            preLogout(commit)
+            resolve()
+          })
+          .catch((error) => {
+            preLogout(commit)
+            reject(error)
+          })
       })
     },
 

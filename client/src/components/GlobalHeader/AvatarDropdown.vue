@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-20 23:19:21
+ * @LastEditTime: 2021-10-24 18:40:09
 -->
 <template>
   <a-dropdown v-if="currentUser && currentUser.name" placement="bottomRight">
@@ -62,7 +62,7 @@ export default {
     handleToSettings () {
       this.$router.push({ path: '/account/settings' })
     },
-    handleLogout (e) {
+    handleLogout () {
       Modal.confirm({
         title: this.$t('layouts.usermenu.dialog.title'),
         content: this.$t('layouts.usermenu.dialog.content'),
@@ -70,9 +70,13 @@ export default {
           // return new Promise((resolve, reject) => {
           //   setTimeout(Math.random() > 0.5 ? resolve : reject, 1500)
           // }).catch(() => console.log('Oops errors!'))
-          return this.$store.dispatch('Logout').then(() => {
-            this.$router.push({ name: 'login' })
-          })
+          this.$store.dispatch('Logout')
+            .then(() => {
+              this.$router.push({ name: 'login' })
+            })
+            .catch(() => {
+              this.$router.push({ name: 'login' })
+            })
         },
         onCancel () {}
       })

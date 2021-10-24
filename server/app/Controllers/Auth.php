@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-23 21:42:51
+ * @LastEditTime: 2021-10-24 18:25:56
  */
 
 namespace App\Controllers;
@@ -33,7 +33,7 @@ class Auth extends BaseController
         // 检查请求数据
         if (!$this->validate('AuthLogin')) {
             $res['code'] = EXIT_ERROR;
-            $res['msg']  = '请求数据无效！';
+            // $res['msg']  = '请求数据无效！';
             return $this->respond($res);
         }
 
@@ -50,7 +50,7 @@ class Auth extends BaseController
             log_message('error', '{file}:{line} --> max login attempts exceeded: ' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4) . ' => ' . $ip_address);
 
             $res['code'] = EXIT_ERROR;
-            $res['msg']  = '已尝试失败多次，请5分钟后再试！';
+            $res['msg']  = '多次登录错误，请5分钟后再试';
             return $this->respond($res);
         }
 
@@ -61,7 +61,7 @@ class Auth extends BaseController
             log_message('error', '{file}:{line} --> phone not existed ' . $phone . ' => ' . $ip_address);
 
             $res['code'] = EXIT_ERROR;
-            $res['msg']  = '用户不存在！';
+            // $res['msg']  = '用户不存在';
             return $this->respond($res);
         }
 
@@ -69,7 +69,7 @@ class Auth extends BaseController
         // 检查用户status 被禁用
         if ($user['status'] === '0') {
             $res['code'] = EXIT_ERROR;
-            $res['msg']  = '该用户已禁用，请联系管理员！';
+            $res['msg']  = '用户未激活，请联系管理员';
             return $this->respond($res);
         }
 
@@ -84,7 +84,7 @@ class Auth extends BaseController
             log_message('error', '{file}:{line} --> password not correct ' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4) . ' => ' . $ip_address);
 
             $res['code'] = EXIT_ERROR;
-            $res['msg']  = '账号或密码错误！';
+            // $res['msg']  = '账号或密码错误！';
             return $this->respond($res);
         }
 

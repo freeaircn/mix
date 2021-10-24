@@ -3,12 +3,12 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-01 21:04:14
+ * @LastEditTime: 2021-10-24 19:10:38
 -->
 <template>
   <!-- hidden PageHeaderWrapper title demo -->
-  <page-header-wrapper >
-    <a-card :body-style="{padding: '24px 32px'}" :bordered="false">
+  <page-header-wrapper :title="false">
+    <a-card :bordered="false">
       <div class="table-page-search-wrapper">
         <router-link to="/app/user/list"><a-button type="primary" icon="double-left" >返回</a-button></router-link>
       </div>

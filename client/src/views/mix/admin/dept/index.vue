@@ -1,9 +1,6 @@
 <template>
-  <page-header-wrapper>
-    <a-card
-      style="margin-top: 24px"
-      :bordered="false">
-
+  <page-header-wrapper :title="false">
+    <a-card :bordered="false">
       <div class="table-page-search-wrapper">
         <a-form layout="inline">
           <a-row :gutter="48">

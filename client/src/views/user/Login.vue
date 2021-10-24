@@ -117,7 +117,7 @@
 import md5 from 'md5'
 import TwoStepCaptcha from '@/components/tools/TwoStepCaptcha'
 import { mapActions, mapGetters } from 'vuex'
-import { timeFix } from '@/utils/util'
+// import { timeFix } from '@/utils/util'
 import { getSmsCaptcha } from '@/api/login'
 // import { getSmsCaptcha, get2step } from '@/api/login'
 
@@ -267,24 +267,25 @@ export default {
       // this.$router.replace({ path: this.redirect || '/' })
       this.$router.push({ path: '/' })
       // 延迟 1 秒显示欢迎信息
-      if (!this.isMobile) {
-        setTimeout(() => {
-          this.$notification.success({
-            message: '欢迎',
-            description: `${timeFix()}，欢迎回来`
-          })
-        }, 600)
-      }
+      // if (!this.isMobile) {
+      //   setTimeout(() => {
+      //     this.$notification.success({
+      //       message: '欢迎',
+      //       description: `${timeFix()}，欢迎回来`
+      //     })
+      //   }, 600)
+      // }
 
       this.isLoginError = false
     },
     requestFailed (err) {
       this.isLoginError = true
-      this.$notification['error']({
-        message: '错误',
-        description: ((err.response || {}).data || {}).message || '请求出现错误，请稍后再试',
-        duration: 4
-      })
+      if (err) {}
+      // this.$notification['error']({
+      //   message: '错误',
+      //   description: ((err.response || {}).data || {}).message || '请求出现错误，请稍后再试',
+      //   duration: 4
+      // })
     }
   }
 }

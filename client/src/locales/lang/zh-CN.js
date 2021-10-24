@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-24 10:50:29
+ * @LastEditTime: 2021-10-24 18:21:45
  */
 import antd from 'ant-design-vue/es/locale-provider/zh_CN'
 import momentCN from 'moment/locale/zh-cn'
@@ -27,8 +27,8 @@ export default {
   message: '-',
 
   'layouts.usermenu.dialog.title': '信息',
-  'layouts.usermenu.dialog.content': '您想退出吗？',
-  'layouts.userLayout.title': '数字 · 驱动力',
+  'layouts.usermenu.dialog.content': '您要退出吗？',
+  'layouts.userLayout.title': '数字 · 驱动',
   ...components,
   ...global,
   ...menu,

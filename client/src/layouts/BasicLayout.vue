@@ -191,11 +191,11 @@ export default {
 </style>
 
 <style lang="less" scoped>
-/deep/ .ant-pro-page-header-wrap-children-content {
-  margin: 8px 8px 0;
-}
+// /deep/ .ant-pro-basicLayout-content {
+//   margin: 24px 8px 8px 8px;
+// }
 
-/deep/ .ant-pro-basicLayout-content {
+/deep/ .ant-pro-page-header-wrap-children-content {
   margin: 8px 8px 0;
 }
 </style>

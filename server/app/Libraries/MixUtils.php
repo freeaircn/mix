@@ -153,7 +153,7 @@ class MixUtils
         // 检查是否存在session数据。存在 - 已登录；不存在 - 未登录。
         $phone = session('phone');
         if (is_null($phone)) {
-            return 'xx用户还未登录！';
+            return '用户未登录';
         }
 
         // ！！！超级用户，仅测试使用。
@@ -164,7 +164,7 @@ class MixUtils
         // API鉴权
         $acl = session('acl');
         if (is_null($acl) || empty($acl)) {
-            return '用户没有权限！';
+            return '用户没有权限';
         }
         $wanted = '';
         $method = $request->getMethod();
@@ -177,7 +177,7 @@ class MixUtils
         }
 
         if (in_array($wanted, $acl) === false) {
-            return '用户没有权限！';
+            return '用户没有权限';
         }
 
         // 数据
