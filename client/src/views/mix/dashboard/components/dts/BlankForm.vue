@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-12 19:25:11
+ * @LastEditTime: 2021-11-01 19:35:03
 -->
 <template>
   <page-header-wrapper :title="false">
@@ -71,7 +71,7 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { getDtsTicketBlankForm, postDtsDraft } from '@/api/service'
+import { getDtsTicketBlankForm, postDtsDraft } from '@/api/mix/dts'
 import { listToTree } from '@/utils/util'
 
 export default {

@@ -2,7 +2,7 @@
 import Cookies from 'js-cookie'
 // import { login, getInfo, logout } from '@/api/login'
 import { login, logout } from '@/api/login'
-import { apiGetUserInfo, apiGetUserMenus, apiUpdateUserInfo, apiUpdateLoginPassword, apiUpdatePhone, apiUpdateEmail } from '@/api/account'
+import { apiGetUserInfo, apiGetUserMenus, apiUpdateUserInfo, apiUpdateLoginPassword, apiUpdatePhone, apiUpdateEmail } from '@/api/mix/account'
 import { ACCESS_TOKEN } from '@/store/mutation-types'
 import { resetRouter } from '@/router'
 // import { welcome } from '@/utils/util'

@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-09-30 20:50:48
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-19 10:47:03
+ * @LastEditTime: 2021-11-01 19:34:50
 -->
 <template>
   <page-header-wrapper :title="false">
@@ -116,7 +116,7 @@
 <script>
 import { mapGetters } from 'vuex'
 import { baseMixin } from '@/store/app-mixin'
-import { getDtsTicketDetails, putDtsTicketProgress, putDtsTicketHandler, postDtsTicketToReview } from '@/api/service'
+import { getDtsTicketDetails, putDtsTicketProgress, putDtsTicketHandler, postDtsTicketToReview } from '@/api/mix/dts'
 
 export default {
   name: 'DtsTicketDetails',

@@ -103,7 +103,7 @@
 <script>
 import { mapGetters } from 'vuex'
 import { baseMixin } from '@/store/app-mixin'
-import { getDtsList } from '@/api/service'
+import { getDtsList } from '@/api/mix/dts'
 
 const typeMap = {
   '1': { text: '隐患' },

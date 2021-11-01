@@ -91,7 +91,7 @@ import mixConfig from '@/config/mix_config'
 import { baseMixin } from '@/store/app-mixin'
 // import store from '@/store'
 import { mapGetters, mapActions } from 'vuex'
-import { getPoliticTbl, getDeptTbl, getJobTbl, getTitleTbl } from '@/api/manage'
+import { getBasicSettingFormParam } from '@/api/mix/account'
 import { listToTree } from '@/utils/util'
 import * as pattern from '@/utils/validateRegex'
 
@@ -132,7 +132,7 @@ export default {
     }
   },
   created: function () {
-    this.getAllFormParams()
+    this.loadFormParam()
   },
   computed: {
     ...mapGetters([
@@ -147,13 +147,13 @@ export default {
   methods: {
     ...mapActions(['UpdateUserInfo', 'UpdateUserAvatar']),
 
-    getAllFormParams () {
-      Promise.all([getPoliticTbl(), getDeptTbl({ columnName: ['id', 'name', 'pid', 'status'] }), getJobTbl(), getTitleTbl()])
+    loadFormParam () {
+      getBasicSettingFormParam()
         .then((res) => {
           this.politicOptions.splice(0)
-          this.politicOptions = res[0].data.slice(0)
+          this.politicOptions = res.politic
           //
-          const tempDept = res[1].data
+          const tempDept = res.dept
           tempDept.forEach((elem, index) => {
             for (var key in elem) {
               if (key === 'status' && elem[key] === '0') {
@@ -164,15 +164,18 @@ export default {
           listToTree(tempDept, this.departmentOptions)
           //
           this.jobOptions.splice(0)
-          this.jobOptions = res[2].data.slice(0)
+          this.jobOptions = res.job
           //
           this.titleOptions.splice(0)
-          this.titleOptions = res[3].data.slice(0)
+          this.titleOptions = res.title
           //
           this.filterUserInfo(this.userInfo)
         })
         //  网络异常，清空页面数据显示，防止错误的操作
         .catch((err) => {
+          this.politicOptions.splice(0)
+          this.jobOptions.splice(0)
+          this.titleOptions.splice(0)
           if (err.response) { }
         })
     },

@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2019-12-24 09:56:03
  * @LastEditors: freeair
- * @LastEditTime: 2021-08-28 18:36:26
+ * @LastEditTime: 2021-11-01 22:02:35
  */
 
 // 正则表达式
@@ -28,8 +28,8 @@ export const IdCard = {
 }
 
 export const password = {
-  regex: /^[a-zA-Z0-9]{8,16}$/,
-  msg: '密码至少8位数，含大小写字母和数字'
+  regex: /^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z\W]{6,18}$/,
+  msg: '密码至少6位，含字母，数字'
 }
 
 export const smsCode = {

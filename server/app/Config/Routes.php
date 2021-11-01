@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-18 22:56:10
+ * @LastEditTime: 2021-11-01 20:09:56
  */
 
 namespace Config;
@@ -48,6 +48,7 @@ $routes->group('api', function ($routes) {
     $routes->post('auth/reset-password', 'Auth::resetPassword');
     //
     $routes->get('account/info', 'Account::getUserInfo');
+    $routes->get('account/basic_setting/form', 'Account::getBasicSettingFormParam');
     $routes->get('account/menus', 'Account::getUserMenus');
     $routes->put('account', 'Account::updateUserInfo');
     $routes->put('account/password', 'Account::updatePassword');

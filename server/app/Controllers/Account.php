@@ -4,19 +4,19 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-24 10:40:09
+ * @LastEditTime: 2021-11-01 22:57:22
  */
 
 namespace App\Controllers;
 
-use App\Models\AccountModel;
-use App\Models\Admin\AvatarModel;
-use App\Models\Admin\DeptModel;
-use App\Models\Admin\JobModel;
-use App\Models\Admin\MenuModel;
-use App\Models\Admin\PoliticModel;
-use App\Models\Admin\TitleModel;
-use App\Models\Admin\UserModel;
+use App\Models\Account\AccountModel;
+use App\Models\Account\AvatarModel;
+use App\Models\Account\DeptModel;
+use App\Models\Account\JobModel;
+use App\Models\Account\MenuModel;
+use App\Models\Account\PoliticModel;
+use App\Models\Account\TitleModel;
+use App\Models\Account\UserModel;
 use App\Models\SmsCodeModel;
 use CodeIgniter\API\ResponseTrait;
 
@@ -57,6 +57,34 @@ class Account extends BaseController
         }
 
         return $this->respond($res);
+    }
+
+    public function getBasicSettingFormParam()
+    {
+        $result = [
+            'politic' => [],
+            'dept'    => [],
+            'job'     => [],
+            'title'   => [],
+        ];
+
+        $politicModel      = new politicModel();
+        $result['politic'] = $politicModel->getPolitic(['id', 'name', 'status']);
+
+        $deptModel      = new DeptModel();
+        $result['dept'] = $deptModel->getDept(['id', 'name', 'pid', 'status']);
+
+        $jobModel      = new JobModel();
+        $result['job'] = $jobModel->getJob(['id', 'name', 'status']);
+
+        $titleModel      = new titleModel();
+        $result['title'] = $titleModel->getTitle(['id', 'name', 'status']);
+
+        $res['code'] = EXIT_SUCCESS;
+        $res['data'] = $result;
+
+        return $this->respond($res);
+
     }
 
     public function getUserMenus()
@@ -304,7 +332,7 @@ class Account extends BaseController
         $emailMessage = view('auth/sms_code.php', $emailParam);
 
         $emailAPI = \Config\Services::email();
-        $emailAPI->setFrom($emailAPI->SMTPUser, '来自Mix应用');
+        $emailAPI->setFrom($emailAPI->SMTPUser, '来自Mix');
         $emailAPI->setTo($email);
         $emailAPI->setSubject('【请勿回复此邮件】验证码： ' . $code);
         $emailAPI->setMessage($emailMessage);

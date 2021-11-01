@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-30 20:13:01
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-20 23:44:36
+ * @LastEditTime: 2021-11-01 22:05:37
 -->
 <template>
   <a-modal
@@ -22,7 +22,7 @@
       :label-col="labelCol"
       :wrapper-col="wrapperCol"
     >
-      <a-form-model-item label="手机号" prop="phone">
+      <a-form-model-item label="新手机号" prop="phone">
         <a-input v-model="record.phone" autocomplete="off" placeholder="输入新手机号">
         </a-input>
       </a-form-model-item>

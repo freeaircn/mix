@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-30 20:13:01
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-20 23:42:34
+ * @LastEditTime: 2021-11-01 22:05:47
 -->
 <template>
   <a-modal
@@ -22,7 +22,7 @@
       :label-col="labelCol"
       :wrapper-col="wrapperCol"
     >
-      <a-form-model-item label="邮箱" prop="email">
+      <a-form-model-item label="新邮箱&quot;" prop="email">
         <a-input v-model="record.email" placeholder="输入新邮箱" autocomplete="off"></a-input>
       </a-form-model-item>
 
@@ -49,7 +49,7 @@
 </template>
 
 <script>
-import { getSmsCaptcha } from '@/api/account'
+import { getSmsCaptcha } from '@/api/mix/account'
 import * as pattern from '@/utils/validateRegex'
 
 export default {
