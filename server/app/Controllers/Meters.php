@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-24 11:25:24
+ * @LastEditTime: 2021-11-02 23:25:01
  */
 
 namespace App\Controllers;
@@ -237,29 +237,45 @@ class Meters extends BaseController
             'log_date'   => $log_date,
             'log_time'   => $log_time,
         ];
-        // 发电量delta
-        $genEnergy = $this->getGenEnergyForDailyReport($query);
 
-        // 上网电量delta
-        $onGridEnergy = $this->getOnGridEnergyForDailyReport($query);
+        if (strpos($log_time, '23:59') !== false) {
+            // 发电量delta
+            $genEnergy = $this->getGenEnergyForDailyReport($query);
 
-        // 完成率
-        $rates = $this->getCompletionRate($log_date, $planning, $genEnergy, $onGridEnergy);
+            // 上网电量delta
+            $onGridEnergy = $this->getOnGridEnergyForDailyReport($query);
 
-        // 简报
-        $stationName = $this->session->get('belongToDeptName');
-        $report      = $this->editDailyReports($stationName, $log_date, $rates, $genEnergy, $onGridEnergy);
+            // 完成率
+            $rates = $this->getCompletionRate($log_date, $planning, $genEnergy, $onGridEnergy);
 
-        // $res['planning']     = $planning;
-        // $res['genEnergy']    = $genEnergy;
-        // $res['onGridEnergy'] = $onGridEnergy;
-        // $res['rates']        = $rates;
+            // 简报
+            $stationName = $this->session->get('belongToDeptName');
+            $report      = $this->editDailyReports($stationName, $log_date, $rates, $genEnergy, $onGridEnergy);
 
-        $res['code'] = EXIT_SUCCESS;
-        $res['data'] = $report;
+            // $res['planning']     = $planning;
+            // $res['genEnergy']    = $genEnergy;
+            // $res['onGridEnergy'] = $onGridEnergy;
+            // $res['rates']        = $rates;
 
+            $res['code'] = EXIT_SUCCESS;
+            $res['data'] = ['data' => $report, 'type' => '23'];
+
+            return $this->respond($res);
+        }
+
+        // 针对 20:00，只提取：全机组发电量
+        if (strpos($log_time, '20:00') !== false) {
+            // 发电量delta
+            $genEnergy = $this->getGenEnergyForTwentyClock($query);
+
+            $res['code'] = EXIT_SUCCESS;
+            $res['data'] = ['data' => $genEnergy, 'type' => '20'];
+
+            return $this->respond($res);
+        }
+
+        $res['code'] = EXIT_ERROR;
         return $this->respond($res);
-
     }
 
     public function getBasicStatistic()
@@ -707,6 +723,65 @@ class Meters extends BaseController
         // 年
         if (($db2[$today]['fak'] > $db2[$prevYear]['fak']) && ($db2[$prevYear]['fak'] > 0)) {
             $res['year'] = $db2[$today]['fak'] - $db2[$prevYear]['fak'];
+        }
+
+        return $res;
+    }
+
+    protected function getGenEnergyForTwentyClock($query)
+    {
+        $station_id = $query['station_id'];
+        $log_date   = $query['log_date'];
+        $log_time   = $query['log_time'];
+
+        // 初值0
+        $res = 0;
+
+        // 需查找的日期
+        $utils = service('mixUtils');
+
+        $today   = $log_date;
+        $prevDay = $utils->getPlusOffsetDay($log_date, -1);
+        $dates   = [$today, $prevDay];
+
+        $meter_ids = [];
+        for ($i = $this->firstGenMeterId; $i <= $this->lastGenMeterId; $i++) {
+            $meter_ids[] = $i;
+        }
+
+        // 查询给定日期：表读数，正向有功
+        $columnName = ['log_date', 'fak'];
+        $query2     = [
+            'station_id' => $station_id,
+            'log_date'   => $dates,
+            'log_time'   => $log_time,
+            'meter_id'   => $meter_ids,
+        ];
+        $db = $this->meterLogModel->getByStationDatesTimeMeters($columnName, $query2);
+        if (empty($db)) {
+            return $res;
+        }
+
+        // 表读数求和
+        $db2  = [];
+        $cnt  = count($dates);
+        $cnt2 = count($db);
+        for ($i = 0; $i < $cnt; $i++) {
+            $date = $dates[$i];
+            $fak  = 0;
+            for ($j = 0; $j < $cnt2; $j++) {
+                if ($db[$j]['log_date'] === $date) {
+                    $fak += $db[$j]['fak'];
+                }
+            }
+            $db2[$date] = [
+                'fak' => $fak,
+            ];
+        }
+
+        // 单日
+        if (($db2[$today]['fak'] > $db2[$prevDay]['fak']) && ($db2[$prevDay]['fak'] > 0)) {
+            $res = $db2[$today]['fak'] - $db2[$prevDay]['fak'];
         }
 
         return $res;

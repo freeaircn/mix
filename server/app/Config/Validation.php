@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-19 10:03:44
+ * @LastEditTime: 2021-11-02 21:19:45
  */
 
 namespace Config;
@@ -75,6 +75,7 @@ class Validation
         'station_id'   => 'required|regex_match[^[1-9]\d{0,2}$]',
         'generator_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
         'event'        => 'required|regex_match[^[1-9]\d{0,2}$]',
+        'cause'        => 'required|regex_match[^[1-9]\d{0,2}$]',
         'event_at'     => 'required|regex_match[/^[1-2]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])\s+([0-1]\d|20|21|22|23):[0-5]\d:[0-5]\d$/]',
         'creator'      => 'required|regex_match[/^([\x{4e00}-\x{9fa5}]{1,6})$/u]',
     ];

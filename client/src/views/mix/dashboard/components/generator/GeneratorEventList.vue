@@ -40,6 +40,9 @@
       <span slot="event" slot-scope="text">
         {{ text | eventFilter }}
       </span>
+      <span slot="cause" slot-scope="text">
+        {{ text | causeFilter }}
+      </span>
       <span slot="action" slot-scope="text, record">
         <template>
           <a @click="handleEdit(record)">修改</a>
@@ -78,6 +81,23 @@
           </a-select>
         </a-form-model-item>
 
+        <a-form-model-item label="原因" prop="cause">
+          <a-select v-model="curRecord.cause" placeholder="请选择">
+            <a-select-option value="1">调度许可</a-select-option>
+            <a-select-option value="2">检修试验</a-select-option>
+            <a-select-option value="3">电气故障</a-select-option>
+            <a-select-option value="4">水系统故障</a-select-option>
+            <a-select-option value="5">油系统故障</a-select-option>
+            <a-select-option value="6">气系统故障</a-select-option>
+            <a-select-option value="7">线路保护动作</a-select-option>
+            <a-select-option value="8">母线保护动作</a-select-option>
+            <a-select-option value="9">主变保护动作</a-select-option>
+            <a-select-option value="10">发电机保护动作</a-select-option>
+            <a-select-option value="11">安稳动作</a-select-option>
+            <a-select-option value="12">误操作</a-select-option>
+          </a-select>
+        </a-form-model-item>
+
         <a-form-model-item label="日期/时间" prop="event_at">
           <a-date-picker v-model="curRecord.event_at" valueFormat="YYYY-MM-DD HH:mm:ss" show-time placeholder="请选择" />
         </a-form-model-item>
@@ -109,6 +129,11 @@ const columns = [
     scopedSlots: { customRender: 'event' }
   },
   {
+    title: '原因',
+    dataIndex: 'cause',
+    scopedSlots: { customRender: 'cause' }
+  },
+  {
     title: '时间',
     dataIndex: 'event_at'
   },
@@ -138,6 +163,22 @@ const generatorIdMap = {
 const eventMap = {
   1: { text: '停机' },
   2: { text: '开机' }
+}
+
+const causeMap = {
+  0: { text: ' - ' },
+  1: { text: '调度许可' },
+  2: { text: '检修试验' },
+  3: { text: '电气故障' },
+  4: { text: '水系统故障' },
+  5: { text: '油系统故障' },
+  6: { text: '气系统故障' },
+  7: { text: '线路保护动作' },
+  8: { text: '母线保护动作' },
+  9: { text: '主变保护动作' },
+  10: { text: '发电机保护动作' },
+  11: { text: '安稳动作' },
+  12: { text: '误操作' }
 }
 
 export default {
@@ -203,6 +244,9 @@ export default {
     },
     eventFilter (type) {
       return eventMap[type].text
+    },
+    causeFilter (type) {
+      return causeMap[type].text
     }
   },
   watch: {

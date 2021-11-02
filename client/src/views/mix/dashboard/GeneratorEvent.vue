@@ -32,6 +32,23 @@
                 </a-select>
               </a-form-model-item>
 
+              <a-form-model-item label="原因" prop="cause">
+                <a-select v-model="objEvent.cause" placeholder="请选择">
+                  <a-select-option value="1">调度许可</a-select-option>
+                  <a-select-option value="2">检修试验</a-select-option>
+                  <a-select-option value="3">电气故障</a-select-option>
+                  <a-select-option value="4">水系统故障</a-select-option>
+                  <a-select-option value="5">油系统故障</a-select-option>
+                  <a-select-option value="6">气系统故障</a-select-option>
+                  <a-select-option value="7">线路保护动作</a-select-option>
+                  <a-select-option value="8">母线保护动作</a-select-option>
+                  <a-select-option value="9">主变保护动作</a-select-option>
+                  <a-select-option value="10">发电机保护动作</a-select-option>
+                  <a-select-option value="11">安稳动作</a-select-option>
+                  <a-select-option value="12">误操作</a-select-option>
+                </a-select>
+              </a-form-model-item>
+
               <a-form-model-item label="日期/时间" prop="event_at">
                 <a-date-picker v-model="objEvent.event_at" valueFormat="YYYY-MM-DD HH:mm:ss" show-time placeholder="请选择" />
               </a-form-model-item>
@@ -48,7 +65,7 @@
         </a-col>
 
         <a-col :xl="16" :lg="24" :md="24" :sm="24" :xs="24">
-          <a-card class="antd-pro-pages-dashboard-analysis-salesCard" :bordered="false" title="事件记录" :style="{ height: '100%' }">
+          <a-card class="antd-pro-pages-dashboard-analysis-salesCard" :bordered="false" title="历史记录" :style="{ height: '100%' }">
             <!-- style="width: calc(100% - 240px);" -->
             <GeneratorEventList
               :loading="listLoading"
@@ -104,7 +121,7 @@
 import moment from 'moment'
 import { GeneratorEventList, GenEventBasicStatistic } from './components/generator'
 import { mapGetters } from 'vuex'
-import { getGeneratorEvent, saveGeneratorEvent, getGeneratorEventStatistic, delGeneratorEvent, getExportGeneratorEvent } from '@/api/service'
+import { apiGetEvent, apiSaveEvent, apiGetEventStatistic, apiDelEvent, apiGetExportEvent } from '@/api/mix/generator'
 import { baseMixin } from '@/store/app-mixin'
 
 const availableYearRange = []
@@ -127,6 +144,7 @@ export default {
       // 录入事件 表单
       objEvent: {
         station_id: null,
+        cause: '1',
         event_at: ''
       },
       labelCol: {
@@ -194,7 +212,7 @@ export default {
           data.creator = this.userInfo.username
 
           this.disableBtn = true
-          saveGeneratorEvent(data)
+          apiSaveEvent(data)
             .then(() => {
               this.$refs.eventForm.resetFields()
               this.disableBtn = false
@@ -222,7 +240,7 @@ export default {
       }
       this.eventLogListPageIndex = 1
       this.listLoading = true
-      getGeneratorEvent(query)
+      apiGetEvent(query)
         .then(res => {
           this.listLoading = false
           //
@@ -244,7 +262,7 @@ export default {
       query.date = this.logListDate
 
       this.listLoading = true
-      getGeneratorEvent(query)
+      apiGetEvent(query)
         .then(res => {
           this.listLoading = false
           //
@@ -260,7 +278,7 @@ export default {
     },
 
     onDelEventLog (param) {
-      delGeneratorEvent(param)
+      apiDelEvent(param)
         .then(() => {
             this.onQueryEventLog(this.logListDate, param.generator_id)
           })
@@ -272,7 +290,7 @@ export default {
 
     onEditEventLog (param) {
       param.creator = this.userInfo.username
-      saveGeneratorEvent(param)
+      apiSaveEvent(param)
         .then(() => {
             this.onQueryEventLog(this.logListDate, param.generator_id)
           })
@@ -289,7 +307,7 @@ export default {
         date: date
       }
 
-      getExportGeneratorEvent(query)
+      apiGetExportEvent(query)
         .then(res => {
           const { data, headers } = res
 
@@ -327,7 +345,7 @@ export default {
         station_id: this.userInfo.belongToDeptId
       }
       this.genEventBasicStatLoading = true
-      getGeneratorEventStatistic(query)
+      apiGetEventStatistic(query)
         .then(res => {
           this.genEventBasicStatData = res
           this.genEventBasicStatLoading = false

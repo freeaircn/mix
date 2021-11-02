@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-14 10:25:45
+ * @LastEditTime: 2021-11-02 21:22:52
  */
 
 namespace App\Models\Generator;
@@ -17,7 +17,7 @@ class GenEventLogModel extends Model
 
     protected $table         = 'app_generator_event_log';
     protected $primaryKey    = 'id';
-    protected $allowedFields = ['station_id', 'generator_id', 'event', 'event_at', 'creator', 'description'];
+    protected $allowedFields = ['station_id', 'generator_id', 'event', 'cause', 'event_at', 'creator', 'description'];
 
     protected $useAutoIncrement = true;
 

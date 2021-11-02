@@ -7,7 +7,7 @@
     <div class="antd-pro-pages-dashboard-analysis-twoColLayout" :class="!isMobile && 'desktop'">
       <a-row :gutter="[8,8]" type="flex" :style="{ marginBottom: '8px' }">
         <a-col :xl="8" :lg="24" :md="24" :sm="24" :xs="24" >
-          <a-card :bordered="false" title="电表读数" :style="{height: '100%'}">
+          <a-card :bordered="false" title="录入电表数" :style="{height: '100%'}">
             <a-form-model
               ref="metersForm"
               :model="metersForm"
@@ -69,7 +69,7 @@
           </a-card>
         </a-col>
         <a-col :xl="8" :lg="24" :md="24" :sm="24" :xs="24">
-          <a-card :bordered="false" title="电表记录" :style="{ height: '100%' }">
+          <a-card :bordered="false" title="历史记录" :style="{ height: '100%' }">
             <div>
               <!-- style="width: calc(100% - 240px);" -->
               <LogList
@@ -140,6 +140,19 @@
         <a-button slot="extra" type="link" @click="handleCopyReportContent('weekly')">复制</a-button>
         <p>{{ reportContent.weekly }}</p>
       </a-card>
+    </a-modal>
+
+    <a-modal v-model="reportOf20ClockDiagVisible" title="简报" >
+      <template slot="footer">
+        <a-button key="submit" type="primary" @click="() => {this.reportOf20ClockDiagVisible = false}">
+          关闭
+        </a-button>
+      </template>
+      <a-statistic title="20:00发电量" :value="dailyOf20Clock">
+        <template #suffix>
+          <span> / 万kWh</span>
+        </template>
+      </a-statistic>
     </a-modal>
 
     <div v-if="!isMobile">
@@ -248,6 +261,9 @@ export default {
         weekly: ''
       },
 
+      reportOf20ClockDiagVisible: false,
+      dailyOf20Clock: '0',
+
       logDetailDiagTitle: '',
       logDetailDiagVisible: false,
       logDetailTab1Data: [],
@@ -336,6 +352,11 @@ export default {
             .then(() => {
               this.logMeterStepIndex = 0
               this.disableBtn = false
+              //
+              this.metersForm.log_date = ''
+              this.metersForm.log_time = ''
+              this.metersForm.meter = this.makeupMeterDataStructure()
+              //
               this.onQueryMeterLog(this.logListDate)
             })
             //  网络异常，清空页面数据显示，防止错误的操作
@@ -438,18 +459,34 @@ export default {
       this.reportContent.daily1 = ''
       this.reportContent.daily2 = ''
       this.reportContent.weekly = ''
+      //
+      this.reportOf20ClockDiagVisible = false
+      this.dailyOf20Clock = '0'
       getMetersDailyReport(query)
-        .then(data => {
-          this.reportDiagVisible = true
-          this.reportContent.daily1 = data.daily1
-          this.reportContent.daily2 = data.daily2
-          this.reportContent.weekly = data.weekly
+        .then(res => {
+          const data = res.data
+          const type = res.type
+          //
+          if (type === '23') {
+            this.reportDiagVisible = true
+            this.reportContent.daily1 = data.daily1
+            this.reportContent.daily2 = data.daily2
+            this.reportContent.weekly = data.weekly
+          }
+          //
+          if (type === '20') {
+            this.reportOf20ClockDiagVisible = true
+            this.dailyOf20Clock = data
+          }
         })
         .catch((err) => {
           this.reportDiagVisible = false
           this.reportContent.daily1 = ''
           this.reportContent.daily2 = ''
           this.reportContent.weekly = ''
+          //
+          this.reportOf20ClockDiagVisible = false
+          this.dailyOf20Clock = '0'
           if (err.response) {
           }
         })

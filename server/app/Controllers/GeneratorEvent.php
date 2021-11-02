@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-14 16:18:13
+ * @LastEditTime: 2021-11-02 21:42:43
  */
 
 namespace App\Controllers;
@@ -59,6 +59,7 @@ class GeneratorEvent extends BaseController
             'station_id'   => $client['station_id'],
             'generator_id' => $client['generator_id'],
             'event'        => $client['event'],
+            'cause'        => $client['cause'],
             'event_at'     => $client['event_at'],
             'creator'      => $client['creator'],
         ];
@@ -114,7 +115,7 @@ class GeneratorEvent extends BaseController
             'offset'       => $param['offset'],
         ];
 
-        $columnName = ['id', 'station_id', 'generator_id', 'event', 'event_at', 'creator', 'description'];
+        $columnName = ['id', 'station_id', 'generator_id', 'event', 'cause', 'event_at', 'creator', 'description'];
         $result     = $this->eventModel->getLogsForShowList($columnName, $query);
 
         $res['code'] = EXIT_SUCCESS;
@@ -178,6 +179,7 @@ class GeneratorEvent extends BaseController
             'station_id'   => $client['station_id'],
             'generator_id' => $client['generator_id'],
             'event'        => $client['event'],
+            'cause'        => $client['cause'],
             'event_at'     => $client['event_at'],
             'creator'      => $client['creator'],
         ];
