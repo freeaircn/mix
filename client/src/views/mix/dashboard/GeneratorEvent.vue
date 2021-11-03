@@ -145,7 +145,8 @@ export default {
       objEvent: {
         station_id: null,
         cause: '1',
-        event_at: ''
+        event_at: '',
+        description: '无'
       },
       labelCol: {
         lg: { span: 7 }, sm: { span: 7 }
@@ -210,6 +211,10 @@ export default {
           const data = { ...this.objEvent }
           data.station_id = this.userInfo.belongToDeptId
           data.creator = this.userInfo.username
+
+          if (data.description === '') {
+            data.description = '无'
+          }
 
           this.disableBtn = true
           apiSaveEvent(data)
