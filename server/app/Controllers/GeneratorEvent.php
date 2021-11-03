@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-11-02 21:42:43
+ * @LastEditTime: 2021-11-03 21:34:47
  */
 
 namespace App\Controllers;
@@ -62,6 +62,7 @@ class GeneratorEvent extends BaseController
             'cause'        => $client['cause'],
             'event_at'     => $client['event_at'],
             'creator'      => $client['creator'],
+            'description'  => $client['description'],
         ];
 
         // 查找时间最近一条事件
@@ -182,6 +183,7 @@ class GeneratorEvent extends BaseController
             'cause'        => $client['cause'],
             'event_at'     => $client['event_at'],
             'creator'      => $client['creator'],
+            'description'  => $client['description'],
         ];
 
         // 查找时间最近
