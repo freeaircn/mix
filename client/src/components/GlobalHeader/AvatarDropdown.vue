@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-24 18:40:09
+ * @LastEditTime: 2021-11-06 13:00:45
 -->
 <template>
   <a-dropdown v-if="currentUser && currentUser.name" placement="bottomRight">
@@ -73,9 +73,15 @@ export default {
           this.$store.dispatch('Logout')
             .then(() => {
               this.$router.push({ name: 'login' })
+              this.$nextTick(function () {
+                window.location.reload()
+              })
             })
             .catch(() => {
               this.$router.push({ name: 'login' })
+              this.$nextTick(function () {
+                window.location.reload()
+              })
             })
         },
         onCancel () {}

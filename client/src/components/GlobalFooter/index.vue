@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-24 10:55:52
+ * @LastEditTime: 2021-11-06 13:12:42
 -->
 <template>
   <global-footer class="footer custom-render">
@@ -13,7 +13,7 @@
       <!-- <a href="https://www.github.com/sendya/" target="_blank">@Sendya</a> -->
     </template>
     <template v-slot:copyright>
-      <a href="#" >Mix</a>
+      <a href="#" >Mix 2021.11.06</a>
     </template>
   </global-footer>
 </template>

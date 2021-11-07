@@ -32,9 +32,12 @@ const errorHandler = (error) => {
       })
       if (token) {
         store.dispatch('Logout').then(() => {
-          setTimeout(() => {
+          // setTimeout(() => {
+          //   window.location.reload()
+          // }, 1500)
+          this.$nextTick(function () {
             window.location.reload()
-          }, 1500)
+          })
         })
       }
     }

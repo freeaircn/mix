@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-08 10:57:45
+ * @LastEditTime: 2021-11-06 13:00:07
  */
 import router from './router'
 import store from './store'
@@ -82,6 +82,9 @@ router.beforeEach((to, from, next) => {
             // 失败时，获取用户信息失败时，调用登出，来清空历史保留信息
             store.dispatch('Logout').then(() => {
               next({ path: loginRoutePath, query: { redirect: to.fullPath } })
+              this.$nextTick(function () {
+                window.location.reload()
+              })
             })
           })
       } else {

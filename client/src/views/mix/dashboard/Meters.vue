@@ -95,6 +95,8 @@
               :loading="planningListLoading"
               :date="planningListDate"
               :listData="planningListData"
+              :sumPlanning="planningListSumPlanning"
+              :sumDeal="planningListSumDeal"
               @query="onQueryPlanning"
               @update="onUpdatePlanningRecord"
             >
@@ -198,6 +200,7 @@
 
 <script>
 import moment from 'moment'
+import { BigNumber } from 'bignumber.js'
 // import { deepMerge } from '@/utils/util'
 import { LogList, PlanningList, BasicStatistic, OverallStatistic, LogDetail } from './components/meter'
 import { mapGetters } from 'vuex'
@@ -233,7 +236,7 @@ export default {
       metersForm: {
         log_date: '',
         log_time: '',
-        meter: this.makeupMeterDataStructure()
+        meter: this.setMeterDataZero()
       },
       labelCol: {
         lg: { span: 4 }, sm: { span: 4 }
@@ -275,6 +278,8 @@ export default {
       planningListLoading: false,
       planningListDate: '',
       planningListData: [],
+      planningListSumPlanning: '0',
+      planningListSumDeal: '0',
 
       // Basic统计显示
       basicStatLoading: false,
@@ -324,7 +329,7 @@ export default {
     // 录入表单
     handleLogMeterStepNext () {
       if (this.hasNullInMeterData(this.metersForm.meter[this.logMeterStepIndex])) {
-        this.$message.warning('请输入数字，例如：0，12，12.3，0.123')
+        this.$message.warning('请输入数字，例如：0，12，12.3，0.1234')
         return true
       }
       this.logMeterStepIndex++
@@ -336,16 +341,21 @@ export default {
 
     handleLogMeters () {
       if (this.hasNullInMeterData(this.metersForm.meter[this.logMeterStepIndex])) {
-        this.$message.warning('请输入数字，例如：0，12，12.3，0.123')
+        this.$message.warning('请输入数字，例如：0，12，12.3，0.1234')
         return true
       }
       this.$refs.metersForm.validate(valid => {
         if (valid) {
-          const data = { ...this.metersForm }
-          const meter = JSON.parse(JSON.stringify(this.metersForm.meter))
-          data.meter = this.floorMeterValue(meter)
-          data.station_id = this.userInfo.belongToDeptId
-          data.creator = this.userInfo.username
+          const temp = this.metersForm.meter
+          const meter = this.filterMeterValue(temp)
+
+          const data = {
+            log_date: this.metersForm.log_date,
+            log_time: this.metersForm.log_time,
+            station_id: this.userInfo.belongToDeptId,
+            creator: this.userInfo.username,
+            meter: meter
+          }
 
           this.disableBtn = true
           saveMeterLogs(data)
@@ -355,7 +365,7 @@ export default {
               //
               this.metersForm.log_date = ''
               this.metersForm.log_time = ''
-              this.metersForm.meter = this.makeupMeterDataStructure()
+              this.metersForm.meter = this.setMeterDataZero()
               //
               this.onQueryMeterLog(this.logListDate)
             })
@@ -535,7 +545,11 @@ export default {
           this.planningListLoading = false
           //
           this.planningListDate = date
-          this.planningListData = this.transformPlanningListData(res.data)
+          const temp = this.adaptPlanningListDisplay(res.data, 4)
+
+          this.planningListData = temp.listData
+          this.planningListSumPlanning = temp.sumPlanning
+          this.planningListSumDeal = temp.sumDeal
         })
         .catch((err) => {
           this.planningListLoading = false
@@ -549,9 +563,9 @@ export default {
     onUpdatePlanningRecord (record) {
       const data = { ...record }
       data.station_id = this.userInfo.belongToDeptId
-      // 单位换算
-      data.planning = Math.floor(data.planning * 10000)
-      data.deal = Math.floor(data.deal * 10000)
+      // 万kwh -> kwh
+      data.planning = this.fractionToInteger(data.planning, 4)
+      data.deal = this.fractionToInteger(data.deal, 4)
       updatePlanningKWhRecord(data)
         .then(() => {
           this.onQueryPlanning(this.planningListDate)
@@ -608,16 +622,16 @@ export default {
           })
     },
 
-    makeupMeterDataStructure () {
+    setMeterDataZero () {
       var data = new Array(9)
       for (let i = 0; i < data.length; i++) {
         data[i] = {
-          fak: '0',
-          bak: '0',
-          frk: '0',
-          brk: '0',
-          peak: '0',
-          valley: '0'
+          fak: 0,
+          bak: 0,
+          frk: 0,
+          brk: 0,
+          peak: 0,
+          valley: 0
         }
       }
       return data
@@ -646,14 +660,109 @@ export default {
       return data
     },
 
-    // 单位换算
-    transformPlanningListData (data) {
-      for (let i = 0; i < data.length; i++) {
-        data[i].month = data[i].month + '月'
-        data[i].planning = data[i].planning / 10000
-        data[i].deal = data[i].deal / 10000
+    // 万kwh -> kwh
+    filterMeterValue (meter) {
+      const temp = meter
+      for (let i = 0; i < temp.length; i++) {
+        for (const x in temp[i]) {
+          if (i < 2) {
+            // 四位小数
+            temp[i][x] = this.toStringAndLeftShift(temp[i][x], 4)
+          } else {
+            // 两位小数
+            temp[i][x] = this.toStringAndLeftShift(temp[i][x], 2)
+          }
+        }
+      }
+      return temp
+    },
+
+    // kwh -> 万kwh
+    computePlanningListData (data) {
+      const temp = { ...data }
+      for (let i = 0; i < temp.length; i++) {
+        temp[i].month = data[i].month + '月'
+        temp[i].planning = data[i].planning / 10000
+        temp[i].deal = data[i].deal / 10000
       }
       return data
+    },
+
+    // DB: kwh -> Web: 万kwh
+    adaptPlanningListDisplay (data, bits) {
+      const temp = data
+      let sumPlanning = 0
+      let sumDeal = 0
+      for (let i = 0; i < temp.length; i++) {
+        temp[i].month = data[i].month + '月'
+        //
+        sumPlanning = sumPlanning + parseInt(data[i].planning)
+        sumDeal = sumDeal + parseInt(data[i].deal)
+        //
+        temp[i].planning = this.integerToFraction(data[i].planning, bits)
+        temp[i].deal = this.integerToFraction(data[i].deal, bits)
+      }
+
+      const res = {
+        sumPlanning: this.integerToFraction(sumPlanning, bits),
+        sumDeal: this.integerToFraction(sumDeal, bits),
+        listData: temp
+      }
+
+      return res
+    },
+
+    fractionToInteger (value, bits) {
+      const str = new BigNumber(value).toFixed()
+      // 截取小数部分 bits位
+      const arr = str.split('.')
+      let res = str
+      if (arr.length === 2) {
+        const frac = arr[1]
+        res = arr[0] + '.' + frac.substr(0, bits)
+      }
+      // 乘以10的bits方
+      const x = Math.pow(10, bits)
+      const temp = new BigNumber(res).multipliedBy(x)
+
+      return temp.toFixed()
+    },
+
+    integerToFraction (value, bits) {
+      // 除以10的bits方
+      const x = Math.pow(10, bits)
+      const temp = new BigNumber(value).dividedBy(x)
+
+      return temp.toFixed()
+    },
+
+    toStringAndLeftShift (value, bits) {
+      const str = value.toString()
+      if (str === '0') {
+        return '0'
+      }
+
+      const arr = str.split('.')
+      //
+      if (arr.length === 1) {
+        let tail = ''
+        for (let i = 0; i < bits; i++) {
+          tail = tail + '0'
+        }
+        return arr[0] + tail
+      }
+      //
+      if (arr.length === 2) {
+        const integerPart = arr[0]
+        const fractionalPart = arr[1].substr(0, bits)
+
+        const len = fractionalPart.length
+        let tail = ''
+        for (let i = 0; i < (bits - len); i++) {
+          tail = tail + '0'
+        }
+        return integerPart + fractionalPart + tail
+      }
     }
   }
 }

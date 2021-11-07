@@ -16,6 +16,7 @@
     "@antv/g2plot": "^2.3.32",
     "ant-design-vue": "^1.7.5",
     "axios": "^0.19.0",
+    "bignumber.js": "^9.0.1",
     "core-js": "^3.1.2",
     "enquire.js": "^2.1.6",
     "js-cookie": "^2.2.1",

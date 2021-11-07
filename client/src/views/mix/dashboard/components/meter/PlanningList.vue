@@ -107,6 +107,14 @@ export default {
       type: Array,
       default: () => []
     },
+    sumPlanning: {
+      type: String,
+      default: '0'
+    },
+    sumDeal: {
+      type: String,
+      default: '0'
+    },
     current: {
       type: Number,
       default: 1
@@ -147,9 +155,6 @@ export default {
         total: 12
       },
 
-      sumPlanning: 0,
-      sumDeal: 0,
-
       // 查询表单
       query: {
         // moment Obj
@@ -177,19 +182,6 @@ export default {
         this.columns[0].title = temp.format('YYYY') + '年'
         this.year = temp.format('YYYY')
         this.query.date = temp
-      },
-      immediate: true
-    },
-    listData: {
-      handler: function (array) {
-        let temp1 = 0
-        let temp2 = 0
-        for (let i = 0; i < array.length; i++) {
-          temp1 = temp1 + array[i].planning
-          temp2 = temp2 + array[i].deal
-        }
-        this.sumPlanning = temp1
-        this.sumDeal = temp2
       },
       immediate: true
     },
