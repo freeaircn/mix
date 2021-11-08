@@ -2,22 +2,11 @@
   <div>
     <div class="kwh-year-card-content">
       <a-row :gutter="24" type="flex">
-        <a-col :xl="8" :lg="24" :md="24" :sm="24" :xs="24" >
-          <a-table
-            ref="table"
-            rowKey="id"
-            :columns="columns"
-            :data-source="statisticListData"
-            :loading="loading"
-            :pagination="false"
-          >
-            <template slot="title" >
-              <span style="color: #303133;">{{ '截止' + date + '（万kWh）' }}</span>
-            </template>
-          </a-table>
+        <a-col :xl="12" :lg="12" :md="24" :sm="24" :xs="24" >
+
         </a-col>
 
-        <a-col :xl="16" :lg="24" :md="24" :sm="24" :xs="24" >
+        <a-col :xl="12" :lg="12" :md="24" :sm="24" :xs="24" >
           <div style="height: 53px; padding: 16px 0px;" >
             <span style="color: #303133">
               <a-tooltip>

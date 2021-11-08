@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-11-02 21:19:45
+ * @LastEditTime: 2021-11-08 22:02:44
  */
 
 namespace Config;
@@ -136,12 +136,31 @@ class Validation
         'log_time'   => 'required|regex_match[/^([0-1]\d|20|21|22|23):[0-5]\d:[0-5]\d$/]',
     ];
 
-    public $MetersPlanningKWhGet = [
+    // public $MetersPlanningKWhGet = [
+    //     'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
+    //     'date'       => 'required|valid_date[Y-m-d]',
+    // ];
+
+    // public $MeterPlanningKWhRecordUpdate = [
+    //     'id'         => 'required|regex_match[^[1-9]\d{0,10}$]',
+    //     'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
+    //     'year'       => 'required|valid_date[Y]',
+    //     'month'      => 'required|regex_match[/^([1-9]|10|11|12)$/]',
+    //     'planning'   => 'required',
+    //     'deal'       => 'required',
+    // ];
+
+    // 2021-11-08
+    public $MeterGetDailyStatistic = [
+        'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
+    ];
+
+    public $MetersGetPlanAndDeal = [
         'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
         'date'       => 'required|valid_date[Y-m-d]',
     ];
 
-    public $MeterPlanningKWhRecordUpdate = [
+    public $MeterUpdatePlanAndDealRecord = [
         'id'         => 'required|regex_match[^[1-9]\d{0,10}$]',
         'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
         'year'       => 'required|valid_date[Y]',
@@ -149,6 +168,7 @@ class Validation
         'planning'   => 'required',
         'deal'       => 'required',
     ];
+    // end
 
     public $MeterBasicStatisticGet = [
         'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',

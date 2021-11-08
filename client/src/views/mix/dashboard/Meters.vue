@@ -1,10 +1,74 @@
 <template>
   <page-header-wrapper :title="false">
 
-    <a-card :title="userInfo.belongToDeptName" :bordered="false" :headStyle="{marginBottom: '8px'}">
+    <a-card :title="userInfo.belongToDeptName" :bordered="false" :bodyStyle="{marginBottom: '8px'}">
+      <a-button style="margin-right: 16px" @click="onClickPlanAndDealDiag">计划&成交</a-button>
+      <a-button type="primary" >录入电度</a-button>
     </a-card>
 
+    <a-modal title="计划&成交" v-model="planAndDealDiagVisible">
+      <template slot="footer">
+        <a-button key="submit" type="primary" @click="() => {this.planAndDealDiagVisible = false}">
+          关闭
+        </a-button>
+      </template>
+      <PlanAndDeal
+        :loading="planAndDealListLoading"
+        :date="queryDateOfPlanAndDeal"
+        :listData="planAndDealListData"
+        :totalPlan="planAndDealTotalPlan"
+        :totalDeal="planAndDealTotalDeal"
+        @query="onQueryPlanAndDeal"
+        @update="onUpdatePlanAndDeal"
+      >
+      </PlanAndDeal>
+    </a-modal>
+
     <div class="antd-pro-pages-dashboard-analysis-twoColLayout" :class="!isMobile && 'desktop'">
+      <a-row :gutter="[8,8]" type="flex" :style="{ marginBottom: '8px' }">
+        <a-col :xl="12" :lg="12" :md="24" :sm="24" :xs="24" >
+          <a-card :bordered="false" :title="dailyListTitle" :style="{height: '100%'}">
+            <div class="extra-wrapper" slot="extra">
+              <div class="extra-item">
+                <a-button type="link" @click="onShowDailyStatisticList">刷新</a-button>
+              </div>
+            </div>
+            <DailyStatisticList
+              :loading="dailyListLoading"
+              :date="dailyListDate"
+              :totalPlan="dailyListTotalPlan"
+              :totalDeal="dailyListTotalDeal"
+              :dayFrkAllGens="dailyListDayFrk"
+              :dayBrkAllGens="dailyListDayBrk"
+              :listData="dailyListData"
+            >
+            </DailyStatisticList>
+          </a-card>
+        </a-col>
+        <a-col :xl="12" :lg="12" :md="24" :sm="24" :xs="24">
+          <a-card :bordered="false" title="历史记录" :style="{ height: '100%' }">
+            <div>
+              <!-- style="width: calc(100% - 240px);" -->
+              <LogList
+                :loading="logListLoading"
+                :date="logListDate"
+                :listData="logListData"
+                :current.sync="logListPageIndex"
+                :total="totalLogs"
+                @paginationChange="onLogListPageChange"
+                @query="onQueryMeterLog"
+                @queryDetail="onQueryMetersLogDetail"
+                @report="onReqDailyReport"
+                @delete="onDeleteMeterLog"
+              >
+              </LogList>
+            </div>
+          </a-card>
+        </a-col>
+      </a-row>
+    </div>
+
+    <div class="antd-pro-pages-dashboard-analysis-twoColLayout" :class="!isMobile && 'desktop'" v-show="false">
       <a-row :gutter="[8,8]" type="flex" :style="{ marginBottom: '8px' }">
         <a-col :xl="8" :lg="24" :md="24" :sm="24" :xs="24" >
           <a-card :bordered="false" title="录入电表数" :style="{height: '100%'}">
@@ -68,39 +132,9 @@
             </a-form-model>
           </a-card>
         </a-col>
-        <a-col :xl="8" :lg="24" :md="24" :sm="24" :xs="24">
-          <a-card :bordered="false" title="历史记录" :style="{ height: '100%' }">
-            <div>
-              <!-- style="width: calc(100% - 240px);" -->
-              <LogList
-                :loading="logListLoading"
-                :date="logListDate"
-                :listData="logListData"
-                :current.sync="logListPageIndex"
-                :total="totalLogs"
-                @paginationChange="onLogListPageChange"
-                @query="onQueryMeterLog"
-                @queryDetail="onQueryMetersLogDetail"
-                @report="onReqDailyReport"
-                @delete="onDeleteMeterLog"
-              >
-              </LogList>
-            </div>
-          </a-card>
-        </a-col>
 
         <a-col :xl="8" :lg="24" :md="24" :sm="24" :xs="24">
           <a-card :bordered="false" title="计划&成交电量" :style="{height: '100%'}">
-            <PlanningList
-              :loading="planningListLoading"
-              :date="planningListDate"
-              :listData="planningListData"
-              :sumPlanning="planningListSumPlanning"
-              :sumDeal="planningListSumDeal"
-              @query="onQueryPlanning"
-              @update="onUpdatePlanningRecord"
-            >
-            </PlanningList>
           </a-card>
         </a-col>
       </a-row>
@@ -158,7 +192,7 @@
     </a-modal>
 
     <div v-if="!isMobile">
-      <a-card title="统计图表" :bordered="false" :body-style="{marginBottom: '8px'}">
+      <a-card title="统计图" :bordered="false" :body-style="{marginBottom: '8px'}">
         <div class="extra-wrapper" slot="extra">
           <div class="extra-item">
             <a-button type="link" @click="onQueryBasicStatistic('month')">刷新</a-button>
@@ -202,23 +236,42 @@
 import moment from 'moment'
 import { BigNumber } from 'bignumber.js'
 // import { deepMerge } from '@/utils/util'
-import { LogList, PlanningList, BasicStatistic, OverallStatistic, LogDetail } from './components/meter'
+import { OverallStatistic, LogList, BasicStatistic, DailyStatisticList, PlanAndDeal, LogDetail } from './components/meter'
 import { mapGetters } from 'vuex'
-import { getMeterLogs, getMetersLogDetail, saveMeterLogs, getMetersDailyReport, getMetersBasicStatistic, delMeterLogs, getPlanningKWh, updatePlanningKWhRecord, getMetersOverallStatistic } from '@/api/service'
+import { getMeterLogs, getMetersLogDetail, saveMeterLogs, getMetersDailyReport, getMetersBasicStatistic, delMeterLogs, getMetersOverallStatistic } from '@/api/service'
+import { getDailyStatistic, getPlanAndDeal, updatePlanAndDealRecord } from '@/api/mix/meter'
 import { baseMixin } from '@/store/app-mixin'
 
 export default {
   name: 'Meters',
   mixins: [baseMixin],
   components: {
+    DailyStatisticList,
+    PlanAndDeal,
     LogList,
-    PlanningList,
     BasicStatistic,
     OverallStatistic,
     LogDetail
   },
   data () {
     return {
+      // 单日数据统计显示 2021-11-08
+      dailyListTitle: '截至',
+      dailyListLoading: false,
+      dailyListDate: '',
+      dailyListTotalPlan: '0',
+      dailyListTotalDeal: '0',
+      dailyListDayFrk: '0',
+      dailyListDayBrk: '0',
+      dailyListData: [],
+
+      // 计划&成交数据 2021-11-08
+      planAndDealDiagVisible: false,
+      planAndDealListLoading: false,
+      queryDateOfPlanAndDeal: '',
+      planAndDealListData: [],
+      planAndDealTotalPlan: '0',
+      planAndDealTotalDeal: '0',
 
       // 输入记录
       logMeterStepIndex: 0,
@@ -274,13 +327,6 @@ export default {
       logDetailTab3Data: [],
       logDetailTab4Data: [],
 
-      // 年计划显示
-      planningListLoading: false,
-      planningListDate: '',
-      planningListData: [],
-      planningListSumPlanning: '0',
-      planningListSumDeal: '0',
-
       // Basic统计显示
       basicStatLoading: false,
       basicStatChanged: false,
@@ -309,22 +355,54 @@ export default {
   created () {
     // 初值
     this.logListDate = moment().format('YYYY-MM-DD')
-    this.planningListDate = moment().format('YYYY-MM-DD')
+    this.queryDateOfPlanAndDeal = moment().format('YYYY-MM-DD')
   },
   mounted () {
-    // 记录显示
+    // 2021-11-08
+    this.onShowDailyStatisticList()
+    //
     this.onQueryMeterLog(this.logListDate)
-    this.onQueryPlanning(this.planningListDate)
 
     if (!this.isMobile) {
       // 统计图表
-    this.onQueryBasicStatistic()
+      this.onQueryBasicStatistic()
 
-    // 全景统计
-    this.onQueryOverallStatistic()
+      // 全景统计
+      this.onQueryOverallStatistic()
     }
   },
   methods: {
+    // 单日数据统计 2021-11-08
+    onShowDailyStatisticList () {
+      const query = {
+        station_id: this.userInfo.belongToDeptId
+      }
+      this.dailyListLoading = true
+      getDailyStatistic(query)
+        .then(response => {
+          this.dailyListDate = response.date
+          this.dailyListTotalPlan = response.totalPlan
+          this.dailyListTotalDeal = response.totalDeal
+          this.dailyListDayFrk = response.dayFrk
+          this.dailyListDayBrk = response.dayBrk
+          this.dailyListData = response.listData
+          //
+          this.dailyListLoading = false
+          this.dailyListTitle = '截至 ' + this.dailyListDate
+        })
+        .catch((err) => {
+          this.dailyListLoading = false
+          if (err.response) {
+          }
+        })
+    },
+
+    // 2021-11-08
+    onClickPlanAndDealDiag () {
+      this.queryDateOfPlanAndDeal = moment().format('YYYY-MM-DD')
+      this.onQueryPlanAndDeal(this.queryDateOfPlanAndDeal)
+      this.planAndDealDiagVisible = true
+    },
 
     // 录入表单
     handleLogMeterStepNext () {
@@ -533,42 +611,42 @@ export default {
           })
     },
 
-    // 查询计划
-    onQueryPlanning (date) {
+    // 查询计划 2021-11-08
+    onQueryPlanAndDeal (date) {
       const query = {
         station_id: this.userInfo.belongToDeptId,
         date: date
       }
-      this.planningListLoading = true
-      getPlanningKWh(query)
+      this.planAndDealListLoading = true
+      getPlanAndDeal(query)
         .then(res => {
-          this.planningListLoading = false
+          this.planAndDealListLoading = false
           //
-          this.planningListDate = date
-          const temp = this.adaptPlanningListDisplay(res.data, 4)
+          this.queryDateOfPlanAndDeal = date
+          const temp = this.adaptPlanAndDealDisplay(res.data, 4)
 
-          this.planningListData = temp.listData
-          this.planningListSumPlanning = temp.sumPlanning
-          this.planningListSumDeal = temp.sumDeal
+          this.planAndDealListData = temp.listData
+          this.planAndDealTotalPlan = temp.totalPlan
+          this.planAndDealTotalDeal = temp.totalDeal
         })
         .catch((err) => {
-          this.planningListLoading = false
-          this.planningListData.splice(0, this.planningListData.length)
+          this.planAndDealListLoading = false
+          this.planAndDealListData.splice(0, this.planAndDealListData.length)
           if (err.response) {
           }
         })
     },
 
-    // 修改计划
-    onUpdatePlanningRecord (record) {
+    // 修改计划 2021-11-08
+    onUpdatePlanAndDeal (record) {
       const data = { ...record }
       data.station_id = this.userInfo.belongToDeptId
       // 万kwh -> kwh
       data.planning = this.fractionToInteger(data.planning, 4)
       data.deal = this.fractionToInteger(data.deal, 4)
-      updatePlanningKWhRecord(data)
+      updatePlanAndDealRecord(data)
         .then(() => {
-          this.onQueryPlanning(this.planningListDate)
+          this.onQueryPlanAndDeal(this.queryDateOfPlanAndDeal)
         })
         .catch((err) => {
           if (err.response) {
@@ -677,41 +755,31 @@ export default {
       return temp
     },
 
-    // kwh -> 万kwh
-    computePlanningListData (data) {
-      const temp = { ...data }
-      for (let i = 0; i < temp.length; i++) {
-        temp[i].month = data[i].month + '月'
-        temp[i].planning = data[i].planning / 10000
-        temp[i].deal = data[i].deal / 10000
-      }
-      return data
-    },
-
-    // DB: kwh -> Web: 万kwh
-    adaptPlanningListDisplay (data, bits) {
+    // 2021-11-08 DB: kwh -> Web: 万kwh
+    adaptPlanAndDealDisplay (data, bits) {
       const temp = data
-      let sumPlanning = 0
-      let sumDeal = 0
+      let totalPlan = 0
+      let totalDeal = 0
       for (let i = 0; i < temp.length; i++) {
         temp[i].month = data[i].month + '月'
         //
-        sumPlanning = sumPlanning + parseInt(data[i].planning)
-        sumDeal = sumDeal + parseInt(data[i].deal)
+        totalPlan = totalPlan + parseInt(data[i].planning)
+        totalDeal = totalDeal + parseInt(data[i].deal)
         //
         temp[i].planning = this.integerToFraction(data[i].planning, bits)
         temp[i].deal = this.integerToFraction(data[i].deal, bits)
       }
 
       const res = {
-        sumPlanning: this.integerToFraction(sumPlanning, bits),
-        sumDeal: this.integerToFraction(sumDeal, bits),
+        totalPlan: this.integerToFraction(totalPlan, bits),
+        totalDeal: this.integerToFraction(totalDeal, bits),
         listData: temp
       }
 
       return res
     },
 
+    // 2021-11-08
     fractionToInteger (value, bits) {
       const str = new BigNumber(value).toFixed()
       // 截取小数部分 bits位
@@ -728,6 +796,7 @@ export default {
       return temp.toFixed()
     },
 
+    // 2021-11-08
     integerToFraction (value, bits) {
       // 除以10的bits方
       const x = Math.pow(10, bits)
