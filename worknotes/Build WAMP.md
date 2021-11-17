@@ -31,8 +31,8 @@ flush privileges;
 
   用户
     create user app@localhost identified by 'Sql@1234';
-    grant all on binglang.* to app@localhost;
-    REVOKE all ON binglang.* FROM 'app'@'localhost';
+    grant all on mix.* to app@localhost;
+    REVOKE all ON mix.* FROM 'app'@'localhost';
     show grants;
     show grants for app@localhost;
     
