@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-11-08 21:41:02
+ * @LastEditTime: 2021-11-20 23:04:18
  */
 import request from '@/utils/request'
 
@@ -11,11 +11,21 @@ const api = {
   meters: '/meters',
   record_detail: '/meters/record/detail',
   report_daily: '/meters/report/daily',
+  //
   statistic_daily: '/meters/statistic/daily',
+  //
   statistic_basic: '/meters/statistic/basic',
   statistic_overall: 'meters/statistic/overall',
   //
   plan_deal: '/meters/plan_deal'
+}
+
+export function newRecord (data) {
+  return request({
+    url: api.meters,
+    method: 'post',
+    data: data
+  })
 }
 
 export function saveRecord (data) {

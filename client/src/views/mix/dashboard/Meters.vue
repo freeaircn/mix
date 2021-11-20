@@ -3,7 +3,7 @@
 
     <a-card :title="userInfo.belongToDeptName" :bordered="false" :bodyStyle="{marginBottom: '8px'}">
       <a-button style="margin-right: 16px" @click="onClickPlanAndDealDiag">计划&成交</a-button>
-      <a-button type="primary" >录入电度</a-button>
+      <a-button type="primary" @click="onClickNewRecord">录入电度</a-button>
     </a-card>
 
     <a-modal title="计划&成交" v-model="planAndDealDiagVisible">
@@ -28,11 +28,12 @@
       <a-row :gutter="[8,8]" type="flex" :style="{ marginBottom: '8px' }">
         <a-col :xl="12" :lg="12" :md="24" :sm="24" :xs="24" >
           <a-card :bordered="false" :title="dailyListTitle" :style="{height: '100%'}">
-            <div class="extra-wrapper" slot="extra">
+            <a-button slot="extra" type="link" @click="onShowDailyStatisticList">刷新</a-button>
+            <!-- <div class="extra-wrapper" slot="extra">
               <div class="extra-item">
                 <a-button type="link" @click="onShowDailyStatisticList">刷新</a-button>
               </div>
-            </div>
+            </div> -->
             <DailyStatisticList
               :loading="dailyListLoading"
               :date="dailyListDate"
@@ -68,77 +69,17 @@
       </a-row>
     </div>
 
-    <div class="antd-pro-pages-dashboard-analysis-twoColLayout" :class="!isMobile && 'desktop'" v-show="false">
-      <a-row :gutter="[8,8]" type="flex" :style="{ marginBottom: '8px' }">
-        <a-col :xl="8" :lg="24" :md="24" :sm="24" :xs="24" >
-          <a-card :bordered="false" title="录入电表数" :style="{height: '100%'}">
-            <a-form-model
-              ref="metersForm"
-              :model="metersForm"
-              :rules="rules"
-              :label-col="labelCol"
-              :wrapper-col="wrapperCol"
-            >
-              <a-form-model-item label="日期" prop="log_date">
-                <a-date-picker v-model="metersForm.log_date" valueFormat="YYYY-MM-DD" placeholder="请选择" />
-              </a-form-model-item>
-
-              <a-form-model-item label="时间" prop="log_time">
-                <a-radio-group v-model="metersForm.log_time">
-                  <a-radio :value="'20:00:00'">
-                    20:00
-                  </a-radio>
-                  <a-radio :value="'23:59:00'">
-                    23:59
-                  </a-radio>
-                </a-radio-group>
-              </a-form-model-item>
-
-              <a-form-model-item :wrapper-col="{ lg: { span: 14, offset: 4 }, sm: { span: 14 } }">
-                <div style="font-size: 16px; font-weight:bold">{{ logMeterSteps[logMeterStepIndex].title }}</div>
-              </a-form-model-item>
-
-              <div v-for="(item, i) in metersForm.meter" :key="item.prop+'_'+i" v-show="logMeterStepIndex == i" >
-                <a-form-model-item label="正向有功">
-                  <a-input-number v-model="metersForm.meter[i].fak" :min="0" :style="{width: '100%'}" />
-                </a-form-model-item>
-                <a-form-model-item label="反向有功" v-show="i < 2 || i > 4">
-                  <a-input-number v-model="metersForm.meter[i].bak" :min="0" :style="{width: '100%'}" />
-                </a-form-model-item>
-                <a-form-model-item label="正向无功">
-                  <a-input-number v-model="metersForm.meter[i].frk" :min="0" :style="{width: '100%'}" />
-                </a-form-model-item>
-                <a-form-model-item label="反向无功">
-                  <a-input-number v-model="metersForm.meter[i].brk" :min="0" :style="{width: '100%'}" />
-                </a-form-model-item>
-
-                <a-form-model-item label="高峰" v-show="i > 1 && i < 5">
-                  <a-input-number v-model="metersForm.meter[i].peak" :min="0" :style="{width: '100%'}" />
-                </a-form-model-item>
-                <a-form-model-item label="低谷" v-show="i > 1 && i < 5">
-                  <a-input-number v-model="metersForm.meter[i].valley" :min="0" :style="{width: '100%'}" />
-                </a-form-model-item>
-              </div>
-
-              <a-form-model-item :wrapper-col="{ lg: { span: 14, offset: 4 }, sm: { span: 14 } }">
-                <div>
-                  <a-button v-if="logMeterStepIndex < logMeterSteps.length - 1" type="primary" block @click="handleLogMeterStepNext">下一步</a-button>
-                  <a-button v-if="logMeterStepIndex == logMeterSteps.length - 1" type="primary" :disabled="disableBtn" block @click="handleLogMeters">提交</a-button>
-                </div>
-                <div>
-                  <a-button v-if="logMeterStepIndex > 0" style="margin-top: 8px" block @click="handleLogMeterStepPrev">上一步</a-button>
-                </div>
-              </a-form-model-item>
-            </a-form-model>
-          </a-card>
-        </a-col>
-
-        <a-col :xl="8" :lg="24" :md="24" :sm="24" :xs="24">
-          <a-card :bordered="false" title="计划&成交电量" :style="{height: '100%'}">
-          </a-card>
-        </a-col>
-      </a-row>
-    </div>
+    <a-modal :title="newRecordDiagTitle" v-model="newRecordDiagVisible" :footer="null" :destroyOnClose="true">
+      <!-- <template slot="footer">
+        <a-button key="submit" type="primary" @click="() => {this.newRecordDiagVisible = false}">关闭</a-button>
+      </template> -->
+      <RecordForm
+        :stationId="userInfo.belongToDeptId"
+        :creator="this.userInfo.username"
+        @submitSuccess="onNewRecordSuccess"
+      >
+      </RecordForm>
+    </a-modal>
 
     <a-modal
       :title="logDetailDiagTitle"
@@ -236,9 +177,9 @@
 import moment from 'moment'
 import { BigNumber } from 'bignumber.js'
 // import { deepMerge } from '@/utils/util'
-import { OverallStatistic, LogList, BasicStatistic, DailyStatisticList, PlanAndDeal, LogDetail } from './components/meter'
+import { RecordForm, OverallStatistic, LogList, BasicStatistic, DailyStatisticList, PlanAndDeal, LogDetail } from './components/meter'
 import { mapGetters } from 'vuex'
-import { getMeterLogs, getMetersLogDetail, saveMeterLogs, getMetersDailyReport, getMetersBasicStatistic, delMeterLogs, getMetersOverallStatistic } from '@/api/service'
+import { getMeterLogs, getMetersLogDetail, getMetersDailyReport, getMetersBasicStatistic, delMeterLogs, getMetersOverallStatistic } from '@/api/service'
 import { getDailyStatistic, getPlanAndDeal, updatePlanAndDealRecord } from '@/api/mix/meter'
 import { baseMixin } from '@/store/app-mixin'
 
@@ -246,6 +187,7 @@ export default {
   name: 'Meters',
   mixins: [baseMixin],
   components: {
+    RecordForm,
     DailyStatisticList,
     PlanAndDeal,
     LogList,
@@ -273,35 +215,9 @@ export default {
       planAndDealTotalPlan: '0',
       planAndDealTotalDeal: '0',
 
-      // 输入记录
-      logMeterStepIndex: 0,
-      logMeterSteps: [
-        { title: '线路主表' },
-        { title: '线路副表' },
-        { title: '1#G' },
-        { title: '2#G' },
-        { title: '3#G' },
-        { title: '1#厂变' },
-        { title: '2#厂变' },
-        { title: '3#厂变' },
-        { title: '隔离变' }
-      ],
-      metersForm: {
-        log_date: '',
-        log_time: '',
-        meter: this.setMeterDataZero()
-      },
-      labelCol: {
-        lg: { span: 4 }, sm: { span: 4 }
-      },
-      wrapperCol: {
-        lg: { span: 14 }, sm: { span: 14 }
-      },
-      rules: {
-        log_date: [{ required: true, message: '请选择日期', trigger: ['change'] }],
-        log_time: [{ required: true, message: '请选择时间', trigger: ['change'] }]
-      },
-      disableBtn: false,
+      // 录入新电度表单对话框 2021-11-20
+      newRecordDiagTitle: '录入电表读数',
+      newRecordDiagVisible: false,
 
       // 记录显示
       logListLoading: false,
@@ -404,58 +320,14 @@ export default {
       this.planAndDealDiagVisible = true
     },
 
-    // 录入表单
-    handleLogMeterStepNext () {
-      if (this.hasNullInMeterData(this.metersForm.meter[this.logMeterStepIndex])) {
-        this.$message.warning('请输入数字，例如：0，12，12.3，0.1234')
-        return true
-      }
-      this.logMeterStepIndex++
+    // 录入表单 2021-11-20
+    onClickNewRecord () {
+      this.newRecordDiagVisible = true
     },
 
-    handleLogMeterStepPrev () {
-      this.logMeterStepIndex--
-    },
-
-    handleLogMeters () {
-      if (this.hasNullInMeterData(this.metersForm.meter[this.logMeterStepIndex])) {
-        this.$message.warning('请输入数字，例如：0，12，12.3，0.1234')
-        return true
-      }
-      this.$refs.metersForm.validate(valid => {
-        if (valid) {
-          const temp = this.metersForm.meter
-          const meter = this.filterMeterValue(temp)
-
-          const data = {
-            log_date: this.metersForm.log_date,
-            log_time: this.metersForm.log_time,
-            station_id: this.userInfo.belongToDeptId,
-            creator: this.userInfo.username,
-            meter: meter
-          }
-
-          this.disableBtn = true
-          saveMeterLogs(data)
-            .then(() => {
-              this.logMeterStepIndex = 0
-              this.disableBtn = false
-              //
-              this.metersForm.log_date = ''
-              this.metersForm.log_time = ''
-              this.metersForm.meter = this.setMeterDataZero()
-              //
-              this.onQueryMeterLog(this.logListDate)
-            })
-            //  网络异常，清空页面数据显示，防止错误的操作
-            .catch((err) => {
-              setTimeout(() => { this.disableBtn = false }, 3000)
-              if (err.response) { }
-            })
-        } else {
-          return false
-        }
-      })
+    onNewRecordSuccess () {
+      this.newRecordDiagVisible = false
+      this.onQueryMeterLog(this.logListDate)
     },
 
     // 记录列表显示
@@ -698,30 +570,6 @@ export default {
             if (err.response) {
             }
           })
-    },
-
-    setMeterDataZero () {
-      var data = new Array(9)
-      for (let i = 0; i < data.length; i++) {
-        data[i] = {
-          fak: 0,
-          bak: 0,
-          frk: 0,
-          brk: 0,
-          peak: 0,
-          valley: 0
-        }
-      }
-      return data
-    },
-
-    hasNullInMeterData (data) {
-      for (const x in data) {
-        if (data[x] === null) {
-          return true
-        }
-      }
-      return false
     },
 
     // 单位换算

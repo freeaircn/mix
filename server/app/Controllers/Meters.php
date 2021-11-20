@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-11-08 22:02:16
+ * @LastEditTime: 2021-11-21 00:23:02
  */
 
 namespace App\Controllers;
@@ -217,6 +217,72 @@ class Meters extends BaseController
         }
 
         return $this->respond($res);
+    }
+
+    // 2021-11-20
+    public function getRecordDetail()
+    {
+        $param = $this->request->getGet();
+
+        // 检查请求数据
+        if (!$this->validate('MeterGetRecordDetail')) {
+            $res['error'] = $this->validator->getErrors();
+
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '请求数据无效';
+            return $this->respond($res);
+        }
+
+        $query = [
+            'station_id' => $param['station_id'],
+            'log_date'   => $param['log_date'],
+            'log_time'   => $param['log_time'],
+        ];
+
+        $columnName = ['meter_id', 'fak', 'bak', 'frk', 'brk', 'peak', 'valley'];
+        $db         = $this->meterLogModel->getByStationDateTime($columnName, $query);
+
+        // 指定日期+时间的记录不存在
+        if (empty($db)) {
+            $utils   = service('mixUtils');
+            $prevDay = $utils->getPlusOffsetDay($query['log_date'], -1);
+
+            $query['log_date'] = $prevDay;
+
+            $db = $this->meterLogModel->getByStationDateTime($columnName, $query);
+        }
+
+        // 指定日期前一天的记录不存在，返回data=0
+        if (empty($db)) {
+            $response['code'] = EXIT_SUCCESS;
+            $response['data'] = ['size' => 0, 'record' => []];
+            return $this->respond($response);
+        }
+
+        $cnt = count($db);
+        for ($i = 0; $i < $cnt; $i++) {
+            // 线路表：4位小数
+            if ($db[$i]['meter_id'] < 3) {
+                $db[$i]['fak'] = $db[$i]['fak'] / 10000;
+                $db[$i]['bak'] = $db[$i]['bak'] / 10000;
+                $db[$i]['frk'] = $db[$i]['frk'] / 10000;
+                $db[$i]['brk'] = $db[$i]['brk'] / 10000;
+            }
+            // 非线路表：2位小数
+            if ($db[$i]['meter_id'] > 2) {
+                $db[$i]['fak']    = $db[$i]['fak'] / 100;
+                $db[$i]['bak']    = $db[$i]['bak'] / 100;
+                $db[$i]['frk']    = $db[$i]['frk'] / 100;
+                $db[$i]['brk']    = $db[$i]['brk'] / 100;
+                $db[$i]['peak']   = $db[$i]['peak'] / 100;
+                $db[$i]['valley'] = $db[$i]['valley'] / 100;
+            }
+        }
+
+        $response['code'] = EXIT_SUCCESS;
+        $response['data'] = ['size' => $cnt, 'record' => $db];
+
+        return $this->respond($response);
     }
 
     public function getDailyReport()

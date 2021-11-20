@@ -29,7 +29,7 @@
         :pagination="false"
       >
         <template slot="footer">
-          <span style="">{{ '全机组单日无功（万kWh）正向 ' + dayFrkAllGens + '，反向 ' + dayBrkAllGens }}</span>
+          <span style="">{{ '今日发电机无功：正向 ' + dayFrkAllGens + '，反向 ' + dayBrkAllGens }}</span>
         </template>
       </a-table>
 
