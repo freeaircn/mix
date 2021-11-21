@@ -174,6 +174,10 @@ class Validation
         'log_date'   => 'required|valid_date[Y-m-d]',
         'log_time'   => 'required|regex_match[/^([0-1]\d|20|21|22|23):[0-5]\d:[0-5]\d$/]',
     ];
+
+    public $MeterGetStatisticChartData = [
+        'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
+    ];
     // end
 
     public $MeterBasicStatisticGet = [

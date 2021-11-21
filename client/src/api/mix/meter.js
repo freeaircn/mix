@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-11-20 23:04:18
+ * @LastEditTime: 2021-11-21 21:51:08
  */
 import request from '@/utils/request'
 
@@ -13,6 +13,7 @@ const api = {
   report_daily: '/meters/report/daily',
   //
   statistic_daily: '/meters/statistic/daily',
+  statistic_chart_data: '/meters/statistic/chart/data',
   //
   statistic_basic: '/meters/statistic/basic',
   statistic_overall: 'meters/statistic/overall',
@@ -71,6 +72,14 @@ export function getDailyReport (params) {
 export function getDailyStatistic (params) {
   return request({
     url: api.statistic_daily,
+    method: 'get',
+    params: params
+  })
+}
+
+export function getStatisticChartData (params) {
+  return request({
+    url: api.statistic_chart_data,
     method: 'get',
     params: params
   })

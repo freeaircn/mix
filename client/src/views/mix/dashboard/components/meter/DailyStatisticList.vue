@@ -1,39 +1,36 @@
 <template>
   <div>
-    <div class="kwh-year-card-content">
-      <div style="margin-bottom: 8px">
-        <a-row :gutter="8" >
-          <a-col :span="12">
-            <a-statistic :title="year + '年计划 / 万kWh'" :value="totalPlan" :value-style="{ color: '#FF4500' }">
-              <!-- <template #suffix>
+    <div style="margin-bottom: 8px">
+      <a-row :gutter="8" >
+        <a-col :span="12">
+          <a-statistic :title="year + '年计划 / 万kWh'" :value="totalPlan" :value-style="{ color: '#FF4500' }">
+            <!-- <template #suffix>
                 <span> / 万kWh</span>
               </template> -->
-            </a-statistic>
-          </a-col>
-          <a-col :span="12">
-            <a-statistic title="累计成交 / 万kWh" :value="totalDeal" :value-style="{ color: '#FF4500' }">
-              <!-- <template #suffix>
+          </a-statistic>
+        </a-col>
+        <a-col :span="12">
+          <a-statistic :title="year + '年成交 / 万kWh'" :value="totalDeal" :value-style="{ color: '#FF4500' }">
+            <!-- <template #suffix>
                 <span> / 万kWh</span>
               </template> -->
-            </a-statistic>
-          </a-col>
-        </a-row>
-      </div>
-
-      <a-table
-        ref="table"
-        rowKey="id"
-        :columns="columns"
-        :data-source="listData"
-        :loading="loading"
-        :pagination="false"
-      >
-        <template slot="footer">
-          <span style="">{{ '今日发电机无功：正向 ' + dayFrkAllGens + '，反向 ' + dayBrkAllGens }}</span>
-        </template>
-      </a-table>
-
+          </a-statistic>
+        </a-col>
+      </a-row>
     </div>
+
+    <a-table
+      ref="table"
+      rowKey="id"
+      :columns="columns"
+      :data-source="listData"
+      :loading="loading"
+      :pagination="false"
+    >
+      <template slot="footer">
+        <span style="">{{ '今日发电机无功：正向 ' + dayFrkAllGens + '，反向 ' + dayBrkAllGens }}</span>
+      </template>
+    </a-table>
   </div>
 </template>
 

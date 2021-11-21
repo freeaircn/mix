@@ -70,9 +70,6 @@
     </div>
 
     <a-modal :title="newRecordDiagTitle" v-model="newRecordDiagVisible" :footer="null" :destroyOnClose="true">
-      <!-- <template slot="footer">
-        <a-button key="submit" type="primary" @click="() => {this.newRecordDiagVisible = false}">关闭</a-button>
-      </template> -->
       <RecordForm
         :stationId="userInfo.belongToDeptId"
         :creator="this.userInfo.username"
@@ -81,14 +78,9 @@
       </RecordForm>
     </a-modal>
 
-    <a-modal
-      :title="logDetailDiagTitle"
-      v-model="logDetailDiagVisible"
-    >
+    <a-modal :title="logDetailDiagTitle" v-model="logDetailDiagVisible">
       <template slot="footer">
-        <a-button key="submit" type="primary" @click="() => {this.logDetailDiagVisible = false}">
-          关闭
-        </a-button>
+        <a-button key="submit" type="primary" @click="() => {this.logDetailDiagVisible = false}">关闭</a-button>
       </template>
       <LogDetail
         :tab1Data="logDetailTab1Data"
@@ -101,9 +93,7 @@
 
     <a-modal v-model="reportDiagVisible" title="简报" >
       <template slot="footer">
-        <a-button key="submit" type="primary" @click="() => {this.reportDiagVisible = false}">
-          关闭
-        </a-button>
+        <a-button key="submit" type="primary" @click="() => {this.reportDiagVisible = false}">关闭</a-button>
       </template>
       <a-card size="small" title="今日1" style="margin-bottom: 8px">
         <a-button slot="extra" type="link" @click="handleCopyReportContent('daily1')">复制</a-button>
@@ -121,9 +111,7 @@
 
     <a-modal v-model="reportOf20ClockDiagVisible" title="简报" >
       <template slot="footer">
-        <a-button key="submit" type="primary" @click="() => {this.reportOf20ClockDiagVisible = false}">
-          关闭
-        </a-button>
+        <a-button key="submit" type="primary" @click="() => {this.reportOf20ClockDiagVisible = false}">关闭</a-button>
       </template>
       <a-statistic title="20:00发电量" :value="dailyOf20Clock">
         <template #suffix>
@@ -132,13 +120,14 @@
       </a-statistic>
     </a-modal>
 
+    <StatisticChart
+      :stationId="userInfo.belongToDeptId"
+    >
+    </StatisticChart>
+
     <div v-if="!isMobile">
-      <a-card title="统计图" :bordered="false" :body-style="{marginBottom: '8px'}">
-        <div class="extra-wrapper" slot="extra">
-          <div class="extra-item">
-            <a-button type="link" @click="onQueryBasicStatistic('month')">刷新</a-button>
-          </div>
-        </div>
+      <!-- <a-card :title="'年统计图 （万kWh）'" :bordered="false" :body-style="{marginBottom: '8px'}">
+        <a-button slot="extra" type="link" @click="onQueryBasicStatistic()">刷新</a-button>
         <BasicStatistic
           :loading="basicStatLoading"
           :changed="basicStatChanged"
@@ -149,7 +138,7 @@
           :quarterlyData="basicStatQuarterlyData"
         >
         </BasicStatistic>
-      </a-card>
+      </a-card> -->
 
       <a-card :loading="false" title="全景" :bordered="false" :body-style="{marginBottom: '8px'}">
         <div class="extra-wrapper" slot="extra">
@@ -177,7 +166,7 @@
 import moment from 'moment'
 import { BigNumber } from 'bignumber.js'
 // import { deepMerge } from '@/utils/util'
-import { RecordForm, OverallStatistic, LogList, BasicStatistic, DailyStatisticList, PlanAndDeal, LogDetail } from './components/meter'
+import { RecordForm, StatisticChart, OverallStatistic, LogList, BasicStatistic, DailyStatisticList, PlanAndDeal, LogDetail } from './components/meter'
 import { mapGetters } from 'vuex'
 import { getMeterLogs, getMetersLogDetail, getMetersDailyReport, getMetersBasicStatistic, delMeterLogs, getMetersOverallStatistic } from '@/api/service'
 import { getDailyStatistic, getPlanAndDeal, updatePlanAndDealRecord } from '@/api/mix/meter'
@@ -188,6 +177,7 @@ export default {
   mixins: [baseMixin],
   components: {
     RecordForm,
+    StatisticChart,
     DailyStatisticList,
     PlanAndDeal,
     LogList,
@@ -328,6 +318,7 @@ export default {
     onNewRecordSuccess () {
       this.newRecordDiagVisible = false
       this.onQueryMeterLog(this.logListDate)
+      this.onShowDailyStatisticList()
     },
 
     // 记录列表显示
@@ -572,37 +563,6 @@ export default {
           })
     },
 
-    // 单位换算
-    floorMeterValue (data) {
-      for (let i = 0; i < data.length; i++) {
-        for (const x in data[i]) {
-          if (i < 2) {
-            data[i][x] = Math.floor(data[i][x] * 10000)
-          } else {
-            data[i][x] = Math.floor(data[i][x] * 100)
-          }
-        }
-      }
-      return data
-    },
-
-    // 万kwh -> kwh
-    filterMeterValue (meter) {
-      const temp = meter
-      for (let i = 0; i < temp.length; i++) {
-        for (const x in temp[i]) {
-          if (i < 2) {
-            // 四位小数
-            temp[i][x] = this.toStringAndLeftShift(temp[i][x], 4)
-          } else {
-            // 两位小数
-            temp[i][x] = this.toStringAndLeftShift(temp[i][x], 2)
-          }
-        }
-      }
-      return temp
-    },
-
     // 2021-11-08 DB: kwh -> Web: 万kwh
     adaptPlanAndDealDisplay (data, bits) {
       const temp = data
@@ -651,35 +611,6 @@ export default {
       const temp = new BigNumber(value).dividedBy(x)
 
       return temp.toFixed()
-    },
-
-    toStringAndLeftShift (value, bits) {
-      const str = value.toString()
-      if (str === '0') {
-        return '0'
-      }
-
-      const arr = str.split('.')
-      //
-      if (arr.length === 1) {
-        let tail = ''
-        for (let i = 0; i < bits; i++) {
-          tail = tail + '0'
-        }
-        return arr[0] + tail
-      }
-      //
-      if (arr.length === 2) {
-        const integerPart = arr[0]
-        const fractionalPart = arr[1].substr(0, bits)
-
-        const len = fractionalPart.length
-        let tail = ''
-        for (let i = 0; i < (bits - len); i++) {
-          tail = tail + '0'
-        }
-        return integerPart + fractionalPart + tail
-      }
     }
   }
 }

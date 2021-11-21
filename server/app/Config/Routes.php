@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-11-20 21:45:29
+ * @LastEditTime: 2021-11-21 21:52:12
  */
 
 namespace Config;
@@ -118,6 +118,7 @@ $routes->group('api', function ($routes) {
     $routes->get('meters/plan_deal', 'Meters::getPlanAndDealList');
     $routes->put('meters/plan_deal', 'Meters::updatePlanAndDealRecord');
     $routes->get('meters/record/detail', 'Meters::getRecordDetail');
+    $routes->get('meters/statistic/chart/data', 'Meters::getStatisticChartData');
     //
     $routes->get('meters/log_detail', 'Meters::getMetersLogDetail');
     $routes->delete('meters', 'Meters::delMeterLogs');
