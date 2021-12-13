@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-11-20 21:21:20
+ * @LastEditTime: 2021-12-13 18:20:28
  */
 
 namespace Config;
@@ -108,17 +108,18 @@ class Validation
         'date'       => 'required|valid_date[Y-m-d]',
     ];
 
-    public $MeterLogsNew = [
+    public $MeterNewRecord = [
         'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
         'log_date'   => 'required|valid_date[Y-m-d]',
         'log_time'   => 'required|regex_match[/^([0-1]\d|20|21|22|23):[0-5]\d:[0-5]\d$/]',
         'creator'    => 'required|regex_match[/^([\x{4e00}-\x{9fa5}]{1,6})$/u]',
     ];
 
-    public $MeterLogsGet = [
+    public $MeterGetRecord = [
         'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
-        'date'       => 'required|valid_date[Y-m-d]',
-        'type'       => 'required|in_list[month]',
+        // 'date'       => 'required',
+        // 'date'       => 'required|valid_date[Y-m-d]',
+        // 'type'       => 'required|in_list[month]',
         'limit'      => 'required|regex_match[^[1-9]\d{0,2}$]',
         'offset'     => 'required|regex_match[^[1-9]\d{0,9}$]',
     ];

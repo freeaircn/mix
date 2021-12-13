@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-11-21 21:52:12
+ * @LastEditTime: 2021-12-13 20:27:36
  */
 
 namespace Config;
@@ -111,8 +111,9 @@ $routes->group('api', function ($routes) {
     $routes->get('generator/event/export', 'GeneratorEvent::getExportGeneratorEvent');
     $routes->delete('generator/event', 'GeneratorEvent::delGeneratorEvent');
     //
-    $routes->post('meters', 'Meters::newMeterLogs');
-    $routes->get('meters', 'Meters::getMeterLogs');
+    $routes->post('meters', 'Meters::newRecord');
+    $routes->get('meters', 'Meters::getRecord');
+    $routes->put('meters', 'Meters::updateRecord');
     // 2021-11-08
     $routes->get('meters/statistic/daily', 'Meters::getDailyStatistic');
     $routes->get('meters/plan_deal', 'Meters::getPlanAndDealList');
@@ -120,10 +121,10 @@ $routes->group('api', function ($routes) {
     $routes->get('meters/record/detail', 'Meters::getRecordDetail');
     $routes->get('meters/statistic/chart/data', 'Meters::getStatisticChartData');
     //
-    $routes->get('meters/log_detail', 'Meters::getMetersLogDetail');
+    // $routes->get('meters/log_detail', 'Meters::getMetersLogDetail');
     $routes->delete('meters', 'Meters::delMeterLogs');
     $routes->get('meters/daily_report', 'Meters::getDailyReport');
-    $routes->get('meters/basic_statistic', 'Meters::getBasicStatistic');
+    // $routes->get('meters/basic_statistic', 'Meters::getBasicStatistic');
     $routes->get('meters/overall_statistic', 'Meters::getOverallStatistic');
     //
     // $routes->get('meters/planning_kWh', 'Meters::getPlanningKWh');

@@ -19,6 +19,7 @@
       </a-row>
     </div>
 
+    <div style="margin-bottom: 8px">{{ '截至：' + date }}</div>
     <a-table
       ref="table"
       rowKey="id"

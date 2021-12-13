@@ -24,16 +24,30 @@
       </PlanAndDeal>
     </a-modal>
 
-    <div class="antd-pro-pages-dashboard-analysis-twoColLayout" :class="!isMobile && 'desktop'">
-      <a-row :gutter="[8,8]" type="flex" :style="{ marginBottom: '8px' }">
-        <a-col :xl="12" :lg="12" :md="24" :sm="24" :xs="24" >
-          <a-card :bordered="false" :title="dailyListTitle" :style="{height: '100%'}">
-            <a-button slot="extra" type="link" @click="onShowDailyStatisticList">刷新</a-button>
-            <!-- <div class="extra-wrapper" slot="extra">
-              <div class="extra-item">
-                <a-button type="link" @click="onShowDailyStatisticList">刷新</a-button>
-              </div>
-            </div> -->
+    <div class="antd-pro-pages-dashboard-analysis-twoColLayout" :style="{ marginBottom: '8px' }">
+      <!-- <a-row :gutter="[8,8]" type="flex" :style="{ marginBottom: '8px' }"> -->
+      <!-- <a-col :xl="12" :lg="12" :md="24" :sm="24" :xs="24"> -->
+      <a-card :bordered="false" title="电表记录" :style="{ height: '100%' }">
+        <div>
+          <!-- style="width: calc(100% - 240px);" -->
+          <RecordList
+            :loading="recordListLoading"
+            :date="queryRecordDate"
+            :listData="recordListData"
+            :current.sync="recordListPageIndex"
+            :total="totalRecords"
+            @paginationChange="onRecordListPageChange"
+            @query="onQueryRecord"
+            @update="onUpdateRecord"
+            @delete="onDeleteRecord"
+            @report="onReqDailyReport"
+          >
+          </RecordList>
+        </div>
+      </a-card>
+      <!-- </a-col> -->
+      <!-- <a-col :xl="12" :lg="12" :md="24" :sm="24" :xs="24" >
+          <a-card :bordered="false" title="统计表" :style="{height: '100%'}">
             <DailyStatisticList
               :loading="dailyListLoading"
               :date="dailyListDate"
@@ -45,50 +59,21 @@
             >
             </DailyStatisticList>
           </a-card>
-        </a-col>
-        <a-col :xl="12" :lg="12" :md="24" :sm="24" :xs="24">
-          <a-card :bordered="false" title="历史记录" :style="{ height: '100%' }">
-            <div>
-              <!-- style="width: calc(100% - 240px);" -->
-              <LogList
-                :loading="logListLoading"
-                :date="logListDate"
-                :listData="logListData"
-                :current.sync="logListPageIndex"
-                :total="totalLogs"
-                @paginationChange="onLogListPageChange"
-                @query="onQueryMeterLog"
-                @queryDetail="onQueryMetersLogDetail"
-                @report="onReqDailyReport"
-                @delete="onDeleteMeterLog"
-              >
-              </LogList>
-            </div>
-          </a-card>
-        </a-col>
-      </a-row>
+        </a-col> -->
+
+      <!-- </a-row> -->
     </div>
 
-    <a-modal :title="newRecordDiagTitle" v-model="newRecordDiagVisible" :footer="null" :destroyOnClose="true">
+    <a-modal :title="recordDiagTitle" v-model="recordDiagVisible" :footer="null" :destroyOnClose="true">
       <RecordForm
         :stationId="userInfo.belongToDeptId"
         :creator="this.userInfo.username"
-        @submitSuccess="onNewRecordSuccess"
+        :update="recordUpdate"
+        :recordInfo="recordInfo"
+        @submitSuccess="onRecordFormSuccess"
+        @failure="onRecordFormFailure"
       >
       </RecordForm>
-    </a-modal>
-
-    <a-modal :title="logDetailDiagTitle" v-model="logDetailDiagVisible">
-      <template slot="footer">
-        <a-button key="submit" type="primary" @click="() => {this.logDetailDiagVisible = false}">关闭</a-button>
-      </template>
-      <LogDetail
-        :tab1Data="logDetailTab1Data"
-        :tab2Data="logDetailTab2Data"
-        :tab3Data="logDetailTab3Data"
-        :tab4Data="logDetailTab4Data"
-      >
-      </LogDetail>
     </a-modal>
 
     <a-modal v-model="reportDiagVisible" title="简报" >
@@ -126,20 +111,6 @@
     </StatisticChart>
 
     <div v-if="!isMobile">
-      <!-- <a-card :title="'年统计图 （万kWh）'" :bordered="false" :body-style="{marginBottom: '8px'}">
-        <a-button slot="extra" type="link" @click="onQueryBasicStatistic()">刷新</a-button>
-        <BasicStatistic
-          :loading="basicStatLoading"
-          :changed="basicStatChanged"
-          :date="basicStatDate"
-          :statisticListData="basicStatListData"
-          :thirtyDaysData="basicStat30DaysData"
-          :monthlyData="basicStatMonthlyData"
-          :quarterlyData="basicStatQuarterlyData"
-        >
-        </BasicStatistic>
-      </a-card> -->
-
       <a-card :loading="false" title="全景" :bordered="false" :body-style="{marginBottom: '8px'}">
         <div class="extra-wrapper" slot="extra">
           <div class="extra-item">
@@ -166,10 +137,11 @@
 import moment from 'moment'
 import { BigNumber } from 'bignumber.js'
 // import { deepMerge } from '@/utils/util'
-import { RecordForm, StatisticChart, OverallStatistic, LogList, BasicStatistic, DailyStatisticList, PlanAndDeal, LogDetail } from './components/meter'
+import { RecordForm, StatisticChart, OverallStatistic, RecordList, DailyStatisticList, PlanAndDeal } from './components/meter'
 import { mapGetters } from 'vuex'
-import { getMeterLogs, getMetersLogDetail, getMetersDailyReport, getMetersBasicStatistic, delMeterLogs, getMetersOverallStatistic } from '@/api/service'
-import { getDailyStatistic, getPlanAndDeal, updatePlanAndDealRecord } from '@/api/mix/meter'
+import { getMetersDailyReport, getMetersOverallStatistic } from '@/api/service'
+import { getRecord, delRecord, getPlanAndDeal, updatePlanAndDealRecord } from '@/api/mix/meter'
+// import { getRecord, delRecord, getDailyStatistic, getPlanAndDeal, updatePlanAndDealRecord } from '@/api/mix/meter'
 import { baseMixin } from '@/store/app-mixin'
 
 export default {
@@ -180,23 +152,11 @@ export default {
     StatisticChart,
     DailyStatisticList,
     PlanAndDeal,
-    LogList,
-    BasicStatistic,
-    OverallStatistic,
-    LogDetail
+    RecordList,
+    OverallStatistic
   },
   data () {
     return {
-      // 单日数据统计显示 2021-11-08
-      dailyListTitle: '截至',
-      dailyListLoading: false,
-      dailyListDate: '',
-      dailyListTotalPlan: '0',
-      dailyListTotalDeal: '0',
-      dailyListDayFrk: '0',
-      dailyListDayBrk: '0',
-      dailyListData: [],
-
       // 计划&成交数据 2021-11-08
       planAndDealDiagVisible: false,
       planAndDealListLoading: false,
@@ -206,16 +166,18 @@ export default {
       planAndDealTotalDeal: '0',
 
       // 录入新电度表单对话框 2021-11-20
-      newRecordDiagTitle: '录入电表读数',
-      newRecordDiagVisible: false,
+      recordDiagTitle: '录入电表读数',
+      recordDiagVisible: false,
+      recordUpdate: false,
+      recordInfo: {},
 
       // 记录显示
-      logListLoading: false,
-      logListPageIndex: 1,
+      recordListLoading: false,
+      recordListPageIndex: 1,
       pageSize: 6,
-      totalLogs: 0,
-      logListDate: '',
-      logListData: [],
+      totalRecords: 0,
+      queryRecordDate: '',
+      recordListData: [],
       reportDiagVisible: false,
       reportContent: {
         daily1: '',
@@ -223,24 +185,19 @@ export default {
         weekly: ''
       },
 
+      // 单日数据统计显示 2021-11-08
+      // dailyListTitle: '截至',
+      // dailyListLoading: false,
+      // dailyListDate: '',
+      // dailyListTotalPlan: '0',
+      // dailyListTotalDeal: '0',
+      // dailyListDayFrk: '0',
+      // dailyListDayBrk: '0',
+      // dailyListData: [],
+
+      //
       reportOf20ClockDiagVisible: false,
       dailyOf20Clock: '0',
-
-      logDetailDiagTitle: '',
-      logDetailDiagVisible: false,
-      logDetailTab1Data: [],
-      logDetailTab2Data: [],
-      logDetailTab3Data: [],
-      logDetailTab4Data: [],
-
-      // Basic统计显示
-      basicStatLoading: false,
-      basicStatChanged: false,
-      basicStatDate: '',
-      basicStatListData: [],
-      basicStat30DaysData: [],
-      basicStatMonthlyData: [],
-      basicStatQuarterlyData: [],
 
       // 全景统计显示
       overallStatLoading: false,
@@ -260,49 +217,19 @@ export default {
   },
   created () {
     // 初值
-    this.logListDate = moment().format('YYYY-MM-DD')
     this.queryDateOfPlanAndDeal = moment().format('YYYY-MM-DD')
   },
   mounted () {
     // 2021-11-08
-    this.onShowDailyStatisticList()
-    //
-    this.onQueryMeterLog(this.logListDate)
+    this.onQueryRecord()
+    // this.onShowDailyStatisticList()
 
     if (!this.isMobile) {
-      // 统计图表
-      this.onQueryBasicStatistic()
-
       // 全景统计
       this.onQueryOverallStatistic()
     }
   },
   methods: {
-    // 单日数据统计 2021-11-08
-    onShowDailyStatisticList () {
-      const query = {
-        station_id: this.userInfo.belongToDeptId
-      }
-      this.dailyListLoading = true
-      getDailyStatistic(query)
-        .then(response => {
-          this.dailyListDate = response.date
-          this.dailyListTotalPlan = response.totalPlan
-          this.dailyListTotalDeal = response.totalDeal
-          this.dailyListDayFrk = response.dayFrk
-          this.dailyListDayBrk = response.dayBrk
-          this.dailyListData = response.listData
-          //
-          this.dailyListLoading = false
-          this.dailyListTitle = '截至 ' + this.dailyListDate
-        })
-        .catch((err) => {
-          this.dailyListLoading = false
-          if (err.response) {
-          }
-        })
-    },
-
     // 2021-11-08
     onClickPlanAndDealDiag () {
       this.queryDateOfPlanAndDeal = moment().format('YYYY-MM-DD')
@@ -310,94 +237,148 @@ export default {
       this.planAndDealDiagVisible = true
     },
 
-    // 录入表单 2021-11-20
+    // 电表记录-增 start
     onClickNewRecord () {
-      this.newRecordDiagVisible = true
+      this.recordDiagVisible = true
     },
 
-    onNewRecordSuccess () {
-      this.newRecordDiagVisible = false
-      this.onQueryMeterLog(this.logListDate)
-      this.onShowDailyStatisticList()
+    onRecordFormSuccess (method) {
+      this.recordDiagVisible = false
+      if (method === 'post') {
+        this.onQueryRecord()
+        // this.onShowDailyStatisticList()
+      }
+      if (method === 'put') {
+        this.onQueryRecordAfterUpdate(this.queryRecordDate)
+      }
     },
 
-    // 记录列表显示
-    onQueryMeterLog (date) {
+    onRecordFormFailure () {
+      this.recordDiagVisible = false
+    },
+    // 电表记录-增 end
+
+    // 电表记录-删
+    onDeleteRecord (param) {
+      delRecord(param)
+        .then(() => {
+            this.onQueryRecord()
+            // this.onShowDailyStatisticList()
+          })
+          //  网络异常，清空页面数据显示，防止错误的操作
+          .catch((err) => {
+            if (err.response) {
+              this.recordListData.splice(0, this.recordListData.length)
+            }
+          })
+    },
+
+    // 电表记录-查 start
+    onQueryRecord (date = '') {
       const query = {
         station_id: this.userInfo.belongToDeptId,
         date: date,
-        type: 'month',
         limit: this.pageSize,
         offset: 1
       }
-      this.logListPageIndex = 1
-      this.logListLoading = true
-      getMeterLogs(query)
+      this.recordListPageIndex = 1
+      this.recordListLoading = true
+      getRecord(query)
         .then(res => {
-          this.logListLoading = false
+          this.recordListLoading = false
           //
-          this.logListDate = date
-          this.totalLogs = res.total
-          this.logListData = res.data
+          this.totalRecords = res.total
+          this.queryRecordDate = res.date
+          this.recordListData = res.data
         })
         .catch((err) => {
-          this.logListLoading = false
-          this.logListData.splice(0, this.logListData.length)
+          this.recordListLoading = false
+          this.recordListData.splice(0, this.recordListData.length)
           if (err.response) {
           }
         })
     },
 
-    onLogListPageChange (param) {
+    onQueryRecordAfterUpdate (date = '') {
+      const query = {
+        station_id: this.userInfo.belongToDeptId,
+        date: date,
+        limit: this.pageSize,
+        offset: this.recordListPageIndex
+      }
+      // this.recordListPageIndex = 1
+      this.recordListLoading = true
+      getRecord(query)
+        .then(res => {
+          this.recordListLoading = false
+          //
+          this.totalRecords = res.total
+          // this.queryRecordDate = res.date
+          this.recordListData = res.data
+        })
+        .catch((err) => {
+          this.recordListLoading = false
+          this.recordListData.splice(0, this.recordListData.length)
+          if (err.response) {
+          }
+        })
+    },
+
+    onRecordListPageChange (param) {
       const query = { ...param }
       query.station_id = this.userInfo.belongToDeptId
-      query.date = this.logListDate
-      query.type = 'month'
+      query.date = this.queryRecordDate
 
-      this.logListLoading = true
-      getMeterLogs(query)
+      this.recordListLoading = true
+      getRecord(query)
         .then(res => {
-          this.logListLoading = false
+          this.recordListLoading = false
           //
-          this.totalLogs = res.total
-          this.logListData = res.data
+          this.totalRecords = res.total
+          this.recordListData = res.data
         })
         .catch((err) => {
-          this.logListLoading = false
-          this.logListData.splice(0, this.logListData.length)
+          this.recordListLoading = false
+          this.recordListData.splice(0, this.recordListData.length)
           if (err.response) {
           }
         })
     },
+    // 电表记录-查 end
 
-    onQueryMetersLogDetail (param) {
-      this.logDetailTab1Data.splice(0, this.logDetailTab1Data.length)
-      this.logDetailTab2Data.splice(0, this.logDetailTab2Data.length)
-      this.logDetailTab3Data.splice(0, this.logDetailTab3Data.length)
-      this.logDetailTab4Data.splice(0, this.logDetailTab4Data.length)
-      //
-      this.logDetailDiagTitle = param.log_date + ' ' + param.log_time
-      this.logDetailDiagVisible = false
-      getMetersLogDetail(param)
-        .then((data) => {
-          this.logDetailTab1Data = data.tab1Data
-          this.logDetailTab2Data = data.tab2Data
-          this.logDetailTab3Data = data.tab3Data
-          this.logDetailTab4Data = data.tab4Data
-          //
-          this.logDetailDiagVisible = true
-        })
-        .catch((err) => {
-          this.logDetailTab1Data.splice(0, this.logDetailTab1Data.length)
-          this.logDetailTab2Data.splice(0, this.logDetailTab2Data.length)
-          this.logDetailTab3Data.splice(0, this.logDetailTab3Data.length)
-          this.logDetailTab4Data.splice(0, this.logDetailTab4Data.length)
-          //
-          this.logDetailDiagVisible = false
-          if (err.response) {
-          }
-        })
+    // 电表记录-改 start
+    onUpdateRecord (record) {
+      this.recordInfo = record
+      this.recordDiagVisible = true
+      this.recordUpdate = true
+      setTimeout(() => { this.recordUpdate = false }, 500)
     },
+    // 电表记录-改 end
+
+    // 单日数据统计 2021-11-08
+    // onShowDailyStatisticList () {
+    //   const query = {
+    //     station_id: this.userInfo.belongToDeptId
+    //   }
+    //   this.dailyListLoading = true
+    //   getDailyStatistic(query)
+    //     .then(response => {
+    //       this.dailyListDate = response.date
+    //       this.dailyListTotalPlan = response.totalPlan
+    //       this.dailyListTotalDeal = response.totalDeal
+    //       this.dailyListDayFrk = response.dayFrk
+    //       this.dailyListDayBrk = response.dayBrk
+    //       this.dailyListData = response.listData
+    //       //
+    //       this.dailyListLoading = false
+    //       this.dailyListTitle = '截至 ' + this.dailyListDate
+    //     })
+    //     .catch((err) => {
+    //       this.dailyListLoading = false
+    //       if (err.response) {
+    //       }
+    //     })
+    // },
 
     // 查看电量单日简报
     onReqDailyReport (param) {
@@ -461,19 +442,6 @@ export default {
         })
     },
 
-    onDeleteMeterLog (param) {
-      delMeterLogs(param)
-        .then(() => {
-            this.onQueryMeterLog(this.logListDate)
-          })
-          //  网络异常，清空页面数据显示，防止错误的操作
-          .catch((err) => {
-            if (err.response) {
-              this.logListData.splice(0, this.logListData.length)
-            }
-          })
-    },
-
     // 查询计划 2021-11-08
     onQueryPlanAndDeal (date) {
       const query = {
@@ -512,30 +480,6 @@ export default {
           this.onQueryPlanAndDeal(this.queryDateOfPlanAndDeal)
         })
         .catch((err) => {
-          if (err.response) {
-          }
-        })
-    },
-
-    // 基本统计
-    onQueryBasicStatistic () {
-      const query = {
-        station_id: this.userInfo.belongToDeptId
-      }
-      this.basicStatLoading = true
-      getMetersBasicStatistic(query)
-        .then(res => {
-          this.basicStatDate = res.date
-          this.basicStatListData = res.statisticList
-          this.basicStat30DaysData = res.thirtyDaysData
-          this.basicStatMonthlyData = res.monthData
-          this.basicStatQuarterlyData = res.quarterData
-          //
-          this.basicStatLoading = false
-          this.basicStatChanged = !this.basicStatChanged
-        })
-        .catch((err) => {
-          this.basicStatLoading = false
           if (err.response) {
           }
         })

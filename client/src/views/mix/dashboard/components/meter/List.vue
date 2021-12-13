@@ -14,7 +14,7 @@
       </a-form-model-item> -->
     </a-form-model>
 
-    <a-table
+    <!-- <a-table
       ref="table"
       rowKey="id"
       :columns="columns"
@@ -22,6 +22,15 @@
       :pagination="pagination"
       :loading="loading"
       :customRow="onRowClick"
+      @change="handleTableChange"
+    > -->
+    <a-table
+      ref="table"
+      rowKey="id"
+      :columns="columns"
+      :data-source="listData"
+      :pagination="pagination"
+      :loading="loading"
       @change="handleTableChange"
     >
       <span slot="serial" slot-scope="text, record, index">
@@ -31,12 +40,14 @@
         <template>
           <a @click="onClickReport(record)">简报</a>
           <a-divider type="vertical" />
-          <a @click="handleDel(record)">删除</a>
+          <a @click="onClickUpdate(record)">修改</a>
+          <a-divider type="vertical" />
+          <a @click="onClickDel(record)">删除</a>
         </template>
       </span>
-      <template slot="footer">
+      <!-- <template slot="footer">
         注：双击某一行，查看记录的电表读数
-      </template>
+      </template> -->
     </a-table>
 
   </div>
@@ -163,28 +174,33 @@ export default {
     },
 
     // 双击行，弹出对话框
-    onRowClick (record) {
-      return {
-        on: {
-          dblclick: () => {
-            const temp = {
-              station_id: record.station_id,
-              log_date: record.log_date,
-              log_time: record.log_time
-            }
-            this.$emit('queryDetail', temp)
-          }
-        }
-      }
-    },
+    // onRowClick (record) {
+    //   return {
+    //     on: {
+    //       dblclick: () => {
+    //         const temp = {
+    //           station_id: record.station_id,
+    //           log_date: record.log_date,
+    //           log_time: record.log_time
+    //         }
+    //         this.$emit('queryDetail', temp)
+    //       }
+    //     }
+    //   }
+    // },
 
     // 查看简报，消息码report
     onClickReport (record) {
       this.$emit('report', record)
     },
 
-    // 删除请求
-    handleDel (record) {
+    // 修改
+    onClickUpdate (record) {
+      this.$emit('update', record)
+    },
+
+    // 删除
+    onClickDel (record) {
       const param = { ...record }
       this.$confirm({
         title: '确定删除吗?',

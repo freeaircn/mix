@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-11-22 00:46:08
+ * @LastEditTime: 2021-12-13 22:41:18
  */
 
 namespace App\Controllers;
@@ -74,10 +74,10 @@ class Meters extends BaseController
         $this->planKWhModel  = new PlanKWhModel();
     }
 
-    public function newMeterLogs()
+    public function newRecord()
     {
         // 检查请求数据
-        if (!$this->validate('MeterLogsNew')) {
+        if (!$this->validate('MeterNewRecord')) {
             $res['error'] = $this->validator->getErrors();
 
             $res['code'] = EXIT_ERROR;
@@ -126,8 +126,10 @@ class Meters extends BaseController
         $log_date   = $client['log_date'];
         $log_time   = $client['log_time'];
 
+        $model = new RecordModel();
+
         // 是否已存在该日期/时间的记录
-        $hasLogs = $this->meterLogModel->hasSameLogByStationAndDateTime($station_id, $log_date, $log_time);
+        $hasLogs = $model->hasSameLogByStationAndDateTime($station_id, $log_date, $log_time);
         if ($hasLogs) {
             $res['code'] = EXIT_ERROR;
             $res['msg']  = '输入的日期已存在记录';
@@ -135,7 +137,7 @@ class Meters extends BaseController
         }
 
         //
-        $result = $this->meterLogModel->batchInsert($meters, $others);
+        $result = $model->batchInsert($meters, $others);
 
         if ($result) {
             $res['code'] = EXIT_SUCCESS;
@@ -148,12 +150,12 @@ class Meters extends BaseController
         return $this->respond($res);
     }
 
-    public function getMeterLogs()
+    public function getRecord()
     {
         $param = $this->request->getGet();
 
         // 检查请求数据
-        if (!$this->validate('MeterLogsGet')) {
+        if (!$this->validate('MeterGetRecord')) {
             $res['error'] = $this->validator->getErrors();
 
             $res['code'] = EXIT_ERROR;
@@ -162,24 +164,48 @@ class Meters extends BaseController
         }
 
         $query['station_id'] = $param['station_id'];
-        $query['start']      = $param['date'];
-        $query['end']        = $param['date'];
         $query['limit']      = $param['limit'];
         $query['offset']     = $param['offset'];
 
-        $type = $param['type'];
-        if ($type === 'month') {
-            $utils          = service('mixUtils');
-            $query['start'] = $utils->getFirstDayOfMonth($param['date']);
-            $query['end']   = $utils->getLastDayOfMonth($param['date']);
+        $date  = date('Y-m-d', time());
+        $model = new RecordModel();
+
+        // 预处理-查询日期
+        if ($param['date'] === '') {
+            $query2     = ['station_id' => $query['station_id']];
+            $columnName = ['log_date'];
+            $db         = $model->getLastDateByStation($columnName, $query2);
+            if (!isset($db['log_date'])) {
+                $res['code'] = EXIT_SUCCESS;
+                $res['data'] = ['total' => 0, 'date' => $date, 'data' => []];
+
+                return $this->respond($res);
+            }
+            $date = $db['log_date'];
+        } else {
+            $regexDate = '/^20\d{2}[\-](0?[1-9]|1[012])[\-](0?[1-9]|[12][0-9]|3[01])$/';
+
+            if (preg_match($regexDate, $param['date']) === 0) {
+                $res['error'] = 'invalid date';
+
+                $res['code'] = EXIT_ERROR;
+                $res['msg']  = '请求数据无效';
+                return $this->respond($res);
+            }
+            $date = $param['date'];
         }
 
+        // 限定查询日期
+        $utils          = service('mixUtils');
+        $query['start'] = $utils->getFirstDayOfMonth($date);
+        $query['end']   = $utils->getLastDayOfMonth($date);
+
         $columnName = ['id', 'station_id', 'log_date', 'log_time', 'creator'];
-        $result     = $this->meterLogModel->getLogsForShowList($columnName, $query);
+        $result     = $model->getForRecordList($columnName, $query);
 
         if ($result) {
             $res['code'] = EXIT_SUCCESS;
-            $res['data'] = ['total' => $result['total'], 'data' => $result['result']];
+            $res['data'] = ['total' => $result['total'], 'date' => $date, 'data' => $result['result']];
         } else {
             $res['code'] = EXIT_ERROR;
             $res['msg']  = '稍后再试';
@@ -188,12 +214,10 @@ class Meters extends BaseController
         return $this->respond($res);
     }
 
-    public function getMetersLogDetail()
+    public function updateRecord()
     {
-        $param = $this->request->getGet();
-
         // 检查请求数据
-        if (!$this->validate('MeterDailyReportGet')) {
+        if (!$this->validate('MeterNewRecord')) {
             $res['error'] = $this->validator->getErrors();
 
             $res['code'] = EXIT_ERROR;
@@ -201,25 +225,91 @@ class Meters extends BaseController
             return $this->respond($res);
         }
 
-        $query['station_id'] = $param['station_id'];
-        $query['log_date']   = $param['log_date'];
-        $query['log_time']   = $param['log_time'];
+        $client = $this->request->getJSON(true);
 
-        $columnName = ['meter_id', 'fak', 'bak', 'frk', 'brk', 'peak', 'valley'];
-        $db         = $this->meterLogModel->getByStationDateTime($columnName, $query);
+        // 检查数据
+        $valid = true;
+        if (isset($client['meter'])) {
+            if (count($client['meter']) !== $this->meterTotalNumber) {
+                $valid = false;
+            } else {
+                for ($i = 0; $i < $this->meterTotalNumber; $i++) {
+                    foreach ($client['meter'][$i] as $value) {
+                        if (!is_numeric($value)) {
+                            $valid = false;
+                            break;
+                        }
+                    }
+                }
 
-        $result = $this->editMetersLogDetail($db);
+            }
+        } else {
+            $valid = false;
+        }
+        if (!$valid) {
+            $res['error'] = 'invalid meter value';
+            $res['code']  = EXIT_ERROR;
+            $res['msg']   = '请求数据无效';
+            return $this->respond($res);
+        }
 
-        if (!empty($result)) {
+        // 取出数据
+        $meters = $client['meter'];
+        $others = [
+            'creator' => $client['creator'],
+        ];
+        $where = [
+            'station_id' => $client['station_id'],
+            'log_date'   => $client['log_date'],
+            'log_time'   => $client['log_time'],
+        ];
+
+        $model  = new RecordModel();
+        $result = $model->batchUpdate($meters, $others, $where);
+
+        if ($result) {
             $res['code'] = EXIT_SUCCESS;
-            $res['data'] = $result;
+            $res['msg']  = '修改成功';
         } else {
             $res['code'] = EXIT_ERROR;
-            $res['msg']  = '稍后再试';
+            $res['msg']  = '修改失败，稍后再试';
         }
 
         return $this->respond($res);
     }
+
+    // public function getMetersLogDetail()
+    // {
+    //     $param = $this->request->getGet();
+
+    //     // 检查请求数据
+    //     if (!$this->validate('MeterDailyReportGet')) {
+    //         $res['error'] = $this->validator->getErrors();
+
+    //         $res['code'] = EXIT_ERROR;
+    //         $res['msg']  = '请求数据无效';
+    //         return $this->respond($res);
+    //     }
+
+    //     $query['station_id'] = $param['station_id'];
+    //     $query['log_date']   = $param['log_date'];
+    //     $query['log_time']   = $param['log_time'];
+
+    //     $columnName = ['meter_id', 'fak', 'bak', 'frk', 'brk', 'peak', 'valley'];
+    //     $db         = $this->meterLogModel->getByStationDateTime($columnName, $query);
+
+    //     $result = $this->editMetersLogDetail($db);
+
+    //     if (!empty($result)) {
+    //         $res['code'] = EXIT_SUCCESS;
+    //         $res['data'] = $result;
+    //     } else {
+    //         $res['code'] = EXIT_ERROR;
+    //         $res['msg']  = '稍后再试';
+    //     }
+
+    //     return $this->respond($res);
+    // }
 
     // 2021-11-20
     public function getRecordDetail()
@@ -241,18 +331,19 @@ class Meters extends BaseController
             'log_time'   => $param['log_time'],
         ];
 
+        $model      = new RecordModel();
         $columnName = ['meter_id', 'fak', 'bak', 'frk', 'brk', 'peak', 'valley'];
-        $db         = $this->meterLogModel->getByStationDateTime($columnName, $query);
+        $db         = $model->getByStationDateTime($columnName, $query);
 
         // 指定日期+时间的记录不存在
-        if (empty($db)) {
-            $utils   = service('mixUtils');
-            $prevDay = $utils->getPlusOffsetDay($query['log_date'], -1);
+        // if (empty($db)) {
+        //     $utils   = service('mixUtils');
+        //     $prevDay = $utils->getPlusOffsetDay($query['log_date'], -1);
 
-            $query['log_date'] = $prevDay;
+        //     $query['log_date'] = $prevDay;
 
-            $db = $this->meterLogModel->getByStationDateTime($columnName, $query);
-        }
+        //     $db = $this->meterLogModel->getByStationDateTime($columnName, $query);
+        // }
 
         // 指定日期前一天的记录不存在，返回data=0
         if (empty($db)) {
@@ -261,28 +352,29 @@ class Meters extends BaseController
             return $this->respond($response);
         }
 
-        $cnt = count($db);
+        $cnt    = count($db);
+        $result = [];
         for ($i = 0; $i < $cnt; $i++) {
             // 线路表：4位小数
             if ($db[$i]['meter_id'] < 3) {
-                $db[$i]['fak'] = $db[$i]['fak'] / 10000;
-                $db[$i]['bak'] = $db[$i]['bak'] / 10000;
-                $db[$i]['frk'] = $db[$i]['frk'] / 10000;
-                $db[$i]['brk'] = $db[$i]['brk'] / 10000;
+                $result[$i]['fak'] = $db[$i]['fak'] / 10000;
+                $result[$i]['bak'] = $db[$i]['bak'] / 10000;
+                $result[$i]['frk'] = $db[$i]['frk'] / 10000;
+                $result[$i]['brk'] = $db[$i]['brk'] / 10000;
             }
             // 非线路表：2位小数
             if ($db[$i]['meter_id'] > 2) {
-                $db[$i]['fak']    = $db[$i]['fak'] / 100;
-                $db[$i]['bak']    = $db[$i]['bak'] / 100;
-                $db[$i]['frk']    = $db[$i]['frk'] / 100;
-                $db[$i]['brk']    = $db[$i]['brk'] / 100;
-                $db[$i]['peak']   = $db[$i]['peak'] / 100;
-                $db[$i]['valley'] = $db[$i]['valley'] / 100;
+                $result[$i]['fak']    = $db[$i]['fak'] / 100;
+                $result[$i]['bak']    = $db[$i]['bak'] / 100;
+                $result[$i]['frk']    = $db[$i]['frk'] / 100;
+                $result[$i]['brk']    = $db[$i]['brk'] / 100;
+                $result[$i]['peak']   = $db[$i]['peak'] / 100;
+                $result[$i]['valley'] = $db[$i]['valley'] / 100;
             }
         }
 
         $response['code'] = EXIT_SUCCESS;
-        $response['data'] = ['size' => $cnt, 'record' => $db];
+        $response['data'] = ['size' => $cnt, 'record' => $result];
 
         return $this->respond($response);
     }
@@ -593,79 +685,79 @@ class Meters extends BaseController
         return $this->respond($res);
     }
 
-    public function getBasicStatistic()
-    {
-        $param = $this->request->getGet();
+    // public function getBasicStatistic()
+    // {
+    //     $param = $this->request->getGet();
 
-        // 检查请求数据
-        if (!$this->validate('MeterBasicStatisticGet')) {
-            $res['error'] = $this->validator->getErrors();
+    //     // 检查请求数据
+    //     if (!$this->validate('MeterBasicStatisticGet')) {
+    //         $res['error'] = $this->validator->getErrors();
 
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '请求数据无效';
-            return $this->respond($res);
-        }
+    //         $res['code'] = EXIT_ERROR;
+    //         $res['msg']  = '请求数据无效';
+    //         return $this->respond($res);
+    //     }
 
-        // 取查询参数
-        $station_id = $param['station_id'];
-        // $log_date   = $param['log_date'];
-        $log_time = '23:59:00';
+    //     // 取查询参数
+    //     $station_id = $param['station_id'];
+    //     // $log_date   = $param['log_date'];
+    //     $log_time = '23:59:00';
 
-        // 查找最近一条23:59记录的日期
-        $query = [
-            'station_id' => $station_id,
-            'log_time'   => $log_time,
-        ];
-        $columnName = ['log_date'];
-        $db         = $this->meterLogModel->getLastDateByStationTime($columnName, $query);
-        // if (!isset($db['log_date'])) {
-        //     $res['code'] = EXIT_SUCCESS;
-        // }
-        $log_date = $db['log_date'];
+    //     // 查找最近一条23:59记录的日期
+    //     $query = [
+    //         'station_id' => $station_id,
+    //         'log_time'   => $log_time,
+    //     ];
+    //     $columnName = ['log_date'];
+    //     $db         = $this->meterLogModel->getLastDateByStationTime($columnName, $query);
+    //     // if (!isset($db['log_date'])) {
+    //     //     $res['code'] = EXIT_SUCCESS;
+    //     // }
+    //     $log_date = $db['log_date'];
 
-        // 查询年计划、月成交量
-        $query = [
-            'station_id' => $station_id,
-            'year'       => date('Y', strtotime($log_date)),
-        ];
-        $planning = $this->getPlanningForDailyReport($query);
+    //     // 查询年计划、月成交量
+    //     $query = [
+    //         'station_id' => $station_id,
+    //         'year'       => date('Y', strtotime($log_date)),
+    //     ];
+    //     $planning = $this->getPlanningForDailyReport($query);
 
-        $query = [
-            'station_id' => $station_id,
-            'log_date'   => $log_date,
-            'log_time'   => $log_time,
-        ];
+    //     $query = [
+    //         'station_id' => $station_id,
+    //         'log_date'   => $log_date,
+    //         'log_time'   => $log_time,
+    //     ];
 
-        // 发电量 delta
-        $genEnergy = $this->getGenEnergyForDailyReport($query);
+    //     // 发电量 delta
+    //     $genEnergy = $this->getGenEnergyForDailyReport($query);
 
-        // 上网电量 delta
-        $onGridEnergy = $this->getOnGridEnergyForDailyReport($query);
+    //     // 上网电量 delta
+    //     $onGridEnergy = $this->getOnGridEnergyForDailyReport($query);
 
-        // 完成率
-        $rates = $this->getCompletionRate($log_date, $planning, $genEnergy, $onGridEnergy);
+    //     // 完成率
+    //     $rates = $this->getCompletionRate($log_date, $planning, $genEnergy, $onGridEnergy);
 
-        // 统计图
-        // 30天
-        $thirtyDaysGenEnergy = $this->getThirtyDaysDataForBasicStatistic($query);
-        // 每月
-        $monthData = $this->getMonthDataForBasicStatistic($query, $planning['month']);
-        // 每季度
-        $quarterData = $this->getQuarterDataForBasicStatistic($query, $planning['quarter']);
+    //     // 统计图
+    //     // 30天
+    //     $thirtyDaysGenEnergy = $this->getThirtyDaysDataForBasicStatistic($query);
+    //     // 每月
+    //     $monthData = $this->getMonthDataForBasicStatistic($query, $planning['month']);
+    //     // 每季度
+    //     $quarterData = $this->getQuarterDataForBasicStatistic($query, $planning['quarter']);
 
-        $statisticResult = $this->chgUnitForBasicStatistic($rates, $genEnergy, $onGridEnergy, $thirtyDaysGenEnergy, $monthData, $quarterData);
+    //     $statisticResult = $this->chgUnitForBasicStatistic($rates, $genEnergy, $onGridEnergy, $thirtyDaysGenEnergy, $monthData, $quarterData);
 
-        $res['code'] = EXIT_SUCCESS;
-        $res['data'] = [
-            'date'           => $log_date . ' ' . $log_time,
-            'statisticList'  => $statisticResult['statisticList'],
-            'thirtyDaysData' => $statisticResult['thirtyDaysData'],
-            'monthData'      => $statisticResult['monthData'],
-            'quarterData'    => $statisticResult['quarterData'],
-        ];
+    //     $res['code'] = EXIT_SUCCESS;
+    //     $res['data'] = [
+    //         'date'           => $log_date . ' ' . $log_time,
+    //         'statisticList'  => $statisticResult['statisticList'],
+    //         'thirtyDaysData' => $statisticResult['thirtyDaysData'],
+    //         'monthData'      => $statisticResult['monthData'],
+    //         'quarterData'    => $statisticResult['quarterData'],
+    //     ];
 
-        return $this->respond($res);
-    }
+    //     return $this->respond($res);
+    // }
 
     public function getOverallStatistic()
     {
@@ -1983,127 +2075,127 @@ class Meters extends BaseController
 
     }
 
-    protected function editMetersLogDetail($db)
-    {
-        if (empty($db)) {
-            return false;
-        }
+    // protected function editMetersLogDetail($db)
+    // {
+    //     if (empty($db)) {
+    //         return false;
+    //     }
 
-        // 初值
-        $res['tab1Data'] = [
-            ['id' => 1, 'rowHeader' => '正向有功', 'value1' => '/', 'value2' => '/'],
-            ['id' => 2, 'rowHeader' => '反向有功', 'value1' => '/', 'value2' => '/'],
-            ['id' => 3, 'rowHeader' => '正向无功', 'value1' => '/', 'value2' => '/'],
-            ['id' => 4, 'rowHeader' => '反向无功', 'value1' => '/', 'value2' => '/'],
-            ['id' => 5, 'rowHeader' => '高峰', 'value1' => '/', 'value2' => '/'],
-            ['id' => 6, 'rowHeader' => '低谷', 'value1' => '/', 'value2' => '/'],
-        ];
+    //     // 初值
+    //     $res['tab1Data'] = [
+    //         ['id' => 1, 'rowHeader' => '正向有功', 'value1' => '/', 'value2' => '/'],
+    //         ['id' => 2, 'rowHeader' => '反向有功', 'value1' => '/', 'value2' => '/'],
+    //         ['id' => 3, 'rowHeader' => '正向无功', 'value1' => '/', 'value2' => '/'],
+    //         ['id' => 4, 'rowHeader' => '反向无功', 'value1' => '/', 'value2' => '/'],
+    //         ['id' => 5, 'rowHeader' => '高峰', 'value1' => '/', 'value2' => '/'],
+    //         ['id' => 6, 'rowHeader' => '低谷', 'value1' => '/', 'value2' => '/'],
+    //     ];
 
-        $res['tab2Data'] = [
-            ['id' => 1, 'rowHeader' => '正向有功', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
-            ['id' => 2, 'rowHeader' => '反向有功', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
-            ['id' => 3, 'rowHeader' => '正向无功', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
-            ['id' => 4, 'rowHeader' => '反向无功', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
-            ['id' => 5, 'rowHeader' => '高峰', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
-            ['id' => 6, 'rowHeader' => '低谷', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
-        ];
+    //     $res['tab2Data'] = [
+    //         ['id' => 1, 'rowHeader' => '正向有功', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
+    //         ['id' => 2, 'rowHeader' => '反向有功', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
+    //         ['id' => 3, 'rowHeader' => '正向无功', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
+    //         ['id' => 4, 'rowHeader' => '反向无功', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
+    //         ['id' => 5, 'rowHeader' => '高峰', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
+    //         ['id' => 6, 'rowHeader' => '低谷', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
+    //     ];
 
-        $res['tab3Data'] = [
-            ['id' => 1, 'rowHeader' => '正向有功', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
-            ['id' => 2, 'rowHeader' => '反向有功', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
-            ['id' => 3, 'rowHeader' => '正向无功', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
-            ['id' => 4, 'rowHeader' => '反向无功', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
-            ['id' => 5, 'rowHeader' => '高峰', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
-            ['id' => 6, 'rowHeader' => '低谷', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
-        ];
+    //     $res['tab3Data'] = [
+    //         ['id' => 1, 'rowHeader' => '正向有功', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
+    //         ['id' => 2, 'rowHeader' => '反向有功', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
+    //         ['id' => 3, 'rowHeader' => '正向无功', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
+    //         ['id' => 4, 'rowHeader' => '反向无功', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
+    //         ['id' => 5, 'rowHeader' => '高峰', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
+    //         ['id' => 6, 'rowHeader' => '低谷', 'value1' => '/', 'value2' => '/', 'value3' => '/'],
+    //     ];
 
-        $res['tab4Data'] = [
-            ['id' => 1, 'rowHeader' => '正向有功', 'value1' => '/'],
-            ['id' => 2, 'rowHeader' => '反向有功', 'value1' => '/'],
-            ['id' => 3, 'rowHeader' => '正向无功', 'value1' => '/'],
-            ['id' => 4, 'rowHeader' => '反向无功', 'value1' => '/'],
-            ['id' => 5, 'rowHeader' => '高峰', 'value1' => '/'],
-            ['id' => 6, 'rowHeader' => '低谷', 'value1' => '/'],
-        ];
+    //     $res['tab4Data'] = [
+    //         ['id' => 1, 'rowHeader' => '正向有功', 'value1' => '/'],
+    //         ['id' => 2, 'rowHeader' => '反向有功', 'value1' => '/'],
+    //         ['id' => 3, 'rowHeader' => '正向无功', 'value1' => '/'],
+    //         ['id' => 4, 'rowHeader' => '反向无功', 'value1' => '/'],
+    //         ['id' => 5, 'rowHeader' => '高峰', 'value1' => '/'],
+    //         ['id' => 6, 'rowHeader' => '低谷', 'value1' => '/'],
+    //     ];
 
-        //
-        $cnt = count($db);
-        for ($i = 0; $i < $cnt; $i++) {
-            if ($db[$i]['meter_id'] === '1') {
-                $res['tab1Data'][0]['value1'] = $db[$i]['fak'] / 10000;
-                $res['tab1Data'][1]['value1'] = $db[$i]['bak'] / 10000;
-                $res['tab1Data'][2]['value1'] = $db[$i]['frk'] / 10000;
-                $res['tab1Data'][3]['value1'] = $db[$i]['brk'] / 10000;
-            }
-            if ($db[$i]['meter_id'] === '2') {
-                $res['tab1Data'][0]['value2'] = $db[$i]['fak'] / 10000;
-                $res['tab1Data'][1]['value2'] = $db[$i]['bak'] / 10000;
-                $res['tab1Data'][2]['value2'] = $db[$i]['frk'] / 10000;
-                $res['tab1Data'][3]['value2'] = $db[$i]['brk'] / 10000;
-            }
-            //
-            if ($db[$i]['meter_id'] === '3') {
-                $res['tab2Data'][0]['value1'] = $db[$i]['fak'] / 100;
-                // $res['tab2Data'][1]['value1'] = $db[$i]['bak'] / 100;
-                $res['tab2Data'][2]['value1'] = $db[$i]['frk'] / 100;
-                $res['tab2Data'][3]['value1'] = $db[$i]['brk'] / 100;
-                $res['tab2Data'][4]['value1'] = $db[$i]['peak'] / 100;
-                $res['tab2Data'][5]['value1'] = $db[$i]['valley'] / 100;
-            }
-            if ($db[$i]['meter_id'] === '4') {
-                $res['tab2Data'][0]['value2'] = $db[$i]['fak'] / 100;
-                // $res['tab2Data'][1]['value2'] = $db[$i]['bak'] / 100;
-                $res['tab2Data'][2]['value2'] = $db[$i]['frk'] / 100;
-                $res['tab2Data'][3]['value2'] = $db[$i]['brk'] / 100;
-                $res['tab2Data'][4]['value2'] = $db[$i]['peak'] / 100;
-                $res['tab2Data'][5]['value2'] = $db[$i]['valley'] / 100;
-            }
-            if ($db[$i]['meter_id'] === '5') {
-                $res['tab2Data'][0]['value3'] = $db[$i]['fak'] / 100;
-                // $res['tab2Data'][1]['value3'] = $db[$i]['bak'] / 100;
-                $res['tab2Data'][2]['value3'] = $db[$i]['frk'] / 100;
-                $res['tab2Data'][3]['value3'] = $db[$i]['brk'] / 100;
-                $res['tab2Data'][4]['value3'] = $db[$i]['peak'] / 100;
-                $res['tab2Data'][5]['value3'] = $db[$i]['valley'] / 100;
-            }
-            //
-            if ($db[$i]['meter_id'] === '6') {
-                $res['tab3Data'][0]['value1'] = $db[$i]['fak'] / 100;
-                // $res['tab2Data'][1]['value1'] = $db[$i]['bak'] / 100;
-                // $res['tab3Data'][2]['value1'] = $db[$i]['frk'] / 100;
-                // $res['tab3Data'][3]['value1'] = $db[$i]['brk'] / 100;
-                // $res['tab3Data'][4]['value1'] = $db[$i]['peak'] / 100;
-                // $res['tab3Data'][5]['value1'] = $db[$i]['valley'] / 100;
-            }
-            if ($db[$i]['meter_id'] === '7') {
-                $res['tab3Data'][0]['value2'] = $db[$i]['fak'] / 100;
-                // $res['tab2Data'][1]['value1'] = $db[$i]['bak'] / 100;
-                // $res['tab3Data'][2]['value1'] = $db[$i]['frk'] / 100;
-                // $res['tab3Data'][3]['value1'] = $db[$i]['brk'] / 100;
-                // $res['tab3Data'][4]['value1'] = $db[$i]['peak'] / 100;
-                // $res['tab3Data'][5]['value1'] = $db[$i]['valley'] / 100;
-            }
-            if ($db[$i]['meter_id'] === '8') {
-                $res['tab3Data'][0]['value3'] = $db[$i]['fak'] / 100;
-                // $res['tab2Data'][1]['value1'] = $db[$i]['bak'] / 100;
-                // $res['tab3Data'][2]['value1'] = $db[$i]['frk'] / 100;
-                // $res['tab3Data'][3]['value1'] = $db[$i]['brk'] / 100;
-                // $res['tab3Data'][4]['value1'] = $db[$i]['peak'] / 100;
-                // $res['tab3Data'][5]['value1'] = $db[$i]['valley'] / 100;
-            }
-            //
-            if ($db[$i]['meter_id'] === '9') {
-                $res['tab4Data'][0]['value1'] = $db[$i]['fak'] / 100;
-                // $res['tab2Data'][1]['value1'] = $db[$i]['bak'] / 100;
-                // $res['tab3Data'][2]['value1'] = $db[$i]['frk'] / 100;
-                // $res['tab3Data'][3]['value1'] = $db[$i]['brk'] / 100;
-                // $res['tab3Data'][4]['value1'] = $db[$i]['peak'] / 100;
-                // $res['tab3Data'][5]['value1'] = $db[$i]['valley'] / 100;
-            }
-        }
+    //     //
+    //     $cnt = count($db);
+    //     for ($i = 0; $i < $cnt; $i++) {
+    //         if ($db[$i]['meter_id'] === '1') {
+    //             $res['tab1Data'][0]['value1'] = $db[$i]['fak'] / 10000;
+    //             $res['tab1Data'][1]['value1'] = $db[$i]['bak'] / 10000;
+    //             $res['tab1Data'][2]['value1'] = $db[$i]['frk'] / 10000;
+    //             $res['tab1Data'][3]['value1'] = $db[$i]['brk'] / 10000;
+    //         }
+    //         if ($db[$i]['meter_id'] === '2') {
+    //             $res['tab1Data'][0]['value2'] = $db[$i]['fak'] / 10000;
+    //             $res['tab1Data'][1]['value2'] = $db[$i]['bak'] / 10000;
+    //             $res['tab1Data'][2]['value2'] = $db[$i]['frk'] / 10000;
+    //             $res['tab1Data'][3]['value2'] = $db[$i]['brk'] / 10000;
+    //         }
+    //         //
+    //         if ($db[$i]['meter_id'] === '3') {
+    //             $res['tab2Data'][0]['value1'] = $db[$i]['fak'] / 100;
+    //             // $res['tab2Data'][1]['value1'] = $db[$i]['bak'] / 100;
+    //             $res['tab2Data'][2]['value1'] = $db[$i]['frk'] / 100;
+    //             $res['tab2Data'][3]['value1'] = $db[$i]['brk'] / 100;
+    //             $res['tab2Data'][4]['value1'] = $db[$i]['peak'] / 100;
+    //             $res['tab2Data'][5]['value1'] = $db[$i]['valley'] / 100;
+    //         }
+    //         if ($db[$i]['meter_id'] === '4') {
+    //             $res['tab2Data'][0]['value2'] = $db[$i]['fak'] / 100;
+    //             // $res['tab2Data'][1]['value2'] = $db[$i]['bak'] / 100;
+    //             $res['tab2Data'][2]['value2'] = $db[$i]['frk'] / 100;
+    //             $res['tab2Data'][3]['value2'] = $db[$i]['brk'] / 100;
+    //             $res['tab2Data'][4]['value2'] = $db[$i]['peak'] / 100;
+    //             $res['tab2Data'][5]['value2'] = $db[$i]['valley'] / 100;
+    //         }
+    //         if ($db[$i]['meter_id'] === '5') {
+    //             $res['tab2Data'][0]['value3'] = $db[$i]['fak'] / 100;
+    //             // $res['tab2Data'][1]['value3'] = $db[$i]['bak'] / 100;
+    //             $res['tab2Data'][2]['value3'] = $db[$i]['frk'] / 100;
+    //             $res['tab2Data'][3]['value3'] = $db[$i]['brk'] / 100;
+    //             $res['tab2Data'][4]['value3'] = $db[$i]['peak'] / 100;
+    //             $res['tab2Data'][5]['value3'] = $db[$i]['valley'] / 100;
+    //         }
+    //         //
+    //         if ($db[$i]['meter_id'] === '6') {
+    //             $res['tab3Data'][0]['value1'] = $db[$i]['fak'] / 100;
+    //             // $res['tab2Data'][1]['value1'] = $db[$i]['bak'] / 100;
+    //             // $res['tab3Data'][2]['value1'] = $db[$i]['frk'] / 100;
+    //             // $res['tab3Data'][3]['value1'] = $db[$i]['brk'] / 100;
+    //             // $res['tab3Data'][4]['value1'] = $db[$i]['peak'] / 100;
+    //             // $res['tab3Data'][5]['value1'] = $db[$i]['valley'] / 100;
+    //         }
+    //         if ($db[$i]['meter_id'] === '7') {
+    //             $res['tab3Data'][0]['value2'] = $db[$i]['fak'] / 100;
+    //             // $res['tab2Data'][1]['value1'] = $db[$i]['bak'] / 100;
+    //             // $res['tab3Data'][2]['value1'] = $db[$i]['frk'] / 100;
+    //             // $res['tab3Data'][3]['value1'] = $db[$i]['brk'] / 100;
+    //             // $res['tab3Data'][4]['value1'] = $db[$i]['peak'] / 100;
+    //             // $res['tab3Data'][5]['value1'] = $db[$i]['valley'] / 100;
+    //         }
+    //         if ($db[$i]['meter_id'] === '8') {
+    //             $res['tab3Data'][0]['value3'] = $db[$i]['fak'] / 100;
+    //             // $res['tab2Data'][1]['value1'] = $db[$i]['bak'] / 100;
+    //             // $res['tab3Data'][2]['value1'] = $db[$i]['frk'] / 100;
+    //             // $res['tab3Data'][3]['value1'] = $db[$i]['brk'] / 100;
+    //             // $res['tab3Data'][4]['value1'] = $db[$i]['peak'] / 100;
+    //             // $res['tab3Data'][5]['value1'] = $db[$i]['valley'] / 100;
+    //         }
+    //         //
+    //         if ($db[$i]['meter_id'] === '9') {
+    //             $res['tab4Data'][0]['value1'] = $db[$i]['fak'] / 100;
+    //             // $res['tab2Data'][1]['value1'] = $db[$i]['bak'] / 100;
+    //             // $res['tab3Data'][2]['value1'] = $db[$i]['frk'] / 100;
+    //             // $res['tab3Data'][3]['value1'] = $db[$i]['brk'] / 100;
+    //             // $res['tab3Data'][4]['value1'] = $db[$i]['peak'] / 100;
+    //             // $res['tab3Data'][5]['value1'] = $db[$i]['valley'] / 100;
+    //         }
+    //     }
 
-        return $res;
-    }
+    //     return $res;
+    // }
 
     // 2021-11-21
     public function getStatisticChartData()
@@ -2121,6 +2213,7 @@ class Meters extends BaseController
 
         // 取查询参数
         $station_id = $param['station_id'];
+        $date       = $param['date'];
         $log_time   = '23:59:00';
 
         // 查找最近一条23:59记录的日期
@@ -2128,11 +2221,18 @@ class Meters extends BaseController
             'station_id' => $station_id,
             'log_time'   => $log_time,
         ];
+        $utils             = service('mixUtils');
+        $query['start_at'] = $utils->getFirstDayOfYear($date);
+        $query['end_at']   = $utils->getLastDayOfYear($date);
+
+        $model      = new RecordModel();
         $columnName = ['log_date'];
-        $db         = $this->meterLogModel->getLastDateByStationTime($columnName, $query);
-        // if (!isset($db['log_date'])) {
-        //     $res['code'] = EXIT_SUCCESS;
-        // }
+        $db         = $model->getByStationDateRangeTime($columnName, $query);
+        if (!isset($db['log_date'])) {
+            $res['code'] = EXIT_SUCCESS;
+            return $this->respond($res);
+        }
+
         $log_date = $db['log_date'];
 
         // 查询计划、成交

@@ -211,8 +211,7 @@ export default {
 
     onGetChartData () {
       const query = {
-        station_id: this.stationId,
-        date: this.query.date
+        station_id: this.stationId
       }
       getStatisticChartData(query)
         .then(res => {

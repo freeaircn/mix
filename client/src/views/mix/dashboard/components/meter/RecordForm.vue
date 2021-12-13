@@ -23,6 +23,9 @@
       </div>
 
       <div v-for="(item, i) in record.meter" :key="item.prop+'_'+i" v-show="currentStep == (i+1)" >
+        <a-form-model-item :wrapper-col="{ lg: { span: 14, offset: 4 }, sm: { span: 14 } }">
+          <div>{{ record.log_date + ' ' + record.log_time }}</div>
+        </a-form-model-item>
         <a-form-model-item label="正向有功">
           <a-input-number v-model="record.meter[i].fak" :min="0" :style="{width: '100%'}" />
         </a-form-model-item>
@@ -47,7 +50,8 @@
       <a-form-model-item :wrapper-col="{ lg: { span: 14, offset: 4 }, sm: { span: 14 } }">
         <div>
           <a-button v-if="currentStep < STEPS.length - 1" type="primary" :disabled="disableBtn" block @click="handleNextStep">下一步</a-button>
-          <a-button v-if="currentStep == STEPS.length - 1" type="primary" :disabled="disableBtn" block @click="handleSubmitRecord">提交</a-button>
+          <a-button v-if="(currentStep == STEPS.length - 1) && (isUpdate === false)" type="primary" :disabled="disableBtn" block @click="handleNewRecord">提交</a-button>
+          <a-button v-if="(currentStep == STEPS.length - 1) && (isUpdate === true)" type="primary" :disabled="disableBtn" block @click="handleUpdateRecord">提交</a-button>
         </div>
         <div>
           <a-button v-if="currentStep > 0" style="margin-top: 8px" block @click="handlePrevStep">上一步</a-button>
@@ -60,8 +64,7 @@
 <script>
 // import moment from 'moment'
 import { BigNumber } from 'bignumber.js'
-import { newRecord } from '@/api/mix/meter'
-// import { getRecordDetail, newRecord } from '@/api/mix/meter'
+import { getRecordDetail, newRecord, updateRecord } from '@/api/mix/meter'
 
 export default {
   name: 'RecordForm',
@@ -77,6 +80,14 @@ export default {
     creator: {
       type: String,
       default: ''
+    },
+    update: {
+      type: Boolean,
+      default: false
+    },
+    recordInfo: {
+      type: Object,
+      default: () => {}
     }
   },
   data () {
@@ -101,6 +112,7 @@ export default {
         log_time: '',
         meter: this.setDataZero()
       },
+      isUpdate: false,
       labelCol: {
         lg: { span: 4 }, sm: { span: 4 }
       },
@@ -114,94 +126,86 @@ export default {
       disableBtn: false
     }
   },
-  // mounted () {
-  // },
-  // watch: {
-  //   date: {
-  //     handler: function (val) {
-  //       const temp = moment(val, 'YYYY-MM-DD')
-  //       this.columns[0].title = temp.format('YYYY') + '年'
-  //       this.year = temp.format('YYYY')
-  //       this.query.date = temp
-  //     },
-  //     immediate: true
-  //   },
-  //   current: {
-  //     handler: function (val) {
-  //       this.pagination.current = val
-  //     },
-  //     immediate: true
-  //   }
-  // },
+  mounted () {
+    this.currentStep = 0
+    this.record.meter = this.setDataZero()
+    // this.isUpdate = false
+  },
+  watch: {
+    update: {
+      handler: function (val) {
+        if (this.update === true) {
+          this.isUpdate = true
+
+          this.record.log_date = this.recordInfo.log_date
+          this.record.log_time = this.recordInfo.log_time
+          const query = {
+            station_id: this.recordInfo.station_id,
+            log_date: this.recordInfo.log_date,
+            log_time: this.recordInfo.log_time
+          }
+          this.disableBtn = true
+          getRecordDetail(query)
+            .then((res) => {
+              if (res.size !== 0) {
+                this.record.meter = res.record
+              }
+              //
+              this.disableBtn = false
+              this.currentStep++
+            })
+            //  网络异常，清空页面数据显示，防止错误的操作
+            .catch((err) => {
+              this.$message.warning('请稍后重试')
+              setTimeout(() => { this.disableBtn = false }, 3000)
+              this.$emit('failure')
+              if (err.response) {}
+            })
+        }
+      },
+      immediate: true
+    }
+    // current: {
+    //   handler: function (val) {
+    //     this.pagination.current = val
+    //   },
+    //   immediate: true
+    // }
+  },
   methods: {
 
     handleNextStep () {
       if (this.currentStep === 0) {
-        if (this.submitClicked === false) {
-          this.record.meter = this.setDataZero()
-        }
+        // if (this.submitClicked === false) {
+        //   this.record.meter = this.setDataZero()
+        // }
 
         this.$refs.form.validate(valid => {
-          if (!valid) {
-            return true
+          if (valid) {
+            this.currentStep++
           }
         })
-
-        // this.$refs.form.validate(valid => {
-        //   if (valid) {
-        //     if (this.submitClicked === false) {
-        //       const query = {
-        //         station_id: this.stationId,
-        //         log_date: this.record.log_date,
-        //         log_time: this.record.log_time
-        //       }
-        //       this.disableBtn = true
-        //       getRecordDetail(query)
-        //       .then((res) => {
-        //         if (res.size !== 0) {
-        //           this.record.meter = res.record
-        //         }
-        //         //
-        //         this.disableBtn = false
-        //         this.currentStep++
-        //       })
-        //       //  网络异常，清空页面数据显示，防止错误的操作
-        //       .catch((err) => {
-        //         setTimeout(() => { this.disableBtn = false }, 3000)
-        //         if (err.response) {}
-        //       })
-        //     } else {
-        //       this.currentStep++
-        //     }
-        //   } else {
-        //     return true
-        //   }
-        // })
       }
-
-      // if (this.currentStep > 0) {
-      //   const index = this.currentStep - 1
-      //   if (this.hasNullInData(this.record.meter[index])) {
-      //     this.$message.warning('请输入数字，例如：0，12，12.3，0.1234')
-      //     return true
-      //   } else {
-      //     this.currentStep++
-      //   }
-      // }
 
       if (this.currentStep > 0) {
         const index = this.currentStep - 1
         if (this.hasNullInData(this.record.meter[index])) {
           this.$message.warning('请输入数字，例如：0，12，12.3，0.1234')
           return true
+        } else {
+          this.currentStep++
         }
       }
-
-      this.currentStep++
     },
 
     handlePrevStep () {
-      this.currentStep--
+      if (this.isUpdate) {
+        if (this.currentStep > 1) {
+          this.currentStep--
+        }
+      } else {
+        this.currentStep--
+      }
     },
 
     hasNullInData (data) {
@@ -213,7 +217,7 @@ export default {
       return false
     },
 
-    handleSubmitRecord () {
+    handleNewRecord () {
       const index = this.currentStep - 1
       if (this.hasNullInData(this.record.meter[index])) {
         this.$message.warning('请输入数字，例如：0，12，12.3，0.1234')
@@ -241,16 +245,14 @@ export default {
               this.disableBtn = true
               newRecord(data)
                 .then(() => {
-                  this.submitClicked = false
-                  this.disableBtn = false
-                  this.record.log_date = ''
-                  this.record.log_time = ''
-                  this.record.meter = this.setDataZero()
-                  this.currentStep = 0
+                  // this.submitClicked = false
+                  // this.disableBtn = false
+                  // this.record.log_date = ''
+                  // this.record.log_time = ''
+                  // this.record.meter = this.setDataZero()
+                  // this.currentStep = 0
                   //
-                  this.$emit('submitSuccess')
-                  //
-                  // this.onQueryMeterLog(this.logListDate)
+                  this.$emit('submitSuccess', 'post')
                 })
                 //  网络异常，清空页面数据显示，防止错误的操作
                 .catch((err) => {
@@ -259,7 +261,60 @@ export default {
                 })
             },
             onCancel: () => {
-              this.currentStep = 0
+              // this.currentStep = 0
+            }
+          })
+        } else {
+          return false
+        }
+      })
+    },
+
+    handleUpdateRecord () {
+      const index = this.currentStep - 1
+      if (this.hasNullInData(this.record.meter[index])) {
+        this.$message.warning('请输入数字，例如：0，12，12.3，0.1234')
+        return true
+      }
+      this.$refs.form.validate(valid => {
+        if (valid) {
+          const temp = JSON.parse(JSON.stringify(this.record.meter))
+          const meter = this.transformValue(temp)
+
+          const data = {
+            station_id: this.stationId,
+            creator: this.creator,
+            log_date: this.record.log_date,
+            log_time: this.record.log_time,
+            meter: meter
+          }
+          this.submitClicked = true
+
+          const title = '确认日期：' + this.record.log_date + ' ' + this.record.log_time
+          this.$confirm({
+            title: title,
+            // content: h => <div style="color:rgba(0, 0, 0, 0.65);">{{ '电表读数日期：' +  }}</div>,
+            onOk: () => {
+              this.disableBtn = true
+              updateRecord(data)
+                .then(() => {
+                  // this.submitClicked = false
+                  // this.disableBtn = false
+                  // this.record.log_date = ''
+                  // this.record.log_time = ''
+                  // this.record.meter = this.setDataZero()
+                  // this.currentStep = 0
+                  //
+                  this.$emit('submitSuccess', 'put')
+                })
+                //  网络异常，清空页面数据显示，防止错误的操作
+                .catch((err) => {
+                  setTimeout(() => { this.disableBtn = false }, 3000)
+                  if (err.response) { }
+                })
+            },
+            onCancel: () => {
+              // this.currentStep = 1
             }
           })
         } else {

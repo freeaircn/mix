@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-11-21 21:51:08
+ * @LastEditTime: 2021-12-13 18:19:53
  */
 import request from '@/utils/request'
 
@@ -29,6 +29,14 @@ export function newRecord (data) {
   })
 }
 
+export function updateRecord (data) {
+  return request({
+    url: api.meters,
+    method: 'put',
+    data: data
+  })
+}
+
 export function saveRecord (data) {
   return request({
     url: api.meters,
@@ -37,7 +45,7 @@ export function saveRecord (data) {
   })
 }
 
-export function getRecords (params) {
+export function getRecord (params) {
   return request({
     url: api.meters,
     method: 'get',
