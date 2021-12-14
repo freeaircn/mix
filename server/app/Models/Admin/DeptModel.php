@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-26 20:04:22
+ * @LastEditTime: 2021-12-14 18:34:30
  */
 
 namespace App\Models\Admin;
@@ -53,5 +53,22 @@ class DeptModel extends Model
         $res = $builder->findAll();
 
         return $res;
+    }
+
+    public function getById($columnName = [], $id)
+    {
+        $selectSQL = '';
+        if (empty($columnName)) {
+            $selectSQL = 'name';
+        } else {
+            foreach ($columnName as $name) {
+                $selectSQL = $selectSQL . $name . ', ';
+            }
+        }
+        $builder = $this->select($selectSQL);
+        $builder->where('id', $id);
+        $res = $builder->findAll();
+
+        return isset($res[0]) ? $res[0] : [];
     }
 }

@@ -25,11 +25,8 @@
     </a-modal>
 
     <div class="antd-pro-pages-dashboard-analysis-twoColLayout" :style="{ marginBottom: '8px' }">
-      <!-- <a-row :gutter="[8,8]" type="flex" :style="{ marginBottom: '8px' }"> -->
-      <!-- <a-col :xl="12" :lg="12" :md="24" :sm="24" :xs="24"> -->
       <a-card :bordered="false" title="电表记录" :style="{ height: '100%' }">
         <div>
-          <!-- style="width: calc(100% - 240px);" -->
           <RecordList
             :loading="recordListLoading"
             :date="queryRecordDate"
@@ -45,23 +42,6 @@
           </RecordList>
         </div>
       </a-card>
-      <!-- </a-col> -->
-      <!-- <a-col :xl="12" :lg="12" :md="24" :sm="24" :xs="24" >
-          <a-card :bordered="false" title="统计表" :style="{height: '100%'}">
-            <DailyStatisticList
-              :loading="dailyListLoading"
-              :date="dailyListDate"
-              :totalPlan="dailyListTotalPlan"
-              :totalDeal="dailyListTotalDeal"
-              :dayFrkAllGens="dailyListDayFrk"
-              :dayBrkAllGens="dailyListDayBrk"
-              :listData="dailyListData"
-            >
-            </DailyStatisticList>
-          </a-card>
-        </a-col> -->
-
-      <!-- </a-row> -->
     </div>
 
     <a-modal :title="recordDiagTitle" v-model="recordDiagVisible" :footer="null" :destroyOnClose="true">
@@ -80,6 +60,10 @@
       <template slot="footer">
         <a-button key="submit" type="primary" @click="() => {this.reportDiagVisible = false}">关闭</a-button>
       </template>
+      <a-card size="small" title="其他" style="margin-bottom: 8px">
+        <p>{{ reportContent.extra1 }}</p>
+        <p>{{ reportContent.extra2 }}</p>
+      </a-card>
       <a-card size="small" title="今日1" style="margin-bottom: 8px">
         <a-button slot="extra" type="link" @click="handleCopyReportContent('daily1')">复制</a-button>
         <p>{{ reportContent.daily1 }}</p>
@@ -137,11 +121,9 @@
 import moment from 'moment'
 import { BigNumber } from 'bignumber.js'
 // import { deepMerge } from '@/utils/util'
-import { RecordForm, StatisticChart, OverallStatistic, RecordList, DailyStatisticList, PlanAndDeal } from './components/meter'
+import { RecordForm, StatisticChart, OverallStatistic, RecordList, PlanAndDeal } from './components/meter'
 import { mapGetters } from 'vuex'
-import { getMetersDailyReport, getMetersOverallStatistic } from '@/api/service'
-import { getRecord, delRecord, getPlanAndDeal, updatePlanAndDealRecord } from '@/api/mix/meter'
-// import { getRecord, delRecord, getDailyStatistic, getPlanAndDeal, updatePlanAndDealRecord } from '@/api/mix/meter'
+import { getRecord, delRecord, getPlanAndDeal, updatePlanAndDealRecord, getReportDaily, getStatisticOverall } from '@/api/mix/meter'
 import { baseMixin } from '@/store/app-mixin'
 
 export default {
@@ -150,7 +132,6 @@ export default {
   components: {
     RecordForm,
     StatisticChart,
-    DailyStatisticList,
     PlanAndDeal,
     RecordList,
     OverallStatistic
@@ -180,20 +161,12 @@ export default {
       recordListData: [],
       reportDiagVisible: false,
       reportContent: {
+        extra1: '',
+        extra2: '',
         daily1: '',
         daily2: '',
         weekly: ''
       },
-
-      // 单日数据统计显示 2021-11-08
-      // dailyListTitle: '截至',
-      // dailyListLoading: false,
-      // dailyListDate: '',
-      // dailyListTotalPlan: '0',
-      // dailyListTotalDeal: '0',
-      // dailyListDayFrk: '0',
-      // dailyListDayBrk: '0',
-      // dailyListData: [],
 
       //
       reportOf20ClockDiagVisible: false,
@@ -222,7 +195,6 @@ export default {
   mounted () {
     // 2021-11-08
     this.onQueryRecord()
-    // this.onShowDailyStatisticList()
 
     if (!this.isMobile) {
       // 全景统计
@@ -246,7 +218,6 @@ export default {
       this.recordDiagVisible = false
       if (method === 'post') {
         this.onQueryRecord()
-        // this.onShowDailyStatisticList()
       }
       if (method === 'put') {
         this.onQueryRecordAfterUpdate(this.queryRecordDate)
@@ -263,7 +234,6 @@ export default {
       delRecord(param)
         .then(() => {
             this.onQueryRecord()
-            // this.onShowDailyStatisticList()
           })
           //  网络异常，清空页面数据显示，防止错误的操作
           .catch((err) => {
@@ -355,31 +325,6 @@ export default {
     },
     // 电表记录-改 end
 
-    // 单日数据统计 2021-11-08
-    // onShowDailyStatisticList () {
-    //   const query = {
-    //     station_id: this.userInfo.belongToDeptId
-    //   }
-    //   this.dailyListLoading = true
-    //   getDailyStatistic(query)
-    //     .then(response => {
-    //       this.dailyListDate = response.date
-    //       this.dailyListTotalPlan = response.totalPlan
-    //       this.dailyListTotalDeal = response.totalDeal
-    //       this.dailyListDayFrk = response.dayFrk
-    //       this.dailyListDayBrk = response.dayBrk
-    //       this.dailyListData = response.listData
-    //       //
-    //       this.dailyListLoading = false
-    //       this.dailyListTitle = '截至 ' + this.dailyListDate
-    //     })
-    //     .catch((err) => {
-    //       this.dailyListLoading = false
-    //       if (err.response) {
-    //       }
-    //     })
-    // },
-
     // 查看电量单日简报
     onReqDailyReport (param) {
       const query = {
@@ -388,19 +333,23 @@ export default {
         log_time: param.log_time
       }
       this.reportDiagVisible = false
+      this.reportContent.extra1 = ''
+      this.reportContent.extra2 = ''
       this.reportContent.daily1 = ''
       this.reportContent.daily2 = ''
       this.reportContent.weekly = ''
       //
       this.reportOf20ClockDiagVisible = false
       this.dailyOf20Clock = '0'
-      getMetersDailyReport(query)
+      getReportDaily(query)
         .then(res => {
           const data = res.data
           const type = res.type
           //
           if (type === '23') {
             this.reportDiagVisible = true
+            this.reportContent.extra1 = data.extra1
+            this.reportContent.extra2 = data.extra2
             this.reportContent.daily1 = data.daily1
             this.reportContent.daily2 = data.daily2
             this.reportContent.weekly = data.weekly
@@ -413,6 +362,8 @@ export default {
         })
         .catch((err) => {
           this.reportDiagVisible = false
+          this.reportContent.extra1 = ''
+          this.reportContent.extra2 = ''
           this.reportContent.daily1 = ''
           this.reportContent.daily2 = ''
           this.reportContent.weekly = ''
@@ -491,7 +442,7 @@ export default {
         station_id: this.userInfo.belongToDeptId
       }
       this.overallStatLoading = true
-      getMetersOverallStatistic(query)
+      getStatisticOverall(query)
         .then((res) => {
           this.overallStatTotal = { ...res.total }
           this.overallStatYearData = res.yearData

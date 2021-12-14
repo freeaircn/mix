@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-12-13 18:19:53
+ * @LastEditTime: 2021-12-14 16:27:10
  */
 import request from '@/utils/request'
 
@@ -12,10 +12,7 @@ const api = {
   record_detail: '/meters/record/detail',
   report_daily: '/meters/report/daily',
   //
-  statistic_daily: '/meters/statistic/daily',
   statistic_chart_data: '/meters/statistic/chart/data',
-  //
-  statistic_basic: '/meters/statistic/basic',
   statistic_overall: 'meters/statistic/overall',
   //
   plan_deal: '/meters/plan_deal'
@@ -33,14 +30,6 @@ export function updateRecord (data) {
   return request({
     url: api.meters,
     method: 'put',
-    data: data
-  })
-}
-
-export function saveRecord (data) {
-  return request({
-    url: api.meters,
-    method: data.id && data.id > 0 ? 'put' : 'post',
     data: data
   })
 }
@@ -69,17 +58,9 @@ export function getRecordDetail (params) {
   })
 }
 
-export function getDailyReport (params) {
+export function getReportDaily (params) {
   return request({
     url: api.report_daily,
-    method: 'get',
-    params: params
-  })
-}
-
-export function getDailyStatistic (params) {
-  return request({
-    url: api.statistic_daily,
     method: 'get',
     params: params
   })
@@ -93,15 +74,7 @@ export function getStatisticChartData (params) {
   })
 }
 
-export function getBasicStatistic (params) {
-  return request({
-    url: api.statistic_basic,
-    method: 'get',
-    params: params
-  })
-}
-
-export function getOverallStatistic (params) {
+export function getStatisticOverall (params) {
   return request({
     url: api.statistic_overall,
     method: 'get',

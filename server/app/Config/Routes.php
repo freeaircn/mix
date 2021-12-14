@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-12-13 20:27:36
+ * @LastEditTime: 2021-12-14 16:24:21
  */
 
 namespace Config;
@@ -113,22 +113,15 @@ $routes->group('api', function ($routes) {
     //
     $routes->post('meters', 'Meters::newRecord');
     $routes->get('meters', 'Meters::getRecord');
+    $routes->get('meters/record/detail', 'Meters::getRecordDetail');
     $routes->put('meters', 'Meters::updateRecord');
-    // 2021-11-08
-    $routes->get('meters/statistic/daily', 'Meters::getDailyStatistic');
+    $routes->delete('meters', 'Meters::delRecord');
+    $routes->get('meters/report/daily', 'Meters::getReportDaily');
+    //
     $routes->get('meters/plan_deal', 'Meters::getPlanAndDealList');
     $routes->put('meters/plan_deal', 'Meters::updatePlanAndDealRecord');
-    $routes->get('meters/record/detail', 'Meters::getRecordDetail');
     $routes->get('meters/statistic/chart/data', 'Meters::getStatisticChartData');
-    //
-    // $routes->get('meters/log_detail', 'Meters::getMetersLogDetail');
-    $routes->delete('meters', 'Meters::delMeterLogs');
-    $routes->get('meters/daily_report', 'Meters::getDailyReport');
-    // $routes->get('meters/basic_statistic', 'Meters::getBasicStatistic');
-    $routes->get('meters/overall_statistic', 'Meters::getOverallStatistic');
-    //
-    // $routes->get('meters/planning_kWh', 'Meters::getPlanningKWh');
-    // $routes->put('meters/planning_kWh', 'Meters::updatePlanningKWhRecord');
+    $routes->get('meters/statistic/overall', 'Meters::getStatisticOverall');
     //
     $routes->post('dts/draft', 'Dts::postDraft');
     $routes->get('dts/list', 'Dts::getForList');

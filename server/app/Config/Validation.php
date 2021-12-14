@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-12-13 18:20:28
+ * @LastEditTime: 2021-12-14 15:01:39
  */
 
 namespace Config;
@@ -124,7 +124,7 @@ class Validation
         'offset'     => 'required|regex_match[^[1-9]\d{0,9}$]',
     ];
 
-    public $MeterLogsDelete = [
+    public $MeterDelRecord = [
         'id'         => 'required|regex_match[^[1-9]\d{0,10}$]',
         'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
         'log_date'   => 'required|valid_date[Y-m-d]',

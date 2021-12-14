@@ -185,6 +185,8 @@ export default {
             this.currentStep++
           }
         })
+
+        return
       }
 
       if (this.currentStep > 0) {
