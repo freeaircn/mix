@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-11-02 20:50:27
+ * @LastEditTime: 2021-12-15 18:53:05
  */
 import request from '@/utils/request'
 
@@ -30,7 +30,7 @@ export function apiSaveEvent (data) {
   })
 }
 
-export function apiGetEventStatistic (params) {
+export function apiGetEventStatisticChartData (params) {
   return request({
     url: api.generator_event_statistic,
     method: 'get',

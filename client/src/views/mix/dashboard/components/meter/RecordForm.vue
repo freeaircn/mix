@@ -219,6 +219,14 @@ export default {
       return false
     },
 
+    // onClickSubmit () {
+    //   if (this.isUpdate) {
+    //     this.handleUpdateRecord()
+    //   } else {
+    //     this.handleNewRecord()
+    //   }
+    // },
+
     handleNewRecord () {
       const index = this.currentStep - 1
       if (this.hasNullInData(this.record.meter[index])) {

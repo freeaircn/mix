@@ -20,7 +20,7 @@
       <div :style="{marginBottom: '16px'}">{{ '截至：' + date }}</div>
 
       <div :style="{marginBottom: '32px'}">
-        <a-row :gutter="[16,16]" >
+        <a-row :gutter="[16, 16]" >
           <a-col :xl="4" :lg="4" :md="12" :sm="12" :xs="12">
             <a-statistic title="全年计划 / 万kWh" :value="yearPlan" :value-style="{ color: '#FF4500' }">
             </a-statistic>
@@ -33,7 +33,16 @@
             </a-statistic>
           </a-col>
           <a-col :xl="4" :lg="4" :md="0" :sm="0" :xs="0">
-            <a-statistic title="完成计划 / %" :value="monthPlanRate" :value-style="{ color: '#1AAF8B' }">
+            <a-statistic :value="monthPlanRate" :value-style="{ color: '#1AAF8B' }">
+              <template #title>
+                <span>
+                  完成计划
+                  <a-tooltip slot="action"><template slot="title">实发电量 / 计划发电量</template>
+                    <a-icon type="info-circle-o" />
+                  </a-tooltip>
+                  / %
+                </span>
+              </template>
               <template #suffix>
                 <span>(本月)</span>
               </template>
@@ -51,7 +60,16 @@
             </a-statistic>
           </a-col>
           <a-col :xl="4" :lg="4" :md="0" :sm="0" :xs="0">
-            <a-statistic title="完成成交 / %" :value="monthDealRate" :value-style="{ color: '#1AAF8B' }">
+            <a-statistic :value="monthDealRate" :value-style="{ color: '#1AAF8B' }">
+              <template #title>
+                <span>
+                  完成成交
+                  <a-tooltip slot="action"><template slot="title">上网电量 / 成交电量</template>
+                    <a-icon type="info-circle-o" />
+                  </a-tooltip>
+                  / %
+                </span>
+              </template>
               <template #suffix>
                 <span>(本月)</span>
               </template>
@@ -135,7 +153,7 @@ export default {
   },
   created () {
     const year = moment().year()
-    for (let i = 2011; i <= year; i++) {
+    for (let i = 2013; i <= year; i++) {
       this.yearRange.push({
         name: i + '年',
         value: i

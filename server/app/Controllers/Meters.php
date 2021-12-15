@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-12-14 19:49:50
+ * @LastEditTime: 2021-12-15 13:03:50
  */
 
 namespace App\Controllers;
@@ -165,7 +165,7 @@ class Meters extends BaseController
         $model = new RecordModel();
 
         // 预处理-查询日期
-        if ($param['date'] === '') {
+        if (empty($param['date'])) {
             $query2     = ['station_id' => $query['station_id']];
             $columnName = ['log_date'];
             $db         = $model->getLastDateByStation($columnName, $query2);

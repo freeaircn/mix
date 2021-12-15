@@ -209,7 +209,7 @@ export default {
       this.planAndDealDiagVisible = true
     },
 
-    // 电表记录-增 start
+    // 记录-增 start
     onClickNewRecord () {
       this.recordDiagVisible = true
     },
@@ -227,9 +227,9 @@ export default {
     onRecordFormFailure () {
       this.recordDiagVisible = false
     },
-    // 电表记录-增 end
+    // 记录-增 end
 
-    // 电表记录-删
+    // 记录-删
     onDeleteRecord (param) {
       delRecord(param)
         .then(() => {
@@ -243,7 +243,7 @@ export default {
           })
     },
 
-    // 电表记录-查 start
+    // 记录-查 start
     onQueryRecord (date = '') {
       const query = {
         station_id: this.userInfo.belongToDeptId,
@@ -314,16 +314,16 @@ export default {
           }
         })
     },
-    // 电表记录-查 end
+    // 记录-查 end
 
-    // 电表记录-改 start
+    // 记录-改 start
     onUpdateRecord (record) {
       this.recordInfo = record
       this.recordDiagVisible = true
       this.recordUpdate = true
       setTimeout(() => { this.recordUpdate = false }, 500)
     },
-    // 电表记录-改 end
+    // 记录-改 end
 
     // 查看电量单日简报
     onReqDailyReport (param) {
@@ -525,19 +525,4 @@ export default {
       }
     }
   }
-
-  // .antd-pro-pages-dashboard-analysis-twoColLayout {
-  //   position: relative;
-  //   display: flex;
-  //   display: block;
-  //   flex-flow: row wrap;
-  // }
-
-  // .antd-pro-pages-dashboard-analysis-salesCard {
-  //   height: calc(100% - 24px);
-  //   /deep/ .ant-card-head {
-  //     position: relative;
-  //   }
-  // }
-
 </style>

@@ -1,116 +1,55 @@
 <template>
   <page-header-wrapper :title="false">
 
-    <a-card :title="userInfo.belongToDeptName" :bordered="false" :headStyle="{marginBottom: '8px'}">
+    <a-card :title="userInfo.belongToDeptName" :bordered="false" :bodyStyle="{marginBottom: '8px'}">
+      <span>
+        录入事件：
+        <a-button type="primary" @click="onClickNewRecord('1')" style="margin-right: 16px">1G</a-button>
+        <a-button type="primary" @click="onClickNewRecord('2')" style="margin-right: 16px">2G</a-button>
+        <a-button type="primary" @click="onClickNewRecord('3')" >3G</a-button>
+      </span>
     </a-card>
 
-    <div class="antd-pro-pages-dashboard-analysis-twoColLayout" :class="!isMobile && 'desktop'">
-      <a-row :gutter="[8,8]" type="flex" :style="{ marginBottom: '8px' }">
-        <a-col :xl="8" :lg="24" :md="24" :sm="24" :xs="24" >
-          <a-card :bordered="false" title="事件录入" :style="{height: '100%'}">
-            <a-form-model
-              ref="eventForm"
-              :model="objEvent"
-              :rules="rules"
-              :label-col="labelCol"
-              :wrapper-col="wrapperCol"
-              @submit="handleNewEvent"
-              @submit.native.prevent
-            >
-              <a-form-model-item label="机组" prop="generator_id">
-                <a-select v-model="objEvent.generator_id" placeholder="请选择">
-                  <a-select-option value="1">1G</a-select-option>
-                  <a-select-option value="2">2G</a-select-option>
-                  <a-select-option value="3">3G</a-select-option>
-                </a-select>
-              </a-form-model-item>
+    <a-modal :title="recordDiagTitle" v-model="recordDiagVisible" :footer="null" :destroyOnClose="true">
+      <RecordForm
+        :stationId="userInfo.belongToDeptId"
+        :genId="genId"
+        :creator="this.userInfo.username"
+        :update="recordUpdate"
+        :recordInfo="recordInfo"
+        @submitSuccess="onRecordFormSuccess"
+      >
+      </RecordForm>
+    </a-modal>
 
-              <a-form-model-item label="事件" prop="event">
-                <a-select v-model="objEvent.event" placeholder="请选择">
-                  <a-select-option value="1">停机</a-select-option>
-                  <a-select-option value="2">开机</a-select-option>
-                </a-select>
-              </a-form-model-item>
-
-              <a-form-model-item label="原因" prop="cause">
-                <a-select v-model="objEvent.cause" placeholder="请选择">
-                  <a-select-option value="1">调度许可</a-select-option>
-                  <a-select-option value="2">检修试验</a-select-option>
-                  <a-select-option value="3">电气故障</a-select-option>
-                  <a-select-option value="4">水系统故障</a-select-option>
-                  <a-select-option value="5">油系统故障</a-select-option>
-                  <a-select-option value="6">气系统故障</a-select-option>
-                  <a-select-option value="7">线路保护动作</a-select-option>
-                  <a-select-option value="8">母线保护动作</a-select-option>
-                  <a-select-option value="9">主变保护动作</a-select-option>
-                  <a-select-option value="10">发电机保护动作</a-select-option>
-                  <a-select-option value="11">安稳动作</a-select-option>
-                  <a-select-option value="12">误操作</a-select-option>
-                </a-select>
-              </a-form-model-item>
-
-              <a-form-model-item label="日期/时间" prop="event_at">
-                <a-date-picker v-model="objEvent.event_at" valueFormat="YYYY-MM-DD HH:mm:ss" show-time placeholder="请选择" />
-              </a-form-model-item>
-
-              <a-form-model-item label="补充说明" prop="description">
-                <a-textarea v-model="objEvent.description"></a-textarea>
-              </a-form-model-item>
-
-              <a-form-model-item :wrapperCol="{ span: 24 }" style="text-align: center">
-                <a-button type="primary" html-type="submit" :disabled="disableBtn">提交</a-button>
-              </a-form-model-item>
-            </a-form-model>
-          </a-card>
-        </a-col>
-
-        <a-col :xl="16" :lg="24" :md="24" :sm="24" :xs="24">
-          <a-card class="antd-pro-pages-dashboard-analysis-salesCard" :bordered="false" title="历史记录" :style="{ height: '100%' }">
-            <!-- style="width: calc(100% - 240px);" -->
-            <GeneratorEventList
-              :loading="listLoading"
-              :date.sync="logListDate"
-              :listData="eventLogData"
-              :current.sync="eventLogListPageIndex"
-              :total="totalEventLog"
-              @paginationChange="onLogListPageChange"
-              @query="onQueryEventLog"
-              @edit="onEditEventLog"
-              @delete="onDelEventLog"
-              @export="onExportEventFile"
-            >
-            </GeneratorEventList>
-          </a-card>
-        </a-col>
-      </a-row>
+    <div :style="{ marginBottom: '8px' }">
+      <a-card :bordered="false" title="事件记录" :style="{ height: '100%' }">
+        <RecordList
+          :loading="listLoading"
+          :date.sync="queryRecordDate"
+          :genId.sync="queryRecordGenId"
+          :listData="recordListData"
+          :current.sync="recordListPageIndex"
+          :total="totalRecords"
+          @paginationChange="onRecordListPageChange"
+          @query="onQueryRecord"
+          @update="onUpdateRecord"
+          @delete="onDeleteRecord"
+          @export="onExportEventFile"
+        >
+        </RecordList>
+      </a-card>
     </div>
 
-    <div v-if="!isMobile">
-      <a-card :title=" '统计图表-' + genEventBasicStatDate " :bordered="false" :body-style="{marginBottom: '8px'}">
-        <a-button slot="extra" type="link" @click="onQueryBasicStatistic">刷新</a-button>
-        <GenEventBasicStatistic
-          :loading="genEventBasicStatLoading"
-          :changed="genEventBasicStatChanged"
-          :statisticData="genEventBasicStatData"
-        >
-        </GenEventBasicStatistic>
-      </a-card>
+    <div :style="{marginBottom: '8px'}">
+      <StatisticChart
+        :stationId="userInfo.belongToDeptId"
+      >
+      </StatisticChart>
+    </div>
 
-      <a-card :loading="false" title="历史统计" :bordered="false" :body-style="{padding: '0', marginBottom: '8px'}">
-        <div style="padding: 8px">
-          <a-select style="width: 100px" placeholder="起始" >
-            <a-select-option v-for="d in availableYearRange" :key="d.value" :value="d.value" >
-              {{ d.name }}
-            </a-select-option>
-          </a-select>
-          <span style="margin: 0 18px">至</span>
-          <a-select style="width: 100px" placeholder="结束" >
-            <a-select-option v-for="d in availableYearRange" :key="d.value" :value="d.value" >
-              {{ d.name }}
-            </a-select-option>
-          </a-select>
-          <span style="margin: 0 18px"><a-button type="primary" @click="handleQueryHisStatistic">查询</a-button></span>
-        </div>
+    <div :style="{marginBottom: '8px'}">
+      <a-card :loading="false" title="全景" :bordered="false">
       </a-card>
     </div>
 
@@ -119,68 +58,35 @@
 
 <script>
 import moment from 'moment'
-import { GeneratorEventList, GenEventBasicStatistic } from './components/generator'
+import { RecordForm, RecordList, StatisticChart } from './components/generator'
 import { mapGetters } from 'vuex'
-import { apiGetEvent, apiSaveEvent, apiGetEventStatistic, apiDelEvent, apiGetExportEvent } from '@/api/mix/generator'
+import { apiGetEvent, apiDelEvent, apiGetExportEvent } from '@/api/mix/generator'
 import { baseMixin } from '@/store/app-mixin'
-
-const availableYearRange = []
-for (let i = 2018; i <= moment().year(); i++) {
-  availableYearRange.push({
-    name: i + '年',
-    value: i
-  })
-}
 
 export default {
   name: 'GeneratorEvent',
   mixins: [baseMixin],
   components: {
-    GeneratorEventList,
-    GenEventBasicStatistic
+    RecordForm,
+    RecordList,
+    StatisticChart
   },
   data () {
     return {
-      // 录入事件 表单
-      objEvent: {
-        station_id: null,
-        cause: '1',
-        event_at: '',
-        description: '无'
-      },
-      labelCol: {
-        lg: { span: 7 }, sm: { span: 7 }
-      },
-      wrapperCol: {
-        lg: { span: 10 }, sm: { span: 17 }
-      },
-      rules: {
-        generator_id: [{ required: true, message: '请选择机组', trigger: 'change' }],
-        event: [{ required: true, message: '请选择事件名称', trigger: 'change' }],
-        event_at: [{ required: true, message: '请选择日期和时间', trigger: ['change', 'blur'] }]
-      },
-      disableBtn: false,
+      recordDiagTitle: '录入机组事件',
+      recordDiagVisible: false,
+      recordUpdate: false,
+      recordInfo: {},
+      genId: '',
 
-      // 记录 列表显示
+      // 记录 显示
       listLoading: false,
-      eventLogListPageIndex: 1,
+      recordListPageIndex: 1,
       pageSize: 5,
-      eventLogData: [],
-      totalEventLog: 0,
-      logListDate: '',
-
-      editEventModalVisible: false,
-      editEventRecord: {},
-
-      // 统计显示
-      genEventBasicStatLoading: false,
-      genEventBasicStatChanged: false,
-      genEventBasicStatDate: '',
-      genEventBasicStatData: [],
-
-      // 历史统计显示
-      availableYearRange
-
+      recordListData: [],
+      totalRecords: 0,
+      queryRecordDate: '',
+      queryRecordGenId: ''
     }
   },
   computed: {
@@ -188,54 +94,32 @@ export default {
       'userInfo'
     ])
   },
-  created () {
-    // 初值
-    this.logListDate = moment().format('YYYY-MM-DD')
-    this.genEventBasicStatDate = moment().format('YYYY')
-  },
+  // created () {
+  // },
   mounted () {
-    // 记录显示
-    this.onQueryEventLog(this.logListDate, 0)
-
-    // 统计图表
-    if (!this.isMobile) {
-      this.onQueryBasicStatistic()
-    }
+    this.onQueryRecord()
   },
   methods: {
 
-    // 录入事件 表单
-    handleNewEvent () {
-      this.$refs.eventForm.validate(valid => {
-        if (valid) {
-          const data = { ...this.objEvent }
-          data.station_id = this.userInfo.belongToDeptId
-          data.creator = this.userInfo.username
-
-          if (data.description === '') {
-            data.description = '无'
-          }
-
-          this.disableBtn = true
-          apiSaveEvent(data)
-            .then(() => {
-              this.$refs.eventForm.resetFields()
-              this.disableBtn = false
-              this.onQueryEventLog(this.logListDate, data.generator_id)
-            })
-            //  网络异常，清空页面数据显示，防止错误的操作
-            .catch((err) => {
-              setTimeout(() => { this.disableBtn = false }, 3000)
-              if (err.response) { }
-            })
-        } else {
-          return false
-        }
-      })
+    // 记录-增
+    onClickNewRecord (genId) {
+      this.genId = genId
+      this.recordDiagTitle = '录入机组事件 ' + genId + 'G'
+      this.recordDiagVisible = true
     },
 
-    // 记录列表显示
-    onQueryEventLog (date, gid) {
+    onRecordFormSuccess (method) {
+      this.recordDiagVisible = false
+      if (method === 'post') {
+        this.onQueryRecordAfterUpdate(this.queryRecordDate, this.queryRecordGenId)
+      }
+      if (method === 'put') {
+        this.onQueryRecordAfterUpdate(this.queryRecordDate, this.queryRecordGenId)
+      }
+    },
+
+    // 记录-查
+    onQueryRecord (date = '', gid = 0) {
       const query = {
         station_id: this.userInfo.belongToDeptId,
         generator_id: gid,
@@ -243,49 +127,76 @@ export default {
         limit: this.pageSize,
         offset: 1
       }
-      this.eventLogListPageIndex = 1
+      this.recordListPageIndex = 1
       this.listLoading = true
       apiGetEvent(query)
         .then(res => {
           this.listLoading = false
           //
-          this.totalEventLog = res.total
-          this.eventLogData = res.data
+          this.totalRecords = res.total
+          this.queryRecordDate = res.date
+          this.recordListData = res.data
         })
         .catch((err) => {
           this.listLoading = false
-          this.eventLogData.splice(0, this.eventLogData.length)
+          this.recordListData.splice(0, this.recordListData.length)
+          if (err.response) {
+          }
+        })
+    },
+
+    onQueryRecordAfterUpdate (date = '', gid = 0) {
+      const query = {
+        station_id: this.userInfo.belongToDeptId,
+        generator_id: gid,
+        date: date,
+        limit: this.pageSize,
+        offset: this.recordListPageIndex
+      }
+
+      this.recordListLoading = true
+      apiGetEvent(query)
+        .then(res => {
+          this.listLoading = false
+          //
+          this.totalRecords = res.total
+          // this.queryRecordDate = res.date
+          this.recordListData = res.data
+        })
+        .catch((err) => {
+          this.listLoading = false
+          this.recordListData.splice(0, this.recordListData.length)
           if (err.response) {
           }
         })
     },
 
     // 点击分页
-    onLogListPageChange (param) {
+    onRecordListPageChange (param) {
       const query = { ...param }
       query.station_id = this.userInfo.belongToDeptId
-      query.date = this.logListDate
+      query.date = this.queryRecordDate
 
       this.listLoading = true
       apiGetEvent(query)
         .then(res => {
           this.listLoading = false
           //
-          this.totalEventLog = res.total
-          this.eventLogData = res.data
+          this.totalRecords = res.total
+          this.recordListData = res.data
         })
         .catch((err) => {
           this.listLoading = false
-          this.eventLogData.splice(0, this.eventLogData.length)
+          this.recordListData.splice(0, this.recordListData.length)
           if (err.response) {
           }
         })
     },
 
-    onDelEventLog (param) {
+    onDeleteRecord (param) {
       apiDelEvent(param)
         .then(() => {
-            this.onQueryEventLog(this.logListDate, param.generator_id)
+            this.onQueryRecordAfterUpdate(this.queryRecordDate, this.queryRecordGenId)
           })
           //  网络异常，清空页面数据显示，防止错误的操作
           .catch((err) => {
@@ -293,16 +204,12 @@ export default {
           })
     },
 
-    onEditEventLog (param) {
-      param.creator = this.userInfo.username
-      apiSaveEvent(param)
-        .then(() => {
-            this.onQueryEventLog(this.logListDate, param.generator_id)
-          })
-          //  网络异常，清空页面数据显示，防止错误的操作
-          .catch((err) => {
-            if (err.response) { }
-          })
+    onUpdateRecord (record) {
+      this.recordInfo = record
+      this.recordDiagTitle = '修改记录 ' + record.generator_id + 'G'
+      this.recordDiagVisible = true
+      this.recordUpdate = true
+      setTimeout(() => { this.recordUpdate = false }, 500)
     },
 
     // 导出excel文件
@@ -341,79 +248,10 @@ export default {
           if (err.response) {
           }
         })
-    },
-
-    // 统计图表
-    onQueryBasicStatistic () {
-      const query = {
-        year: this.genEventBasicStatDate,
-        station_id: this.userInfo.belongToDeptId
-      }
-      this.genEventBasicStatLoading = true
-      apiGetEventStatistic(query)
-        .then(res => {
-          this.genEventBasicStatData = res
-          this.genEventBasicStatLoading = false
-          this.genEventBasicStatChanged = !this.genEventBasicStatChanged
-        })
-        .catch((err) => {
-          this.genEventBasicStatLoading = false
-          this.genEventBasicStatData.splice(0, this.genEventBasicStatData.length)
-          if (err.response) {
-          }
-        })
-    },
-
-    // 历史统计 显示区
-    handleQueryHisStatistic () {
-      this.$message.warning('暂不支持')
     }
   }
 }
 </script>
 
 <style lang="less" scoped>
-  .extra-wrapper {
-    line-height: 55px;
-    padding-right: 24px;
-
-    .extra-item {
-      display: inline-block;
-      margin-right: 24px;
-
-      a {
-        margin-left: 24px;
-      }
-    }
-  }
-
-  .antd-pro-pages-dashboard-analysis-twoColLayout {
-    position: relative;
-    display: flex;
-    display: block;
-    flex-flow: row wrap;
-  }
-
-  .antd-pro-pages-dashboard-analysis-salesCard {
-    height: calc(100% - 24px);
-    /deep/ .ant-card-head {
-      position: relative;
-    }
-  }
-
-  .dashboard-analysis-iconGroup {
-    i {
-      margin-left: 16px;
-      color: rgba(0,0,0,.45);
-      cursor: pointer;
-      transition: color .32s;
-      color: black;
-    }
-  }
-  .analysis-salesTypeRadio {
-    position: absolute;
-    right: 54px;
-    bottom: 12px;
-  }
-
 </style>

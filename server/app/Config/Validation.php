@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-12-14 15:01:39
+ * @LastEditTime: 2021-12-15 16:43:21
  */
 
 namespace Config;
@@ -71,7 +71,7 @@ class Validation
         'code'     => 'required|regex_match[^[1-9]\d{4}$]',
     ];
 
-    public $GeneratorEventNew = [
+    public $GeneratorEventNewRecord = [
         'station_id'   => 'required|regex_match[^[1-9]\d{0,2}$]',
         'generator_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
         'event'        => 'required|regex_match[^[1-9]\d{0,2}$]',
@@ -80,7 +80,7 @@ class Validation
         'creator'      => 'required|regex_match[/^([\x{4e00}-\x{9fa5}]{1,6})$/u]',
     ];
 
-    public $GeneratorEventUpdate = [
+    public $GeneratorEventUpdateRecord = [
         'id'           => 'required|regex_match[^[1-9]\d{0,10}$]',
         'station_id'   => 'required|regex_match[^[1-9]\d{0,2}$]',
         'generator_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
@@ -89,21 +89,21 @@ class Validation
         'creator'      => 'required|regex_match[/^([\x{4e00}-\x{9fa5}]{1,6})$/u]',
     ];
 
-    public $GeneratorEventGet = [
+    public $GeneratorGetEvent = [
         'station_id'   => 'required|regex_match[^[1-9]\d{0,2}$]',
         'generator_id' => 'required|regex_match[^[0-9]\d{0,2}$]',
-        'date'         => 'required|valid_date[Y-m-d]',
+        // 'date'         => 'required|valid_date[Y-m-d]',
         'limit'        => 'required|regex_match[^[1-9]\d{0,2}$]',
         'offset'       => 'required|regex_match[^[1-9]\d{0,9}$]',
     ];
 
-    public $GeneratorEventDelete = [
+    public $GeneratorEventDelRecord = [
         'id'           => 'required|regex_match[^[1-9]\d{0,10}$]',
         'station_id'   => 'required|regex_match[^[1-9]\d{0,2}$]',
         'generator_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
     ];
 
-    public $GeneratorEventExport = [
+    public $GeneratorEventExportRecords = [
         'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
         'date'       => 'required|valid_date[Y-m-d]',
     ];

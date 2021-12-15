@@ -3,14 +3,16 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-13 19:33:35
+ * @LastEditTime: 2021-12-15 17:37:11
  */
 
 // Mix
-import GeneratorEventList from './GeneratorEventList'
-import GenEventBasicStatistic from './GenEventBasicStatistic'
+import RecordForm from './RecordForm'
+import RecordList from './RecordList'
+import StatisticChart from './StatisticChart'
 
 export {
-  GeneratorEventList,
-  GenEventBasicStatistic
+  RecordForm,
+  RecordList,
+  StatisticChart
 }
