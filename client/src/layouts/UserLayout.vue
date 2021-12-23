@@ -27,7 +27,7 @@
             <a href="#">条款</a>
           </div>
           <div class="copyright">
-            松山河口 &copy; 2021.11.06 Sang Yu
+            松山河口 &copy; 2021.12.22 Sang Yu
           </div>
         </div>
       </div>

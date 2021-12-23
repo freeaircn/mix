@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-12-15 19:04:21
+ * @LastEditTime: 2021-12-23 23:28:47
  */
 
 namespace App\Controllers;
@@ -366,6 +366,81 @@ class GeneratorEvent extends BaseController
         // return $this->respond($res);
     }
 
+    // public function getStatisticChartData()
+    // {
+    //     $param = $this->request->getGet();
+
+    //     // 检查输入
+    //     if (empty($param) || !isset($param['station_id']) || !isset($param['year'])) {
+    //         $res['code'] = EXIT_ERROR;
+    //         $res['msg']  = '请求数据无效';
+    //         return $this->respond($res);
+    //     }
+    //     if (!is_numeric($param['station_id']) || !is_numeric($param['year'])) {
+    //         $res['code'] = EXIT_ERROR;
+    //         $res['msg']  = '请求数据无效';
+    //         return $this->respond($res);
+    //     }
+
+    //     $model = new RecordModel();
+
+    //     // 初值
+    //     $res = [];
+    //     for ($i = 0; $i < $this->genTotalNumber; $i++) {
+    //         $res[] = [
+    //             'gid'          => ($i + 1) . 'G',
+    //             'start_num'    => 0,
+    //             'running_time' => 0,
+    //             'last_at'      => 'NULL',
+    //         ];
+    //     }
+
+    //     $utils = service('mixUtils');
+
+    //     // 查询记录
+    //     $columnName = ['event', 'event_at'];
+    //     $query      = [
+    //         'year'         => $param['year'],
+    //         'station_id'   => $param['station_id'],
+    //         'generator_id' => 0,
+    //     ];
+    //     for ($i = 0; $i < $this->genTotalNumber; $i++) {
+    //         $query['generator_id'] = ($i + 1);
+
+    //         $db = $model->getByStationDateGen($columnName, $query);
+    //         if (!empty($db)) {
+    //             $cnt          = count($db);
+    //             $start_num    = 0;
+    //             $running_time = 0;
+    //             $start_at     = '';
+    //             for ($j = 0; $j < $cnt; $j++) {
+    //                 if ($db[$j]['event'] == $this->eventStart) {
+    //                     $start_num += 1;
+    //                     $start_at = $db[$j]['event_at'];
+    //                     continue;
+    //                 }
+    //                 if ($j === 0 && $db[$j]['event'] == $this->eventStop) {
+    //                     $firstDayOfYear = $utils->getFirstDayOfYear($db[$j]['event_at'], 0, true);
+    //                     $running_time += (strtotime($db[$j]['event_at']) - strtotime($firstDayOfYear));
+    //                     continue;
+    //                 }
+    //                 if ($j !== 0 && $db[$j]['event'] == $this->eventStop) {
+    //                     $running_time += (strtotime($db[$j]['event_at']) - strtotime($start_at));
+    //                     continue;
+    //                 }
+    //             }
+    //             $res[$i]['start_num']    = $start_num;
+    //             $res[$i]['running_time'] = round($running_time / 3600, 2);
+    //             $res[$i]['last_at']      = $db[$cnt - 1]['event_at'];
+    //         }
+    //     }
+
+    //     $response['code'] = EXIT_SUCCESS;
+    //     $response['data'] = $res;
+
+    //     return $this->respond($response);
+    // }
+
     public function getStatisticChartData()
     {
         $param = $this->request->getGet();
@@ -385,58 +460,92 @@ class GeneratorEvent extends BaseController
         $model = new RecordModel();
 
         // 初值
-        $res = [];
-        for ($i = 0; $i < $this->genTotalNumber; $i++) {
-            $res[] = [
-                'gid'          => ($i + 1) . 'G',
-                'start_num'    => 0,
-                'running_time' => 0,
-                'last_at'      => 'NULL',
+        $run_time  = [];
+        $start_num = [];
+        $months    = 12;
+        for ($i = 0; $i < $months; $i++) {
+            $run_time[$i] = [
+                'month' => ($i + 1) . '月',
+                '1G'    => 0,
+                '2G'    => 0,
+                '3G'    => 0,
+            ];
+            $start_num[$i] = [
+                'month' => ($i + 1) . '月',
+                '1G'    => 0,
+                '2G'    => 0,
+                '3G'    => 0,
             ];
         }
+        $last_at = [
+            '1G' => 'NULL',
+            '2G' => 'NULL',
+            '3G' => 'NULL',
+        ];
 
         $utils = service('mixUtils');
 
         // 查询记录
-        $columnName = ['event', 'event_at'];
+        $columnName = ['generator_id', 'event', 'event_at'];
         $query      = [
-            'year'         => $param['year'],
-            'station_id'   => $param['station_id'],
-            'generator_id' => 0,
+            'year'       => $param['year'],
+            'station_id' => $param['station_id'],
+            // 'generator_id' => 0,
         ];
-        for ($i = 0; $i < $this->genTotalNumber; $i++) {
-            $query['generator_id'] = ($i + 1);
+        for ($i = 0; $i < $months; $i++) {
+            $query['month'] = $i + 1;
 
-            $db = $model->getByStationDateGen($columnName, $query);
+            $db = $model->getByStationYearMonth($columnName, $query);
             if (!empty($db)) {
-                $cnt          = count($db);
-                $start_num    = 0;
-                $running_time = 0;
-                $start_at     = '';
-                for ($j = 0; $j < $cnt; $j++) {
-                    if ($db[$j]['event'] == $this->eventStart) {
-                        $start_num += 1;
-                        $start_at = $db[$j]['event_at'];
-                        continue;
+                $cnt = count($db);
+                for ($k = 1; $k < 4; $k++) {
+                    $start_num2  = 0;
+                    $run_time2   = 0;
+                    $start_at    = '';
+                    $last_at2    = '';
+                    $firstIsStop = true;
+                    for ($j = 0; $j < $cnt; $j++) {
+                        if ($db[$j]['generator_id'] == $k && $db[$j]['event'] == $this->eventStart) {
+                            $start_num2 += 1;
+                            $start_at    = $db[$j]['event_at'];
+                            $last_at2    = $db[$j]['event_at'];
+                            $firstIsStop = false;
+                            continue;
+                        }
+                        if ($db[$j]['generator_id'] == $k && $db[$j]['event'] == $this->eventStop) {
+                            $last_at2 = $db[$j]['event_at'];
+                            if ($firstIsStop) {
+                                $firstDayOfYear = $utils->getFirstDayOfMonth($db[$j]['event_at'], 0, true);
+                                $run_time2 += (strtotime($db[$j]['event_at']) - strtotime($firstDayOfYear));
+                                $firstIsStop = false;
+                                continue;
+                            } else {
+                                $run_time2 += (strtotime($db[$j]['event_at']) - strtotime($start_at));
+                                continue;
+                            }
+                        }
                     }
-                    if ($j === 0 && $db[$j]['event'] == $this->eventStop) {
-                        $firstDayOfYear = $utils->getFirstDayOfYear($db[$j]['event_at'], 0, true);
-                        $running_time += (strtotime($db[$j]['event_at']) - strtotime($firstDayOfYear));
-                        continue;
+                    if ($k == 1) {
+                        $start_num[$i]['1G'] = $start_num2;
+                        $run_time[$i]['1G']  = round($run_time2 / 3600, 2);
+                        $last_at['1G']       = $last_at2;
                     }
-                    if ($j !== 0 && $db[$j]['event'] == $this->eventStop) {
-                        $running_time += (strtotime($db[$j]['event_at']) - strtotime($start_at));
-                        continue;
+                    if ($k == 2) {
+                        $start_num[$i]['2G'] = $start_num2;
+                        $run_time[$i]['2G']  = round($run_time2 / 3600, 2);
+                        $last_at['2G']       = $last_at2;
+                    }
+                    if ($k == 3) {
+                        $start_num[$i]['3G'] = $start_num2;
+                        $run_time[$i]['3G']  = round($run_time2 / 3600, 2);
+                        $last_at['3G']       = $last_at2;
                     }
                 }
-                $res[$i]['start_num']    = $start_num;
-                $res[$i]['running_time'] = round($running_time / 3600, 2);
-                $res[$i]['last_at']      = $db[$cnt - 1]['event_at'];
             }
         }
 
         $response['code'] = EXIT_SUCCESS;
-        $response['data'] = $res;
+        $response['data'] = ['start_num' => $start_num, 'run_time' => $run_time, 'last_at' => $last_at];
 
         return $this->respond($response);
     }

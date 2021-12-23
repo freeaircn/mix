@@ -39,6 +39,8 @@ import moment from 'moment'
 import { Column } from '@antv/g2plot'
 import { apiGetEventStatisticChartData } from '@/api/mix/generator'
 
+const DataSet = require('@antv/data-set')
+
 export default {
   name: 'StatisticChart',
   props: {
@@ -56,6 +58,8 @@ export default {
       isMounted: false,
       //
       chartData: [],
+      run_time: [],
+      start_num: [],
       last_at: [],
       //
       runningTimeChart: null,
@@ -64,7 +68,7 @@ export default {
   },
   created () {
     const year = moment().year()
-    for (let i = 2018; i <= year; i++) {
+    for (let i = 2017; i <= year; i++) {
       this.yearRange.push({
         name: i + '年',
         value: i
@@ -88,7 +92,9 @@ export default {
       }
       apiGetEventStatisticChartData(query)
         .then(res => {
-          this.chartData = res
+          // this.chartData = res
+          this.run_time = res.run_time
+          this.start_num = res.start_num
           if (this.isMounted) {
             this.updateRunningTimeChart()
             this.updateStartNumChart()
@@ -103,119 +109,157 @@ export default {
     },
 
     initRunningTimeChart () {
+      const dv = new DataSet.View().source(this.run_time)
+      dv.transform({
+        type: 'fold',
+        fields: ['1G', '2G', '3G'],
+        key: 'type',
+        value: 'time'
+      })
+      const chartData = dv.rows
+
       this.runningTimeChart = new Column('running-time-chart', {
-        data: this.chartData,
-        xField: 'gid',
-        yField: 'running_time',
-        seriesField: 'gid',
-        color: ['#025DF4', '#2391FF', '#78D3F8'],
+        data: chartData,
+        xField: 'month',
+        yField: 'time',
+        seriesField: 'type',
+        isStack: false,
+        isGroup: true,
+        // color: ['#025DF4', '#2391FF', '#78D3F8'],
         legend: {
           position: 'bottom'
         },
-        label: {
-          // 可手动配置 label 数据标签位置
-          position: 'middle', // 'top', 'middle', 'bottom'
-          // 可配置附加的布局方法
-          layout: [
-            // 柱形图数据标签位置自动调整
-            { type: 'interval-adjust-position' },
-            // 数据标签防遮挡
-            { type: 'interval-hide-overlap' },
-            // 数据标签文颜色自动调整
-            { type: 'adjust-color' }
-          ]
+        slider: {
+          start: 0,
+          end: 1
+          // trendCfg: {
+          //   isArea: true
+          // }
         },
-        animation: false,
-        maxColumnWidth: 60,
-        // meta: {
-        //   gid: {
-        //     alias: '机组'
-        //   },
-        //   running_time: {
-        //     alias: '时长'
-        //   }
+        // label: {
+        //   // 可手动配置 label 数据标签位置
+        //   position: 'middle', // 'top', 'middle', 'bottom'
+        //   // 可配置附加的布局方法
+        //   layout: [
+        //     // 柱形图数据标签位置自动调整
+        //     { type: 'interval-adjust-position' },
+        //     // 数据标签防遮挡
+        //     { type: 'interval-hide-overlap' },
+        //     // 数据标签文颜色自动调整
+        //     { type: 'adjust-color' }
+        //   ]
         // },
-        tooltip: {
-          customItems: (originalItems) => {
-            const cnt = originalItems.length
-            if (cnt === 1) {
-              const dateInfo = Object.assign({}, originalItems[0])
-              dateInfo.name = '截至'
-              const cnt2 = this.last_at.length
-              for (let i = 0; i < cnt2; i++) {
-                if (originalItems[0].name === this.last_at[i].gid) {
-                  dateInfo.value = this.last_at[i].date
-                }
-              }
-              originalItems.push(dateInfo)
-            }
-            return originalItems
-          }
-        }
+        animation: false,
+        maxColumnWidth: 60
+        // tooltip: {
+        //   customItems: (originalItems) => {
+        //     const cnt = originalItems.length
+        //     if (cnt === 1) {
+        //       const dateInfo = Object.assign({}, originalItems[0])
+        //       dateInfo.name = '截至'
+        //       const cnt2 = this.last_at.length
+        //       for (let i = 0; i < cnt2; i++) {
+        //         if (originalItems[0].name === this.last_at[i].gid) {
+        //           dateInfo.value = this.last_at[i].date
+        //         }
+        //       }
+        //       originalItems.push(dateInfo)
+        //     }
+        //     return originalItems
+        //   }
+        // }
       })
       this.runningTimeChart.render()
     },
 
     updateRunningTimeChart () {
-      this.runningTimeChart.changeData(this.chartData)
+      const dv = new DataSet.View().source(this.run_time)
+      dv.transform({
+        type: 'fold',
+        fields: ['1G', '2G', '3G'],
+        key: 'type',
+        value: 'time'
+      })
+      const chartData = dv.rows
+
+      this.runningTimeChart.changeData(chartData)
     },
 
     initStartNumChart () {
+      const dv = new DataSet.View().source(this.start_num)
+      dv.transform({
+        type: 'fold',
+        fields: ['1G', '2G', '3G'],
+        key: 'type',
+        value: 'num'
+      })
+      const chartData = dv.rows
+
       this.startNumChart = new Column('start-num-chart', {
-        data: this.chartData,
-        xField: 'gid',
-        yField: 'start_num',
-        seriesField: 'gid',
-        color: ['#FF6B3B', '#E19348', '#FFC100'],
+        data: chartData,
+        xField: 'month',
+        yField: 'num',
+        seriesField: 'type',
+        isStack: false,
+        isGroup: true,
+        color: ['#025DF4', '#2391FF', '#78D3F8'],
         legend: {
           position: 'bottom'
         },
-        label: {
-          // 可手动配置 label 数据标签位置
-          position: 'middle', // 'top', 'middle', 'bottom'
-          // 可配置附加的布局方法
-          layout: [
-            // 柱形图数据标签位置自动调整
-            { type: 'interval-adjust-position' },
-            // 数据标签防遮挡
-            { type: 'interval-hide-overlap' },
-            // 数据标签文颜色自动调整
-            { type: 'adjust-color' }
-          ]
+        slider: {
+          start: 0,
+          end: 1
+          // trendCfg: {
+          //   isArea: true
+          // }
         },
-        animation: false,
-        maxColumnWidth: 60,
-        // meta: {
-        //   gid: {
-        //     alias: '机组'
-        //   },
-        //   start_num: {
-        //     alias: '次数'
-        //   }
+        // label: {
+        //   // 可手动配置 label 数据标签位置
+        //   position: 'middle', // 'top', 'middle', 'bottom'
+        //   // 可配置附加的布局方法
+        //   layout: [
+        //     // 柱形图数据标签位置自动调整
+        //     { type: 'interval-adjust-position' },
+        //     // 数据标签防遮挡
+        //     { type: 'interval-hide-overlap' },
+        //     // 数据标签文颜色自动调整
+        //     { type: 'adjust-color' }
+        //   ]
         // },
-        tooltip: {
-          customItems: (originalItems) => {
-            const cnt = originalItems.length
-            if (cnt === 1) {
-              const dateInfo = Object.assign({}, originalItems[0])
-              dateInfo.name = '截至'
-              const cnt2 = this.last_at.length
-              for (let i = 0; i < cnt2; i++) {
-                if (originalItems[0].name === this.last_at[i].gid) {
-                  dateInfo.value = this.last_at[i].date
-                }
-              }
-              originalItems.push(dateInfo)
-            }
-            return originalItems
-          }
-        }
+        animation: false,
+        maxColumnWidth: 60
+        // tooltip: {
+        //   customItems: (originalItems) => {
+        //     const cnt = originalItems.length
+        //     if (cnt === 1) {
+        //       const dateInfo = Object.assign({}, originalItems[0])
+        //       dateInfo.name = '截至'
+        //       const cnt2 = this.last_at.length
+        //       for (let i = 0; i < cnt2; i++) {
+        //         if (originalItems[0].name === this.last_at[i].gid) {
+        //           dateInfo.value = this.last_at[i].date
+        //         }
+        //       }
+        //       originalItems.push(dateInfo)
+        //     }
+        //     return originalItems
+        //   }
+        // }
       })
       this.startNumChart.render()
     },
 
     updateStartNumChart () {
-      this.startNumChart.changeData(this.chartData)
+      const dv = new DataSet.View().source(this.start_num)
+      dv.transform({
+        type: 'fold',
+        fields: ['1G', '2G', '3G'],
+        key: 'type',
+        value: 'num'
+      })
+      const chartData = dv.rows
+
+      this.startNumChart.changeData(chartData)
     },
 
     updateLastAt () {
