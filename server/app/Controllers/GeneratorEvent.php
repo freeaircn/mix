@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-12-23 23:28:47
+ * @LastEditTime: 2021-12-24 22:13:46
  */
 
 namespace App\Controllers;
@@ -457,6 +457,7 @@ class GeneratorEvent extends BaseController
             return $this->respond($res);
         }
 
+        $year  = $param['year'];
         $model = new RecordModel();
 
         // 初值
@@ -466,86 +467,192 @@ class GeneratorEvent extends BaseController
         for ($i = 0; $i < $months; $i++) {
             $run_time[$i] = [
                 'month' => ($i + 1) . '月',
-                '1G'    => 0,
-                '2G'    => 0,
-                '3G'    => 0,
+                'G1'    => 0,
+                'G2'    => 0,
+                'G3'    => 0,
             ];
             $start_num[$i] = [
                 'month' => ($i + 1) . '月',
-                '1G'    => 0,
-                '2G'    => 0,
-                '3G'    => 0,
+                'G1'    => 0,
+                'G2'    => 0,
+                'G3'    => 0,
             ];
         }
         $last_at = [
-            '1G' => 'NULL',
-            '2G' => 'NULL',
-            '3G' => 'NULL',
+            'G1' => 'NULL',
+            'G2' => 'NULL',
+            'G3' => 'NULL',
+        ];
+        $total_run = [
+            'G1_run' => 0,
+            'G2_run' => 0,
+            'G3_run' => 0,
+            'total'  => 0,
+        ];
+        $total_start = [
+            'G1_start' => 0,
+            'G2_start' => 0,
+            'G3_start' => 0,
         ];
 
         $utils = service('mixUtils');
 
         // 查询记录
-        $columnName = ['generator_id', 'event', 'event_at'];
+        $columnName = ['event', 'event_at'];
         $query      = [
-            'year'       => $param['year'],
-            'station_id' => $param['station_id'],
-            // 'generator_id' => 0,
+            'station_id'   => $param['station_id'],
+            'generator_id' => 0,
+            'year'         => $param['year'],
         ];
-        for ($i = 0; $i < $months; $i++) {
-            $query['month'] = $i + 1;
+        for ($i = 1; $i <= $this->genTotalNumber; $i++) {
+            $query['generator_id'] = $i;
 
-            $db = $model->getByStationYearMonth($columnName, $query);
+            $db = $model->getByStationGenYear($columnName, $query); // 按日期排序
             if (!empty($db)) {
                 $cnt = count($db);
-                for ($k = 1; $k < 4; $k++) {
-                    $start_num2  = 0;
-                    $run_time2   = 0;
-                    $start_at    = '';
-                    $last_at2    = '';
-                    $firstIsStop = true;
-                    for ($j = 0; $j < $cnt; $j++) {
-                        if ($db[$j]['generator_id'] == $k && $db[$j]['event'] == $this->eventStart) {
-                            $start_num2 += 1;
-                            $start_at    = $db[$j]['event_at'];
-                            $last_at2    = $db[$j]['event_at'];
-                            $firstIsStop = false;
-                            continue;
-                        }
-                        if ($db[$j]['generator_id'] == $k && $db[$j]['event'] == $this->eventStop) {
-                            $last_at2 = $db[$j]['event_at'];
-                            if ($firstIsStop) {
-                                $firstDayOfYear = $utils->getFirstDayOfMonth($db[$j]['event_at'], 0, true);
-                                $run_time2 += (strtotime($db[$j]['event_at']) - strtotime($firstDayOfYear));
-                                $firstIsStop = false;
-                                continue;
-                            } else {
-                                $run_time2 += (strtotime($db[$j]['event_at']) - strtotime($start_at));
-                                continue;
+                for ($j = 0; $j < $months; $j++) {
+                    $start_num2 = 0;
+                    $run_time2  = 0;
+                    $filter     = [];
+                    for ($k = 0; $k < $cnt; $k++) {
+                        $item  = $db[$k];
+                        $month = date("n", strtotime($item['event_at']));
+                        if ($month == ($j + 1)) {
+                            $filter[] = $item;
+                            // 启动次数
+                            if ($item['event'] == $this->eventStart) {
+                                $start_num2 = $start_num2 + 1;
                             }
                         }
                     }
-                    if ($k == 1) {
-                        $start_num[$i]['1G'] = $start_num2;
-                        $run_time[$i]['1G']  = round($run_time2 / 3600, 2);
-                        $last_at['1G']       = $last_at2;
+                    // 处理：跨月运行
+                    if (!empty($filter)) {
+                        $temp = reset($filter);
+                        if ($temp['event'] == $this->eventStop) {
+                            $head = [
+                                'event'    => $this->eventStart,
+                                'event_at' => $utils->getFirstDayOfMonth($temp['event_at'], 0) . ' 00:00:00',
+                            ];
+                            array_unshift($filter, $head);
+                        }
+                        $temp = end($filter);
+                        if ($temp['event'] == $this->eventStart) {
+                            $tail = [
+                                'event'    => $this->eventStop,
+                                'event_at' => $utils->getLastDayOfMonth($temp['event_at'], 0) . ' 23:59:59',
+                            ];
+                            array_push($filter, $tail);
+                        }
+                        // 计算
+                        $l = count($filter);
+                        for ($n = 0; $n < ($l - 1); $n++) {
+                            $start_at = $filter[$n]['event_at'];
+                            $stop_at  = $filter[$n + 1]['event_at'];
+                            $run_time2 += (strtotime($stop_at) - strtotime($start_at));
+                            $n = $n + 1;
+                        }
                     }
-                    if ($k == 2) {
-                        $start_num[$i]['2G'] = $start_num2;
-                        $run_time[$i]['2G']  = round($run_time2 / 3600, 2);
-                        $last_at['2G']       = $last_at2;
+                    //
+                    if ($i == 1) {
+                        $start_num[$j]['G1'] = $start_num2;
+                        $run_time[$j]['G1']  = round($run_time2 / 3600, 2);
                     }
-                    if ($k == 3) {
-                        $start_num[$i]['3G'] = $start_num2;
-                        $run_time[$i]['3G']  = round($run_time2 / 3600, 2);
-                        $last_at['3G']       = $last_at2;
+                    if ($i == 2) {
+                        $start_num[$j]['G2'] = $start_num2;
+                        $run_time[$j]['G2']  = round($run_time2 / 3600, 2);
                     }
+                    if ($i == 3) {
+                        $start_num[$j]['G3'] = $start_num2;
+                        $run_time[$j]['G3']  = round($run_time2 / 3600, 2);
+                    }
+                    // 释放
+                    unset($filter);
                 }
             }
+            // 运行时间
+            // if (!empty($db)) {
+            //     $cnt = count($db);
+            //     for ($j = 0; $j < $months; $j++) {
+            //         $filter = [];
+            //         for ($k = 0; $k < $cnt; $k++) {
+            //             $item  = $db[$k];
+            //             $month = date("n", strtotime($item['event_at']));
+            //             if ($month == ($j + 1)) {
+            //                 $filter[] = $item;
+            //             }
+            //         }
+            //         // 处理：跨月运行
+            //         $run_time2 = 0;
+            //         if (!empty($filter)) {
+            //             $temp = reset($filter);
+            //             if ($temp['event'] == $this->eventStop) {
+            //                 $head = [
+            //                     'event'    => $this->eventStart,
+            //                     'event_at' => $utils->getFirstDayOfMonth($temp['event_at'], 0) . ' 00:00:00',
+            //                 ];
+            //                 array_unshift($filter, $head);
+            //             }
+            //             $temp = end($filter);
+            //             if ($temp['event'] == $this->eventStart) {
+            //                 $tail = [
+            //                     'event'    => $this->eventStop,
+            //                     'event_at' => $utils->getLastDayOfMonth($temp['event_at'], 0) . ' 23:59:59',
+            //                 ];
+            //                 array_push($filter, $tail);
+            //             }
+            //             // 计算
+            //             $l = count($filter);
+            //             for ($n = 0; $n < ($l - 1); $n++) {
+            //                 $start_at = $filter[$n]['event_at'];
+            //                 $stop_at  = $filter[$n + 1]['event_at'];
+            //                 $run_time2 += (strtotime($stop_at) - strtotime($start_at));
+            //                 $n = $n + 1;
+            //             }
+            //         }
+            //         // 赋值
+            //         if ($i == 1) {
+            //             $run_time[$j]['1G'] = round($run_time2 / 3600, 2);
+            //         }
+            //         if ($i == 2) {
+            //             $run_time[$j]['2G'] = round($run_time2 / 3600, 2);
+            //         }
+            //         if ($i == 3) {
+            //             $run_time[$j]['3G'] = round($run_time2 / 3600, 2);
+            //         }
+            //         // 释放
+            //         unset($filter);
+            //     }
+            // }
         }
 
+        // 计算：年累计
+        $g1 = 0;
+        $g2 = 0;
+        $g3 = 0;
+        for ($i = 0; $i < $month; $i++) {
+            $g1 += $run_time[$i]['G1'];
+            $g2 += $run_time[$i]['G2'];
+            $g3 += $run_time[$i]['G3'];
+            //
+            $total_start['G1_start'] += $start_num[$i]['G1'];
+            $total_start['G2_start'] += $start_num[$i]['G2'];
+            $total_start['G3_start'] += $start_num[$i]['G3'];
+        }
+        $total_run['G1_run'] = round($g1, 2);
+        $total_run['G2_run'] = round($g2, 2);
+        $total_run['G3_run'] = round($g3, 2);
+
+        $totalHours = 8760;
+        if ($year % 4 == 0 && $year % 100 != 0 || $year % 400 == 0) {
+            $totalHours = 8784;
+        }
+        $total_run['total'] = $totalHours;
+        // $total_run['G1_idle'] = round($totalHours - $total_run['G1_run'], 2);
+        // $total_run['G2_idle'] = round($totalHours - $total_run['G2_run'], 2);
+        // $total_run['G3_idle'] = round($totalHours - $total_run['G3_run'], 2);
+
         $response['code'] = EXIT_SUCCESS;
-        $response['data'] = ['start_num' => $start_num, 'run_time' => $run_time, 'last_at' => $last_at];
+        $response['data'] = ['start_num' => $start_num, 'run_time' => $run_time, 'last_at' => $last_at, 'total_run' => $total_run, 'total_start' => $total_start];
 
         return $this->respond($response);
     }

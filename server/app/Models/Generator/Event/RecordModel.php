@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-12-23 21:29:48
+ * @LastEditTime: 2021-12-24 17:39:35
  */
 
 namespace App\Models\Generator\Event;
@@ -61,7 +61,7 @@ class RecordModel extends Model
         return $result;
     }
 
-    public function getByStationYearMonth($columnName = [], $query = [])
+    public function getByStationGenYear($columnName = [], $query = [])
     {
         if (empty($columnName)) {
             return false;
@@ -74,8 +74,9 @@ class RecordModel extends Model
         $builder = $this->select($selectSql);
 
         $builder->where('station_id', $query['station_id']);
+        $builder->where('generator_id', $query['generator_id']);
         $builder->where('Year(event_at)', $query['year']);
-        $builder->where('Month(event_at)', $query['month']);
+        // $builder->where('Month(event_at)', $query['month']);
         $builder->orderBy('event_at', 'ASC');
 
         $result = $builder->findAll();

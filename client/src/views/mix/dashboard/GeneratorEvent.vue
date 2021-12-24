@@ -48,7 +48,7 @@
       </StatisticChart>
     </div>
 
-    <div :style="{marginBottom: '8px'}">
+    <div v-if="false" :style="{marginBottom: '8px'}">
       <a-card :loading="false" title="全景" :bordered="false">
       </a-card>
     </div>
