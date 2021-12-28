@@ -26,8 +26,10 @@
       <a-card :bordered="false" title="事件记录" :style="{ height: '100%' }">
         <RecordList
           :loading="listLoading"
-          :date.sync="queryRecordDate"
-          :genId.sync="queryRecordGenId"
+          :date.sync="queryParamDate"
+          :genId.sync="queryParamGenId"
+          :eventId.sync="queryParamEventId"
+          :descriptionId.sync="queryParamDescId"
           :listData="recordListData"
           :current.sync="recordListPageIndex"
           :total="totalRecords"
@@ -85,8 +87,10 @@ export default {
       pageSize: 5,
       recordListData: [],
       totalRecords: 0,
-      queryRecordDate: '',
-      queryRecordGenId: ''
+      queryParamDate: '',
+      queryParamGenId: '',
+      queryParamEventId: '',
+      queryParamDescId: ''
     }
   },
   computed: {
@@ -111,19 +115,21 @@ export default {
     onRecordFormSuccess (method) {
       this.recordDiagVisible = false
       if (method === 'post') {
-        this.onQueryRecordAfterUpdate(this.queryRecordDate, this.queryRecordGenId)
+        this.onQueryRecordAfterUpdate(this.queryParamDate, this.queryParamGenId, this.queryParamEventId, this.queryParamDescId)
       }
       if (method === 'put') {
-        this.onQueryRecordAfterUpdate(this.queryRecordDate, this.queryRecordGenId)
+        this.onQueryRecordAfterUpdate(this.queryParamDate, this.queryParamGenId, this.queryParamEventId, this.queryParamDescId)
       }
     },
 
     // 记录-查
-    onQueryRecord (date = '', gid = 0) {
+    onQueryRecord (date = '', gid = '0', eventId = '0', descId = '0') {
       const query = {
         station_id: this.userInfo.belongToDeptId,
         generator_id: gid,
         date: date,
+        event: eventId,
+        description: descId,
         limit: this.pageSize,
         offset: 1
       }
@@ -134,7 +140,7 @@ export default {
           this.listLoading = false
           //
           this.totalRecords = res.total
-          this.queryRecordDate = res.date
+          this.queryParamDate = res.date
           this.recordListData = res.data
         })
         .catch((err) => {
@@ -145,11 +151,13 @@ export default {
         })
     },
 
-    onQueryRecordAfterUpdate (date = '', gid = 0) {
+    onQueryRecordAfterUpdate (date = '', gid = '0', eventId = '0', descId = '0') {
       const query = {
         station_id: this.userInfo.belongToDeptId,
         generator_id: gid,
         date: date,
+        event: eventId,
+        description: descId,
         limit: this.pageSize,
         offset: this.recordListPageIndex
       }
@@ -160,7 +168,7 @@ export default {
           this.listLoading = false
           //
           this.totalRecords = res.total
-          // this.queryRecordDate = res.date
+          // this.queryParamDate = res.date
           this.recordListData = res.data
         })
         .catch((err) => {
@@ -175,7 +183,7 @@ export default {
     onRecordListPageChange (param) {
       const query = { ...param }
       query.station_id = this.userInfo.belongToDeptId
-      query.date = this.queryRecordDate
+      query.date = this.queryParamDate
 
       this.listLoading = true
       apiGetEvent(query)
@@ -196,7 +204,7 @@ export default {
     onDeleteRecord (param) {
       apiDelEvent(param)
         .then(() => {
-            this.onQueryRecordAfterUpdate(this.queryRecordDate, this.queryRecordGenId)
+            this.onQueryRecordAfterUpdate(this.queryParamDate, this.queryParamGenId, this.queryParamEventId, this.queryParamDescId)
           })
           //  网络异常，清空页面数据显示，防止错误的操作
           .catch((err) => {

@@ -3,17 +3,17 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-12-22 19:39:25
+ * @LastEditTime: 2021-12-28 19:52:16
 -->
 <template>
   <global-footer class="footer custom-render">
     <template v-slot:links>
       <!-- <a href="https://www.github.com/vueComponent/pro-layout" target="_blank">Pro Layout</a> -->
-      <a href="#" >松山河口</a>
+      <a href="#" >松山河口工作室</a>
       <!-- <a href="https://www.github.com/sendya/" target="_blank">@Sendya</a> -->
     </template>
     <template v-slot:copyright>
-      <a href="#" >Mix 2021.12.22</a>
+      <a href="#" >Mix 2021.12</a>
     </template>
   </global-footer>
 </template>

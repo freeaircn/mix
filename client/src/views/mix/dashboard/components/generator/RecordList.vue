@@ -14,6 +14,21 @@
       </a-form-model-item>
 
       <a-form-model-item>
+        <a-select v-model="query.event" placeholder="事件" allowClear style="width: 90px">
+          <a-select-option value="1">停机</a-select-option>
+          <a-select-option value="2">开机</a-select-option>
+          <a-select-option value="3">检修开始</a-select-option>
+          <a-select-option value="4">检修结束</a-select-option>
+        </a-select>
+      </a-form-model-item>
+
+      <a-form-model-item>
+        <a-select v-model="query.description" placeholder="说明" allowClear style="width: 90px">
+          <a-select-option value="1">非“无”</a-select-option>
+        </a-select>
+      </a-form-model-item>
+
+      <a-form-model-item>
         <a-button type="primary" @click="onClickQuery">查询</a-button>
       </a-form-model-item>
 
@@ -73,7 +88,7 @@ const columns = [
     scopedSlots: { customRender: 'event' }
   },
   {
-    title: '原因',
+    title: '分类',
     dataIndex: 'cause',
     scopedSlots: { customRender: 'cause' }
   },
@@ -106,23 +121,25 @@ const generatorIdMap = {
 
 const eventMap = {
   1: { text: '停机' },
-  2: { text: '开机' }
+  2: { text: '开机' },
+  3: { text: '检修开始' },
+  4: { text: '检修结束' }
 }
 
 const causeMap = {
   0: { text: ' - ' },
   1: { text: '调度许可' },
-  2: { text: '检修试验' },
-  3: { text: '电气故障' },
-  4: { text: '水系统故障' },
-  5: { text: '油系统故障' },
-  6: { text: '气系统故障' },
-  7: { text: '线路保护动作' },
-  8: { text: '母线保护动作' },
-  9: { text: '主变保护动作' },
-  10: { text: '发电机保护动作' },
-  11: { text: '安稳动作' },
-  12: { text: '误操作' }
+  2: { text: '正常' },
+  11: { text: '试验' },
+  12: { text: '空转' },
+  21: { text: '设备故障' },
+  22: { text: '保护动作' },
+  23: { text: '稳控动作' },
+  31: { text: 'A级检修' },
+  32: { text: 'B级检修' },
+  33: { text: 'C级检修' },
+  34: { text: 'D级检修' },
+  35: { text: '其他' }
 }
 
 export default {
@@ -137,6 +154,14 @@ export default {
       default: ''
     },
     genId: {
+      type: String,
+      default: ''
+    },
+    eventId: {
+      type: String,
+      default: ''
+    },
+    descriptionId: {
       type: String,
       default: ''
     },
@@ -161,8 +186,8 @@ export default {
     this.columns = columns
     return {
       query: {
-        // moment YYYY-MM-DD
         date: null
+        // generator_id: ''
       },
 
       // 事件列表显示区
@@ -214,16 +239,26 @@ export default {
     // 点击分页
     handleTableChange (value) {
       this.pagination.current = value.current
-      let gid = 0
+      let gid = '0'
+      let event = '0'
+      let description = '0'
       if (this.query.generator_id !== undefined) {
         gid = this.query.generator_id
+      }
+      if (this.query.event !== undefined) {
+        event = this.query.event
+      }
+      if (this.query.description !== undefined) {
+        description = this.query.description
       }
 
       // 向父组件发消息，更新数据区
       const query = {
         limit: this.pagination.pageSize,
         offset: this.pagination.current,
-        generator_id: gid
+        generator_id: gid,
+        event: event,
+        description: description
       }
       this.$emit('update:current', value.current)
       this.$emit('paginationChange', query)
@@ -232,15 +267,26 @@ export default {
     // 点击查询
     onClickQuery () {
       let gid = '0'
+      let event = '0'
+      let description = '0'
+      //
       if (this.query.date == null) {
         this.query.date = ''
       }
       if (this.query.generator_id !== undefined) {
         gid = this.query.generator_id
       }
+      if (this.query.event !== undefined) {
+        event = this.query.event
+      }
+      if (this.query.description !== undefined) {
+        description = this.query.description
+      }
       this.$emit('update:date', this.query.date)
       this.$emit('update:genId', gid)
-      this.$emit('query', this.query.date, gid)
+      this.$emit('update:eventId', event)
+      this.$emit('update:descriptionId', description)
+      this.$emit('query', this.query.date, gid, event, description)
     },
 
     // 导出excel
@@ -261,14 +307,24 @@ export default {
 
     onClickUpdate (record) {
       let gid = '0'
+      let event = '0'
+      let description = '0'
       if (this.query.date == null) {
         this.query.date = ''
       }
       if (this.query.generator_id !== undefined) {
         gid = this.query.generator_id
       }
+      if (this.query.event !== undefined) {
+        event = this.query.event
+      }
+      if (this.query.description !== undefined) {
+        description = this.query.description
+      }
       this.$emit('update:date', this.query.date)
       this.$emit('update:genId', gid)
+      this.$emit('update:eventId', event)
+      this.$emit('update:descriptionId', description)
 
       this.$emit('update', record)
     },
@@ -283,24 +339,40 @@ export default {
 
       let title = ''
       if (record.event === '1') {
-        title = '删除记录吗? ' + record.event_at + ' ' + record.generator_id + 'G ' + ' 停机'
+        title = '删除 ' + record.event_at + ' ' + record.generator_id + 'G ' + ' 停机'
       }
       if (record.event === '2') {
-        title = '删除记录吗? ' + record.event_at + ' ' + record.generator_id + 'G ' + ' 开机'
+        title = '删除 ' + record.event_at + ' ' + record.generator_id + 'G ' + ' 开机'
+      }
+      if (record.event === '3') {
+        title = '删除 ' + record.event_at + '  ' + record.generator_id + 'G 检修开始'
+      }
+      if (record.event === '4') {
+        title = '删除 ' + record.event_at + '  ' + record.generator_id + 'G 检修结束'
       }
       this.$confirm({
         title: title,
         // content: '删除 ' + record.username,
         onOk: () => {
           let gid = '0'
+          let event = '0'
+          let description = '0'
           if (this.query.date == null) {
             this.query.date = ''
           }
           if (this.query.generator_id !== undefined) {
             gid = this.query.generator_id
           }
+          if (this.query.event !== undefined) {
+            event = this.query.event
+          }
+          if (this.query.description !== undefined) {
+            description = this.query.description
+          }
           this.$emit('update:date', this.query.date)
           this.$emit('update:genId', gid)
+          this.$emit('update:eventId', event)
+          this.$emit('update:descriptionId', description)
 
           this.$emit('delete', param)
         }

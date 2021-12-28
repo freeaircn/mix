@@ -23,8 +23,8 @@ class App extends BaseConfig
      *
      * @var string
      */
-    // public $baseURL = 'http://localhost:8080/';
-    public $baseURL = 'http://192.168.1.100/';
+    public $baseURL = 'http://localhost:8080/';
+    // public $baseURL = 'http://192.168.1.100/';
 
     /**
      * --------------------------------------------------------------------------
@@ -219,7 +219,7 @@ class App extends BaseConfig
      *
      * @var integer
      */
-    public $sessionTimeToUpdate = 7200;
+    public $sessionTimeToUpdate = 3600;
 
     /**
      * --------------------------------------------------------------------------
@@ -232,7 +232,7 @@ class App extends BaseConfig
      *
      * @var boolean
      */
-    public $sessionRegenerateDestroy = false;
+    public $sessionRegenerateDestroy = true;
 
     /**
      * --------------------------------------------------------------------------

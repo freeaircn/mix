@@ -27,7 +27,7 @@
             <a href="#">条款</a>
           </div>
           <div class="copyright">
-            松山河口 &copy; 2021.12.22 Sang Yu
+            松山河口工作室 &copy; Sang Yu 2021.12
           </div>
         </div>
       </div>

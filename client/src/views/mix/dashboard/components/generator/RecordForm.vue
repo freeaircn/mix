@@ -10,26 +10,17 @@
       </a-form-model-item>
 
       <a-form-model-item label="事件" prop="event">
-        <a-select v-model="record.event" placeholder="请选择" :disabled="isUpdate">
+        <a-select v-model="record.event" placeholder="请选择" :disabled="isUpdate" @select="onSelectEvent">
           <a-select-option value="1">停机</a-select-option>
           <a-select-option value="2">开机</a-select-option>
+          <a-select-option value="3">检修开始</a-select-option>
+          <a-select-option value="4">检修结束</a-select-option>
         </a-select>
       </a-form-model-item>
 
-      <a-form-model-item label="原因" prop="cause">
+      <a-form-model-item label="分类" prop="cause">
         <a-select v-model="record.cause" placeholder="请选择">
-          <a-select-option value="1">调度许可</a-select-option>
-          <a-select-option value="2">检修试验</a-select-option>
-          <a-select-option value="3">电气故障</a-select-option>
-          <a-select-option value="4">水系统故障</a-select-option>
-          <a-select-option value="5">油系统故障</a-select-option>
-          <a-select-option value="6">气系统故障</a-select-option>
-          <a-select-option value="7">线路保护动作</a-select-option>
-          <a-select-option value="8">母线保护动作</a-select-option>
-          <a-select-option value="9">主变保护动作</a-select-option>
-          <a-select-option value="10">发电机保护动作</a-select-option>
-          <a-select-option value="11">安稳动作</a-select-option>
-          <a-select-option value="12">误操作</a-select-option>
+          <a-select-option v-for="d in eventCauseList" :key="d.value" :value="d.value">{{ d.label }}</a-select-option>
         </a-select>
       </a-form-model-item>
 
@@ -105,16 +96,24 @@ export default {
       rules: {
         generator_id: [{ required: true, message: '请选择机组', trigger: 'change' }],
         event: [{ required: true, message: '请选择事件名称', trigger: 'change' }],
+        cause: [{ required: true, message: '请选择事件分类', trigger: 'change' }],
         date_at: [{ required: true, message: '请选择日期', trigger: ['change'] }],
         time_at: [{ required: true, message: '请选择时间', trigger: ['change'] }]
       },
-      disableBtn: false
+      disableBtn: false,
+      //
+      eventCauseList: null,
+      eventCauseOptions: {
+        c1: [{ label: '调度许可', value: '1' }, { label: '设备故障', value: '21' }, { label: '保护动作', value: '22' }, { label: '稳控动作', value: '23' }, { label: '试验', value: '11' }],
+        c2: [{ label: '调度许可', value: '1' }, { label: '空转', value: '12' }, { label: '试验', value: '11' }],
+        c3: [{ label: 'A级检修', value: '31' }, { label: 'B级检修', value: '32' }, { label: 'C级检修', value: '33' }, { label: 'D级检修', value: '34' }, { label: '其他', value: '35' }]
+      }
     }
   },
   mounted () {
     this.record.station_id = this.stationId
     this.record.generator_id = this.genId
-    this.record.cause = '1'
+    // this.record.cause = '1'
     this.record.date_at = moment().format('YYYY-MM-DD')
   },
   watch: {
@@ -123,12 +122,14 @@ export default {
         if (this.update === true) {
           this.isUpdate = true
           setTimeout(() => {
+            this.onSelectEvent(this.recordInfo.event)
             this.record.station_id = this.recordInfo.station_id
             this.record.generator_id = this.recordInfo.generator_id
             this.record.event = this.recordInfo.event
             this.record.cause = this.recordInfo.cause
             this.record.date_at = this.recordInfo.event_at.substr(0, 10)
             this.record.time_at = this.recordInfo.event_at.substr(11, 8)
+            this.record.description = this.recordInfo.description
           }, 100)
         }
       },
@@ -162,10 +163,16 @@ export default {
 
           let title = ''
           if (data.event === '1') {
-            title = '是否录入: ' + data.event_at + '  ' + data.generator_id + 'G 停机'
+            title = '录入 ' + data.event_at + '  ' + data.generator_id + 'G 停机'
           }
           if (data.event === '2') {
-            title = '是否录入: ' + data.event_at + '  ' + data.generator_id + 'G 开机'
+            title = '录入 ' + data.event_at + '  ' + data.generator_id + 'G 开机'
+          }
+          if (data.event === '3') {
+            title = '录入 ' + data.event_at + '  ' + data.generator_id + 'G 检修开始'
+          }
+          if (data.event === '4') {
+            title = '录入 ' + data.event_at + '  ' + data.generator_id + 'G 检修结束'
           }
 
           this.$confirm({
@@ -211,10 +218,16 @@ export default {
 
           let title = ''
           if (data.event === '1') {
-            title = '确认修改: ' + data.event_at + '  ' + data.generator_id + 'G 停机'
+            title = '修改 ' + data.event_at + '  ' + data.generator_id + 'G 停机'
           }
           if (data.event === '2') {
-            title = '确认修改: ' + data.event_at + '  ' + data.generator_id + 'G 开机'
+            title = '修改 ' + data.event_at + '  ' + data.generator_id + 'G 开机'
+          }
+          if (data.event === '3') {
+            title = '修改 ' + data.event_at + '  ' + data.generator_id + 'G 检修开始'
+          }
+          if (data.event === '4') {
+            title = '修改 ' + data.event_at + '  ' + data.generator_id + 'G 检修结束'
           }
 
           this.$confirm({
@@ -239,6 +252,22 @@ export default {
           return false
         }
       })
+    },
+
+    onSelectEvent (value) {
+      if (value === '1') {
+        this.eventCauseList = this.eventCauseOptions.c1
+        this.record.cause = ''
+      } else if (value === '2') {
+        this.eventCauseList = this.eventCauseOptions.c2
+        this.record.cause = ''
+      } else if (value === '3') {
+        this.eventCauseList = this.eventCauseOptions.c3
+        this.record.cause = ''
+      } else if (value === '4') {
+        this.eventCauseList = this.eventCauseOptions.c3
+        this.record.cause = ''
+      }
     }
   }
 }
