@@ -26,6 +26,7 @@
       <a-card :bordered="false" title="事件记录" :style="{ height: '100%' }">
         <RecordList
           :loading="listLoading"
+          :btnSyncLoading="btnSyncLoading"
           :date.sync="queryParamDate"
           :genId.sync="queryParamGenId"
           :eventId.sync="queryParamEventId"
@@ -38,6 +39,7 @@
           @update="onUpdateRecord"
           @delete="onDeleteRecord"
           @export="onExportEventFile"
+          @sync="onSyncKKX"
         >
         </RecordList>
       </a-card>
@@ -62,7 +64,7 @@
 import moment from 'moment'
 import { RecordForm, RecordList, StatisticChart } from './components/generator'
 import { mapGetters } from 'vuex'
-import { apiGetEvent, apiDelEvent, apiGetExportEvent } from '@/api/mix/generator'
+import { apiGetEvent, apiDelEvent, apiGetExportEvent, apiSyncToKKX } from '@/api/mix/generator'
 import { baseMixin } from '@/store/app-mixin'
 
 export default {
@@ -83,6 +85,7 @@ export default {
 
       // 记录 显示
       listLoading: false,
+      btnSyncLoading: false,
       recordListPageIndex: 1,
       pageSize: 5,
       recordListData: [],
@@ -253,6 +256,23 @@ export default {
         })
         .catch((err) => {
           this.$message.info('导出文件失败')
+          if (err.response) {
+          }
+        })
+    },
+
+    onSyncKKX (date) {
+      const query = {
+        station_id: this.userInfo.belongToDeptId,
+        date: date
+      }
+      this.btnSyncLoading = true
+      apiSyncToKKX(query)
+        .then(() => {
+          this.btnSyncLoading = false
+        })
+        .catch((err) => {
+          this.btnSyncLoading = false
           if (err.response) {
           }
         })

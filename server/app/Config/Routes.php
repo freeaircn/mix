@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-12-15 16:42:34
+ * @LastEditTime: 2021-12-31 09:30:21
  */
 
 namespace Config;
@@ -111,6 +111,7 @@ $routes->group('api', function ($routes) {
 
     $routes->get('generator/event/statistic', 'GeneratorEvent::getStatisticChartData');
     $routes->get('generator/event/export', 'GeneratorEvent::getExportRecordsAsExcel');
+    $routes->get('generator/event/sync/kkx', 'GeneratorEvent::getSyncRecordToKKX');
     //
     $routes->post('meters', 'Meters::newRecord');
     $routes->get('meters', 'Meters::getRecord');

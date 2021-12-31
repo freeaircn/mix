@@ -1,12 +1,6 @@
-# 发布前Check List
+# Prod Check List
 
 ---
-### 说明  
-检查Check List中每一项要求，满足后打包，将server文件夹上传至服务器.   
-关键字: [G]-global  [v]-vue  [c]-ci
-
----
-### Check List
 ***1. vue部分***
 ```
 1 修改VUE打包config    
@@ -36,11 +30,24 @@
 ---
 ***2. ci部分***
 ```
-1 修改生产环境账号密码  
-  数据库连接config文件-server\application\config\database.php
+1 修改pwd
   
 2 修改base_url
   文件server\application\config\config.php
   # $config['base_url'] = 'http://127.0.0.1';
+  
+3
+  rm -rf /var/www/html/mix/server
+  chown -R apache:apache /var/www/html/mix/server
+  [optional] chmod -R 755 /var/www/html/mix/server/writable/
+  
+4
+  create user ssh_auto@localhost identified by 'Meter@2021';
+
+  grant all on mix.app_meter to ssh_auto@localhost;
+  grant Select on mix.app_generator_event_log to ssh_auto@localhost;
+  flush privileges;
+
+  show grants for ssh_auto@localhost;
 ```
 

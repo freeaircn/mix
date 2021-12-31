@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-11-01 22:57:22
+ * @LastEditTime: 2021-12-29 09:29:43
  */
 
 namespace App\Controllers;
@@ -487,7 +487,10 @@ class Account extends BaseController
 
         // 删除旧文件
         if (strpos($oldAvatar['path'], 'default') === false) {
-            unlink($absolutePath . $oldAvatar['name']);
+            $old = $absolutePath . $oldAvatar['name'];
+            if (file_exists($old)) {
+                unlink($absolutePath . $oldAvatar['name']);
+            }
         }
 
         $res['code']       = EXIT_SUCCESS;

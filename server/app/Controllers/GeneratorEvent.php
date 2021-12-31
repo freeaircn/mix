@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-12-28 18:35:33
+ * @LastEditTime: 2021-12-31 19:58:03
  */
 
 namespace App\Controllers;
@@ -610,6 +610,40 @@ class GeneratorEvent extends BaseController
         $response['data'] = ['start_num' => $start_num, 'run_time' => $run_time, 'last_at' => $last_at, 'total_run' => $total_run, 'total_start' => $total_start];
 
         return $this->respond($response);
+    }
+
+    public function getSyncRecordToKKX()
+    {
+        $param = $this->request->getGet();
+
+        // 检查输入
+        if (!$this->validate('GeneratorEventSyncToKKX')) {
+            $res['error'] = $this->validator->getErrors();
+
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '请求数据无效';
+            return $this->respond($res);
+        }
+        $date = $param['date'];
+
+        $py_path   = 'python3';
+        $py_script = '/var/www/html/mix/server/vendor/python_scripts/kkx/kkx.py';
+        exec("$py_path $py_script $date", $msg, $ret);
+
+        if ($ret === 0) {
+            $msg2 = str_replace('_n_', "\n", $msg[0]);
+            if (strpos($msg2, 'Result') !== false) {
+                $res['code'] = EXIT_SUCCESS;
+                $msg2        = str_replace('Result', "", $msg2);
+            } else {
+                $res['code'] = EXIT_ERROR;
+            }
+            $res['msg'] = $msg2;
+        } else {
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '同步处理出错，稍后再试';
+        }
+        return $this->respond($res);
     }
 
     // 内部方法

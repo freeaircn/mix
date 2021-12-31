@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-12-28 17:36:35
+ * @LastEditTime: 2021-12-31 10:04:14
  */
 
 namespace Config;
@@ -106,6 +106,11 @@ class Validation
     ];
 
     public $GeneratorEventExportRecords = [
+        'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
+        'date'       => 'required|valid_date[Y-m-d]',
+    ];
+
+    public $GeneratorEventSyncToKKX = [
         'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
         'date'       => 'required|valid_date[Y-m-d]',
     ];

@@ -35,6 +35,10 @@
       <a-form-model-item>
         <a-button @click="onClickExportExcel">导出</a-button>
       </a-form-model-item>
+
+      <a-form-model-item>
+        <a-button :loading="btnSyncLoading" icon="cloud-upload" @click="onClickSyncKKX">同步</a-button>
+      </a-form-model-item>
     </a-form-model>
 
     <a-table
@@ -146,6 +150,10 @@ export default {
   name: 'RecordList',
   props: {
     loading: {
+      type: Boolean,
+      default: false
+    },
+    btnSyncLoading: {
       type: Boolean,
       default: false
     },
@@ -299,6 +307,21 @@ export default {
             this.query.date = moment().format('YYYY-MM-DD')
           }
           this.$emit('export', this.query.date)
+        },
+        onCancel () {
+        }
+      })
+    },
+
+    onClickSyncKKX () {
+      if (this.query.date == null) {
+        this.query.date = moment().format('YYYY-MM-DD')
+      }
+      this.$confirm({
+        title: '将' + this.query.date.substr(0, 7) + '的记录同步至发电可靠性系统吗',
+        // content: h => <div style="color:rgba(0, 0, 0, 0.65);">导出Excel文件，请点确定按钮</div>,
+        onOk: () => {
+          this.$emit('sync', this.query.date)
         },
         onCancel () {
         }
