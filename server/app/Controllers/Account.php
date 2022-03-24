@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-12-29 09:29:43
+ * @LastEditTime: 2022-01-27 16:30:07
  */
 
 namespace App\Controllers;
@@ -332,13 +332,13 @@ class Account extends BaseController
         $emailMessage = view('auth/sms_code.php', $emailParam);
 
         $emailAPI = \Config\Services::email();
-        $emailAPI->setFrom($emailAPI->SMTPUser, '来自Mix');
+        $emailAPI->setFrom($emailAPI->SMTPUser);
         $emailAPI->setTo($email);
-        $emailAPI->setSubject('【请勿回复此邮件】验证码： ' . $code);
+        $emailAPI->setSubject('【发自Mix，请勿回复】验证码： ' . $code);
         $emailAPI->setMessage($emailMessage);
         if (!$emailAPI->send(false)) {
             $err = $emailAPI->printDebugger('subject');
-            log_message('error', '{file}:{line} --> send mail failed' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4) . '.  ' . $err);
+            log_message('error', '{file}:{line} --> send mail failed ' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4) . '.  ' . $err);
 
             $res['code'] = EXIT_ERROR;
             $res['msg']  = '发送验证码失败，稍后尝试！';

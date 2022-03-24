@@ -4,20 +4,20 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-04 20:32:15
+ * @LastEditTime: 2022-03-24 20:37:35
  */
 
 namespace App\Models\Dts;
 
 use CodeIgniter\Model;
 
-class WorkflowAuthorityModel extends Model
+class DeviceModel extends Model
 {
     protected $DBGroup = 'mix';
 
-    protected $table         = 'app_workflow_authority';
+    protected $table         = 'app_equipment_unit';
     protected $primaryKey    = 'id';
-    protected $allowedFields = ['pid', 'name', 'alias', 'description', 'created_at', 'updated_at', 'deleted_at'];
+    protected $allowedFields = ['name', 'pid', 'description'];
 
     protected $useAutoIncrement = true;
 
@@ -36,32 +36,32 @@ class WorkflowAuthorityModel extends Model
         }
 
         $selectSql = '';
-        foreach ($columnName as $name) {
-            $selectSql = $selectSql . $name . ', ';
+        foreach ($columnName as $key) {
+            $selectSql = $selectSql . $key . ', ';
         }
         $builder = $this->select($selectSql);
-
+        $builder->where($query);
         $builder->orderBy('id', 'ASC');
-        $db = $builder->findAll();
 
-        return $db;
+        $res = $builder->findAll();
+
+        return $res;
     }
 
-    public function getByAlias($columnName = [], $query = [])
+    public function getByIds($columnName = [], $query = [])
     {
-        if (empty($columnName)) {
-            return false;
+        if (empty($columnName) || empty($query)) {
+            return [];
         }
 
         $selectSql = '';
-        foreach ($columnName as $name) {
-            $selectSql = $selectSql . $name . ', ';
+        foreach ($columnName as $key) {
+            $selectSql = $selectSql . $key . ', ';
         }
         $builder = $this->select($selectSql);
+        $builder->whereIn('id', $query['ids']);
+        $builder->orderBy('id', 'ASC');
 
-        $builder->where($query);
-        $db = $builder->findAll();
-
-        return isset($db[0]) ? $db[0] : [];
+        return $builder->findAll();
     }
 }

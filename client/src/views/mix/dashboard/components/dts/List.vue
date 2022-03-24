@@ -5,7 +5,7 @@
     </a-card>
 
     <a-card :bordered="false" title="问题单" :body-style="{marginBottom: '8px'}">
-      <router-link slot="extra" to="/dashboard/dts/new">新建</router-link>
+      <!-- <router-link slot="extra" to="/dashboard/dts/new">新建</router-link> -->
 
       <div class="table-page-search-wrapper">
         <a-form layout="inline">
@@ -56,7 +56,8 @@
             </template> -->
             <a-col :md="!advanced && 8 || 24" :sm="24">
               <span class="table-page-search-submitButtons" :style="advanced && { float: 'right', overflow: 'hidden' } || {} ">
-                <a-button type="primary" @click="onQuery">查询</a-button>
+                <router-link slot="extra" to="/dashboard/dts/new"><a-button type="primary" :style="{ marginRight: '16px' }">新建</a-button></router-link>
+                <a-button @click="onQuery">查询</a-button>
                 <!-- <a-button style="margin-left: 8px" @click="() => this.queryParam = {}">重置</a-button> -->
                 <!-- <a @click="toggleAdvanced" style="margin-left: 8px">
                   {{ advanced ? '收起' : '展开' }}
@@ -93,7 +94,7 @@
       </a-table>
     </a-card>
 
-    <a-card title="统计分析" :bordered="false" :body-style="{marginBottom: '8px'}">
+    <a-card title="统计" :bordered="false" :body-style="{marginBottom: '8px'}">
       xxxx
     </a-card>
 
@@ -130,7 +131,7 @@ export default {
       columns: [
         {
           title: '单号',
-          dataIndex: 'ticket_id'
+          dataIndex: 'dts_id'
         },
         {
           title: '类型',

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-12-15 13:03:50
+ * @LastEditTime: 2022-01-26 10:40:01
  */
 
 namespace App\Controllers;
@@ -1459,12 +1459,11 @@ class Meters extends BaseController
         }
 
         // 单日
-        if (($db2[$today]['fak'] > $db2[$prevDay]['fak']) && ($db2[$prevDay]['fak'] > 0)) {
+        if (($db2[$today]['fak'] >= $db2[$prevDay]['fak']) && ($db2[$prevDay]['fak'] > 0)) {
             $value = $db2[$today]['fak'] - $db2[$prevDay]['fak'];
+            // 电表倍率，单位 kWh -> 万kWh
+            $res = round($value * $this->genMeterRatio / 10000, $this->precision);
         }
-
-        // 电表倍率，单位 kWh -> 万kWh
-        $res = round($value * $this->genMeterRatio / 10000, $this->precision);
 
         return $res;
     }

@@ -3,6 +3,10 @@
 namespace App\Libraries;
 
 use CodeIgniter\HTTP\RequestInterface;
+use Godruoyi\Snowflake\RedisSequenceResolver;
+use Godruoyi\Snowflake\Snowflake;
+use Redis;
+use RedisException;
 
 class MixUtils
 {
@@ -30,6 +34,15 @@ class MixUtils
     public $defaultAvatarPath   = 'avatar/default/';
     public $defaultAvatarMale   = 'male.jpg';
     public $defaultAvatarFemale = 'female.jpg';
+
+    /**
+     * Redis - Uid
+     */
+    public $redisHost     = '127.0.0.1';
+    public $redisPort     = 6379;
+    public $redisTimeOut  = 2;
+    public $uidDataCenter = 1;
+    public $uidWorkerId   = 1;
 
     public function __construct($config = null)
     {
@@ -267,6 +280,40 @@ class MixUtils
         } else {
             return date('Y-m-d', mktime(0, 0, 0, 1, 1, $year));
         }
+    }
+
+    /**
+     * 申请全局Id，采用雪花算法id结构，采用redis存储序列
+     *
+     * @author freeair
+     * @DateTime 2022-03-24
+     * @param string $cacheKey
+     * @return mix - false or int
+     */
+    public function applyForUid(string $cacheKey = '')
+    {
+        $redis = new Redis();
+        if (!$redis->connect($this->redisHost, $this->redisPort, $this->redisTimeOut)) {
+            return false;
+        }
+
+        try {
+            $seqResolver = new RedisSequenceResolver($redis);
+        } catch (RedisException $e) {
+            return false;
+        }
+
+        $seqResolver->setCachePrefix($cacheKey);
+        $snowflake = new Snowflake($this->uidDataCenter, $this->uidWorkerId);
+        $snowflake->setSequenceResolver($seqResolver);
+
+        return $snowflake->id();
+    }
+
+    public function parseUid(int $Uid = 0)
+    {
+        $snowflake = new Snowflake($this->uidDataCenter, $this->uidWorkerId);
+        return $snowflake->parseId($Uid, true);
     }
 
     /**

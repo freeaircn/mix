@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-07-06 21:44:27
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-24 22:19:25
+ * @LastEditTime: 2022-03-24 10:18:56
  */
 
 namespace Config;
@@ -40,4 +40,14 @@ class MixUtils extends BaseConfig
     public $defaultAvatarPath   = 'avatar/default/';
     public $defaultAvatarMale   = 'male.jpg';
     public $defaultAvatarFemale = 'female.jpg';
+
+    /**
+     * Redis - Uid
+     */
+    public $redisHost    = '127.0.0.1';
+    public $redisPort    = 6379;
+    public $redisTimeOut = 2;
+
+    public $uidDataCenter = 1;
+    public $uidWorkerId   = 1;
 }

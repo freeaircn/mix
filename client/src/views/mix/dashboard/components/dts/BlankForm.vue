@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2021-11-01 19:35:03
+ * @LastEditTime: 2022-03-24 20:58:01
 -->
 <template>
   <page-header-wrapper :title="false">
@@ -11,8 +11,6 @@
     </a-card>
 
     <a-card title="新问题单" :bordered="false" :body-style="{marginBottom: '8px'}" >
-      <router-link slot="extra" to="/dashboard/dts">返回</router-link>
-
       <a-form-model
         ref="form"
         :model="record"
@@ -23,7 +21,7 @@
         <a-form-model-item label="类别" prop="type">
           <a-radio-group name="radioGroup1" v-model="record.type">
             <a-radio value="1">隐患</a-radio>
-            <a-radio value="2">故障</a-radio>
+            <a-radio value="2">缺陷</a-radio>
           </a-radio-group>
         </a-form-model-item>
         <a-form-model-item label="标题" prop="title">
@@ -49,6 +47,24 @@
           />
         </a-form-model-item>
 
+        <a-form-model-item label="进展" prop="progress">
+          <a-textarea v-model="record.progress" :rows="10" />
+        </a-form-model-item>
+
+        <a-form-model-item label="附件" prop="attachment">
+          <a-upload
+            accept="text/plain, image/jpeg, image/png, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-powerpoint, application/vnd.openxmlformats-officedocument.presentationml.presentation, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel, application/pdf, application/zip"
+            action="/api/dts/ticket/upload/attachment"
+            :before-upload="beforeUploadAttachment"
+            :data="uploadAttachmentParam"
+            :file-list="attachmentList"
+            :showUploadList="{ showDownloadIcon: true, showRemoveIcon: true }"
+            @download="onClickAttachment"
+          >
+            <a-button> <a-icon type="upload" /> 点击上传 </a-button>
+          </a-upload>
+        </a-form-model-item>
+
         <a-form-model-item label="指派" prop="handler">
           <a-select v-model="record.handler" placeholder="请选择" >
             <a-select-option v-for="d in handlerOptions" :key="d.id" :value="d.id" :disabled="d.status === '0'">
@@ -57,12 +73,10 @@
           </a-select>
         </a-form-model-item>
 
-        <a-form-model-item label="进展" prop="progress">
-          <a-textarea v-model="record.progress" :rows="10" />
-        </a-form-model-item>
-
         <a-form-model-item :wrapperCol="{ span: 24 }" style="text-align: center">
-          <a-button type="primary" @click="onSubmit" :disabled="!ready" style="margin-left: 8px">提交</a-button>
+          <a-button type="primary" @click="onSubmit" :disabled="!ready" >提交</a-button>
+          <!-- <router-link slot="extra" to="/dashboard/dts"><a-button>取消</a-button></router-link> -->
+          <a-button style="margin-left: 16px">取消</a-button>
         </a-form-model-item>
       </a-form-model>
     </a-card>
@@ -93,6 +107,8 @@ export default {
       record: {
         progress: ''
       },
+      uploadAttachmentParam: { uid: '666' },
+      attachmentList: [],
       rules: {}
     }
   },
@@ -114,11 +130,11 @@ export default {
         .then((data) => {
             this.ready = true
             //
-            this.record.progress = data.progressText
+            this.record.progress = data.progress
             //
             this.handlerOptions = data.handler
             //
-            listToTree(data.equipmentUnit, this.cascaderOptions, '1')
+            listToTree(data.deviceList, this.cascaderOptions, '1')
           })
           //  网络异常，清空页面数据显示，防止错误的操作
           .catch((err) => {
@@ -128,6 +144,29 @@ export default {
             if (err.response) {
             }
           })
+    },
+
+    // 附件
+    beforeUploadAttachment (file) {
+      console.log(file)
+      let fileType = file.type === 'text/plain' || file.type === 'image/jpeg' || file.type === 'image/png'
+      fileType = fileType || file.type === 'application/msword' || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      fileType = fileType || file.type === 'application/vnd.ms-powerpoint' || file.type === 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+      fileType = fileType || file.type === 'application/vnd.ms-excel' || file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      fileType = fileType || file.type === 'application/pdf' || file.type === 'application/zip'
+      if (!fileType) {
+        this.$message.error('允许的文件类型: jpg, png, txt, pdf, doc, docx, xls, xlsx, ppt, pptx, zip')
+      }
+      //
+      const fileSize = file.size / 1024 / 1024 < 2
+      if (!fileSize) {
+        this.$message.error('允许的文件大小: 小于2MB')
+      }
+      return fileType && fileSize
+    },
+
+    onClickAttachment (file) {
+      console.log(file)
     },
 
     onSubmit () {

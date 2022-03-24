@@ -95,11 +95,11 @@
                   <router-link
                     :to="{ path: '/dashboard/dts' }"
                   >
-                    隐患&故障
+                    隐患&缺陷
                   </router-link>
                 </div>
                 <div slot="description" class="card-description">
-                  设备隐患，故障记录
+                  记录设备隐患，缺陷
                 </div>
               </a-card-meta>
             </a-card>

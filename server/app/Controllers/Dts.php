@@ -4,17 +4,17 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-19 11:12:38
+ * @LastEditTime: 2022-03-24 20:51:39
  */
 
 namespace App\Controllers;
 
-use App\Models\Dts\EquipmentUnitModel;
+use App\Models\Dts\DeviceModel;
 use App\Models\Dts\RoleWorkflowAuthorityModel;
 use App\Models\Dts\TicketModel;
 use App\Models\Dts\UserModel;
 use App\Models\Dts\UserRoleModel;
-use App\Models\Dts\WorkflowAuthorityModel;
+use App\Models\Dts\WorkflowAuthModel;
 use App\MyEntity\Workflow\Dts\Ticket;
 use App\MyEntity\Workflow\Dts\WorkflowCore;
 use CodeIgniter\API\ResponseTrait;
@@ -33,7 +33,7 @@ class Dts extends BaseController
     public function __construct()
     {
         $this->progressTemplate = [
-            'draft'  => "【问题描述】\n\n【发生时间】\n\n【问题影响】\n\n【已采取措施】\n\n",
+            'draft'  => "【现象描述】\n\n【发生时间】\n\n【影响】\n\n【已采取措施】\n\n",
             'update' => "【当前进展】\n\n【下一步计划】\n\n",
         ];
 
@@ -68,36 +68,45 @@ class Dts extends BaseController
         $station_id = $params['station_id'];
 
         //
-        $progressText = $this->getProgressTemplate();
+        $progress = $this->getProgressTemplate();
 
         //
         $wf         = new WorkflowCore();
         $firstPlace = $wf->getFirstPlace();
-        $nextPlace  = $firstPlace;
-        do {
-            $nextPlace = $wf->getNextPlace($nextPlace);
-        } while (!$wf->isCheckPlace($nextPlace));
+        // $nextPlace  = $firstPlace;
+        // do {
+        //     $nextPlace = $wf->getNextPlace($nextPlace);
+        // } while (!$wf->isHandlingPlace($nextPlace));
 
-        $handler = $this->getHandler($station_id, $nextPlace);
+        $nextPlace = $wf->getNextPlace($firstPlace);
+        $handler   = [];
+        if ($wf->isHandlingPlace($nextPlace)) {
+            $handler = $this->getHandler($station_id, $nextPlace);
+        }
 
         //
-        $model         = new EquipmentUnitModel();
-        $columnName    = ['id', 'pid', 'name'];
-        $query         = ['id >' => 1];
-        $equipmentUnit = $model->get($columnName, $query);
+        $model      = new DeviceModel();
+        $columnName = ['id', 'pid', 'name'];
+        $query      = ['id >' => 1];
+        $deviceList = $model->get($columnName, $query);
 
-        if (empty($progressText) || empty($handler) || empty($equipmentUnit)) {
+        if (empty($progress) || empty($handler) || empty($deviceList)) {
             $res['code'] = EXIT_ERROR;
         } else {
             $res['code'] = EXIT_SUCCESS;
             $res['data'] = [
-                'progressText'  => $progressText,
-                'handler'       => $handler,
-                'equipmentUnit' => $equipmentUnit,
+                'progress'   => $progress,
+                'handler'    => $handler,
+                'deviceList' => $deviceList,
             ];
         }
 
         return $this->respond($res);
+    }
+
+    public function postTicketAttachment()
+    {
+        # code...
     }
 
     public function postDraft()
@@ -135,7 +144,7 @@ class Dts extends BaseController
         $result = $model->newDraft($draft, $this->ticketIdTailLength);
         if ($result) {
             $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '已创建问题单';
+            $res['msg']  = '创建问题单';
 
         } else {
             $res['code'] = EXIT_ERROR;
@@ -145,7 +154,7 @@ class Dts extends BaseController
         return $this->respond($res);
     }
 
-    public function getForList()
+    public function getList()
     {
         $param = $this->request->getGet();
 
@@ -164,8 +173,14 @@ class Dts extends BaseController
         $query['limit']      = $param['limit'];
         $query['offset']     = $param['offset'];
 
-        $columnName = ['id', 'ticket_id', 'type', 'title', 'level', 'place_at', 'created_at', 'updated_at', 'creator', 'handler'];
+        $columnName = ['id', 'dts_id', 'type', 'title', 'level', 'place_at', 'created_at', 'updated_at', 'creator', 'handler'];
         $db         = $model->getByLimitOffset($columnName, $query);
+
+        if ($db['total'] === 0) {
+            $res['code'] = EXIT_SUCCESS;
+            $res['data'] = ['total' => 0, 'data' => []];
+            return $this->respond($res);
+        }
 
         // uid => name
         $model      = new UserModel();
@@ -194,12 +209,12 @@ class Dts extends BaseController
             }
         }
 
-        if ($db) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['data'] = ['total' => $db['total'], 'data' => $db['data']];
-        } else {
+        if ($db === false) {
             $res['code'] = EXIT_ERROR;
             $res['msg']  = '稍后再试';
+        } else {
+            $res['code'] = EXIT_SUCCESS;
+            $res['data'] = ['total' => $db['total'], 'data' => $db['data']];
         }
 
         return $this->respond($res);
@@ -463,7 +478,7 @@ class Dts extends BaseController
         }
 
         // 获取流程权限
-        $model      = new WorkflowAuthorityModel();
+        $model      = new WorkflowAuthModel();
         $columnName = ['id'];
         $query      = ['alias' => $metadata['auth']];
         $wfAuthId   = $model->getByAlias($columnName, $query);
@@ -507,7 +522,7 @@ class Dts extends BaseController
         $temp = explode("+", trim($data, '+'));
         $res  = '';
         if (count($temp) > 0) {
-            $model      = new EquipmentUnitModel();
+            $model      = new DeviceModel();
             $columnName = ['id', 'name'];
             $query      = [
                 'ids' => $temp,

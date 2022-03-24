@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-12-31 19:58:03
+ * @LastEditTime: 2022-01-01 10:48:44
  */
 
 namespace App\Controllers;
@@ -549,11 +549,23 @@ class GeneratorEvent extends BaseController
                         }
                         $temp = end($filter);
                         if ($temp['event'] == $this->eventStart) {
-                            $tail = [
-                                'event'    => $this->eventStop,
-                                'event_at' => $utils->getLastDayOfMonth($temp['event_at'], 0) . ' 23:59:59',
-                            ];
-                            array_push($filter, $tail);
+                            $now = date("Y-m-d H:i:s");
+                            $end = $utils->getLastDayOfMonth($temp['event_at'], 0) . ' 23:59:59';
+                            if (strtotime($now) >= strtotime($end)) {
+                                $tail = [
+                                    'event'    => $this->eventStop,
+                                    'event_at' => $end,
+                                ];
+                                array_push($filter, $tail);
+                            } else {
+                                if (strtotime($now) >= strtotime($temp['event_at'])) {
+                                    $tail = [
+                                        'event'    => $this->eventStop,
+                                        'event_at' => $now,
+                                    ];
+                                    array_push($filter, $tail);
+                                }
+                            }
                         }
                         // 计算
                         $l = count($filter);

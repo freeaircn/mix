@@ -46,8 +46,12 @@
 
   grant all on mix.app_meter to ssh_auto@localhost;
   grant Select on mix.app_generator_event_log to ssh_auto@localhost;
+  grant Select on mix.app_kwh_planning to ssh_auto@localhost;
   flush privileges;
 
   show grants for ssh_auto@localhost;
+  
+  mixcenter
+  KNOBFTKWXKSXNNTI
 ```
 

@@ -91,8 +91,8 @@ export default {
       recordListData: [],
       totalRecords: 0,
       queryParamDate: '',
-      queryParamGenId: '',
-      queryParamEventId: '',
+      queryParamGenId: '0',
+      queryParamEventId: '0',
       queryParamDescId: ''
     }
   },

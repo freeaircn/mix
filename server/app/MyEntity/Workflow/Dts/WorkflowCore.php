@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2019-12-29 14:06:12
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-19 11:01:25
+ * @LastEditTime: 2022-03-24 20:41:56
  */
 
 namespace App\MyEntity\Workflow\Dts;
@@ -201,9 +201,9 @@ class WorkflowCore
         }
     }
 
-    public function isCheckPlace(string $place = '')
+    public function isHandlingPlace(string $place = '')
     {
-        if ($place === 'check') {
+        if ($place === 'handling') {
             return true;
         } else {
             return false;
