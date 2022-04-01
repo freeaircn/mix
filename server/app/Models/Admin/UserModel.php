@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-01 21:07:29
+ * @LastEditTime: 2022-04-01 10:00:33
  */
 
 namespace App\Models\Admin;
@@ -198,8 +198,8 @@ class UserModel extends Model
 
         // 密码hash
         if (isset($user['password'])) {
-            $utils   = service('mixUtils');
-            $tempPwd = $utils->hashPassword($user['password']);
+            helper('my_auth');
+            $tempPwd = my_hash_password($user['password']);
             if ($tempPwd === false) {
                 return false;
             }
@@ -240,8 +240,8 @@ class UserModel extends Model
 
         // 密码hash
         if (isset($user['password'])) {
-            $utils   = service('mixUtils');
-            $tempPwd = $utils->hashPassword($user['password']);
+            helper('my_auth');
+            $tempPwd = my_hash_password($user['password']);
             if ($tempPwd === false) {
                 return false;
             }
@@ -273,8 +273,8 @@ class UserModel extends Model
         }
 
         // hash 密码
-        $utils        = \Config\Services::mixUtils();
-        $hashPassword = $utils->hashPassword($password);
+        helper('my_auth');
+        $hashPassword = my_hash_password($password);
         if ($hashPassword === false) {
             log_message('error', '{file}:{line} --> update password hash failed' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4));
             return false;

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-01-27 16:30:07
+ * @LastEditTime: 2022-04-01 09:54:27
  */
 
 namespace App\Controllers;
@@ -23,6 +23,11 @@ use CodeIgniter\API\ResponseTrait;
 class Account extends BaseController
 {
     use ResponseTrait;
+
+    public function __construct()
+    {
+        helper('my_auth');
+    }
 
     public function getUserInfo()
     {
@@ -195,8 +200,7 @@ class Account extends BaseController
         $userModel    = new UserModel();
         $hashPassword = $userModel->getUserPassword(['id' => $id]);
 
-        $utils  = service('mixUtils');
-        $result = $utils->verifyPassword($password, $hashPassword);
+        $result = my_verify_password($password, $hashPassword);
         if ($result === false) {
             log_message('error', '{file}:{line} --> password error when update user password ');
 
@@ -253,8 +257,7 @@ class Account extends BaseController
         // 验证密码
         $hashPassword = $userModel->getUserPassword(['id' => $id]);
 
-        $utils  = service('mixUtils');
-        $result = $utils->verifyPassword($password, $hashPassword);
+        $result = my_verify_password($password, $hashPassword);
         if ($result === false) {
             log_message('error', '{file}:{line} --> password error when update user phone' . '[' . substr(session_id(), 0, 15) . '] ' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4));
 
@@ -394,8 +397,7 @@ class Account extends BaseController
         // 验证密码
         $hashPassword = $userModel->getUserPassword(['id' => $id]);
 
-        $utils  = service('mixUtils');
-        $result = $utils->verifyPassword($password, $hashPassword);
+        $result = my_verify_password($password, $hashPassword);
         if ($result === false) {
             log_message('error', '{file}:{line} --> password error when update user email' . '[' . substr(session_id(), 0, 15) . '] ' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4));
 

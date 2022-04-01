@@ -4,13 +4,12 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-26 20:04:42
+ * @LastEditTime: 2022-03-31 23:06:54
  */
 
 namespace App\Models\Admin;
 
 use CodeIgniter\Model;
-use Config\Services;
 
 class MenuModel extends Model
 {
@@ -93,8 +92,8 @@ class MenuModel extends Model
             }
         }
 
-        $utils = Services::mixUtils();
-        $res   = $utils->arr2tree($menus);
+        helper('my_array');
+        $res = my_arr2tree($menus);
 
         return $res;
     }
@@ -108,9 +107,6 @@ class MenuModel extends Model
 
         $builder = $this->select($selectSQL)->orderBy('id', 'ASC');
         $data    = $builder->findAll();
-
-        // $utils = Services::mixUtils();
-        // $res   = $utils->arr2tree($data);
 
         return $data;
     }

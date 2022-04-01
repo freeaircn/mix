@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-07-16 23:08:38
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-23 21:02:32
+ * @LastEditTime: 2022-04-01 10:27:26
  */
 
 /**
@@ -18,6 +18,7 @@
 
 namespace App\Filters;
 
+use App\Libraries\MyApiAuth;
 use CodeIgniter\API\ResponseTrait;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\IncomingRequest;
@@ -27,7 +28,7 @@ use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\Security\Exceptions\SecurityException;
 use Config\Services;
 
-class AuthFilter implements FilterInterface
+class ApiAuthFilter implements FilterInterface
 {
     protected $response;
     use ResponseTrait;
@@ -53,9 +54,9 @@ class AuthFilter implements FilterInterface
         //     return;
         // }
 
-        $mixUtils = Services::mixUtils();
+        $apiAuth = new MyApiAuth();
 
-        $msg = $mixUtils->accessAuth($request);
+        $msg = $apiAuth->check($request);
         if ($msg !== true) {
             $this->response = Services::response();
 

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-01-27 16:34:18
+ * @LastEditTime: 2022-04-01 09:55:02
  */
 
 namespace App\Controllers;
@@ -27,6 +27,11 @@ use CodeIgniter\API\ResponseTrait;
 class Auth extends BaseController
 {
     use ResponseTrait;
+
+    public function __construct()
+    {
+        helper('my_auth');
+    }
 
     public function login()
     {
@@ -77,8 +82,7 @@ class Auth extends BaseController
         $userModel    = new UserModel();
         $hashPassword = $userModel->getUserPassword(['phone' => $phone]);
 
-        $utils  = service('mixUtils');
-        $result = $utils->verifyPassword($password, $hashPassword);
+        $result = my_verify_password($password, $hashPassword);
         if ($result === false) {
             $authModel->increaseLoginAttempts($phone, $ip_address);
             log_message('error', '{file}:{line} --> password not correct ' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4) . ' => ' . $ip_address);

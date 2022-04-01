@@ -1,49 +1,16 @@
 <?php
+/*
+ * @Description:
+ * @Author: freeair
+ * @Date: 2021-09-06 01:17:02
+ * @LastEditors: freeair
+ * @LastEditTime: 2022-04-01 10:47:51
+ */
 
 namespace App\Libraries;
 
-use CodeIgniter\HTTP\RequestInterface;
-use Godruoyi\Snowflake\RedisSequenceResolver;
-use Godruoyi\Snowflake\Snowflake;
-use Redis;
-use RedisException;
-
 class MixUtils
 {
-    public $maxPwdSizeBytes     = 254;
-    public $argon2DefaultParams = [
-        'memory_cost' => 1 << 14, // 16MB
-        'time_cost'   => 4,
-        'threads'     => PASSWORD_ARGON2_DEFAULT_THREADS,
-    ];
-
-    /**
-     * 登录
-     */
-    public $maxAttempts = 5;
-    public $lockoutTime = 600; // 秒
-
-    /**
-     * 验证码
-     */
-    public $smsCodeTimeout = 600; // 秒
-
-    /**
-     * 默认头像
-     */
-    public $defaultAvatarPath   = 'avatar/default/';
-    public $defaultAvatarMale   = 'male.jpg';
-    public $defaultAvatarFemale = 'female.jpg';
-
-    /**
-     * Redis - Uid
-     */
-    public $redisHost     = '127.0.0.1';
-    public $redisPort     = 6379;
-    public $redisTimeOut  = 2;
-    public $uidDataCenter = 1;
-    public $uidWorkerId   = 1;
-
     public function __construct($config = null)
     {
         $this->initialize($config);
@@ -55,9 +22,9 @@ class MixUtils
     /**
      * Initialize preferences
      *
-     * @param array|\Config\MixUtils $config
+     * @param array|\Config\ $config
      *
-     * @return MixUtils
+     * @return
      */
     public function initialize($config)
     {
@@ -81,239 +48,6 @@ class MixUtils
         }
 
         return $this;
-    }
-
-    /**
-     * @Description: 一维数组转换为树结构
-     * @Author:
-     * @Date:
-     * @param array 一维数组
-     * @param string ID Key
-     * @param string 父ID Key
-     * @param string 子数据Key
-     * @return array
-     */
-    public function arr2tree($arr, $id = 'id', $pid = 'pid', $son = 'children')
-    {
-        list($tree, $map) = [[], []];
-        foreach ($arr as $item) {
-            $map[$item[$id]] = $item;
-        }
-        foreach ($arr as $item) {
-            if (isset($item[$pid]) && isset($map[$item[$pid]])) {
-                $map[$item[$pid]][$son][] = &$map[$item[$id]];
-            } else {
-                $tree[] = &$map[$item[$id]];
-            }
-        }
-        unset($map);
-        return $tree;
-    }
-
-    /**
-     * Hashes the password to be stored in the database.
-     *
-     * @param string $password
-     * @param string $identity
-     *
-     * @return false|string
-     * @author Mathew
-     */
-    public function hashPassword($password)
-    {
-        // $MAX_PASSWORD_SIZE_BYTES = $this->config->item('MAX_PASSWORD_SIZE_BYTES', 'app_config');
-        // Check for empty password, or password containing null char, or password above limit
-        // Null char may pose issue: http://php.net/manual/en/function.password-hash.php#118603
-        // Long password may pose DOS issue (note: strlen gives size in bytes and not in multibyte symbol)
-        if (empty($password) || strpos($password, "\0") !== false ||
-            strlen($password) > $this->maxPwdSizeBytes) {
-            return false;
-        }
-
-        $algo   = PASSWORD_ARGON2I;
-        $params = $this->argon2DefaultParams;
-
-        if ($algo !== '') {
-            return password_hash($password, $algo, $params);
-        }
-
-        return false;
-    }
-
-    public function verifyPassword($password, $hashPassword)
-    {
-        // $MAX_PASSWORD_SIZE_BYTES = $this->config->item('MAX_PASSWORD_SIZE_BYTES', 'app_config');
-        // Check for empty password, or password containing null char, or password above limit
-        // Null char may pose issue: http://php.net/manual/en/function.password-hash.php#118603
-        // Long password may pose DOS issue (note: strlen gives size in bytes and not in multibyte symbol)
-        if (empty($password) || empty($hashPassword) || strpos($password, "\0") !== false
-            || strlen($password) > $this->maxPwdSizeBytes) {
-            return false;
-        }
-
-        return password_verify($password, $hashPassword);
-    }
-
-    public function accessAuth(RequestInterface $request)
-    {
-        $url = $request->uri->getSegments();
-
-        // 方法：登录，登出，重置密码，返回true
-        if (isset($url[0]) && $url[0] === 'api' && isset($url[1]) && $url[1] === 'auth') {
-            return true;
-        }
-
-        // 检查是否存在session数据。存在 - 已登录；不存在 - 未登录。
-        $phone = session('phone');
-        if (is_null($phone)) {
-            return '用户未登录';
-        }
-
-        // ！！！超级用户，仅测试使用。
-        // if ($phone == '13812345679') {
-        //     return true;
-        // }
-
-        // API鉴权
-        $acl = session('acl');
-        if (is_null($acl) || empty($acl)) {
-            return '用户没有权限';
-        }
-        $wanted = '';
-        $method = $request->getMethod();
-
-        if (isset($url[0]) && $url[0] === 'api') {
-            for ($i = 1; $i < count($url); $i++) {
-                $wanted = $wanted . $url[$i] . '/';
-            }
-            $wanted = rtrim($wanted, "/") . ':' . $method;
-        }
-
-        if (in_array($wanted, $acl) === false) {
-            return '用户没有权限';
-        }
-
-        // 数据
-        $station_in_session = session('belongToDeptId');
-        $station_in_request = isset($_POST['station_id']) ? $_POST['station_id'] : null;
-        if ($station_in_request !== null) {
-            if ($station_in_request != $station_in_session) {
-                return '没有访问数据的权限';
-            }
-        }
-        $station_in_request = isset($_GET['station_id']) ? $_GET['station_id'] : null;
-        if ($station_in_request !== null) {
-            if ($station_in_request != $station_in_session) {
-                return '没有访问数据的权限';
-            }
-        }
-
-        return true;
-    }
-
-    public function isTimeout(string $timeName = null, string $time)
-    {
-        if (empty($timeName) || empty($time)) {
-            return false;
-        }
-
-        // 验证码
-        if ($timeName === 'SMS_CODE') {
-            $timeout = $this->smsCodeTimeout;
-            $now     = date("Y-m-d H:i:s");
-            if (strtotime($now) - strtotime($time) > $timeout) {
-                // 超期
-                return true;
-            } else {
-                return false;
-            }
-        }
-
-        return false;
-    }
-
-    public function getPlusOffsetDay(string $date = '', $offset = 0)
-    {
-        return date("Y-m-d", strtotime($offset . " days", strtotime($date)));
-    }
-
-    public function getDayOfPreviousWeek(string $date = '')
-    {
-        return date('Y-m-d', strtotime($date . ' -1 week'));
-    }
-
-    public function getFirstDayOfMonth(string $date = '', $offset = 0)
-    {
-        return date("Y-m-d", strtotime("first day of" . $offset . " month", strtotime($date)));
-    }
-
-    public function getLastDayOfMonth(string $date = '', $offset = 0)
-    {
-        return date("Y-m-d", strtotime("last day of" . $offset . " month", strtotime($date)));
-    }
-
-    public function getFirstDayOfQuarter(string $date = '', $offset = 0)
-    {
-        $year    = date('Y', strtotime($date));
-        $quarter = ceil((date('n', strtotime($date))) / 3) + $offset;
-        return date('Y-m-d', mktime(0, 0, 0, $quarter * 3 - 3 + 1, 1, $year));
-    }
-
-    public function getLastDayOfQuarter(string $date = '', $offset = 0)
-    {
-        $year    = date('Y', strtotime($date));
-        $quarter = ceil((date('n', strtotime($date))) / 3) + $offset;
-        return date('Y-m-d', mktime(23, 59, 59, $quarter * 3, date('t', mktime(0, 0, 0, $quarter * 3, 1, $year)), $year));
-    }
-
-    public function getLastDayOfYear(string $date = '', $offset = 0)
-    {
-        $year = date('Y', strtotime($date)) + $offset;
-        return $year . '-12-31';
-    }
-
-    public function getFirstDayOfYear(string $date = '', $offset = 0, $include_time = false)
-    {
-        $year = date('Y', strtotime($date)) + $offset;
-        if ($include_time) {
-            return date('Y-m-d H:i:s', mktime(0, 0, 0, 1, 1, $year));
-        } else {
-            return date('Y-m-d', mktime(0, 0, 0, 1, 1, $year));
-        }
-    }
-
-    /**
-     * 申请全局Id，采用雪花算法id结构，采用redis存储序列
-     *
-     * @author freeair
-     * @DateTime 2022-03-24
-     * @param string $cacheKey
-     * @return mix - false or int
-     */
-    public function applyForUid(string $cacheKey = '')
-    {
-        $redis = new Redis();
-        if (!$redis->connect($this->redisHost, $this->redisPort, $this->redisTimeOut)) {
-            return false;
-        }
-
-        try {
-            $seqResolver = new RedisSequenceResolver($redis);
-        } catch (RedisException $e) {
-            return false;
-        }
-
-        $seqResolver->setCachePrefix($cacheKey);
-        $snowflake = new Snowflake($this->uidDataCenter, $this->uidWorkerId);
-        $snowflake->setSequenceResolver($seqResolver);
-
-        return $snowflake->id();
-    }
-
-    public function parseUid(int $Uid = 0)
-    {
-        $snowflake = new Snowflake($this->uidDataCenter, $this->uidWorkerId);
-        return $snowflake->parseId($Uid, true);
     }
 
     /**

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-12 19:46:02
+ * @LastEditTime: 2022-04-01 10:43:13
  */
 
 namespace App\Models\Auth;
@@ -35,7 +35,7 @@ class AuthModel extends Model
             return true;
         }
 
-        $config      = config('MixUtils');
+        $config      = config('MyGlobalConfig');
         $maxAttempts = $config->maxAttempts;
         $lockoutTime = $config->lockoutTime;
 

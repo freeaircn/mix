@@ -4,12 +4,12 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-24 09:13:53
+ * @LastEditTime: 2022-04-01 10:27:40
  */
 
 namespace Config;
 
-use App\Filters\AuthFilter;
+use App\Filters\ApiAuthFilter;
 use CodeIgniter\Config\BaseConfig;
 use CodeIgniter\Filters\CSRF;
 use CodeIgniter\Filters\DebugToolbar;
@@ -27,7 +27,7 @@ class Filters extends BaseConfig
         'csrf'     => CSRF::class,
         'toolbar'  => DebugToolbar::class,
         'honeypot' => Honeypot::class,
-        'auth'     => AuthFilter::class,
+        'api_auth' => ApiAuthFilter::class,
     ];
 
     /**
@@ -69,6 +69,6 @@ class Filters extends BaseConfig
      * @var array
      */
     public $filters = [
-        'auth' => ['before' => ['api/*']],
+        'api_auth' => ['before' => ['api/*']],
     ];
 }

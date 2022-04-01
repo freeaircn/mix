@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-18 14:43:59
+ * @LastEditTime: 2022-04-01 09:25:13
  */
 
 namespace App\Models;
@@ -80,10 +80,9 @@ class SmsCodeModel extends Model
             return false;
         }
 
-        $utils     = \Config\Services::mixUtils();
-        $isTimeout = $utils->isTimeout('SMS_CODE', $db['updated_at']);
         // 超期
-        if ($isTimeout) {
+        helper('my_date');
+        if (my_is_timeout($db['updated_at'])) {
             // 删除db记录
             $this->delete($db['id']);
             return false;

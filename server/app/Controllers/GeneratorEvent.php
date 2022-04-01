@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-01-01 10:48:44
+ * @LastEditTime: 2022-03-31 23:06:17
  */
 
 namespace App\Controllers;
@@ -35,6 +35,8 @@ class GeneratorEvent extends BaseController
         $this->eventStart            = '2';
         $this->eventMaintenanceStart = '3';
         $this->eventMaintenanceStop  = '4';
+
+        helper('my_date');
     }
 
     public function newRecord()
@@ -155,9 +157,8 @@ class GeneratorEvent extends BaseController
             $date = $param['date'];
         }
 
-        $utils          = service('mixUtils');
-        $query['start'] = $utils->getFirstDayOfMonth($date);
-        $query['end']   = $utils->getLastDayOfMonth($date);
+        $query['start'] = my_first_day_of_month($date);
+        $query['end']   = my_last_day_of_month($date);
 
         $columnName = ['id', 'station_id', 'generator_id', 'event', 'cause', 'event_at', 'creator', 'description'];
         $db         = $model->getByStationGIdDateRange($columnName, $query);
@@ -506,8 +507,6 @@ class GeneratorEvent extends BaseController
             'G3_start' => 0,
         ];
 
-        $utils = service('mixUtils');
-
         // 查询记录
         $columnName = ['event', 'event_at'];
         $query      = [
@@ -543,14 +542,14 @@ class GeneratorEvent extends BaseController
                         if ($temp['event'] == $this->eventStop) {
                             $head = [
                                 'event'    => $this->eventStart,
-                                'event_at' => $utils->getFirstDayOfMonth($temp['event_at'], 0) . ' 00:00:00',
+                                'event_at' => my_first_day_of_month($temp['event_at'], 0) . ' 00:00:00',
                             ];
                             array_unshift($filter, $head);
                         }
                         $temp = end($filter);
                         if ($temp['event'] == $this->eventStart) {
                             $now = date("Y-m-d H:i:s");
-                            $end = $utils->getLastDayOfMonth($temp['event_at'], 0) . ' 23:59:59';
+                            $end = my_last_day_of_month($temp['event_at'], 0) . ' 23:59:59';
                             if (strtotime($now) >= strtotime($end)) {
                                 $tail = [
                                     'event'    => $this->eventStop,

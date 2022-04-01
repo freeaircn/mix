@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-26 20:04:17
+ * @LastEditTime: 2022-04-01 10:42:28
  */
 
 namespace App\Models\Admin;
@@ -48,7 +48,7 @@ class AvatarModel extends Model
             return false;
         }
 
-        $config = config('MixUtils');
+        $config = config('MyGlobalConfig');
         if ($sex == '男') {
             $data = [
                 'path' => $config->defaultAvatarPath,

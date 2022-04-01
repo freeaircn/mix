@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-01-26 10:40:01
+ * @LastEditTime: 2022-03-31 23:06:26
  */
 
 namespace App\Controllers;
@@ -66,6 +66,8 @@ class Meters extends BaseController
         $this->precision = 4;
 
         $this->first_at = '2012-12-31';
+
+        helper('my_date');
     }
 
     public function newRecord()
@@ -190,9 +192,8 @@ class Meters extends BaseController
         }
 
         // 限定查询日期
-        $utils          = service('mixUtils');
-        $query['start'] = $utils->getFirstDayOfMonth($date);
-        $query['end']   = $utils->getLastDayOfMonth($date);
+        $query['start'] = my_first_day_of_month($date);
+        $query['end']   = my_last_day_of_month($date);
 
         $columnName = ['id', 'station_id', 'log_date', 'log_time', 'creator'];
         $result     = $model->getForRecordList($columnName, $query);
@@ -587,9 +588,8 @@ class Meters extends BaseController
             'station_id' => $station_id,
             'log_time'   => $log_time,
         ];
-        $utils             = service('mixUtils');
-        $query['start_at'] = $utils->getFirstDayOfYear($date);
-        $query['end_at']   = $utils->getLastDayOfYear($date);
+        $query['start_at'] = my_first_day_of_year($date);
+        $query['end_at']   = my_last_day_of_year($date);
 
         $model      = new RecordModel();
         $columnName = ['log_date'];
@@ -766,18 +766,16 @@ class Meters extends BaseController
         $log_time   = $query['log_time'];
         $meter_id   = $query['meter_id'];
 
-        $utils = service('mixUtils');
-
         // 每月最后一天的日期
         $first_at = $this->first_at;
         $month    = [];
         $month[]  = $first_at;
 
-        $target   = $utils->getLastDayOfMonth($log_date);
+        $target   = my_last_day_of_month($log_date);
         $i        = 1;
         $continue = true;
         do {
-            $temp = $utils->getLastDayOfMonth($first_at, $i);
+            $temp = my_last_day_of_month($first_at, $i);
             if ($temp === $target) {
                 $continue = false;
                 $month[]  = $log_date;
@@ -801,11 +799,11 @@ class Meters extends BaseController
         $year     = [];
         $year[]   = $first_at;
 
-        $target   = $utils->getLastDayOfYear($log_date);
+        $target   = my_last_day_of_year($log_date);
         $i        = 1;
         $continue = true;
         do {
-            $temp = $utils->getLastDayOfYear($first_at, $i);
+            $temp = my_last_day_of_year($first_at, $i);
             if ($temp === $target) {
                 $continue = false;
                 $year[]   = $log_date;
@@ -981,16 +979,15 @@ class Meters extends BaseController
         $log_date   = $query['log_date'];
         $log_time   = $query['log_time'];
 
-        $utils    = service('mixUtils');
         $length   = 30;
-        $start_at = $utils->getPlusOffsetDay($log_date, -$length);
+        $start_at = my_any_day($log_date, -$length);
         $end_at   = $log_date;
 
         // 初值
         $res      = [];
         $dates[0] = $start_at;
         for ($i = 0; $i < $length; $i++) {
-            $date    = $utils->getPlusOffsetDay($log_date, -($length - 1 - $i));
+            $date    = my_any_day($log_date, -($length - 1 - $i));
             $res[$i] = [
                 'date' => $date,
                 'real' => 0,
@@ -1065,7 +1062,6 @@ class Meters extends BaseController
         $log_date   = $query['log_date'];
         $log_time   = $query['log_time'];
 
-        $utils  = service('mixUtils');
         $length = 12;
 
         // 初值0
@@ -1083,7 +1079,7 @@ class Meters extends BaseController
         $month = date('n', strtotime($log_date));
         $dates = [];
         for ($i = 0; $i < $month; $i++) {
-            $dates[] = $utils->getLastDayOfMonth($log_date, (-$month + $i));
+            $dates[] = my_last_day_of_month($log_date, (-$month + $i));
         }
         $dates[] = $log_date;
 
@@ -1160,7 +1156,6 @@ class Meters extends BaseController
         $log_date   = $query['log_date'];
         $log_time   = $query['log_time'];
 
-        $utils  = service('mixUtils');
         $length = 4;
 
         // 初值0
@@ -1177,7 +1172,7 @@ class Meters extends BaseController
         $quarter = ceil((date('n', strtotime($log_date))) / 3);
         $dates   = [];
         for ($i = 0; $i < $quarter; $i++) {
-            $dates[] = $utils->getLastDayOfQuarter($log_date, (-$quarter + $i));
+            $dates[] = my_last_day_of_quarter($log_date, (-$quarter + $i));
         }
         $dates[] = $log_date;
 
@@ -1273,14 +1268,12 @@ class Meters extends BaseController
         ];
 
         // 需查找的日期
-        $utils = service('mixUtils');
-
         $today       = $log_date;
-        $prevDay     = $utils->getPlusOffsetDay($today, -1);
-        $prevWeek    = $utils->getDayOfPreviousWeek($today);
-        $prevMonth   = $utils->getLastDayOfMonth($today, -1);
-        $prevQuarter = $utils->getLastDayOfQuarter($today, -1);
-        $prevYear    = $utils->getLastDayOfYear($today, -1);
+        $prevDay     = my_any_day($today, -1);
+        $prevWeek    = my_prev_week($today);
+        $prevMonth   = my_last_day_of_month($today, -1);
+        $prevQuarter = my_last_day_of_quarter($today, -1);
+        $prevYear    = my_last_day_of_year($today, -1);
         $dates       = [$today, $prevDay, $prevWeek, $prevMonth, $prevQuarter, $prevYear];
 
         $meter_ids[0] = $this->mainMeterId;
@@ -1415,10 +1408,8 @@ class Meters extends BaseController
         $res = 0;
 
         // 需查找的日期
-        $utils = service('mixUtils');
-
         $today   = $log_date;
-        $prevDay = $utils->getPlusOffsetDay($log_date, -1);
+        $prevDay = my_any_day($log_date, -1);
         $dates   = [$today, $prevDay];
 
         $meter_ids = [];
@@ -1509,15 +1500,13 @@ class Meters extends BaseController
             . '今日弃水电量为 0 万kWh，本月弃水电量累计 0 万kWh。';
 
         //
-        $utils = service('mixUtils');
-
-        $temp      = $utils->getPlusOffsetDay($date, 1);
+        $temp      = my_any_day($date, 1);
         $timestamp = strtotime($temp);
         $year2     = date('Y', $timestamp) . '年';
         $month2    = date('m', $timestamp) . '月';
         $day2      = date('d', $timestamp) . '日';
 
-        $previousWeek = $utils->getDayOfPreviousWeek($temp);
+        $previousWeek = my_prev_week($temp);
         $timestamp    = strtotime($previousWeek);
         $year1        = date('Y', $timestamp) . '年';
         $month1       = date('m', $timestamp) . '月';

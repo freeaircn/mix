@@ -1,9 +1,17 @@
 <?php
+/*
+ * @Description:
+ * @Author: freeair
+ * @Date: 2021-06-25 11:02:42
+ * @LastEditors: freeair
+ * @LastEditTime: 2022-04-01 10:45:22
+ */
 
 namespace Config;
 
-use App\Libraries\MixUtils;
 use CodeIgniter\Config\BaseService;
+
+// use App\Libraries\MixUtils;
 
 /**
  * Services Configuration file.
@@ -39,16 +47,16 @@ class Services extends BaseService
     //     return new MixUtils();
     // }
 
-    public static function mixUtils($config = null, bool $getShared = true)
-    {
-        if ($getShared) {
-            return static::getSharedInstance('mixUtils', $config);
-        }
+    // public static function mixUtils($config = null, bool $getShared = true)
+    // {
+    //     if ($getShared) {
+    //         return static::getSharedInstance('mixUtils', $config);
+    //     }
 
-        if (empty($config) || !(is_array($config) || $config instanceof MixUtils)) {
-            $config = config('MixUtils');
-        }
+    //     if (empty($config) || !(is_array($config) || $config instanceof MixUtils)) {
+    //         $config = config('MixUtils');
+    //     }
 
-        return new MixUtils($config);
-    }
+    //     return new MixUtils($config);
+    // }
 }

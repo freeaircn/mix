@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-01 21:40:19
+ * @LastEditTime: 2022-04-01 10:02:32
  */
 
 namespace App\Models;
@@ -28,6 +28,11 @@ class AccountModel extends Model
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
+
+    // public function __construct()
+    // {
+    //     helper('my_auth');
+    // }
 
     public function updateUserInfo($data = [])
     {
@@ -64,8 +69,8 @@ class AccountModel extends Model
         }
 
         // hash 密码
-        $utils        = \Config\Services::mixUtils();
-        $hashPassword = $utils->hashPassword($password);
+        helper('my_auth');
+        $hashPassword = my_hash_password($password);
         if ($hashPassword === false) {
             log_message('error', '{file}:{line} --> update password hash failed');
             return false;
@@ -90,8 +95,8 @@ class AccountModel extends Model
         }
 
         // hash 密码
-        $utils        = \Config\Services::mixUtils();
-        $hashPassword = $utils->hashPassword($password);
+        helper('my_auth');
+        $hashPassword = my_hash_password($password);
         if ($hashPassword === false) {
             log_message('error', '{file}:{line} --> update password, hash failed');
             return false;

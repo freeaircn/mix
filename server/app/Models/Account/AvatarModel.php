@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-11-01 20:29:54
+ * @LastEditTime: 2022-04-01 10:42:16
  */
 
 namespace App\Models\Account;
@@ -42,29 +42,6 @@ class AvatarModel extends Model
 
         return isset($res[0]) ? $res[0] : [];
     }
-
-    // public function newDefaultAvatarBySex(string $sex = '')
-    // {
-    //     if (empty($sex)) {
-    //         return false;
-    //     }
-
-    //     $config = config('MixUtils');
-    //     if ($sex == '男') {
-    //         $data = [
-    //             'path' => $config->defaultAvatarPath,
-    //             'name' => $config->defaultAvatarMale,
-    //         ];
-    //     } else {
-    //         $data = [
-    //             'path' => $config->defaultAvatarPath,
-    //             'name' => $config->defaultAvatarFemale,
-    //         ];
-    //     }
-
-    //     return $this->insert($data);
-
-    // }
 
     public function updateAvatarById($id = null, string $path = '', string $name = '')
     {
