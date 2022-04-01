@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-03-24 20:13:21
+ * @LastEditTime: 2022-04-01 14:53:53
  */
 
 namespace Config;
@@ -127,7 +127,7 @@ $routes->group('api', function ($routes) {
     //
     $routes->post('dts/draft', 'Dts::postDraft');
     $routes->get('dts/list', 'Dts::getList');
-    $routes->get('dts/ticket/blank_form', 'Dts::getTicketBlankForm');
+    $routes->get('dts/blank_form', 'Dts::getBlankForm');
     $routes->post('dts/ticket/upload/attachment', 'Dts::postTicketAttachment');
     $routes->get('dts/ticket/download/attachment', 'Dts::getTicketAttachment');
     $routes->get('dts/ticket/details', 'Dts::getTicketDetails');

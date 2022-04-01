@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2022-03-24 20:58:01
+ * @LastEditTime: 2022-04-01 19:10:26
 -->
 <template>
   <page-header-wrapper :title="false">
@@ -35,10 +35,10 @@
           </a-select>
         </a-form-model-item>
 
-        <a-form-model-item label="所属单元" prop="equipmentUnit">
+        <a-form-model-item label="设备" prop="device">
           <a-cascader
-            :options="cascaderOptions"
-            v-model="equipmentUnit"
+            :options="deviceOptions"
+            v-model="device"
             :allowClear="true"
             expand-trigger="hover"
             change-on-select
@@ -47,8 +47,8 @@
           />
         </a-form-model-item>
 
-        <a-form-model-item label="进展" prop="progress">
-          <a-textarea v-model="record.progress" :rows="10" />
+        <a-form-model-item label="描述" prop="description">
+          <a-textarea v-model="record.description" :rows="10" />
         </a-form-model-item>
 
         <a-form-model-item label="附件" prop="attachment">
@@ -65,14 +65,6 @@
           </a-upload>
         </a-form-model-item>
 
-        <a-form-model-item label="指派" prop="handler">
-          <a-select v-model="record.handler" placeholder="请选择" >
-            <a-select-option v-for="d in handlerOptions" :key="d.id" :value="d.id" :disabled="d.status === '0'">
-              {{ d.username }}
-            </a-select-option>
-          </a-select>
-        </a-form-model-item>
-
         <a-form-model-item :wrapperCol="{ span: 24 }" style="text-align: center">
           <a-button type="primary" @click="onSubmit" :disabled="!ready" >提交</a-button>
           <!-- <router-link slot="extra" to="/dashboard/dts"><a-button>取消</a-button></router-link> -->
@@ -85,7 +77,7 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { getDtsTicketBlankForm, postDtsDraft } from '@/api/mix/dts'
+import { getBlankForm, postDraft } from '@/api/mix/dts'
 import { listToTree } from '@/utils/util'
 
 export default {
@@ -100,12 +92,11 @@ export default {
       },
       //
       ready: false,
-      cascaderOptions: [],
-      handlerOptions: [],
-      equipmentUnit: [],
+      deviceOptions: [],
+      device: [],
       //
       record: {
-        progress: ''
+        description: ''
       },
       uploadAttachmentParam: { uid: '666' },
       attachmentList: [],
@@ -126,21 +117,18 @@ export default {
       const query = {
         station_id: this.userInfo.belongToDeptId
       }
-      getDtsTicketBlankForm(query)
+      getBlankForm(query)
         .then((data) => {
             this.ready = true
             //
-            this.record.progress = data.progress
+            this.record.description = data.description
             //
-            this.handlerOptions = data.handler
-            //
-            listToTree(data.deviceList, this.cascaderOptions, '1')
+            listToTree(data.deviceList, this.deviceOptions, this.userInfo.belongToDeptId)
           })
           //  网络异常，清空页面数据显示，防止错误的操作
           .catch((err) => {
-            this.cascaderOptions.splice(0, this.cascaderOptions.length)
-            this.handlerOptions = []
-            this.record.progress = ''
+            this.deviceOptions.splice(0, this.deviceOptions.length)
+            this.record.description = ''
             if (err.response) {
             }
           })
@@ -173,17 +161,15 @@ export default {
       this.$refs.form.validate(valid => {
         if (valid) {
           let temp = '+'
-          this.equipmentUnit.forEach(element => {
-            // temp = temp + '+' + element
+          this.device.forEach(element => {
             temp = temp + element + '+'
           })
-          // temp = temp + '+'
           //
           const data = { ...this.record }
-          data.equipment_unit = temp
+          data.device = temp
           data.station_id = this.userInfo.belongToDeptId
 
-          postDtsDraft(data)
+          postDraft(data)
             .then(() => {
               this.$router.push({ path: `/dashboard/dts/list` })
             })

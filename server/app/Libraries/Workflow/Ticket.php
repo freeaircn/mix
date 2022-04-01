@@ -4,10 +4,10 @@
  * @Author: freeair
  * @Date: 2019-12-29 14:06:12
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-01 15:09:52
+ * @LastEditTime: 2022-04-01 15:19:47
  */
 
-namespace App\MyEntity\Workflow\Dts;
+namespace App\Libraries\Workflow;
 
 class Ticket
 {

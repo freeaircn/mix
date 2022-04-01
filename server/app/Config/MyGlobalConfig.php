@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-07-06 21:44:27
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-01 10:41:35
+ * @LastEditTime: 2022-04-01 19:35:56
  */
 
 namespace Config;
@@ -13,6 +13,12 @@ use CodeIgniter\Config\BaseConfig;
 
 class MyGlobalConfig extends BaseConfig
 {
+    /**
+     * 数据库
+     */
+    public $dbName   = 'mix';
+    public $dbPrefix = 'app_';
+
     /**
      * 登录
      */
@@ -25,4 +31,9 @@ class MyGlobalConfig extends BaseConfig
     public $defaultAvatarPath   = 'avatar/default/';
     public $defaultAvatarMale   = 'male.jpg';
     public $defaultAvatarFemale = 'female.jpg';
+
+    /**
+     * DTS 工作流配置文件
+     */
+    public $wfDtsConfigFile = 'Libraries/Workflow/Dts/config.yaml';
 }

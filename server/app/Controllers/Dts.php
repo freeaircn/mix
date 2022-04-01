@@ -4,42 +4,42 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-03-24 20:51:39
+ * @LastEditTime: 2022-04-01 23:17:36
  */
 
 namespace App\Controllers;
 
+use App\Libraries\MyIdMaker;
+use App\Libraries\Workflow\Dts\WfDts;
+use App\Libraries\Workflow\Ticket;
 use App\Models\Dts\DeviceModel;
+use App\Models\Dts\DtsModel;
 use App\Models\Dts\RoleWorkflowAuthorityModel;
-use App\Models\Dts\TicketModel;
 use App\Models\Dts\UserModel;
 use App\Models\Dts\UserRoleModel;
 use App\Models\Dts\WorkflowAuthModel;
-use App\MyEntity\Workflow\Dts\Ticket;
-use App\MyEntity\Workflow\Dts\WorkflowCore;
 use CodeIgniter\API\ResponseTrait;
 
 class Dts extends BaseController
 {
     use ResponseTrait;
 
-    // 进展模板
-    protected $progressTemplate;
+    // 模板
+    protected $blankTpl;
+    protected $updateTpl;
     // 单号末尾几位
     protected $ticketIdTailLength;
     //
-    protected $ticketTextMap;
+    protected $keyValueMap;
 
     public function __construct()
     {
-        $this->progressTemplate = [
-            'draft'  => "【现象描述】\n\n【发生时间】\n\n【影响】\n\n【已采取措施】\n\n",
-            'update' => "【当前进展】\n\n【下一步计划】\n\n",
-        ];
+        $this->blankTpl  = "【现象】\n\n【时间】\n\n【影响】\n\n【已采取措施】\n\n";
+        $this->updateTpl = "【当前进展】\n\n【下一步计划】\n\n";
 
         $this->ticketIdTailLength = 3;
 
-        $this->ticketTextMap = [
+        $this->keyValueMap = [
             'type'  => [
                 1 => '隐患',
                 2 => '故障',
@@ -52,12 +52,12 @@ class Dts extends BaseController
         ];
     }
 
-    public function getTicketBlankForm()
+    public function getBlankForm()
     {
         $params = $this->request->getGet();
 
         // 检查请求数据
-        if (!$this->validate('DtsGetTicketBlankForm')) {
+        if (!$this->validate('DtsGetBlankForm')) {
             $res['error'] = $this->validator->getErrors();
 
             $res['code'] = EXIT_ERROR;
@@ -65,39 +65,17 @@ class Dts extends BaseController
             return $this->respond($res);
         }
 
-        $station_id = $params['station_id'];
+        $station_id  = $params['station_id'];
+        $description = $this->blankTpl;
+        $deviceList  = $this->_getDeviceList($station_id);
 
-        //
-        $progress = $this->getProgressTemplate();
-
-        //
-        $wf         = new WorkflowCore();
-        $firstPlace = $wf->getFirstPlace();
-        // $nextPlace  = $firstPlace;
-        // do {
-        //     $nextPlace = $wf->getNextPlace($nextPlace);
-        // } while (!$wf->isHandlingPlace($nextPlace));
-
-        $nextPlace = $wf->getNextPlace($firstPlace);
-        $handler   = [];
-        if ($wf->isHandlingPlace($nextPlace)) {
-            $handler = $this->getHandler($station_id, $nextPlace);
-        }
-
-        //
-        $model      = new DeviceModel();
-        $columnName = ['id', 'pid', 'name'];
-        $query      = ['id >' => 1];
-        $deviceList = $model->get($columnName, $query);
-
-        if (empty($progress) || empty($handler) || empty($deviceList)) {
+        if (empty($deviceList)) {
             $res['code'] = EXIT_ERROR;
         } else {
             $res['code'] = EXIT_SUCCESS;
             $res['data'] = [
-                'progress'   => $progress,
-                'handler'    => $handler,
-                'deviceList' => $deviceList,
+                'description' => $description,
+                'deviceList'  => $deviceList,
             ];
         }
 
@@ -121,27 +99,37 @@ class Dts extends BaseController
         }
 
         $client = $this->request->getJSON(true);
-        $model  = new TicketModel();
-
-        // 取出数据
+        //
         $uid   = session('id');
         $draft = [
-            'station_id'     => $client['station_id'],
-            'type'           => $client['type'],
-            'title'          => $client['title'],
-            'level'          => $client['level'],
-            'equipment_unit' => $client['equipment_unit'],
-            'progress'       => $this->getProgressHead() . $client['progress'],
-            'handler'        => $client['handler'],
-            'creator'        => $uid,
+            'station_id'  => $client['station_id'],
+            'type'        => $client['type'],
+            'title'       => $client['title'],
+            'level'       => $client['level'],
+            'device'      => $client['device'],
+            'description' => $this->_getContentTplHead() . $client['description'],
+            'creator_id'  => $uid,
         ];
 
         // 工作流
-        $wf                = new WorkflowCore();
-        $firstPlace        = $wf->getFirstPlace();
-        $draft['place_at'] = $wf->getNextPlace($firstPlace);
+        $wf_config         = rtrim(APPPATH, '\\/ ') . DIRECTORY_SEPARATOR . config('MyGlobalConfig')->wfDtsConfigFile;
+        $wf                = new WfDts($wf_config);
+        $draft['place_at'] = $wf->getFirstPlace();
 
-        $result = $model->newDraft($draft, $this->ticketIdTailLength);
+        // dts_id
+        $maker  = new MyIdMaker();
+        $dts_id = $maker->apply('DTS');
+        if ($dts_id === false) {
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '失败，稍后再试';
+
+            return $this->respond($res);
+        }
+        $draft['dts_id'] = $dts_id;
+        // $draft['dts_id'] = '1';
+
+        $model  = new DtsModel();
+        $result = $model->insertDB($draft);
         if ($result) {
             $res['code'] = EXIT_SUCCESS;
             $res['msg']  = '创建问题单';
@@ -250,8 +238,8 @@ class Dts extends BaseController
 
         $ticket = $db;
         // id => 名称
-        $ticket['type']  = $this->ticketTextMap['type'][$db['type']];
-        $ticket['level'] = $this->ticketTextMap['level'][$db['level']];
+        $ticket['type']  = $this->keyValueMap['type'][$db['type']];
+        $ticket['level'] = $this->keyValueMap['level'][$db['level']];
 
         //
         $place      = $db['place_at'];
@@ -356,7 +344,7 @@ class Dts extends BaseController
         $where  = [
             'ticket_id' => $client['ticket_id'],
         ];
-        $progress = $this->getProgressHead() . $client['progress'];
+        $progress = $this->_getContentTplHead() . $client['progress'];
 
         $model  = new TicketModel();
         $result = $model->updateProgress($progress, $where);
@@ -460,7 +448,7 @@ class Dts extends BaseController
         return $this->progressTemplate[$type];
     }
 
-    protected function getProgressHead()
+    protected function _getContentTplHead()
     {
         return date('Y-m-d H:i', time()) . ' ' . session('username') . "\n";
     }
@@ -511,6 +499,21 @@ class Dts extends BaseController
         }
 
         return $handler;
+    }
+
+    protected function _getDeviceList(int $station_id = 0)
+    {
+        if ($station_id <= 0) {
+            return [];
+        }
+        $list = [];
+
+        $model      = new DeviceModel();
+        $columnName = ['id', 'pid', 'name'];
+        $query      = ['id >' => 1];
+        $list       = $model->get($columnName, $query);
+
+        return $list;
     }
 
     protected function equipmentUnitTextMap($data = '')

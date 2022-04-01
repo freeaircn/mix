@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-03-24 20:37:35
+ * @LastEditTime: 2022-04-01 22:51:17
  */
 
 namespace App\Models\Dts;
@@ -13,9 +13,9 @@ use CodeIgniter\Model;
 
 class DeviceModel extends Model
 {
-    protected $DBGroup = 'mix';
+    protected $DBGroup;
+    protected $table;
 
-    protected $table         = 'app_equipment_unit';
     protected $primaryKey    = 'id';
     protected $allowedFields = ['name', 'pid', 'description'];
 
@@ -29,10 +29,17 @@ class DeviceModel extends Model
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
 
+    public function __construct()
+    {
+        $this->DBGroup = config('MyGlobalConfig')->dbName;
+        $this->table   = config('MyGlobalConfig')->dbPrefix . 'equipment_unit';
+        parent::__construct();
+    }
+
     public function get($columnName = [], $query = [])
     {
         if (empty($columnName)) {
-            return false;
+            return [];
         }
 
         $selectSql = '';

@@ -4,20 +4,20 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-03-24 20:20:19
+ * @LastEditTime: 2022-04-01 22:56:07
  */
 
 namespace App\Models\Dts;
 
 use CodeIgniter\Model;
 
-class TicketModel extends Model
+class DtsModel extends Model
 {
-    protected $DBGroup = 'mix';
+    protected $DBGroup;
+    protected $table;
 
-    protected $table         = 'app_dts';
     protected $primaryKey    = 'id';
-    protected $allowedFields = ['station_id', 'dts_id', 'type', 'title', 'level', 'device', 'progress', 'creator', 'handler', 'reviewer', 'place_at', 'task_id', 'rm_id', 'score', 'score_comment', 'cause'];
+    protected $allowedFields = ['station_id', 'dts_id', 'status', 'type', 'title', 'level', 'device', 'description', 'progress', 'creator_id', 'reviewer_id', 'place_at', 'cause'];
 
     protected $useAutoIncrement = true;
 
@@ -28,6 +28,13 @@ class TicketModel extends Model
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
+
+    public function __construct()
+    {
+        $this->DBGroup = config('MyGlobalConfig')->dbName;
+        $this->table   = config('MyGlobalConfig')->dbPrefix . 'dts';
+        parent::__construct();
+    }
 
     public function getLastOneByCreateDate($columnName = [], $query = [])
     {
@@ -51,25 +58,25 @@ class TicketModel extends Model
         return isset($db[0]) ? $db[0] : [];
     }
 
-    public function newDraft(array $draft, int $ticketIdTailLength = 3)
+    public function insertDB(array $draft)
     {
         if (empty($draft)) {
             return false;
         }
 
         // 单号
-        $time       = time();
-        $columnName = ['dts_id'];
-        $query      = ['created_at' => date('Y-m-d', $time)];
+        // $time       = time();
+        // $columnName = ['dts_id'];
+        // $query      = ['created_at' => date('Y-m-d', $time)];
 
         $this->transStart();
-        $db = $this->getLastOneByCreateDate($columnName, $query);
-        if (empty($db)) {
-            $draft['dts_id'] = date('ymd', $time) . substr('00000001', -$ticketIdTailLength);
-        } else {
-            $id              = (int) $db['dts_id'] + 1;
-            $draft['dts_id'] = date('ymd', $time) . substr((string) $id, -$ticketIdTailLength);
-        }
+        // $db = $this->getLastOneByCreateDate($columnName, $query);
+        // if (empty($db)) {
+        //     $draft['dts_id'] = date('ymd', $time) . substr('00000001', -$ticketIdTailLength);
+        // } else {
+        //     $id              = (int) $db['dts_id'] + 1;
+        //     $draft['dts_id'] = date('ymd', $time) . substr((string) $id, -$ticketIdTailLength);
+        // }
         $result = $this->insert($draft);
 
         $this->transComplete();

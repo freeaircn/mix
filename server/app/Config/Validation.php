@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-12-31 10:04:14
+ * @LastEditTime: 2022-04-01 15:00:24
  */
 
 namespace Config;
@@ -204,7 +204,7 @@ class Validation
         'offset'     => 'required|regex_match[^[1-9]\d{0,9}$]',
     ];
 
-    public $DtsGetTicketBlankForm = [
+    public $DtsGetBlankForm = [
         'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
     ];
 
