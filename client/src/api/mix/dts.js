@@ -3,14 +3,15 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-01 18:58:19
+ * @LastEditTime: 2022-04-02 11:02:08
  */
 import request from '@/utils/request'
 
 const api = {
+  dts_blank_form: '/dts/blank_form',
   dts_draft: '/dts/draft',
   dts_list: '/dts/list',
-  dts_blank_form: '/dts/blank_form',
+  //
   dts_ticket_details: '/dts/ticket/details',
   dts_ticket_progress: '/dts/ticket/progress',
   dts_ticket_handler: '/dts/ticket/handler',
@@ -26,7 +27,7 @@ export function postDraft (data) {
   })
 }
 
-export function getDtsList (params) {
+export function getList (params) {
   return request({
     url: api.dts_list,
     method: 'get',

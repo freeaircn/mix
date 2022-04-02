@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-01 14:53:53
+ * @LastEditTime: 2022-04-02 10:53:41
  */
 
 namespace Config;
@@ -125,12 +125,12 @@ $routes->group('api', function ($routes) {
     $routes->get('meters/statistic/chart/data', 'Meters::getStatisticChartData');
     $routes->get('meters/statistic/overall', 'Meters::getStatisticOverall');
     //
+    $routes->get('dts/blank_form', 'Dts::getBlankForm');
     $routes->post('dts/draft', 'Dts::postDraft');
     $routes->get('dts/list', 'Dts::getList');
-    $routes->get('dts/blank_form', 'Dts::getBlankForm');
     $routes->post('dts/ticket/upload/attachment', 'Dts::postTicketAttachment');
     $routes->get('dts/ticket/download/attachment', 'Dts::getTicketAttachment');
-    $routes->get('dts/ticket/details', 'Dts::getTicketDetails');
+    $routes->get('dts/ticket/details', 'Dts::getDetails');
     $routes->put('dts/ticket/progress', 'Dts::putTicketProgress');
     $routes->put('dts/ticket/handler', 'Dts::putTicketHandler');
     $routes->post('dts/ticket/toReview', 'Dts::postTicketToReview');

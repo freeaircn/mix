@@ -1,10 +1,3 @@
-<!--
- * @Description:
- * @Author: freeair
- * @Date: 2021-09-30 20:50:48
- * @LastEditors: freeair
- * @LastEditTime: 2021-11-01 19:34:50
--->
 <template>
   <page-header-wrapper :title="false">
 
@@ -28,39 +21,43 @@
       <a slot="extra" @click="onQueryDetails">刷新</a>
 
       <a-descriptions title="" :column="{ xxl: 4, xl: 3, lg: 3, md: 3, sm: 2, xs: 1 }">
-        <a-descriptions-item label="单号">{{ details.ticket_id }}</a-descriptions-item>
+        <a-descriptions-item label="单号">{{ details.dts_id }}</a-descriptions-item>
         <a-descriptions-item label="类别">{{ details.type }}</a-descriptions-item>
         <a-descriptions-item label="影响程度">{{ details.level }}</a-descriptions-item>
-        <a-descriptions-item label="进度">{{ details.place_at }}</a-descriptions-item>
       </a-descriptions>
       <a-descriptions title="" :column="{ xxl: 4, xl: 3, lg: 3, md: 3, sm: 2, xs: 1 }">
         <a-descriptions-item label="标题">{{ details.title }}</a-descriptions-item>
       </a-descriptions>
       <a-descriptions title="" :column="{ xxl: 4, xl: 3, lg: 3, md: 3, sm: 2, xs: 1 }">
-        <a-descriptions-item label="所属单元">{{ details.equipment_unit }}</a-descriptions-item>
+        <a-descriptions-item label="设备">{{ details.device }}</a-descriptions-item>
       </a-descriptions>
       <a-descriptions title="" :column="{ xxl: 4, xl: 3, lg: 3, md: 3, sm: 2, xs: 1 }">
         <a-descriptions-item label="创建时间">{{ details.created_at }}</a-descriptions-item>
         <a-descriptions-item label="更新时间">{{ details.updated_at }}</a-descriptions-item>
       </a-descriptions>
       <a-descriptions title="" :column="{ xxl: 4, xl: 3, lg: 3, md: 3, sm: 2, xs: 1 }">
-        <a-descriptions-item label="创建人">{{ details.creator }}</a-descriptions-item>
-        <a-descriptions-item label="处理人">{{ details.handler }}</a-descriptions-item>
-        <a-descriptions-item label="审核人">{{ details.reviewer }}</a-descriptions-item>
+        <a-descriptions-item label="创建">{{ details.creator }}</a-descriptions-item>
+        <a-descriptions-item label="审核" v-if="details.reviewer.length !== 0">{{ details.reviewer }}</a-descriptions-item>
       </a-descriptions>
 
-      <div style="margin-bottom: 8px">进展:</div>
+      <div style="margin-bottom: 8px">描述:</div>
       <div style="width: 100%">
-        <a-textarea id="textarea_id" v-model="details.progress" :defaultValue="details.progress" :rows="10" readOnly/>
+        <a-textarea id="textarea_id" v-model="details.description" :defaultValue="details.description" :rows="9" readOnly/>
+      </div>
+
+      <div style="margin-top: 8px; margin-bottom: 8px">进展:</div>
+      <div style="width: 100%">
+        <a-textarea id="textarea_id" v-model="details.progress" :defaultValue="details.progress" :rows="8" readOnly/>
       </div>
     </a-card>
 
-    <a-card v-if="OpVisible" :bordered="false" title="操作" :loading="loading" :body-style="{marginBottom: '8px'}">
+    <!-- <a-card v-if="OpVisible" :bordered="false" title="操作" :loading="loading" :body-style="{marginBottom: '8px'}"> -->
+    <a-card :bordered="false" title="操作" :loading="loading" :body-style="{marginBottom: '8px'}">
       <router-link slot="extra" to="/dashboard/dts/list">返回</router-link>
       <div style="width: 100%">
         <a-form-model :model="operation">
           <a-form-model-item label="新进展">
-            <a-textarea v-model="operation.newProgress" :defaultValue="defaultProgressText" :rows="6" />
+            <a-textarea v-model="operation.newProgress" :defaultValue="newProgressTpl" :rows="6" />
           </a-form-model-item>
           <a-form-model-item>
             <a-button type="primary" @click="handleSubmitNewProgress" style="margin-top: 8px; margin-right: 16px">更新进展</a-button>
@@ -123,25 +120,26 @@ export default {
   mixins: [baseMixin],
   data () {
     return {
-      ticketId: '0',
+      dts_id: '0',
       loading: false,
       steps: {
         current: 0
       },
       details: {
-        ticket_id: '',
+        dts_id: '',
         type: '',
         level: '',
         place_at: '',
         title: '',
-        equipment_unit: '',
+        device: '',
         creator: '',
+        reviewer: '',
         created_at: '',
-        handler: '',
         updated_at: '',
+        description: '',
         progress: ''
       },
-      defaultProgressText: '',
+      newProgressTpl: '',
       //
       operation: {},
       //
@@ -167,7 +165,7 @@ export default {
     }
   },
   created () {
-    this.ticketId = (this.$route.params.ticketId) ? this.$route.params.ticketId : '0'
+    this.dts_id = (this.$route.params.id) ? this.$route.params.id : '0'
   },
   mounted () {
     this.onQueryDetails()
@@ -176,21 +174,20 @@ export default {
 
     // 查询
     onQueryDetails () {
-      if (this.ticketId === '0') {
+      if (this.dts_id === '0') {
         return
       }
       const query = {
-        station_id: this.userInfo.belongToDeptId,
-        ticket_id: this.ticketId
+        dts_id: this.dts_id
       }
       this.loading = true
       getDtsTicketDetails(query)
         .then(data => {
           this.loading = false
           //
-          Object.assign(this.details, data.ticket)
+          Object.assign(this.details, data.details)
           this.steps = data.steps
-          this.defaultProgressText = data.progressText
+          this.newProgressTpl = data.newProgressTpl
           this.isCreator = data.view.isCreator
           this.isCheck = data.view.isCheck
           this.isReview = data.view.isReview
@@ -213,12 +210,12 @@ export default {
         onOk: () => {
           const progress = {
             station_id: this.userInfo.belongToDeptId,
-            ticket_id: this.ticketId,
+            dts_id: this.dts_id,
             progress: this.operation.newProgress
           }
           putDtsTicketProgress(progress)
             .then(() => {
-              this.operation.newProgress = this.defaultProgressText
+              this.operation.newProgress = this.newProgressTpl
               // this.details.progress = data
               // const textarea = document.getElementById('textarea_id')
               // textarea.scrollTop = 0
@@ -243,7 +240,7 @@ export default {
         this.newHandlerDialogVisible = false
         const handler = {
           station_id: this.userInfo.belongToDeptId,
-          ticket_id: this.ticketId,
+          dts_id: this.dts_id,
           handler: this.newHandler
         }
         putDtsTicketHandler(handler)
@@ -269,7 +266,7 @@ export default {
         this.reviewDialogVisible = false
         const reviewer = {
           station_id: this.userInfo.belongToDeptId,
-          ticket_id: this.ticketId,
+          dts_id: this.dts_id,
           reviewer: this.reviewer
         }
         postDtsTicketToReview(reviewer)
@@ -291,7 +288,7 @@ export default {
     //     onOk: () => {
     //       const review = {
     //         station_id: this.userInfo.belongToDeptId,
-    //         ticket_id: this.ticketId
+    //         dts_id: this.dts_id
     //       }
     //       postDtsTicketToReview(review)
     //         .then(() => {

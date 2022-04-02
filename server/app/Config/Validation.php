@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-01 15:00:24
+ * @LastEditTime: 2022-04-02 11:23:24
  */
 
 namespace Config;
@@ -186,31 +186,29 @@ class Validation
     public $MeterGetStatisticChartData = [
         'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
     ];
-    // end
 
     public $MeterBasicStatisticGet = [
         'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
-    ];
-
-    public $DtsDraftPost = [
-        'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
-        'type'       => 'required|regex_match[^[1-9]$]',
-        'level'      => 'required|regex_match[^[1-9]$]',
-    ];
-
-    public $DtsTicketsGet = [
-        'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
-        'limit'      => 'required|regex_match[^[1-9]\d{0,2}$]',
-        'offset'     => 'required|regex_match[^[1-9]\d{0,9}$]',
     ];
 
     public $DtsGetBlankForm = [
         'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
     ];
 
-    public $DtsGetTicketDetails = [
+    public $DtsPostDraft = [
         'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
-        'ticket_id'  => 'required|regex_match[/^\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])[0-9]{3}$/]',
+        'type'       => 'required|regex_match[^[1-9]$]',
+        'level'      => 'required|regex_match[^[1-9]$]',
+    ];
+
+    public $DtsGetList = [
+        'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
+        'limit'      => 'required|regex_match[^[1-9]\d{0,2}$]',
+        'offset'     => 'required|regex_match[^[1-9]\d{0,9}$]',
+    ];
+
+    public $DtsGetDetails = [
+        'dts_id' => 'required|regex_match[/^[1-9]\d{0,19}$/]',
     ];
 
     public $DtsProgressPut = [

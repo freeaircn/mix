@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-01 22:51:17
+ * @LastEditTime: 2022-04-02 10:44:07
  */
 
 namespace App\Models\Dts;
@@ -31,8 +31,9 @@ class DeviceModel extends Model
 
     public function __construct()
     {
-        $this->DBGroup = config('MyGlobalConfig')->dbName;
-        $this->table   = config('MyGlobalConfig')->dbPrefix . 'equipment_unit';
+        $config        = config('MyGlobalConfig');
+        $this->DBGroup = $config->dbName;
+        $this->table   = $config->dbPrefix . 'equipment_unit';
         parent::__construct();
     }
 

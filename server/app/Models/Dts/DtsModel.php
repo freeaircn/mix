@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-01 22:56:07
+ * @LastEditTime: 2022-04-02 11:26:16
  */
 
 namespace App\Models\Dts;
@@ -31,8 +31,9 @@ class DtsModel extends Model
 
     public function __construct()
     {
-        $this->DBGroup = config('MyGlobalConfig')->dbName;
-        $this->table   = config('MyGlobalConfig')->dbPrefix . 'dts';
+        $config        = config('MyGlobalConfig');
+        $this->DBGroup = $config->dbName;
+        $this->table   = $config->dbPrefix . 'dts';
         parent::__construct();
     }
 
@@ -90,7 +91,7 @@ class DtsModel extends Model
     public function getByLimitOffset($columnName = [], $query = [])
     {
         if (empty($columnName) || empty($query)) {
-            return false;
+            return ['total' => 0, 'data' => []];
         }
 
         $selectSql = '';
@@ -99,17 +100,22 @@ class DtsModel extends Model
         }
         $builder = $this->select($selectSql);
         $builder->where('station_id', $query['station_id']);
+        $builder->where('status', $query['status']);
 
         $total = 0;
         $total = $builder->countAllResults(false);
 
-        $builder->orderBy('dts_id', 'ASC');
-        $db = $builder->findAll($query['limit'], ($query['offset'] - 1) * $query['limit']);
+        if ($total === 0) {
+            return ['total' => 0, 'data' => []];
+        } else {
+            $builder->orderBy('dts_id', 'ASC');
+            $db = $builder->findAll($query['limit'], ($query['offset'] - 1) * $query['limit']);
 
-        return ['total' => $total, 'data' => $db];
+            return ['total' => $total, 'data' => $db];
+        }
     }
 
-    public function getByTicketId($columnName = [], $query = [])
+    public function getByDtsId($columnName = [], $query = [])
     {
         if (empty($columnName) || empty($query)) {
             return [];
@@ -136,7 +142,7 @@ class DtsModel extends Model
 
         $columnName = ['id', 'progress'];
         $this->transStart();
-        $db = $this->getByTicketId($columnName, $where);
+        $db = $this->getByDtsId($columnName, $where);
         if (empty($db)) {
             return false;
         }

@@ -104,7 +104,7 @@
 <script>
 import { mapGetters } from 'vuex'
 import { baseMixin } from '@/store/app-mixin'
-import { getDtsList } from '@/api/mix/dts'
+import { getList } from '@/api/mix/dts'
 
 const typeMap = {
   '1': { text: '隐患' },
@@ -134,13 +134,13 @@ export default {
           dataIndex: 'dts_id'
         },
         {
+          title: '标题',
+          dataIndex: 'title'
+        },
+        {
           title: '类型',
           dataIndex: 'type',
           scopedSlots: { customRender: 'type' }
-        },
-        {
-          title: '标题',
-          dataIndex: 'title'
         },
         {
           title: '影响程度',
@@ -154,10 +154,6 @@ export default {
         {
           title: '创建日期',
           dataIndex: 'created_at'
-        },
-        {
-          title: '处理人',
-          dataIndex: 'handler'
         },
         {
           title: '更新日期',
@@ -217,7 +213,7 @@ export default {
       }
       this.pagination.current = 1
       this.loading = true
-      getDtsList(query)
+      getList(query)
         .then(res => {
           this.loading = false
           //
@@ -233,9 +229,9 @@ export default {
     },
 
     onQueryDetails (record) {
-      if (record.ticket_id) {
-        const ticketId = record.ticket_id
-        this.$router.push({ path: `/dashboard/dts/details/${ticketId}` })
+      if (record.dts_id) {
+        const id = record.dts_id
+        this.$router.push({ path: `/dashboard/dts/details/${id}` })
       }
     }
 

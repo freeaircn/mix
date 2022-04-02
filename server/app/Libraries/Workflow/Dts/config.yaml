@@ -7,7 +7,7 @@ workflows:
         places:
             create:
                 metadata:
-                    name: '创建'
+                    name: '新建'
                     auth: 'dts_auth_any'
                     branchA: 'A'
                     view:

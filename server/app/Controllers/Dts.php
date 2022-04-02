@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-01 23:17:36
+ * @LastEditTime: 2022-04-02 13:44:24
  */
 
 namespace App\Controllers;
@@ -90,7 +90,7 @@ class Dts extends BaseController
     public function postDraft()
     {
         // 检查请求数据
-        if (!$this->validate('DtsDraftPost')) {
+        if (!$this->validate('DtsPostDraft')) {
             $res['error'] = $this->validator->getErrors();
 
             $res['code'] = EXIT_ERROR;
@@ -111,11 +111,10 @@ class Dts extends BaseController
             'creator_id'  => $uid,
         ];
 
-        // 工作流
-        $wf_config         = rtrim(APPPATH, '\\/ ') . DIRECTORY_SEPARATOR . config('MyGlobalConfig')->wfDtsConfigFile;
-        $wf                = new WfDts($wf_config);
+        $wf                = new WfDts();
         $draft['place_at'] = $wf->getFirstPlace();
 
+        $draft['status'] = 'publish';
         // dts_id
         $maker  = new MyIdMaker();
         $dts_id = $maker->apply('DTS');
@@ -126,7 +125,6 @@ class Dts extends BaseController
             return $this->respond($res);
         }
         $draft['dts_id'] = $dts_id;
-        // $draft['dts_id'] = '1';
 
         $model  = new DtsModel();
         $result = $model->insertDB($draft);
@@ -147,7 +145,7 @@ class Dts extends BaseController
         $param = $this->request->getGet();
 
         // 检查请求数据
-        if (!$this->validate('DtsTicketsGet')) {
+        if (!$this->validate('DtsGetList')) {
             $res['error'] = $this->validator->getErrors();
 
             $res['code'] = EXIT_ERROR;
@@ -155,63 +153,33 @@ class Dts extends BaseController
             return $this->respond($res);
         }
 
-        $model = new TicketModel();
-
         $query['station_id'] = $param['station_id'];
+        $query['status']     = 'publish';
         $query['limit']      = $param['limit'];
         $query['offset']     = $param['offset'];
+        $columnName          = ['id', 'dts_id', 'type', 'title', 'level', 'place_at', 'created_at', 'updated_at', 'creator_id'];
 
-        $columnName = ['id', 'dts_id', 'type', 'title', 'level', 'place_at', 'created_at', 'updated_at', 'creator', 'handler'];
-        $db         = $model->getByLimitOffset($columnName, $query);
+        $model = new DtsModel();
+        $db    = $model->getByLimitOffset($columnName, $query);
 
         if ($db['total'] === 0) {
             $res['code'] = EXIT_SUCCESS;
-            $res['data'] = ['total' => 0, 'data' => []];
+            $res['data'] = $db;
             return $this->respond($res);
         }
 
-        // uid => name
-        $model      = new UserModel();
-        $columnName = ['id', 'username', 'status'];
-        $station    = '+' . $query['station_id'] . '+';
-        $users      = $model->getUserByStation($columnName, $station);
-        $cnt        = count($users);
+        // id => name
+        $data = $this->_getUserNameAndWorkflowName($db['data'], $query['station_id']);
 
-        // 过滤
-        $wf = new WorkflowCore();
-        for ($i = 0; $i < $db['total']; $i++) {
-            // 工作流
-            $metadata = $wf->getPlaceMetadata($db['data'][$i]['place_at']);
-            if (!empty($metadata)) {
-                $db['data'][$i]['place_at'] = $metadata['name'];
-            }
-
-            // 用户名
-            for ($j = 0; $j < $cnt; $j++) {
-                if ($users[$j]['id'] === $db['data'][$i]['creator']) {
-                    $db['data'][$i]['creator'] = $users[$j]['username'];
-                }
-                if ($users[$j]['id'] === $db['data'][$i]['handler']) {
-                    $db['data'][$i]['handler'] = $users[$j]['username'];
-                }
-            }
-        }
-
-        if ($db === false) {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '稍后再试';
-        } else {
-            $res['code'] = EXIT_SUCCESS;
-            $res['data'] = ['total' => $db['total'], 'data' => $db['data']];
-        }
-
+        $res['code'] = EXIT_SUCCESS;
+        $res['data'] = ['total' => $db['total'], 'data' => $data];
         return $this->respond($res);
     }
 
-    public function getTicketDetails()
+    public function getDetails()
     {
         // 检查请求数据
-        if (!$this->validate('DtsGetTicketDetails')) {
+        if (!$this->validate('DtsGetDetails')) {
             $res['error'] = $this->validator->getErrors();
 
             $res['code'] = EXIT_ERROR;
@@ -219,69 +187,45 @@ class Dts extends BaseController
             return $this->respond($res);
         }
 
-        $model = new TicketModel();
+        $params = $this->request->getGet();
+        $dts_id = $params['dts_id'];
 
-        $params     = $this->request->getGet();
-        $station_id = $params['station_id'];
-        $ticket_id  = $params['ticket_id'];
+        $columnName = ['dts_id', 'type', 'title', 'level', 'place_at', 'device', 'description', 'progress', 'created_at', 'updated_at', 'creator_id', 'reviewer_id'];
+        $query      = ['dts_id' => $dts_id];
 
-        $columnName = ['ticket_id', 'type', 'title', 'level', 'place_at', 'equipment_unit', 'progress', 'created_at', 'updated_at', 'creator', 'handler', 'reviewer'];
-        $query      = [
-            'ticket_id' => $ticket_id,
-        ];
-        $db = $model->getByTicketId($columnName, $query);
+        $model = new DtsModel();
+        $db    = $model->getByDtsId($columnName, $query);
         if (empty($db)) {
             $res['code'] = EXIT_ERROR;
             $res['msg']  = '问题单不存在';
             return $this->respond($res);
         }
 
-        $ticket = $db;
-        // id => 名称
-        $ticket['type']  = $this->keyValueMap['type'][$db['type']];
-        $ticket['level'] = $this->keyValueMap['level'][$db['level']];
+        $details = $db;
+        // $progress = $this->getProgressTemplate('update');
+        $newProgressTpl = $this->updateTpl;
 
-        //
-        $place      = $db['place_at'];
-        $creator    = $db['creator'];
-        $handler    = $db['handler'];
-        $reviewer   = $db['reviewer'];
-        $created_at = $db['created_at'];
-        $updated_at = $db['updated_at'];
+        // id => name
+        $details['type']  = $this->keyValueMap['type'][$db['type']];
+        $details['level'] = $this->keyValueMap['level'][$db['level']];
 
-        // uid => 用户名
-        $ticket['creator']  = '-';
-        $ticket['handler']  = '-';
-        $ticket['reviewer'] = '-';
+        $users_id = [
+            'creator'  => $db['creator_id'],
+            'reviewer' => $db['reviewer_id'],
+        ];
+        $users               = $this->_getUserName($users_id);
+        $details['creator']  = $users['creator'];
+        $details['reviewer'] = $users['reviewer'];
 
-        $model      = new UserModel();
-        $columnName = ['id', 'username', 'status'];
-        $users      = $model->getUserWhereId($columnName, [$creator, $handler, $reviewer]);
-        foreach ($users as $value) {
-            if ($value['id'] === $creator) {
-                $ticket['creator'] = $value['username'];
-            }
-            if ($value['id'] === $handler) {
-                $ticket['handler'] = $value['username'];
-            }
-            if ($value['id'] === $reviewer) {
-                $ticket['reviewer'] = $value['username'];
-            }
-        }
+        $details['device'] = $this->_getDeviceFullName($db['device']);
 
-        //
-        $progressText = $this->getProgressTemplate('update');
-
-        // 所属设备
-        $ticket['equipment_unit'] = $this->equipmentUnitTextMap($db['equipment_unit']);
+        $steps = $this->_getStepsBar($details['creator'], $details['reviewer'], $db['created_at'], $db['updated_at'], $db['place_at']);
 
         // 进度
-        $wf                 = new WorkflowCore();
-        $meta               = $wf->getPlaceMetadata($place);
-        $ticket['place_at'] = $meta['name'];
-        $wfPlaceAuth        = $meta['auth'];
-
-        $steps = $this->StepsTextMap($ticket['creator'], $ticket['handler'], $ticket['reviewer'], $created_at, $updated_at, $place);
+        // $wf                  = new WfDts();
+        // $meta                = $wf->getPlaceMetadata($place);
+        // $details['place_at'] = $meta['name'];
+        // $wfPlaceAuth         = $meta['auth'];
 
         // 用户权限
         $view = [
@@ -292,37 +236,37 @@ class Dts extends BaseController
         $handlers  = [];
         $reviewers = [];
 
-        $uid            = session('id');
-        $ownWfAuthority = session('wfAuthority');
+        // $uid            = session('id');
+        // $ownWfAuthority = session('wfAuthority');
 
-        if ($wf->isCheckPlace($place)) {
-            if ($handler === $uid || in_array($wfPlaceAuth, $ownWfAuthority)) {
-                $view = $wf->getPlaceMetaOfView($place);
-                $temp = $this->getHandler($station_id, $place);
-                foreach ($temp as $value) {
-                    if ($value['id'] !== $handler) {
-                        $handlers[] = $value;
-                    }
-                }
+        // if ($wf->isCheckPlace($place)) {
+        //     if ($handler === $uid || in_array($wfPlaceAuth, $ownWfAuthority)) {
+        //         $view = $wf->getPlaceMetaOfView($place);
+        //         $temp = $this->getHandler($station_id, $place);
+        //         foreach ($temp as $value) {
+        //             if ($value['id'] !== $handler) {
+        //                 $handlers[] = $value;
+        //             }
+        //         }
 
-                $temp = $this->getHandler($station_id, $wf->getReviewPlace());
-                foreach ($temp as $value) {
-                    if ($value['id'] !== $handler) {
-                        $reviewers[] = $value;
-                    }
-                }
-            }
-        }
+        //         $temp = $this->getHandler($station_id, $wf->getReviewPlace());
+        //         foreach ($temp as $value) {
+        //             if ($value['id'] !== $handler) {
+        //                 $reviewers[] = $value;
+        //             }
+        //         }
+        //     }
+        // }
 
         //
         $res['code'] = EXIT_SUCCESS;
         $res['data'] = [
-            'ticket'       => $ticket,
-            'steps'        => $steps,
-            'progressText' => $progressText,
-            'view'         => $view,
-            'handlers'     => $handlers,
-            'reviewers'    => $reviewers,
+            'details'        => $details,
+            'steps'          => $steps,
+            'newProgressTpl' => $newProgressTpl,
+            'view'           => $view,
+            'handlers'       => $handlers,
+            'reviewers'      => $reviewers,
         ];
         // $res['extra'] = $view;
 
@@ -448,11 +392,6 @@ class Dts extends BaseController
         return $this->progressTemplate[$type];
     }
 
-    protected function _getContentTplHead()
-    {
-        return date('Y-m-d H:i', time()) . ' ' . session('username') . "\n";
-    }
-
     protected function getHandler($station_id = 0, $place = '')
     {
         if (!is_numeric($station_id) || empty($place)) {
@@ -516,28 +455,94 @@ class Dts extends BaseController
         return $list;
     }
 
-    protected function equipmentUnitTextMap($data = '')
+    protected function _getContentTplHead()
     {
-        if (empty($data)) {
+        return date('Y-m-d H:i', time()) . ' ' . session('username') . "\n";
+    }
+
+    protected function _getUserNameAndWorkflowName(array $array, string $station_id)
+    {
+        if (empty($array)) {
+            return [];
+        }
+
+        $model      = new UserModel();
+        $columnName = ['id', 'username', 'status'];
+        $station    = '+' . $station_id . '+';
+        $users      = $model->getUserByStation($columnName, $station);
+        $cnt        = count($users);
+
+        $wf = new WfDts();
+
+        $cnt = count($array);
+        for ($i = 0; $i < $cnt; $i++) {
+            $array[$i]['creator'] = '';
+            foreach ($users as $user) {
+                if ($user['id'] === $array[$i]['creator_id']) {
+                    $array[$i]['creator'] = $user['username'];
+                }
+            }
+
+            $metadata = $wf->getPlaceMetadata($array[$i]['place_at']);
+            if (!empty($metadata) && isset($metadata['name'])) {
+                $array[$i]['place_at'] = $metadata['name'];
+            }
+
+        }
+        return $array;
+    }
+
+    protected function _getUserName(array $array = null)
+    {
+        if (empty($array)) {
+            return [];
+        }
+
+        $ids    = [];
+        $result = [];
+        foreach ($array as $key => $value) {
+            $ids[]        = $value;
+            $result[$key] = '';
+        }
+
+        $model      = new UserModel();
+        $columnName = ['id', 'username', 'status'];
+        $users      = $model->getByIds($columnName, $ids);
+
+        if (empty($users)) {
+            return $result;
+        }
+
+        foreach ($array as $key => $item) {
+            foreach ($users as $user) {
+                if ($item === $user['id']) {
+                    $result[$key] = $user['username'];
+                }
+            }
+        }
+        return $result;
+    }
+
+    protected function _getDeviceFullName(string $keys = '')
+    {
+        if (empty($keys)) {
             return '';
         }
 
-        $temp = explode("+", trim($data, '+'));
-        $res  = '';
-        if (count($temp) > 0) {
+        $array = explode("+", trim($keys, '+'));
+        $res   = '';
+        if (!empty($array)) {
             $model      = new DeviceModel();
             $columnName = ['id', 'name'];
-            $query      = [
-                'ids' => $temp,
-            ];
-            $db2 = $model->getByIds($columnName, $query);
-            if (!empty($db2)) {
-                $cnt  = count($temp);
+            $query      = ['ids' => $array];
+            $devices    = $model->getByIds($columnName, $query);
+
+            if (!empty($devices)) {
                 $text = '';
-                for ($i = 0; $i < $cnt; $i++) {
-                    for ($j = 0; $j < count($db2); $j++) {
-                        if ($temp[$i] === $db2[$j]['id']) {
-                            $text = $text . $db2[$j]['name'] . ' / ';
+                foreach ($array as $value) {
+                    foreach ($devices as $device) {
+                        if ($value === $device['id']) {
+                            $text = $text . $device['name'] . ' / ';
                             break;
                         }
                     }
@@ -549,45 +554,56 @@ class Dts extends BaseController
         return $res;
     }
 
-    protected function StepsTextMap($creator = '', $handler = '', $reviewer = '', $created_at = '', $updated_at = '', $place = '')
+    protected function _getStepsBar($creator = '', $reviewer = '', $created_at = '', $updated_at = '', $place = '')
     {
-        $steps = [
-            'current' => '0',
-            'step'    => [],
-        ];
-
-        if (empty($created_at) || empty($updated_at) || empty($place)) {
-            return $steps;
-        }
-
-        $wf   = new WorkflowCore();
-        $meta = $wf->getPlaceMetaOfName();
-        $cnt  = count($meta);
-
-        $temp                    = [];
-        $temp[$meta[0]['alias']] = [
-            'title'       => $meta[0]['name'],
-            'icon'        => false,
-            'description' => [$creator, $created_at],
-        ];
-        for ($i = 1; $i < $cnt; $i++) {
-            if ($meta[$i]['alias'] === $place) {
-                $steps['current'] = $i;
-            }
-            $temp[$meta[$i]['alias']] = [
-                'title'       => $meta[$i]['name'],
-                'icon'        => false,
-                'description' => [],
+        if (empty($creator) || empty($created_at) || empty($place)) {
+            return [
+                'current' => 0,
+                'step'    => [],
             ];
         }
 
-        if ($wf->isCheckPlace($place)) {
-            $temp[$place]['icon']        = true;
-            $temp[$place]['description'] = [$handler, $updated_at];
+        $steps = [
+            'current' => 0,
+            'step'    => [],
+        ];
+
+        $wf    = new WfDts();
+        $metas = $wf->getPlaceMetaOfName();
+        if (empty($metas)) {
+            return $steps;
+        }
+
+        $temp                     = [];
+        $temp[$metas[0]['alias']] = [
+            'title'       => $metas[0]['name'],
+            'icon'        => false,
+            'description' => [$creator, $created_at],
+        ];
+
+        $i = 0;
+        foreach ($metas as $meta) {
+            if ($i === 0) {
+                $temp[$meta['alias']] = [
+                    'title'       => $meta['name'],
+                    'icon'        => false,
+                    'description' => [$creator, $created_at],
+                ];
+            } else {
+                $temp[$meta['alias']] = [
+                    'title'       => $meta['name'],
+                    'icon'        => false,
+                    'description' => [],
+                ];
+            }
+            if ($meta['alias'] === $place) {
+                $steps['current']             = $i;
+                $temp[$meta['alias']]['icon'] = true;
+            }
+            $i++;
         }
 
         if ($wf->isReviewPlace($place)) {
-            $temp[$place]['icon']        = true;
             $temp[$place]['description'] = [$reviewer, $updated_at];
         }
 

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2019-12-29 14:06:12
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-01 19:30:20
+ * @LastEditTime: 2022-04-02 10:26:18
  */
 
 namespace App\Libraries\Workflow\Dts;
@@ -13,9 +13,9 @@ use App\Libraries\Workflow\Core;
 
 class WfDts extends Core
 {
-    public function __construct(string $config = '')
+    public function __construct()
     {
-        // $config = rtrim(APPPATH, '\\/ ') . DIRECTORY_SEPARATOR . 'MyEntity/Workflow/Dts/config.yaml';
+        $config = rtrim(APPPATH, '\\/ ') . DIRECTORY_SEPARATOR . config('MyGlobalConfig')->wfDtsConfigFile;
         parent::__construct($config);
     }
 

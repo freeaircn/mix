@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-10 09:44:59
+ * @LastEditTime: 2022-04-02 12:17:33
  */
 
 namespace App\Models\Dts;
@@ -13,9 +13,9 @@ use CodeIgniter\Model;
 
 class UserModel extends Model
 {
-    protected $DBGroup = 'mix';
+    protected $DBGroup;
+    protected $table;
 
-    protected $table         = 'app_user';
     protected $primaryKey    = 'id';
     protected $allowedFields = ['workID', 'username', 'sex', 'IdCard', 'phone', 'email', 'status', 'password', 'forceChgPwd', 'avatar', 'dept_ids', 'job', 'title', 'politic', 'last_login', 'ip_address'];
 
@@ -29,9 +29,17 @@ class UserModel extends Model
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
 
-    public function getUserWhereId($columnName = [], $id = [])
+    public function __construct()
     {
-        if (empty($columnName) || empty($id)) {
+        $config        = config('MyGlobalConfig');
+        $this->DBGroup = $config->dbName;
+        $this->table   = $config->dbPrefix . 'user';
+        parent::__construct();
+    }
+
+    public function getByIds($columnName = [], $ids = [])
+    {
+        if (empty($columnName) || empty($ids)) {
             return [];
         }
 
@@ -41,7 +49,7 @@ class UserModel extends Model
         }
         $builder = $this->select($selectSql);
 
-        $builder->whereIn('id', $id);
+        $builder->whereIn('id', $ids);
         $db = $builder->findAll();
 
         // $res = [];
