@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-08 17:11:53
+ * @LastEditTime: 2022-04-08 20:40:24
  */
 
 namespace App\Controllers;
@@ -190,7 +190,6 @@ class Auth extends BaseController
 
         $res['code'] = EXIT_SUCCESS;
         $res['data'] = ['token' => md5(time())];
-        $res['es']   = $user;
 
         return $this->respond($res);
     }

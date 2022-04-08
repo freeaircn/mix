@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-08 13:05:39
+ * @LastEditTime: 2022-04-08 20:41:37
  */
 
 namespace App\Models\Admin;
@@ -59,7 +59,7 @@ class RoleMenuModel extends Model
             $res[] = $value['menu_id'];
         }
 
-        // 多个角色，允许有相同的menu id，去除重复
+        // 多个角色，允许有相同的id，去除重复
         return array_unique($res);
     }
 

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-07 22:28:08
+ * @LastEditTime: 2022-04-08 22:00:59
  */
 
 namespace Config;
@@ -63,6 +63,9 @@ $routes->group('api', function ($routes) {
     $routes->delete('role', 'Admin::delRole');
     //
     $routes->get('menu', 'Admin::getMenu');
+    $routes->post('menu', 'Admin::newMenu');
+    $routes->put('menu', 'Admin::updateMenu');
+    $routes->delete('menu', 'Admin::delMenu');
     //
     $routes->get('role_menu', 'Admin::getRoleMenu');
     $routes->post('role_menu', 'Admin::saveRoleMenu');

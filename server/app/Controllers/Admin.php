@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-04 20:02:23
+ * @LastEditTime: 2022-04-08 22:01:39
  */
 
 namespace App\Controllers;
@@ -98,11 +98,68 @@ class Admin extends BaseController
     // 菜单
     public function getMenu()
     {
-        $model  = new MenuModel();
-        $result = $model->getMenuByColumnName(['id', 'type', 'pid', 'title']);
+        $model = new MenuModel();
+        // $columnName = ['id', 'type', 'pid', 'title'];
+        $columnName = ['id', 'pid', 'title', 'path', 'redirect', 'name', 'component', 'hidden', 'hideChildrenInMenu', 'meta_hidden', 'icon', 'keepAlive', 'hiddenHeaderContent', 'permission', 'target', 'updated_at'];
+        $result     = $model->getMenus($columnName);
 
         $res['code'] = EXIT_SUCCESS;
-        $res['data'] = ['menu' => $result];
+        $res['data'] = ['data' => $result];
+
+        return $this->respond($res);
+    }
+
+    public function newMenu()
+    {
+        $client = $this->request->getJSON(true);
+
+        $model  = new MenuModel();
+        $result = $model->insert($client);
+
+        if (is_numeric($result)) {
+            $res['code'] = EXIT_SUCCESS;
+            $res['msg']  = '已添加';
+            $res['data'] = ['id' => $result];
+        } else {
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '添加失败，稍后再试';
+        }
+
+        return $this->respond($res);
+    }
+
+    public function updateMenu()
+    {
+        $client = $this->request->getJSON(true);
+
+        $model  = new MenuModel();
+        $result = $model->save($client);
+
+        if ($result) {
+            $res['code'] = EXIT_SUCCESS;
+            $res['msg']  = '已修改';
+        } else {
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '修改失败，稍后再试';
+        }
+
+        return $this->respond($res);
+    }
+
+    public function delMenu()
+    {
+        $client = $this->request->getJSON(true);
+
+        $model  = new MenuModel();
+        $result = $model->delete($client['id']);
+
+        if ($result === true) {
+            $res['code'] = EXIT_SUCCESS;
+            $res['msg']  = '已删除';
+        } else {
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '删除失败，稍后再试';
+        }
 
         return $this->respond($res);
     }

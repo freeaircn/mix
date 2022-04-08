@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-08 12:39:16
+ * @LastEditTime: 2022-04-08 20:54:07
  */
 
 namespace App\Models\Admin;
@@ -96,19 +96,6 @@ class ApiModel extends Model
     //     $res = my_arr2tree($menus);
 
     //     return $res;
-    // }
-
-    // public function getMenuByColumnName($columnName = [])
-    // {
-    //     $selectSQL = '';
-    //     foreach ($columnName as $name) {
-    //         $selectSQL = $selectSQL . $name . ', ';
-    //     }
-
-    //     $builder = $this->select($selectSQL)->orderBy('id', 'ASC');
-    //     $data    = $builder->findAll();
-
-    //     return $data;
     // }
 
     public function getByIds(array $Ids = null)

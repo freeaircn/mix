@@ -1,12 +1,12 @@
 <template>
   <page-header-wrapper :title="false">
-    <a-card :bordered="false" title="前端菜单" :body-style="{marginBottom: '8px'}">
+    <a-card :bordered="false" title="前端页面路由" :body-style="{marginBottom: '8px'}">
       <div class="table-page-search-wrapper">
         <a-form layout="inline">
           <a-row :gutter="48">
             <a-col :md="8" :sm="24">
-              <a-form-item label="名称">
-                <a-input v-model="query.name" placeholder=""/>
+              <a-form-item label="标题">
+                <a-input v-model="query.title" placeholder=""/>
               </a-form-item>
             </a-col>
             <a-col :md="16" :sm="24">
@@ -47,16 +47,16 @@
         </span>
       </a-table>
 
-      <dept-form :visible.sync="visibleRoleForm" :record="tempRecord" :deptTreeData="tempDeptData" @res="handleSave">
-      </dept-form>
+      <my-form :visible.sync="visibleForm" :record="recordTemp" :treeData="treeDataTemp" @res="handleSave">
+      </my-form>
 
     </a-card>
   </page-header-wrapper>
 </template>
 
 <script>
-import DeptForm from './modules/DeptForm'
-import { getDeptTbl, saveDept, delDept } from '@/api/manage'
+import MyForm from './modules/Form'
+import { getMenu, saveMenu, delMenu } from '@/api/manage'
 import { listToTree, newTimestamp } from '@/utils/util'
 
 const columns = [
@@ -69,16 +69,36 @@ const columns = [
     dataIndex: 'title'
   },
   {
-    title: '组件',
-    dataIndex: 'component'
-  },
-  {
     title: '路由',
     dataIndex: 'path'
   },
   {
     title: '重定向',
     dataIndex: 'redirect'
+  },
+  {
+    title: '名称',
+    dataIndex: 'name'
+  },
+  {
+    title: '组件',
+    dataIndex: 'component'
+  },
+  {
+    title: '侧边栏隐藏',
+    dataIndex: 'hidden'
+  },
+  {
+    title: '强制菜单显示',
+    dataIndex: 'hideChildrenInMenu'
+  },
+  {
+    title: '侧边栏隐藏meta',
+    dataIndex: 'meta_hidden'
+  },
+  {
+    title: '隐藏面包屑',
+    dataIndex: 'hiddenHeaderContent'
   },
   {
     title: '更新时间',
@@ -92,35 +112,24 @@ const columns = [
   }
 ]
 
-const statusMap = {
-  0: {
-    status: 'disable',
-    text: '已禁用'
-  },
-  1: {
-    status: 'active',
-    text: '已启用'
-  }
-}
-
 export default {
-  name: 'DeptList',
+  name: 'MenuList',
   components: {
-    DeptForm
+    MyForm
   },
   data () {
     this.columns = columns
     return {
-      // 部门数据
-      deptData: [],
-      // 部门的树结构数据
+      // 数据
+      respData: [],
+      // 树结构数据
       tableData: [],
       // 查询参数
       query: {},
       loading: false,
-      visibleRoleForm: false,
-      tempRecord: {},
-      tempDeptData: [],
+      visibleForm: false,
+      recordTemp: {},
+      treeDataTemp: [],
       //
       visiblePermissionTree: false,
       tempRole: {},
@@ -128,24 +137,11 @@ export default {
       checkedKeys: []
     }
   },
-  filters: {
-    statusFilter (type) {
-      return statusMap[type].text
-    }
-  },
   created () {
-    // const { pageNo } = this.$route.params
-    // const localPageNum = this.pageURI && (pageNo && parseInt(pageNo)) || this.pageNum
-    // this.localPagination = ['auto', true].includes(this.showPagination) && Object.assign({}, this.localPagination, {
-    //   current: localPageNum,
-    //   pageSize: this.pageSize,
-    //   showSizeChanger: this.showSizeChanger
-    // }) || false
-    // this.needTotalList = this.initTotalList(this.columns)
     this.handleQuery()
   },
   watch: {
-    deptData: {
+    respData: {
       handler: function (val) {
         listToTree(val, this.tableData)
       },
@@ -155,58 +151,58 @@ export default {
   methods: {
 
     handleQuery () {
-      const requestParameters = Object.assign({}, this.query)
-      getDeptTbl(requestParameters)
+      const param = Object.assign({}, this.query)
+      getMenu(param)
         .then(res => {
-          this.deptData = res.data
+          this.respData = res.data
         })
         //  网络异常，清空页面数据显示，防止错误的操作
        .catch((err) => {
          if (err.response) {
-           this.deptData.splice(0, this.deptData.length)
+           this.respData.splice(0, this.respData.length)
          }
        })
     },
 
     handleAdd () {
-      this.tempDeptData = this.tableData.slice(0)
+      this.treeDataTemp = this.tableData.slice(0)
       //
-      this.tempRecord = Object.assign({}, { status: '1' })
-      this.visibleRoleForm = true
+      this.recordTemp = {}
+      this.visibleForm = true
     },
     handleEdit (record) {
-      this.tempDeptData = this.tableData.slice(0)
+      this.treeDataTemp = this.tableData.slice(0)
       //
-      this.tempRecord = Object.assign({}, record)
-      this.visibleRoleForm = true
+      this.recordTemp = Object.assign({}, record)
+      this.visibleForm = true
     },
 
     handleSave (record) {
       console.log('handleSave', record)
-      saveDept(record)
+      saveMenu(record)
        .then((res) => {
           // 新建结果同步至table
           if (res && res.id) {
             var now = newTimestamp()
             const temp = Object.assign({ id: res.id, updated_at: now }, record)
-            this.deptData.unshift(temp)
+            this.respData.unshift(temp)
           }
           // 修改结果同步至table
           if (record && record.id) {
-            const temp = this.deptData.slice(0)
+            const temp = this.respData.slice(0)
             temp.forEach((element) => {
               if (element.id === record.id) {
                 Object.assign(element, record)
                 element.updated_at = newTimestamp()
               }
             })
-            this.deptData = temp.slice(0)
+            this.respData = temp.slice(0)
           }
        })
       //  网络异常，清空页面数据显示，防止错误的操作
        .catch((err) => {
          if (err.response) {
-           this.deptData.splice(0, this.deptData.length)
+           this.respData.splice(0, this.respData.length)
          }
        })
     },
@@ -214,13 +210,13 @@ export default {
     handleDel (record) {
       this.$confirm({
         title: '确定删除吗?',
-        content: '删除 ' + record.name,
+        content: '删除 ' + record.title,
         onOk: () => {
-          delDept(record.id)
+          delMenu(record.id)
             .then(() => {
               // 结果同步至table
               if (record.id) {
-                this.deptData.forEach(function (element, index, array) {
+                this.respData.forEach(function (element, index, array) {
                   if (element.id === record.id) {
                     array.splice(index, 1)
                   }
@@ -230,7 +226,7 @@ export default {
             //  网络异常，清空页面数据显示，防止错误的操作
             .catch((err) => {
               if (err.response) {
-                this.deptData.splice(0, this.deptData.length)
+                this.respData.splice(0, this.respData.length)
               }
             })
         }

@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-04 19:59:52
+ * @LastEditTime: 2022-04-08 22:00:03
  */
 import request from '@/utils/request'
 
@@ -119,6 +119,22 @@ export function getMenu () {
   return request({
     url: api.menu,
     method: 'get'
+  })
+}
+
+export function saveMenu (data) {
+  return request({
+    url: api.menu,
+    method: data.id && data.id > 0 ? 'put' : 'post',
+    data: data
+  })
+}
+
+export function delMenu (id) {
+  return request({
+    url: api.menu,
+    method: 'delete',
+    data: { id }
   })
 }
 

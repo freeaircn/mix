@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-08 12:34:41
+ * @LastEditTime: 2022-04-08 21:51:21
  */
 
 namespace App\Models\Admin;
@@ -15,8 +15,9 @@ class MenuModel extends Model
 {
     protected $DBGroup = 'mix';
 
-    protected $table      = 'app_menu';
-    protected $primaryKey = 'id';
+    protected $table         = 'app_menu';
+    protected $primaryKey    = 'id';
+    protected $allowedFields = ['pid', 'title', 'path', 'redirect', 'name', 'component', 'hidden', 'hideChildrenInMenu', 'meta_hidden', 'icon', 'keepAlive', 'hiddenHeaderContent', 'permission', 'target'];
 
     protected $useAutoIncrement = true;
 
@@ -98,7 +99,7 @@ class MenuModel extends Model
         return $res;
     }
 
-    public function getMenuByColumnName($columnName = [])
+    public function getMenus($columnName = [])
     {
         $selectSQL = '';
         foreach ($columnName as $name) {

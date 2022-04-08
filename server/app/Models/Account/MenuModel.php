@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-03-31 23:06:50
+ * @LastEditTime: 2022-04-08 20:54:02
  */
 
 namespace App\Models\Account;
@@ -97,19 +97,6 @@ class MenuModel extends Model
 
         return $res;
     }
-
-    // public function getMenuByColumnName($columnName = [])
-    // {
-    //     $selectSQL = '';
-    //     foreach ($columnName as $name) {
-    //         $selectSQL = $selectSQL . $name . ', ';
-    //     }
-
-    //     $builder = $this->select($selectSQL)->orderBy('id', 'ASC');
-    //     $data    = $builder->findAll();
-
-    //     return $data;
-    // }
 
     // public function getApiAclByMenuId(array $menuId = null)
     // {
