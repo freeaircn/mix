@@ -4,10 +4,10 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-08 13:49:42
+ * @LastEditTime: 2022-04-08 16:25:04
  */
 
-namespace App\Models\Admin;
+namespace App\Models\Dts;
 
 use CodeIgniter\Model;
 
@@ -29,7 +29,7 @@ class DeptModel extends Model
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
 
-    public function getDept($columnName = [], $queryParam = [])
+    public function getDept(array $columnName = [], array $queryParam = [])
     {
         $selectSQL = '';
         if (empty($columnName)) {

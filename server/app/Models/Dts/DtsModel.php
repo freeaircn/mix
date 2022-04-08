@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-02 11:26:16
+ * @LastEditTime: 2022-04-08 16:00:41
  */
 
 namespace App\Models\Dts;
@@ -99,7 +99,7 @@ class DtsModel extends Model
             $selectSql = $selectSql . $key . ', ';
         }
         $builder = $this->select($selectSql);
-        $builder->where('station_id', $query['station_id']);
+        $builder->whereIn('station_id', $query['station_id']);
         $builder->where('status', $query['status']);
 
         $total = 0;

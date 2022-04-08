@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-02 11:02:08
+ * @LastEditTime: 2022-04-07 22:26:57
  */
 import request from '@/utils/request'
 
@@ -12,8 +12,8 @@ const api = {
   dts_draft: '/dts/draft',
   dts_list: '/dts/list',
   //
-  dts_ticket_details: '/dts/ticket/details',
-  dts_ticket_progress: '/dts/ticket/progress',
+  dts_details: '/dts/details',
+  dts_progress: '/dts/progress',
   dts_ticket_handler: '/dts/ticket/handler',
   dts_ticket_toReview: '/dts/ticket/toReview'
 }
@@ -43,17 +43,17 @@ export function getBlankForm (params) {
   })
 }
 
-export function getDtsTicketDetails (params) {
+export function getDetails (params) {
   return request({
-    url: api.dts_ticket_details,
+    url: api.dts_details,
     method: 'get',
     params: params
   })
 }
 
-export function putDtsTicketProgress (data) {
+export function putProgress (data) {
   return request({
-    url: api.dts_ticket_progress,
+    url: api.dts_progress,
     method: 'put',
     data: data
   })

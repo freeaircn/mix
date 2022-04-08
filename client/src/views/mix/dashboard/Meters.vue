@@ -1,7 +1,7 @@
 <template>
   <page-header-wrapper :title="false">
 
-    <a-card :title="userInfo.belongToDeptName" :bordered="false" :bodyStyle="{marginBottom: '8px'}">
+    <a-card :title="userInfo.displayedDept" :bordered="false" :bodyStyle="{marginBottom: '8px'}">
       <a-button style="margin-right: 16px" @click="onClickPlanAndDealDiag">计划&成交</a-button>
       <a-button type="primary" @click="onClickNewRecord">录入电度</a-button>
     </a-card>

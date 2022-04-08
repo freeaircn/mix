@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-04 19:56:34
+ * @LastEditTime: 2022-04-08 13:05:28
  */
 
 namespace App\Models\Admin;
@@ -60,25 +60,4 @@ class RoleWorkflowAuthorityModel extends Model
 
         return ($cnt == $num) ? true : false;
     }
-
-    // public function getMenuIdForAuthority(array $roleId = null)
-    // {
-    //     if (!is_array($roleId) || empty($roleId)) {
-    //         return [];
-    //     }
-
-    //     $temp = $this->select('menu_id')
-    //         ->whereIn('role_id', $roleId)
-    //         ->orderBy('menu_id', 'ASC')
-    //         ->findAll();
-
-    //     $res = [];
-    //     foreach ($temp as $value) {
-    //         $res[] = $value['menu_id'];
-    //     }
-
-    //     // 多个角色，允许有相同的menu id，去除重复
-    //     return array_unique($res);
-    // }
-
 }

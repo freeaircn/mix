@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-02 13:44:24
+ * @LastEditTime: 2022-04-08 17:04:46
  */
 
 namespace App\Controllers;
@@ -12,6 +12,7 @@ namespace App\Controllers;
 use App\Libraries\MyIdMaker;
 use App\Libraries\Workflow\Dts\WfDts;
 use App\Libraries\Workflow\Ticket;
+use App\Models\Dts\DeptModel;
 use App\Models\Dts\DeviceModel;
 use App\Models\Dts\DtsModel;
 use App\Models\Dts\RoleWorkflowAuthorityModel;
@@ -54,18 +55,19 @@ class Dts extends BaseController
 
     public function getBlankForm()
     {
-        $params = $this->request->getGet();
+        // $params = $this->request->getGet();
 
         // 检查请求数据
-        if (!$this->validate('DtsGetBlankForm')) {
-            $res['error'] = $this->validator->getErrors();
+        // if (!$this->validate('DtsGetBlankForm')) {
+        //     $res['error'] = $this->validator->getErrors();
 
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '请求数据无效';
-            return $this->respond($res);
-        }
+        //     $res['code'] = EXIT_ERROR;
+        //     $res['msg']  = '请求数据无效';
+        //     return $this->respond($res);
+        // }
 
-        $station_id  = $params['station_id'];
+        // $station_id  = $params['station_id'];
+        $station_id  = session('ownDirectDataDeptId');
         $description = $this->blankTpl;
         $deviceList  = $this->_getDeviceList($station_id);
 
@@ -100,14 +102,15 @@ class Dts extends BaseController
 
         $client = $this->request->getJSON(true);
         //
-        $uid   = session('id');
-        $draft = [
-            'station_id'  => $client['station_id'],
+        $uid        = session('id');
+        $station_id = session('ownDirectDataDeptId');
+        $draft      = [
+            'station_id'  => $station_id,
             'type'        => $client['type'],
             'title'       => $client['title'],
             'level'       => $client['level'],
             'device'      => $client['device'],
-            'description' => $this->_getContentTplHead() . $client['description'],
+            'description' => $client['description'],
             'creator_id'  => $uid,
         ];
 
@@ -153,11 +156,11 @@ class Dts extends BaseController
             return $this->respond($res);
         }
 
-        $query['station_id'] = $param['station_id'];
+        $query['station_id'] = session('allowDeptId');
         $query['status']     = 'publish';
         $query['limit']      = $param['limit'];
         $query['offset']     = $param['offset'];
-        $columnName          = ['id', 'dts_id', 'type', 'title', 'level', 'place_at', 'created_at', 'updated_at', 'creator_id'];
+        $columnName          = ['id', 'dts_id', 'station_id', 'type', 'title', 'level', 'place_at', 'created_at', 'updated_at', 'creator_id'];
 
         $model = new DtsModel();
         $db    = $model->getByLimitOffset($columnName, $query);
@@ -169,7 +172,8 @@ class Dts extends BaseController
         }
 
         // id => name
-        $data = $this->_getUserNameAndWorkflowName($db['data'], $query['station_id']);
+        $data = $this->_getUserNameAndWorkflowName($db['data']);
+        $data = $this->_getDeptName($data);
 
         $res['code'] = EXIT_SUCCESS;
         $res['data'] = ['total' => $db['total'], 'data' => $data];
@@ -190,7 +194,7 @@ class Dts extends BaseController
         $params = $this->request->getGet();
         $dts_id = $params['dts_id'];
 
-        $columnName = ['dts_id', 'type', 'title', 'level', 'place_at', 'device', 'description', 'progress', 'created_at', 'updated_at', 'creator_id', 'reviewer_id'];
+        $columnName = ['dts_id', 'type', 'title', 'level', 'station_id', 'place_at', 'device', 'description', 'progress', 'created_at', 'updated_at', 'creator_id', 'reviewer_id'];
         $query      = ['dts_id' => $dts_id];
 
         $model = new DtsModel();
@@ -201,8 +205,7 @@ class Dts extends BaseController
             return $this->respond($res);
         }
 
-        $details = $db;
-        // $progress = $this->getProgressTemplate('update');
+        $details        = $db;
         $newProgressTpl = $this->updateTpl;
 
         // id => name
@@ -217,7 +220,8 @@ class Dts extends BaseController
         $details['creator']  = $users['creator'];
         $details['reviewer'] = $users['reviewer'];
 
-        $details['device'] = $this->_getDeviceFullName($db['device']);
+        $details['device']  = $this->_getDeviceFullName($db['device']);
+        $details['station'] = $this->_getDeptName2($db['station_id']);
 
         $steps = $this->_getStepsBar($details['creator'], $details['reviewer'], $db['created_at'], $db['updated_at'], $db['place_at']);
 
@@ -273,10 +277,10 @@ class Dts extends BaseController
         return $this->respond($res);
     }
 
-    public function putTicketProgress()
+    public function updateProgress()
     {
         // 检查请求数据
-        if (!$this->validate('DtsProgressPut')) {
+        if (!$this->validate('DtsUpdateProgress')) {
             $res['error'] = $this->validator->getErrors();
 
             $res['code'] = EXIT_ERROR;
@@ -285,13 +289,31 @@ class Dts extends BaseController
         }
 
         $client = $this->request->getJSON(true);
-        $where  = [
-            'ticket_id' => $client['ticket_id'],
-        ];
+        $dts_id = $client['dts_id'];
+
+        $model      = new DtsModel();
+        $columnName = ['id', 'dts_id', 'station_id'];
+        $query      = ['dts_id' => $dts_id];
+        $db         = $model->getByDtsId($columnName, $query);
+        if (empty($db)) {
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '请求无效';
+            return $this->respond($res);
+        }
+
+        $stationId = $this->session->get('dept_id');
+        if ($stationId !== $db['station_id']) {
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '没有权限修改';
+            $res['x1']   = $stationId;
+            $res['x2']   = $db['station_id'];
+            return $this->respond($res);
+        }
+
         $progress = $this->_getContentTplHead() . $client['progress'];
 
-        $model  = new TicketModel();
-        $result = $model->updateProgress($progress, $where);
+        // $result = $model->updateProgress($progress, $where);
+        $result = true;
         if ($result !== false) {
             $res['code'] = EXIT_SUCCESS;
             $res['msg']  = '更新进展成功';
@@ -460,7 +482,7 @@ class Dts extends BaseController
         return date('Y-m-d H:i', time()) . ' ' . session('username') . "\n";
     }
 
-    protected function _getUserNameAndWorkflowName(array $array, string $station_id)
+    protected function _getUserNameAndWorkflowName(array $array = null)
     {
         if (empty($array)) {
             return [];
@@ -468,9 +490,7 @@ class Dts extends BaseController
 
         $model      = new UserModel();
         $columnName = ['id', 'username', 'status'];
-        $station    = '+' . $station_id . '+';
-        $users      = $model->getUserByStation($columnName, $station);
-        $cnt        = count($users);
+        $users      = $model->getUsers($columnName);
 
         $wf = new WfDts();
 
@@ -490,6 +510,48 @@ class Dts extends BaseController
 
         }
         return $array;
+    }
+
+    protected function _getDeptName(array $array = null)
+    {
+        if (empty($array)) {
+            return [];
+        }
+
+        $model      = new DeptModel();
+        $columnName = ['id', 'name', 'status'];
+        $dept       = $model->getDept($columnName);
+
+        $cnt = count($array);
+        for ($i = 0; $i < $cnt; $i++) {
+            $array[$i]['station'] = '';
+            foreach ($dept as $d) {
+                if ($d['id'] === $array[$i]['station_id']) {
+                    $array[$i]['station'] = $d['name'];
+                }
+            }
+        }
+        return $array;
+    }
+
+    protected function _getDeptName2(string $id = null)
+    {
+        if (empty($id)) {
+            return '';
+        }
+
+        $model      = new DeptModel();
+        $columnName = ['id', 'name', 'status'];
+        $dept       = $model->getDept($columnName);
+
+        $name = '';
+        foreach ($dept as $d) {
+            if ($d['id'] === $id) {
+                $name = $d['name'];
+            }
+        }
+
+        return $name;
     }
 
     protected function _getUserName(array $array = null)

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-03-31 23:06:54
+ * @LastEditTime: 2022-04-08 12:34:41
  */
 
 namespace App\Models\Admin;
@@ -140,7 +140,6 @@ class MenuModel extends Model
         }
 
         $temp = $this->select('id')
-            ->where('type', '1')
             ->whereIn('id', $menuId)
             ->orderBy('id', 'ASC')
             ->findAll();

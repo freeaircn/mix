@@ -1,7 +1,7 @@
 <template>
   <page-header-wrapper :title="false">
 
-    <a-card :title="userInfo.belongToDeptName" :bordered="false" :bodyStyle="{marginBottom: '8px'}">
+    <a-card :title="userInfo.displayedDept" :bordered="false" :bodyStyle="{marginBottom: '8px'}">
       <span>
         录入事件：
         <a-button type="primary" @click="onClickNewRecord('1')" style="margin-right: 16px">1G</a-button>
@@ -242,7 +242,7 @@ export default {
             const blob = new Blob([data], { type: headers['content-type'] })
             const dom = document.createElement('a')
             const url = window.URL.createObjectURL(blob)
-            const filename = this.userInfo.belongToDeptName + '_开停机记录_' + moment().format('YYYY-MM-DD') + '.xlsx'
+            const filename = this.userInfo.displayedDept + '_开停机记录_' + moment().format('YYYY-MM-DD') + '.xlsx'
             dom.href = url
             dom.download = decodeURI(filename)
             dom.style.display = 'none'

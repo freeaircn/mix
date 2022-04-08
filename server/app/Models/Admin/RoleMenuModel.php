@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-26 20:04:52
+ * @LastEditTime: 2022-04-08 13:05:39
  */
 
 namespace App\Models\Admin;
@@ -43,14 +43,14 @@ class RoleMenuModel extends Model
         return $res;
     }
 
-    public function getMenuIdForAuthority(array $roleId = null)
+    public function getByRoleIdsForAuth(array $roleIds = null)
     {
-        if (!is_array($roleId) || empty($roleId)) {
+        if (!is_array($roleIds) || empty($roleIds)) {
             return [];
         }
 
         $temp = $this->select('menu_id')
-            ->whereIn('role_id', $roleId)
+            ->whereIn('role_id', $roleIds)
             ->orderBy('menu_id', 'ASC')
             ->findAll();
 

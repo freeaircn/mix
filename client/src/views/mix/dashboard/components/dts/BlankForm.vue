@@ -3,11 +3,11 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-01 19:10:26
+ * @LastEditTime: 2022-04-08 15:37:33
 -->
 <template>
   <page-header-wrapper :title="false">
-    <a-card :title="userInfo.belongToDeptName" :bordered="false" :headStyle="{marginBottom: '8px'}">
+    <a-card :title="userInfo.displayedDept" :bordered="false" :headStyle="{marginBottom: '8px'}">
     </a-card>
 
     <a-card title="新问题单" :bordered="false" :body-style="{marginBottom: '8px'}" >
@@ -68,7 +68,7 @@
         <a-form-model-item :wrapperCol="{ span: 24 }" style="text-align: center">
           <a-button type="primary" @click="onSubmit" :disabled="!ready" >提交</a-button>
           <!-- <router-link slot="extra" to="/dashboard/dts"><a-button>取消</a-button></router-link> -->
-          <a-button style="margin-left: 16px">取消</a-button>
+          <a-button style="margin-left: 16px" @click="onCancel">取消</a-button>
         </a-form-model-item>
       </a-form-model>
     </a-card>
@@ -100,7 +100,12 @@ export default {
       },
       uploadAttachmentParam: { uid: '666' },
       attachmentList: [],
-      rules: {}
+      rules: {
+        type: [{ required: true, message: '请选择', trigger: ['change'] }],
+        title: [{ required: true, message: '请输入', trigger: ['change'] }],
+        level: [{ required: true, message: '请选择', trigger: ['change'] }]
+        // device: [{ required: true, message: '请选择', trigger: ['change'] }]
+      }
     }
   },
   created: function () {
@@ -114,16 +119,13 @@ export default {
   },
   methods: {
     loadBlankForm () {
-      const query = {
-        station_id: this.userInfo.belongToDeptId
-      }
-      getBlankForm(query)
+      getBlankForm()
         .then((data) => {
             this.ready = true
             //
             this.record.description = data.description
             //
-            listToTree(data.deviceList, this.deviceOptions, this.userInfo.belongToDeptId)
+            listToTree(data.deviceList, this.deviceOptions, this.userInfo.ownDirectDataDeptId)
           })
           //  网络异常，清空页面数据显示，防止错误的操作
           .catch((err) => {
@@ -167,7 +169,6 @@ export default {
           //
           const data = { ...this.record }
           data.device = temp
-          data.station_id = this.userInfo.belongToDeptId
 
           postDraft(data)
             .then(() => {
@@ -182,6 +183,10 @@ export default {
           return false
         }
       })
+    },
+
+    onCancel () {
+      this.$router.push({ path: `/dashboard/dts/list` })
     }
   }
 }

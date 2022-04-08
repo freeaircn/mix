@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-26 20:05:16
+ * @LastEditTime: 2022-04-08 12:50:14
  */
 
 namespace App\Models\Admin;
@@ -32,7 +32,7 @@ class UserRoleModel extends Model
     public function getUserRole($uid = null)
     {
         if (!is_numeric($uid)) {
-            return false;
+            return [];
         }
 
         $temp = $this->select('role_id')

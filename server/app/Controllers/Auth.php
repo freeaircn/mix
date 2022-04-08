@@ -4,23 +4,24 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-01 09:55:02
+ * @LastEditTime: 2022-04-08 17:11:53
  */
 
 namespace App\Controllers;
 
+use App\Models\Admin\ApiModel;
 use App\Models\Admin\AvatarModel;
 use App\Models\Admin\DeptModel;
 use App\Models\Admin\JobModel;
 use App\Models\Admin\MenuModel;
 use App\Models\Admin\PoliticModel;
+use App\Models\Admin\RoleApiModel;
+use App\Models\Admin\RoleDeptModel;
 use App\Models\Admin\RoleMenuModel;
 use App\Models\Admin\TitleModel;
 use App\Models\Admin\UserModel;
 use App\Models\Admin\UserRoleModel;
 use App\Models\Auth\AuthModel;
-use App\Models\Auth\RoleWorkflowAuthorityModel;
-use App\Models\Auth\WorkflowAuthorityModel;
 use App\Models\SmsCodeModel;
 use CodeIgniter\API\ResponseTrait;
 
@@ -60,7 +61,7 @@ class Auth extends BaseController
         }
 
         // 查询用户phone是否存在
-        $query = $this->getUserByQuery(['phone' => $phone]);
+        $query = $this->_getUserByQuery(['phone' => $phone]);
         if ($query['total'] == 0) {
             $authModel->increaseLoginAttempts($phone, $ip_address);
             log_message('error', '{file}:{line} --> phone not existed ' . $phone . ' => ' . $ip_address);
@@ -98,27 +99,43 @@ class Auth extends BaseController
         // 更新用户登陆成功时间
         $userModel->updateLastLoginAndIP($user['id'], $ip_address);
 
-        // 查询用户拥有的访问权限
-        $userRoleModel = new UserRoleModel();
-        $roleId        = $userRoleModel->getUserRole($user['id']);
+        // 查询用户权限
+        $allowPageId   = [];
+        $allowApi      = [];
+        $allowDeptId   = [];
+        $allowWorkFlow = [];
+        //
+        $model   = new UserRoleModel();
+        $roleIds = $model->getUserRole($user['id']);
+        if (!empty($roleIds)) {
+            $model   = new RoleMenuModel();
+            $menuIds = $model->getByRoleIdsForAuth($roleIds);
+            if (!empty($menuIds)) {
+                $model       = new MenuModel();
+                $allowPageId = $model->getPageIdByMenuId($menuIds);
+            }
+            //
+            $model  = new RoleApiModel();
+            $apiIds = $model->getByRoleIdsForAuth($roleIds);
+            if (!empty($apiIds)) {
+                $model    = new ApiModel();
+                $allowApi = $model->getByIds($apiIds);
+            }
+            //
+            $model       = new RoleDeptModel();
+            $allowDeptId = $model->getByRoleIdsForAuth($roleIds);
+            //
+            // $model         = new RoleWorkflowAuthorityModel();
+            // $wfAuthorityId = $model->getByRoles($roleIds);
+            // if (!empty($wfAuthorityId)) {
+            //     $model         = new WorkflowAuthorityModel();
+            //     $columnName    = ['alias'];
+            //     $query         = $wfAuthorityId;
+            //     $allowWorkFlow = $model->getAliasByWhereInId($columnName, $query);
+            // }
+        }
 
-        $roleMenuModel = new RoleMenuModel();
-        $menuId        = $roleMenuModel->getMenuIdForAuthority($roleId);
-
-        $menuModel  = new MenuModel();
-        $userACL    = $menuModel->getApiAclByMenuId($menuId);
-        $userPageId = $menuModel->getPageIdByMenuId($menuId);
-
-        // 查询用户拥有的流程权限
-        $model         = new RoleWorkflowAuthorityModel();
-        $wfAuthorityId = $model->getByRoles($roleId);
-
-        $model       = new WorkflowAuthorityModel();
-        $columnName  = ['alias'];
-        $query       = $wfAuthorityId;
-        $wfAuthority = $model->getAliasByWhereInId($columnName, $query);
-
-        // 取用户头像文件
+        // 用户头像文件
         if (isset($user['avatar']) && is_numeric($user['avatar'])) {
             $avatarModel = new AvatarModel();
             $avatar      = $avatarModel->getAvatarPathAndNameById($user['avatar']);
@@ -127,28 +144,45 @@ class Auth extends BaseController
             }
         }
 
-        // 获取用户所属部门
-        $deptIds          = explode("+", trim($user['dept_ids'], '+'));
-        $belongToDeptId   = '0';
-        $belongToDeptName = '';
-
-        $deptModel = new DeptModel();
-        $belongTo  = $deptModel->getDept(['id', 'name', 'dataMask'], ['ids' => $deptIds]);
-        foreach ($belongTo as $value) {
-            if ($value['dataMask'] != 0) {
-                $belongToDeptId   = $value['id'];
-                $belongToDeptName = $value['name'];
+        // 用户上级部门，用户拥有数据CRUD的部门
+        $deptIds             = [];
+        $ownDirectDataDeptId = '0';
+        $displayedDept       = '';
+        if (!empty($user['dept_ids'])) {
+            $deptIds = explode("+", trim($user['dept_ids'], '+'));
+            $model   = new DeptModel();
+            $db      = $model->getByIds(['id', 'name', 'dataMask'], $deptIds);
+            $cnt     = count($db);
+            if ($cnt > 0) {
+                $level = config('MyGlobalConfig')->userDeptLevel;
+                if ($cnt < $level) {
+                    $item          = end($db);
+                    $displayedDept = $item['name'];
+                    if ($item['dataMask'] == 1) {
+                        $ownDirectDataDeptId = $item['id'];
+                    }
+                } else {
+                    $item          = $db[$level - 1];
+                    $displayedDept = $item['name'];
+                    if ($item['dataMask'] == 1) {
+                        $ownDirectDataDeptId = $item['id'];
+                    }
+                }
             }
+
         }
 
-        // 写入session数据
-        $user['dept_ids']                = explode("+", trim($user['dept_ids'], '+'));
-        $sessionData                     = $user;
-        $sessionData['acl']              = $userACL;
-        $sessionData['pageId']           = $userPageId;
-        $sessionData['wfAuthority']      = $wfAuthority;
-        $sessionData['belongToDeptId']   = $belongToDeptId;
-        $sessionData['belongToDeptName'] = $belongToDeptName;
+        // session
+        $user['dept_ids']                   = $deptIds;
+        $sessionData                        = $user;
+        $sessionData['allowApi']            = $allowApi;
+        $sessionData['allowPageId']         = $allowPageId;
+        $sessionData['allowDeptId']         = $allowDeptId;
+        $sessionData['displayedDept']       = $displayedDept;
+        $sessionData['ownDirectDataDeptId'] = $ownDirectDataDeptId;
+        // belongToDeptId
+        //
+        $sessionData['wfAuthority'] = $allowWorkFlow;
         $this->session->set($sessionData);
 
         // 日志
@@ -156,6 +190,7 @@ class Auth extends BaseController
 
         $res['code'] = EXIT_SUCCESS;
         $res['data'] = ['token' => md5(time())];
+        $res['es']   = $user;
 
         return $this->respond($res);
     }
@@ -282,38 +317,8 @@ class Auth extends BaseController
         return $this->respond($res);
     }
 
-    // public function getUserInfo()
-    // {
-    //     // 取session保存的用户数据
-    //     $sessionData = $this->session->get();
-
-    //     // 取用户有权访问的前端页面路由
-    //     if (isset($sessionData['pageId']) && !empty($sessionData['pageId'])) {
-    //         $pageId = $sessionData['pageId'];
-
-    //         $model  = new MenuModel();
-    //         $result = $model->getMenu(['pageId' => $pageId]);
-
-    //         // 去掉acl和pageId
-    //         if (isset($sessionData['acl'])) {
-    //             $sessionData['acl'] = '';
-    //         }
-    //         $sessionData['pageId'] = '';
-    //         array_shift($sessionData);
-    //         array_pop($sessionData);
-
-    //         $res['code'] = EXIT_SUCCESS;
-    //         $res['data'] = ['menus' => $result, 'info' => $sessionData];
-    //     } else {
-    //         $res['code'] = EXIT_ERROR;
-    //         $res['msg']  = '用户没有授权！';
-    //     }
-
-    //     return $this->respond($res);
-    // }
-
     // 内部方法
-    protected function getUserByQuery($queryParam = [])
+    protected function _getUserByQuery($queryParam = [])
     {
         $deptModel = new DeptModel();
         $dept      = $deptModel->getDept(['id', 'name']);

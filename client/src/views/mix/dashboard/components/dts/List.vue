@@ -1,7 +1,7 @@
 <template>
   <page-header-wrapper :title="false">
 
-    <a-card :title="userInfo.belongToDeptName" :bordered="false" :headStyle="{marginBottom: '8px'}">
+    <a-card :title="userInfo.displayedDept" :bordered="false" :headStyle="{marginBottom: '8px'}">
     </a-card>
 
     <a-card :bordered="false" title="问题单" :body-style="{marginBottom: '8px'}">
@@ -77,6 +77,11 @@
         :pagination="pagination"
         :loading="loading"
       >
+        <span slot="dts_id" slot-scope="text, record">
+          <template>
+            <a @click="onQueryDetails(record)">{{ text }}</a>
+          </template>
+        </span>
         <span slot="type" slot-scope="text">
           {{ text | typeFilter }}
         </span>
@@ -131,7 +136,12 @@ export default {
       columns: [
         {
           title: '单号',
-          dataIndex: 'dts_id'
+          dataIndex: 'dts_id',
+          scopedSlots: { customRender: 'dts_id' }
+        },
+        {
+          title: '站点',
+          dataIndex: 'station'
         },
         {
           title: '标题',
@@ -207,7 +217,6 @@ export default {
     // 查询
     onQuery () {
       const query = {
-        station_id: this.userInfo.belongToDeptId,
         limit: this.pagination.pageSize,
         offset: 1
       }

@@ -1,7 +1,7 @@
 <template>
   <page-header-wrapper :title="false">
 
-    <a-card :title="userInfo.belongToDeptName" :bordered="false" :headStyle="{marginBottom: '8px'}">
+    <a-card :title="userInfo.displayedDept" :bordered="false" :headStyle="{marginBottom: '8px'}">
     </a-card>
 
     <a-card :bordered="false" title="进度" :loading="loading" :body-style="{marginBottom: '8px', marginRight: '100px'}">
@@ -27,6 +27,9 @@
       </a-descriptions>
       <a-descriptions title="" :column="{ xxl: 4, xl: 3, lg: 3, md: 3, sm: 2, xs: 1 }">
         <a-descriptions-item label="标题">{{ details.title }}</a-descriptions-item>
+      </a-descriptions>
+      <a-descriptions title="" :column="{ xxl: 4, xl: 3, lg: 3, md: 3, sm: 2, xs: 1 }">
+        <a-descriptions-item label="站点">{{ details.station }}</a-descriptions-item>
       </a-descriptions>
       <a-descriptions title="" :column="{ xxl: 4, xl: 3, lg: 3, md: 3, sm: 2, xs: 1 }">
         <a-descriptions-item label="设备">{{ details.device }}</a-descriptions-item>
@@ -113,7 +116,7 @@
 <script>
 import { mapGetters } from 'vuex'
 import { baseMixin } from '@/store/app-mixin'
-import { getDtsTicketDetails, putDtsTicketProgress, putDtsTicketHandler, postDtsTicketToReview } from '@/api/mix/dts'
+import { getDetails, putProgress, putDtsTicketHandler, postDtsTicketToReview } from '@/api/mix/dts'
 
 export default {
   name: 'DtsTicketDetails',
@@ -142,6 +145,7 @@ export default {
       newProgressTpl: '',
       //
       operation: {},
+      activeKey: ['1'],
       //
       isCreator: false,
       isCheck: false,
@@ -181,7 +185,7 @@ export default {
         dts_id: this.dts_id
       }
       this.loading = true
-      getDtsTicketDetails(query)
+      getDetails(query)
         .then(data => {
           this.loading = false
           //
@@ -209,11 +213,10 @@ export default {
         title: '你想要提交新进展吗？',
         onOk: () => {
           const progress = {
-            station_id: this.userInfo.belongToDeptId,
             dts_id: this.dts_id,
             progress: this.operation.newProgress
           }
-          putDtsTicketProgress(progress)
+          putProgress(progress)
             .then(() => {
               this.operation.newProgress = this.newProgressTpl
               // this.details.progress = data
@@ -239,7 +242,7 @@ export default {
       if (this.newHandler !== undefined) {
         this.newHandlerDialogVisible = false
         const handler = {
-          station_id: this.userInfo.belongToDeptId,
+          station_id: this.userInfo.ownDirectDataDeptId,
           dts_id: this.dts_id,
           handler: this.newHandler
         }
@@ -265,7 +268,7 @@ export default {
       if (this.reviewer !== undefined) {
         this.reviewDialogVisible = false
         const reviewer = {
-          station_id: this.userInfo.belongToDeptId,
+          station_id: this.userInfo.ownDirectDataDeptId,
           dts_id: this.dts_id,
           reviewer: this.reviewer
         }
@@ -281,26 +284,6 @@ export default {
           })
       }
     },
-
-    // handleToReview () {
-    //   this.$confirm({
-    //     title: '你想要提交审核吗？',
-    //     onOk: () => {
-    //       const review = {
-    //         station_id: this.userInfo.belongToDeptId,
-    //         dts_id: this.dts_id
-    //       }
-    //       postDtsTicketToReview(review)
-    //         .then(() => {
-    //           this.$router.push({ path: '/dashboard/dts/list' })
-    //         })
-    //         .catch((err) => {
-    //           if (err.response) {
-    //           }
-    //         })
-    //     }
-    //   })
-    // },
 
     //
     handleToCheckAgain () {

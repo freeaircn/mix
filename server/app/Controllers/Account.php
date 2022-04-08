@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-01 09:54:27
+ * @LastEditTime: 2022-04-08 16:09:02
  */
 
 namespace App\Controllers;
@@ -40,10 +40,13 @@ class Account extends BaseController
             if (strpos($key, '_ci_') !== false) {
                 continue;
             }
-            if ($key === 'acl') {
+            if ($key === 'allowApi') {
                 continue;
             }
-            if ($key === 'pageId') {
+            if ($key === 'allowPageId') {
+                continue;
+            }
+            if ($key === 'allowDeptId') {
                 continue;
             }
             if ($key === 'wfAuthority') {
@@ -98,8 +101,8 @@ class Account extends BaseController
         $sessionData = $this->session->get();
 
         // 取用户有权访问的前端页面路由
-        if (isset($sessionData['pageId']) && !empty($sessionData['pageId'])) {
-            $pageId = $sessionData['pageId'];
+        if (isset($sessionData['allowPageId']) && !empty($sessionData['allowPageId'])) {
+            $pageId = $sessionData['allowPageId'];
 
             $model  = new MenuModel();
             $result = $model->getMenu(['pageId' => $pageId]);
