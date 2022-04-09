@@ -56,9 +56,13 @@
         </span>
         <span slot="action2" slot-scope="text, record">
           <template>
-            <a @click="handleAccessAuth(record)">访问</a>
+            <a @click="assignMenu(record)">前端页面</a>
             <a-divider type="vertical" />
-            <a @click="handleWorkflowAuth(record)">流程</a>
+            <a @click="assignApi(record)">API</a>
+            <a-divider type="vertical" />
+            <a @click="assignDeptData(record)">部门数据</a>
+            <a-divider type="vertical" />
+            <a @click="assignWorkflow(record)">流程</a>
           </template>
         </span>
       </a-table>
@@ -132,9 +136,9 @@ const columns = [
     scopedSlots: { customRender: 'action' }
   },
   {
-    title: '定义权限',
+    title: '分配权限',
     dataIndex: 'action2',
-    width: '150px',
+    width: '280px',
     scopedSlots: { customRender: 'action2' }
   }
 ]
@@ -250,13 +254,13 @@ export default {
       })
     },
 
-    handleAccessAuth (role) {
+    assignMenu (role) {
       this.tempRole = Object.assign({}, role)
       this.checkedKeys = []
       Promise.all([getMenu(), getRoleMenu({ role_id: role.id })])
         .then(function (res) {
           this.treeData.splice(0)
-          const menuList = this.filterTreeData(res[0].menu.slice(0))
+          const menuList = this.filterTreeData(res[0].data.slice(0))
           listToTree(menuList, this.treeData)
           //
           res[1].menu.forEach(element => {
@@ -281,7 +285,10 @@ export default {
         })
     },
 
-    handleWorkflowAuth (record) {
+    assignApi (role) {},
+    assignDeptData (role) {},
+
+    assignWorkflow (record) {
       this.visibleWorkflowTree = false
       //
       this.tempRole2 = Object.assign({}, record)

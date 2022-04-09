@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-08 22:00:03
+ * @LastEditTime: 2022-04-09 10:02:15
  */
 import request from '@/utils/request'
 
@@ -11,6 +11,7 @@ const api = {
   user: '/user',
   role: '/role',
   menu: '/menu',
+  api: '/api',
   roleMenu: '/role_menu',
   dept: '/dept',
   job: '/job',
@@ -133,6 +134,30 @@ export function saveMenu (data) {
 export function delMenu (id) {
   return request({
     url: api.menu,
+    method: 'delete',
+    data: { id }
+  })
+}
+
+// API
+export function getApi () {
+  return request({
+    url: api.api,
+    method: 'get'
+  })
+}
+
+export function saveApi (data) {
+  return request({
+    url: api.api,
+    method: data.id && data.id > 0 ? 'put' : 'post',
+    data: data
+  })
+}
+
+export function delApi (id) {
+  return request({
+    url: api.api,
     method: 'delete',
     data: { id }
   })

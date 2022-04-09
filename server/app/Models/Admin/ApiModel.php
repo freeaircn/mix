@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-08 20:54:07
+ * @LastEditTime: 2022-04-09 10:13:28
  */
 
 namespace App\Models\Admin;
@@ -15,8 +15,9 @@ class ApiModel extends Model
 {
     protected $DBGroup = 'mix';
 
-    protected $table      = 'app_api';
-    protected $primaryKey = 'id';
+    protected $table         = 'app_api';
+    protected $primaryKey    = 'id';
+    protected $allowedFields = ['type', 'pid', 'title', 'api', 'method'];
 
     protected $useAutoIncrement = true;
 
@@ -27,76 +28,6 @@ class ApiModel extends Model
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
-
-    // public function getMenu($queryParam = [])
-    // {
-    //     $selectSQL = 'id, pid, name, path, component, redirect, hideChildrenInMenu, title, icon, keepAlive, meta_hidden, hiddenHeaderContent, hidden, permission, target';
-    //     $builder   = $this->select($selectSQL);
-
-    //     if (isset($queryParam['type']) && $queryParam['type'] === '1') {
-    //         $builder->where('type', '1');
-    //     }
-    //     if (isset($queryParam['pageId']) && !empty($queryParam['pageId'])) {
-    //         $builder->whereIn('id', $queryParam['pageId']);
-    //     }
-    //     $builder->orderBy('id', 'ASC');
-    //     $data = $builder->findAll();
-
-    //     $menus = [];
-    //     if (!empty($data)) {
-    //         foreach ($data as $item) {
-    //             $menu = [];
-    //             $meta = [];
-    //             //
-    //             $menu['id']   = $item['id'];
-    //             $menu['pid']  = $item['pid'];
-    //             $menu['name'] = $item['name'];
-    //             $menu['path'] = $item['path'];
-    //             if ($item['component'] !== '') {
-    //                 $menu['component'] = $item['component'];
-    //             }
-    //             if ($item['redirect'] !== '') {
-    //                 $menu['redirect'] = $item['redirect'];
-    //             }
-    //             $menu['hidden']             = $item['hidden'];
-    //             $menu['hideChildrenInMenu'] = $item['hideChildrenInMenu'];
-    //             // if ($item['hidden'] === '1') {
-    //             //     $menu['hidden'] = '1';
-    //             // }
-    //             // if ($item['hideChildrenInMenu'] === '1') {
-    //             //     $menu['hideChildrenInMenu'] = '1';
-    //             // }
-    //             //
-    //             $meta['title'] = $item['title'];
-    //             if ($item['icon'] !== '') {
-    //                 $meta['icon'] = $item['icon'];
-    //             }
-    //             if ($item['keepAlive'] === '1') {
-    //                 $meta['keepAlive'] = '1';
-    //             }
-    //             if ($item['meta_hidden'] === '1') {
-    //                 $meta['hidden'] = '1';
-    //             }
-    //             if ($item['hiddenHeaderContent'] === '1') {
-    //                 $meta['hiddenHeaderContent'] = '1';
-    //             }
-    //             if ($item['permission'] !== '') {
-    //                 $meta['permission'] = [];
-    //             }
-    //             if ($item['target'] !== '') {
-    //                 $meta['target'] = $item['target'];
-    //             }
-    //             //
-    //             $menu['meta'] = $meta;
-    //             $menus[]      = $menu;
-    //         }
-    //     }
-
-    //     helper('my_array');
-    //     $res = my_arr2tree($menus);
-
-    //     return $res;
-    // }
 
     public function getByIds(array $Ids = null)
     {
@@ -120,22 +51,16 @@ class ApiModel extends Model
         return $res;
     }
 
-    // public function getPageIdByMenuId(array $menuId = null)
-    // {
-    //     if (!is_array($menuId) || empty($menuId)) {
-    //         return [];
-    //     }
+    public function getApis($columnName = [])
+    {
+        $selectSQL = '';
+        foreach ($columnName as $name) {
+            $selectSQL = $selectSQL . $name . ', ';
+        }
 
-    //     $temp = $this->select('id')
-    //         ->whereIn('id', $menuId)
-    //         ->orderBy('id', 'ASC')
-    //         ->findAll();
+        $builder = $this->select($selectSQL)->orderBy('id', 'ASC');
+        $data    = $builder->findAll();
 
-    //     $res = [];
-    //     foreach ($temp as $value) {
-    //         $res[] = $value['id'];
-    //     }
-
-    //     return $res;
-    // }
+        return $data;
+    }
 }

@@ -4,11 +4,12 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-08 22:01:39
+ * @LastEditTime: 2022-04-09 10:22:42
  */
 
 namespace App\Controllers;
 
+use App\Models\Admin\ApiModel;
 use App\Models\Admin\AvatarModel;
 use App\Models\Admin\DeptModel;
 use App\Models\Admin\EquipmentUnitModel;
@@ -151,6 +152,74 @@ class Admin extends BaseController
         $client = $this->request->getJSON(true);
 
         $model  = new MenuModel();
+        $result = $model->delete($client['id']);
+
+        if ($result === true) {
+            $res['code'] = EXIT_SUCCESS;
+            $res['msg']  = '已删除';
+        } else {
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '删除失败，稍后再试';
+        }
+
+        return $this->respond($res);
+    }
+
+    // API
+    public function getApi()
+    {
+        $model      = new ApiModel();
+        $columnName = ['id', 'type', 'pid', 'title', 'api', 'method', 'updated_at'];
+        $result     = $model->getApis($columnName);
+
+        $res['code'] = EXIT_SUCCESS;
+        $res['data'] = ['data' => $result];
+
+        return $this->respond($res);
+    }
+
+    public function newApi()
+    {
+        $client = $this->request->getJSON(true);
+
+        $model  = new ApiModel();
+        $result = $model->insert($client);
+
+        if (is_numeric($result)) {
+            $res['code'] = EXIT_SUCCESS;
+            $res['msg']  = '已添加';
+            $res['data'] = ['id' => $result];
+        } else {
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '添加失败，稍后再试';
+        }
+
+        return $this->respond($res);
+    }
+
+    public function updateApi()
+    {
+        $client = $this->request->getJSON(true);
+
+        $model  = new ApiModel();
+        $result = $model->save($client);
+
+        if ($result) {
+            $res['code'] = EXIT_SUCCESS;
+            $res['msg']  = '已修改';
+        } else {
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '修改失败，稍后再试';
+        }
+
+        return $this->respond($res);
+    }
+
+    public function delApi()
+    {
+        $client = $this->request->getJSON(true);
+
+        $model  = new ApiModel();
         $result = $model->delete($client['id']);
 
         if ($result === true) {

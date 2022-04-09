@@ -1,27 +1,18 @@
 <template>
   <page-header-wrapper :title="false">
-    <a-card :bordered="false">
+    <a-card :bordered="false" title="API管理" :body-style="{marginBottom: '8px'}">
       <div class="table-page-search-wrapper">
         <a-form layout="inline">
           <a-row :gutter="48">
             <a-col :md="8" :sm="24">
-              <a-form-item label="部门名称">
-                <a-input v-model="queryParam.name" placeholder=""/>
+              <a-form-item label="标题">
+                <a-input v-model="query.title" placeholder=""/>
               </a-form-item>
             </a-col>
-            <!-- <a-col :md="8" :sm="24">
-              <a-form-item label="状态">
-                <a-select v-model="queryParam.status" placeholder="请选择">
-                  <a-select-option value="0">已禁用</a-select-option>
-                  <a-select-option value="1">已启用</a-select-option>
-                </a-select>
-              </a-form-item>
-            </a-col> -->
             <a-col :md="16" :sm="24">
-              <!-- <span class="table-page-search-submitButtons" :style="{ float: 'right', overflow: 'hidden' }"> -->
               <span class="table-page-search-submitButtons" >
-                <a-button type="primary" @click="loadData()">查询</a-button>
-                <a-button style="margin-left: 8px" @click="() => this.queryParam = {}">重置</a-button>
+                <a-button type="primary" @click="handleQuery()">查询</a-button>
+                <a-button style="margin-left: 8px" @click="() => this.query = {}">重置</a-button>
               </span>
             </a-col>
           </a-row>
@@ -56,16 +47,16 @@
         </span>
       </a-table>
 
-      <dept-form :visible.sync="visibleRoleForm" :record="tempRecord" :deptTreeData="tempDeptData" @res="handleSave">
-      </dept-form>
+      <my-form :visible.sync="visibleForm" :record="recordTemp" :treeData="treeDataTemp" @res="handleSave">
+      </my-form>
 
     </a-card>
   </page-header-wrapper>
 </template>
 
 <script>
-import DeptForm from './modules/DeptForm'
-import { getDeptTbl, saveDept, delDept } from '@/api/manage'
+import MyForm from './modules/Form'
+import { getApi, saveApi, delApi } from '@/api/manage'
 import { listToTree, newTimestamp } from '@/utils/util'
 
 const columns = [
@@ -74,29 +65,24 @@ const columns = [
     scopedSlots: { customRender: 'serial' }
   },
   {
-    title: '部门名称',
-    dataIndex: 'name'
+    title: '标题',
+    dataIndex: 'title'
   },
   {
-    title: '描述',
-    dataIndex: 'description',
-    scopedSlots: { customRender: 'description' },
-    ellipsis: false
+    title: '类型',
+    dataIndex: 'type'
   },
   {
-    title: '状态',
-    dataIndex: 'status',
-    scopedSlots: { customRender: 'status' }
+    title: 'API',
+    dataIndex: 'api'
   },
   {
-    title: '业务数据标识',
-    dataIndex: 'dataMask',
-    scopedSlots: { customRender: 'dataMask' }
+    title: '方法',
+    dataIndex: 'method'
   },
   {
     title: '更新时间',
-    dataIndex: 'updated_at',
-    sorter: true
+    dataIndex: 'updated_at'
   },
   {
     title: '操作',
@@ -106,55 +92,32 @@ const columns = [
   }
 ]
 
-const statusMap = {
-  0: {
-    status: 'disable',
-    text: '已禁用'
-  },
-  1: {
-    status: 'active',
-    text: '已启用'
-  }
-}
-
 export default {
-  name: 'DeptList',
+  name: 'ApiList',
   components: {
-    DeptForm
+    MyForm
   },
   data () {
     this.columns = columns
     return {
-      // 部门数据
-      deptData: [],
-      // 部门的树结构数据
+      // 数据
+      respData: [],
+      // 树结构数据
       tableData: [],
       // 查询参数
-      queryParam: {},
+      query: {},
       loading: false,
-      visibleRoleForm: false,
-      tempRecord: {},
-      tempDeptData: []
-    }
-  },
-  filters: {
-    statusFilter (type) {
-      return statusMap[type].text
+      visibleForm: false,
+      recordTemp: {},
+      treeDataTemp: []
+      //
     }
   },
   created () {
-    // const { pageNo } = this.$route.params
-    // const localPageNum = this.pageURI && (pageNo && parseInt(pageNo)) || this.pageNum
-    // this.localPagination = ['auto', true].includes(this.showPagination) && Object.assign({}, this.localPagination, {
-    //   current: localPageNum,
-    //   pageSize: this.pageSize,
-    //   showSizeChanger: this.showSizeChanger
-    // }) || false
-    // this.needTotalList = this.initTotalList(this.columns)
-    this.loadData()
+    this.handleQuery()
   },
   watch: {
-    deptData: {
+    respData: {
       handler: function (val) {
         listToTree(val, this.tableData)
       },
@@ -163,59 +126,59 @@ export default {
   },
   methods: {
 
-    loadData () {
-      const requestParameters = Object.assign({}, this.queryParam)
-      getDeptTbl(requestParameters)
+    handleQuery () {
+      const param = Object.assign({}, this.query)
+      getApi(param)
         .then(res => {
-          this.deptData = res.data
+          this.respData = res.data
         })
         //  网络异常，清空页面数据显示，防止错误的操作
        .catch((err) => {
          if (err.response) {
-           this.deptData.splice(0, this.deptData.length)
+           this.respData.splice(0, this.respData.length)
          }
        })
     },
 
     handleAdd () {
-      this.tempDeptData = this.tableData.slice(0)
+      this.treeDataTemp = this.tableData.slice(0)
       //
-      this.tempRecord = Object.assign({}, { status: '1' })
-      this.visibleRoleForm = true
+      this.recordTemp = {}
+      this.visibleForm = true
     },
     handleEdit (record) {
-      this.tempDeptData = this.tableData.slice(0)
+      this.treeDataTemp = this.tableData.slice(0)
       //
-      this.tempRecord = Object.assign({}, record)
-      this.visibleRoleForm = true
+      this.recordTemp = Object.assign({}, record)
+      this.visibleForm = true
     },
 
     handleSave (record) {
       console.log('handleSave', record)
-      saveDept(record)
+      saveApi(record)
        .then((res) => {
           // 新建结果同步至table
           if (res && res.id) {
             var now = newTimestamp()
             const temp = Object.assign({ id: res.id, updated_at: now }, record)
-            this.deptData.unshift(temp)
+            this.respData.unshift(temp)
           }
           // 修改结果同步至table
           if (record && record.id) {
-            const temp = this.deptData.slice(0)
+            const temp = this.respData.slice(0)
             temp.forEach((element) => {
               if (element.id === record.id) {
                 Object.assign(element, record)
                 element.updated_at = newTimestamp()
               }
             })
-            this.deptData = temp.slice(0)
+            this.respData = temp.slice(0)
           }
        })
       //  网络异常，清空页面数据显示，防止错误的操作
        .catch((err) => {
          if (err.response) {
-           this.deptData.splice(0, this.deptData.length)
+           this.respData.splice(0, this.respData.length)
          }
        })
     },
@@ -223,13 +186,13 @@ export default {
     handleDel (record) {
       this.$confirm({
         title: '确定删除吗?',
-        content: '删除 ' + record.name,
+        content: '删除 ' + record.title,
         onOk: () => {
-          delDept(record.id)
+          delApi(record.id)
             .then(() => {
               // 结果同步至table
               if (record.id) {
-                this.deptData.forEach(function (element, index, array) {
+                this.respData.forEach(function (element, index, array) {
                   if (element.id === record.id) {
                     array.splice(index, 1)
                   }
@@ -239,7 +202,7 @@ export default {
             //  网络异常，清空页面数据显示，防止错误的操作
             .catch((err) => {
               if (err.response) {
-                this.deptData.splice(0, this.deptData.length)
+                this.respData.splice(0, this.respData.length)
               }
             })
         }
