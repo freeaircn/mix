@@ -1,12 +1,12 @@
 <template>
   <page-header-wrapper :title="false">
-    <a-card :bordered="false" title="前端页面路由" :body-style="{marginBottom: '8px'}">
+    <a-card :bordered="false" title="工作流权限设置" :body-style="{marginBottom: '8px'}">
       <div class="table-page-search-wrapper">
         <a-form layout="inline">
           <a-row :gutter="48">
             <a-col :md="8" :sm="24">
-              <a-form-item label="标题">
-                <a-input v-model="query.title" placeholder=""/>
+              <a-form-item label="名称">
+                <a-input v-model="query.name" placeholder=""/>
               </a-form-item>
             </a-col>
             <a-col :md="16" :sm="24">
@@ -28,7 +28,7 @@
         rowKey="id"
         :columns="columns"
         :data-source="tableData"
-        :defaultExpandedRowKeys="['2']"
+        :defaultExpandedRowKeys="['1']"
         :pagination="false"
         :loading="loading"
       >
@@ -56,7 +56,7 @@
 
 <script>
 import MyForm from './modules/Form'
-import { getMenu, saveMenu, delMenu } from '@/api/manage'
+import { getWorkflow, saveWorkflow, delWorkflow } from '@/api/manage'
 import { listToTree, newTimestamp } from '@/utils/util'
 
 const columns = [
@@ -65,42 +65,20 @@ const columns = [
     scopedSlots: { customRender: 'serial' }
   },
   {
-    title: '标题',
-    dataIndex: 'title'
-  },
-  {
-    title: '路由',
-    dataIndex: 'path'
-  },
-  {
-    title: '重定向',
-    dataIndex: 'redirect',
-    ellipsis: true
-  },
-  {
     title: '名称',
     dataIndex: 'name'
   },
   {
-    title: '组件',
-    dataIndex: 'component',
-    ellipsis: true
+    title: '类型',
+    dataIndex: 'type'
   },
   {
-    title: '侧边栏隐藏',
-    dataIndex: 'hidden'
+    title: 'WF',
+    dataIndex: 'workflow'
   },
   {
-    title: '强制菜单显示',
-    dataIndex: 'hideChildrenInMenu'
-  },
-  {
-    title: '侧边栏隐藏meta',
-    dataIndex: 'meta_hidden'
-  },
-  {
-    title: '隐藏面包屑',
-    dataIndex: 'hiddenHeaderContent'
+    title: '方法',
+    dataIndex: 'method'
   },
   {
     title: '更新时间',
@@ -115,7 +93,7 @@ const columns = [
 ]
 
 export default {
-  name: 'MenuList',
+  name: 'WorkflowList',
   components: {
     MyForm
   },
@@ -131,12 +109,8 @@ export default {
       loading: false,
       visibleForm: false,
       recordTemp: {},
-      treeDataOptions: [],
+      treeDataOptions: []
       //
-      visiblePermissionTree: false,
-      tempRole: {},
-      treeData: [],
-      checkedKeys: []
     }
   },
   created () {
@@ -159,7 +133,7 @@ export default {
 
     handleQuery () {
       const param = Object.assign({}, this.query)
-      getMenu(param)
+      getWorkflow(param)
         .then(res => {
           this.respData = res.data
         })
@@ -181,7 +155,7 @@ export default {
     },
 
     handleSave (record) {
-      saveMenu(record)
+      saveWorkflow(record)
        .then((res) => {
           // 新建结果同步至table
           if (res && res.id) {
@@ -212,9 +186,9 @@ export default {
     handleDel (record) {
       this.$confirm({
         title: '确定删除吗?',
-        content: '删除 ' + record.title,
+        content: '删除 ' + record.name,
         onOk: () => {
-          delMenu(record.id)
+          delWorkflow(record.id)
             .then(() => {
               // 结果同步至table
               if (record.id) {

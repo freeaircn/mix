@@ -155,7 +155,6 @@ export default {
       if (value === '') {
        return callback()
       }
-      console.log('scorePassword ; ', scorePassword(value))
       if (value.length >= 6) {
         if (scorePassword(value) >= 30) {
           this.state.level = 1
@@ -189,10 +188,6 @@ export default {
     },
 
     handlePhoneCheck (rule, value, callback) {
-      console.log('handlePhoneCheck, rule:', rule)
-      console.log('handlePhoneCheck, value', value)
-      console.log('handlePhoneCheck, callback', callback)
-
       callback()
     },
 
@@ -262,7 +257,6 @@ export default {
   },
   watch: {
     'state.passwordLevel' (val) {
-      console.log(val)
     }
   }
 }

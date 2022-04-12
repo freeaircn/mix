@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-09 10:02:15
+ * @LastEditTime: 2022-04-12 11:27:51
  */
 import request from '@/utils/request'
 
@@ -12,8 +12,14 @@ const api = {
   role: '/role',
   menu: '/menu',
   api: '/api',
-  roleMenu: '/role_menu',
   dept: '/dept',
+  workflow: '/workflow',
+  //
+  roleMenu: '/role_menu',
+  roleApi: '/role_api',
+  roleDept: '/role_dept',
+  roleWorkflow: '/role_workflow',
+  //
   job: '/job',
   title: '/title',
   politic: '/politic',
@@ -21,12 +27,6 @@ const api = {
   equipmentUnit: '/equipment_unit',
   WorkflowAuthority: '/workflow/authority',
   roleWorkflowAuthority: '/role_workflow_authority'
-  // user: '/user',
-  //
-  // service: '/service',
-  // permission: '/permission',
-  // permissionNoPager: '/permission/no-pager',
-  // orgTree: '/org/tree'
 }
 
 export default api
@@ -91,11 +91,11 @@ export function saveSub (sub) {
 
 // Mix code
 // 角色
-export function getRoleTbl (parameter) {
+export function getRoleTbl (params) {
   return request({
     url: api.role,
     method: 'get',
-    params: parameter
+    params: params
   })
 }
 
@@ -116,10 +116,11 @@ export function delRole (id) {
 }
 
 // 菜单
-export function getMenu () {
+export function getMenu (params) {
   return request({
     url: api.menu,
-    method: 'get'
+    method: 'get',
+    params: params
   })
 }
 
@@ -163,6 +164,30 @@ export function delApi (id) {
   })
 }
 
+// Workflow
+export function getWorkflow () {
+  return request({
+    url: api.workflow,
+    method: 'get'
+  })
+}
+
+export function saveWorkflow (data) {
+  return request({
+    url: api.workflow,
+    method: data.id && data.id > 0 ? 'put' : 'post',
+    data: data
+  })
+}
+
+export function delWorkflow (id) {
+  return request({
+    url: api.workflow,
+    method: 'delete',
+    data: { id }
+  })
+}
+
 //
 export function getRoleMenu (parameter) {
   return request({
@@ -180,8 +205,64 @@ export function saveRoleMenu (data) {
   })
 }
 
+export function getRoleApi (parameter) {
+  return request({
+    url: api.roleApi,
+    method: 'get',
+    params: parameter
+  })
+}
+
+export function saveRoleApi (data) {
+  return request({
+    url: api.roleApi,
+    method: 'post',
+    data: data
+  })
+}
+
+export function getRoleDept (parameter) {
+  return request({
+    url: api.roleDept,
+    method: 'get',
+    params: parameter
+  })
+}
+
+export function saveRoleDept (data) {
+  return request({
+    url: api.roleDept,
+    method: 'post',
+    data: data
+  })
+}
+
+export function getRoleWorkflow (parameter) {
+  return request({
+    url: api.roleWorkflow,
+    method: 'get',
+    params: parameter
+  })
+}
+
+export function saveRoleWorkflow (data) {
+  return request({
+    url: api.roleWorkflow,
+    method: 'post',
+    data: data
+  })
+}
+
 // 部门
 export function getDeptTbl (parameter) {
+  return request({
+    url: api.dept,
+    method: 'get',
+    params: parameter
+  })
+}
+
+export function getDept (parameter) {
   return request({
     url: api.dept,
     method: 'get',
@@ -339,27 +420,27 @@ export function deleteEquipmentUnit (id) {
   })
 }
 
-export function getWorkflowAuthority (parameter) {
-  return request({
-    url: api.WorkflowAuthority,
-    method: 'get',
-    params: parameter
-  })
-}
+// export function getWorkflowAuthority (parameter) {
+//   return request({
+//     url: api.WorkflowAuthority,
+//     method: 'get',
+//     params: parameter
+//   })
+// }
 
 //
-export function getRoleWorkflowAuthority (parameter) {
-  return request({
-    url: api.roleWorkflowAuthority,
-    method: 'get',
-    params: parameter
-  })
-}
+// export function getRoleWorkflowAuthority (parameter) {
+//   return request({
+//     url: api.roleWorkflowAuthority,
+//     method: 'get',
+//     params: parameter
+//   })
+// }
 
-export function saveRoleWorkflowAuthority (data) {
-  return request({
-    url: api.roleWorkflowAuthority,
-    method: 'post',
-    data: data
-  })
-}
+// export function saveRoleWorkflowAuthority (data) {
+//   return request({
+//     url: api.roleWorkflowAuthority,
+//     method: 'post',
+//     data: data
+//   })
+// }

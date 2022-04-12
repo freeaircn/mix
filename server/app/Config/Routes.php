@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-09 10:10:45
+ * @LastEditTime: 2022-04-12 15:06:30
  */
 
 namespace Config;
@@ -72,13 +72,19 @@ $routes->group('api', function ($routes) {
     $routes->put('api', 'Admin::updateApi');
     $routes->delete('api', 'Admin::delApi');
     //
+    $routes->get('workflow', 'Admin::getWorkflow');
+    $routes->post('workflow', 'Admin::newWorkflow');
+    $routes->put('workflow', 'Admin::updateWorkflow');
+    $routes->delete('workflow', 'Admin::delWorkflow');
+    //
     $routes->get('role_menu', 'Admin::getRoleMenu');
     $routes->post('role_menu', 'Admin::saveRoleMenu');
-    //
-    $routes->get('workflow/authority', 'Admin::getWorkflowAuthority');
-    //
-    $routes->get('role_workflow_authority', 'Admin::getRoleWorkflowAuthority');
-    $routes->post('role_workflow_authority', 'Admin::saveRoleWorkflowAuthority');
+    $routes->get('role_api', 'Admin::getRoleApi');
+    $routes->post('role_api', 'Admin::saveRoleApi');
+    $routes->get('role_dept', 'Admin::getRoleDept');
+    $routes->post('role_dept', 'Admin::saveRoleDept');
+    $routes->get('role_workflow', 'Admin::getRoleWorkflow');
+    $routes->post('role_workflow', 'Admin::saveRoleWorkflow');
     //
     $routes->get('dept', 'Admin::getDept');
     $routes->post('dept', 'Admin::newDept');

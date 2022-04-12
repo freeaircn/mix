@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-09 10:22:42
+ * @LastEditTime: 2022-04-12 21:08:59
  */
 
 namespace App\Controllers;
@@ -16,13 +16,15 @@ use App\Models\Admin\EquipmentUnitModel;
 use App\Models\Admin\JobModel;
 use App\Models\Admin\MenuModel;
 use App\Models\Admin\PoliticModel;
+use App\Models\Admin\RoleApiModel;
+use App\Models\Admin\RoleDeptModel;
 use App\Models\Admin\RoleMenuModel;
 use App\Models\Admin\RoleMode;
-use App\Models\Admin\RoleWorkflowAuthorityModel;
+use App\Models\Admin\RoleWorkflowModel;
 use App\Models\Admin\TitleModel;
 use App\Models\Admin\UserModel;
 use App\Models\Admin\UserRoleModel;
-use App\Models\Admin\WorkflowAuthorityModel;
+use App\Models\Admin\WorkflowModel;
 use CodeIgniter\API\ResponseTrait;
 
 class Admin extends BaseController
@@ -99,10 +101,16 @@ class Admin extends BaseController
     // 菜单
     public function getMenu()
     {
+        $params = $this->request->getGet();
+
         $model = new MenuModel();
-        // $columnName = ['id', 'type', 'pid', 'title'];
-        $columnName = ['id', 'pid', 'title', 'path', 'redirect', 'name', 'component', 'hidden', 'hideChildrenInMenu', 'meta_hidden', 'icon', 'keepAlive', 'hiddenHeaderContent', 'permission', 'target', 'updated_at'];
-        $result     = $model->getMenus($columnName);
+        if (isset($params['any']) && $params['any'] === 'any') {
+            $columnName = ['id', 'pid', 'title'];
+        } else {
+            $columnName = ['id', 'pid', 'title', 'path', 'redirect', 'name', 'component', 'hidden', 'hideChildrenInMenu', 'meta_hidden', 'icon', 'keepAlive', 'hiddenHeaderContent', 'permission', 'target', 'updated_at'];
+
+        }
+        $result = $model->getMenus($columnName);
 
         $res['code'] = EXIT_SUCCESS;
         $res['data'] = ['data' => $result];
@@ -233,6 +241,74 @@ class Admin extends BaseController
         return $this->respond($res);
     }
 
+    // Workflow
+    public function getWorkflow()
+    {
+        $model      = new WorkflowModel();
+        $columnName = ['id', 'type', 'pid', 'name', 'workflow', 'method', 'updated_at'];
+        $result     = $model->getWorkflow($columnName);
+
+        $res['code'] = EXIT_SUCCESS;
+        $res['data'] = ['data' => $result];
+
+        return $this->respond($res);
+    }
+
+    public function newWorkflow()
+    {
+        $client = $this->request->getJSON(true);
+
+        $model  = new WorkflowModel();
+        $result = $model->insert($client);
+
+        if (is_numeric($result)) {
+            $res['code'] = EXIT_SUCCESS;
+            $res['msg']  = '已添加';
+            $res['data'] = ['id' => $result];
+        } else {
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '添加失败，稍后再试';
+        }
+
+        return $this->respond($res);
+    }
+
+    public function updateWorkflow()
+    {
+        $client = $this->request->getJSON(true);
+
+        $model  = new WorkflowModel();
+        $result = $model->save($client);
+
+        if ($result) {
+            $res['code'] = EXIT_SUCCESS;
+            $res['msg']  = '已修改';
+        } else {
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '修改失败，稍后再试';
+        }
+
+        return $this->respond($res);
+    }
+
+    public function delWorkflow()
+    {
+        $client = $this->request->getJSON(true);
+
+        $model  = new WorkflowModel();
+        $result = $model->delete($client['id']);
+
+        if ($result === true) {
+            $res['code'] = EXIT_SUCCESS;
+            $res['msg']  = '已删除';
+        } else {
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '删除失败，稍后再试';
+        }
+
+        return $this->respond($res);
+    }
+
     // 角色-权限
     public function getRoleMenu()
     {
@@ -243,9 +319,8 @@ class Admin extends BaseController
         $model  = new RoleMenuModel();
         $result = $model->getMenuByRole($role_id);
 
-        $res['code']   = EXIT_SUCCESS;
-        $res['data']   = ['menu' => $result];
-        $res['client'] = $client;
+        $res['code'] = EXIT_SUCCESS;
+        $res['data'] = ['data' => $result];
 
         return $this->respond($res);
     }
@@ -262,10 +337,161 @@ class Admin extends BaseController
 
         if ($result === true) {
             $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '权限已更新！';
+            $res['msg']  = '权限已更新';
         } else {
             $res['code'] = EXIT_ERROR;
-            $res['msg']  = '权限配置失败，稍后再试！';
+            $res['msg']  = '权限配置失败，稍后再试';
+        }
+
+        return $this->respond($res);
+    }
+
+    public function getRoleApi()
+    {
+        $client = $this->request->getGet();
+
+        $role_id = $client['role_id'];
+
+        $model  = new RoleApiModel();
+        $result = $model->getByRoleId($role_id);
+
+        $res['code'] = EXIT_SUCCESS;
+        $res['data'] = ['data' => $result];
+
+        return $this->respond($res);
+    }
+
+    public function saveRoleApi()
+    {
+        $client = $this->request->getJSON(true);
+
+        $role_id = $client['role_id'];
+        $api     = $client['api'];
+
+        $model  = new RoleApiModel();
+        $result = $model->saveRoleApi($role_id, $api);
+
+        if ($result === true) {
+            $res['code'] = EXIT_SUCCESS;
+            $res['msg']  = '权限已更新';
+        } else {
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '权限配置失败，稍后再试';
+        }
+
+        return $this->respond($res);
+    }
+
+    public function getRoleDept()
+    {
+        $client = $this->request->getGet();
+
+        $role_id = $client['role_id'];
+
+        $result = [];
+        if (!isset($client['method'])) {
+            $model  = new RoleDeptModel();
+            $result = $model->getByRoleId($role_id);
+        }
+
+        if (isset($client['method']) && $client['method'] === 'set') {
+            $model  = new RoleDeptModel();
+            $result = $model->getByRoleId2($role_id);
+            $deptId = [];
+            foreach ($result as $r) {
+                $deptId[] = $r['dept_id'];
+            }
+
+            $model      = new DeptModel();
+            $columnName = ['id', 'name'];
+            $dept       = $model->getByIds($columnName, $deptId);
+
+            foreach ($result as $key => $r) {
+                foreach ($dept as $d) {
+                    if ($r['dept_id'] === $d['id']) {
+                        $result[$key]['name'] = $d['name'];
+                    }
+                }
+            }
+        }
+
+        $res['code'] = EXIT_SUCCESS;
+        $res['data'] = ['data' => $result];
+
+        return $this->respond($res);
+    }
+
+    public function saveRoleDept()
+    {
+        $client = $this->request->getJSON(true);
+
+        if (!isset($client['method'])) {
+            $role_id = $client['role_id'];
+            $dept    = $client['dept'];
+            //
+            $model = new RoleDeptModel();
+            $db    = $model->getByRoleId($role_id);
+            $old   = [];
+            foreach ($db as $value) {
+                $old[] = $value['dept_id'];
+            }
+
+            $result = $model->saveRoleDept($role_id, $dept);
+        }
+
+        if (isset($client['method']) && $client['method'] === 'set') {
+            $role_id = $client['role_id'];
+            $dept_id = $client['dept_id'];
+            $data    = [
+                'data_writable' => $client['data_writable'],
+                'is_default'    => $client['is_default'],
+            ];
+            $model  = new RoleDeptModel();
+            $result = $model->setRoleDept($role_id, $dept_id, $data);
+        }
+
+        if ($result === true) {
+            $res['code'] = EXIT_SUCCESS;
+            $res['msg']  = '权限已更新';
+        } else {
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '权限配置失败，稍后再试';
+        }
+
+        return $this->respond($res);
+    }
+
+    public function getRoleWorkflow()
+    {
+        $client = $this->request->getGet();
+
+        $role_id = $client['role_id'];
+
+        $model  = new RoleWorkflowModel();
+        $result = $model->getByRoleId($role_id);
+
+        $res['code'] = EXIT_SUCCESS;
+        $res['data'] = ['data' => $result];
+
+        return $this->respond($res);
+    }
+
+    public function saveRoleWorkflow()
+    {
+        $client = $this->request->getJSON(true);
+
+        $role_id  = $client['role_id'];
+        $workflow = $client['workflow'];
+
+        $model  = new RoleWorkflowModel();
+        $result = $model->saveRoleWorkflow($role_id, $workflow);
+
+        if ($result === true) {
+            $res['code'] = EXIT_SUCCESS;
+            $res['msg']  = '权限已更新';
+        } else {
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '权限配置失败，稍后再试';
         }
 
         return $this->respond($res);
@@ -816,59 +1042,6 @@ class Admin extends BaseController
         } else {
             $res['code'] = EXIT_ERROR;
             $res['msg']  = '删除失败，稍后再试';
-        }
-
-        return $this->respond($res);
-    }
-
-    public function getWorkflowAuthority()
-    {
-        $model = new WorkflowAuthorityModel();
-
-        $columnName = ['id', 'pid', 'name', 'alias'];
-        $db         = $model->get($columnName);
-
-        if (empty($db)) {
-            $res['code'] = EXIT_ERROR;
-        } else {
-            $res['code'] = EXIT_SUCCESS;
-            $res['data'] = $db;
-        }
-
-        return $this->respond($res);
-    }
-
-    public function getRoleWorkflowAuthority()
-    {
-        $client = $this->request->getGet();
-
-        $role_id = $client['role_id'];
-
-        $model = new RoleWorkflowAuthorityModel();
-        $db    = $model->getByRole($role_id);
-
-        $res['code'] = EXIT_SUCCESS;
-        $res['data'] = $db;
-
-        return $this->respond($res);
-    }
-
-    public function saveRoleWorkflowAuthority()
-    {
-        $client = $this->request->getJSON(true);
-
-        $role_id              = $client['role_id'];
-        $workflow_handler_ids = $client['workflow_handler_ids'];
-
-        $model  = new RoleWorkflowAuthorityModel();
-        $result = $model->saveByRole($role_id, $workflow_handler_ids);
-
-        if ($result === true) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '权限已更新！';
-        } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '权限配置失败，稍后再试';
         }
 
         return $this->respond($res);

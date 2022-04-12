@@ -60,9 +60,11 @@
             <a-divider type="vertical" />
             <a @click="assignApi(record)">API</a>
             <a-divider type="vertical" />
-            <a @click="assignDeptData(record)">部门数据</a>
+            <a @click="assignDept(record)">部门</a>
             <a-divider type="vertical" />
-            <a @click="assignWorkflow(record)">流程</a>
+            <a @click="handleDeptSetting(record)">部门设置</a>
+            <a-divider type="vertical" />
+            <a @click="assignWorkflow(record)">工作流程</a>
           </template>
         </span>
       </a-table>
@@ -70,23 +72,45 @@
       <blank-form :visible.sync="visibleRoleForm" :record="tempRecord" @res="handleSubmitRole">
       </blank-form>
 
-      <permission-tree
-        :visible.sync="visiblePermissionTree"
-        :role="tempRole"
+      <modal-tree
+        :visible.sync="visibleAssignMenuDiag"
+        title="权限：前端页面"
+        :objId="objId"
         :treeData="treeData"
-        :allCheckableId="allCheckableMenuId"
-        :checkedKeys="checkedKeys"
-        @submitPermission="handleSubmitAccessAuth">
-      </permission-tree>
+        :allCheckableId="allCheckableId"
+        :checkedKeys="checkedId"
+        @submit="submitAllowMenu">
+      </modal-tree>
 
-      <WorkflowTree
-        :visible.sync="visibleWorkflowTree"
-        :role="tempRole2"
-        :treeData="treeData2"
-        :allCheckableId="allCheckableMenuId2"
-        :checkedKeys="checkedKeys2"
-        @submit="handleSubmitWorkflowAuth">
-      </WorkflowTree>
+      <modal-tree
+        :visible.sync="visibleAssignApiDiag"
+        title="权限：API"
+        :objId="objId"
+        :treeData="treeData"
+        :allCheckableId="allCheckableId"
+        :checkedKeys="checkedId"
+        @submit="submitAllowApi">
+      </modal-tree>
+
+      <modal-tree
+        :visible.sync="visibleAssignDeptDiag"
+        title="权限：部门"
+        :objId="objId"
+        :treeData="treeData"
+        :allCheckableId="allCheckableId"
+        :checkedKeys="checkedId"
+        @submit="submitAllowDept">
+      </modal-tree>
+
+      <modal-tree
+        :visible.sync="visibleAssignWorkflowDiag"
+        title="权限：工作流程"
+        :objId="objId"
+        :treeData="treeData"
+        :allCheckableId="allCheckableId"
+        :checkedKeys="checkedId"
+        @submit="submitAllowWorkflow">
+      </modal-tree>
 
     </a-card>
   </page-header-wrapper>
@@ -94,9 +118,8 @@
 
 <script>
 import BlankForm from './modules/BlankForm'
-import PermissionTree from './modules/PermissionTree'
-import WorkflowTree from './modules/WorkflowTree'
-import { getRoleTbl, saveRole, delRole, getMenu, getRoleMenu, saveRoleMenu, getWorkflowAuthority, getRoleWorkflowAuthority, saveRoleWorkflowAuthority } from '@/api/manage'
+import ModalTree from './modules/ModalTree'
+import { getRoleTbl, saveRole, delRole, getMenu, getRoleMenu, saveRoleMenu, getApi, getRoleApi, saveRoleApi, getDept, getRoleDept, saveRoleDept, getWorkflow, getRoleWorkflow, saveRoleWorkflow } from '@/api/manage'
 import { listToTree, newTimestamp } from '@/utils/util'
 
 const columns = [
@@ -138,7 +161,7 @@ const columns = [
   {
     title: '分配权限',
     dataIndex: 'action2',
-    width: '280px',
+    width: '380px',
     scopedSlots: { customRender: 'action2' }
   }
 ]
@@ -155,17 +178,15 @@ const statusMap = {
 }
 
 export default {
-  name: 'StandardList',
+  name: 'List',
   components: {
     BlankForm,
-    PermissionTree,
-    WorkflowTree
+    ModalTree
   },
   data () {
     this.columns = columns
     return {
       data: [],
-      // 查询参数
       queryParam: {},
       status: 'all',
       pagination: {},
@@ -173,17 +194,16 @@ export default {
       visibleRoleForm: false,
       tempRecord: {},
       //
-      visiblePermissionTree: false,
-      tempRole: {},
-      allCheckableMenuId: [],
+      objId: '0',
+      allCheckableId: [],
       treeData: [],
-      checkedKeys: [],
+      checkedId: [],
       //
-      visibleWorkflowTree: false,
-      tempRole2: {},
-      allCheckableMenuId2: [],
-      treeData2: [],
-      checkedKeys2: []
+      visibleAssignMenuDiag: false,
+      visibleAssignApiDiag: false,
+      visibleAssignDeptDiag: false,
+      //
+      visibleAssignWorkflowDiag: false
     }
   },
   filters: {
@@ -255,27 +275,37 @@ export default {
     },
 
     assignMenu (role) {
-      this.tempRole = Object.assign({}, role)
-      this.checkedKeys = []
-      Promise.all([getMenu(), getRoleMenu({ role_id: role.id })])
+      this.objId = role.id
+      this.checkedId.splice(0)
+      Promise.all([getMenu({ any: 'any' }), getRoleMenu({ role_id: role.id })])
         .then(function (res) {
-          this.treeData.splice(0)
-          const menuList = this.filterTreeData(res[0].data.slice(0))
-          listToTree(menuList, this.treeData)
+          const allMenu = res[0].data.slice(0)
+          const allowMenu = res[1].data.slice(0)
+
+          this.allCheckableId.splice(0)
+          allMenu.forEach(element => {
+            if (element['pid'] !== '0') {
+              this.allCheckableId.push(element['id'])
+            }
+          })
+          listToTree(allMenu, this.treeData, '1')
           //
-          res[1].menu.forEach(element => {
-            this.checkedKeys.push(element.menu_id)
+          allowMenu.forEach(element => {
+            this.checkedId.push(element.menu_id)
           })
           //
           this.$nextTick(() => {
-            this.titlePermissionTree = role.name
-            this.visiblePermissionTree = true
+            this.visibleAssignMenuDiag = true
           })
         }.bind(this))
     },
 
-    handleSubmitAccessAuth (permission) {
-      saveRoleMenu(permission)
+    submitAllowMenu (data) {
+      var temp = {
+        role_id: data.objId,
+        menus: data.selected
+      }
+      saveRoleMenu(temp)
        .then(() => {
 
        })
@@ -285,77 +315,136 @@ export default {
         })
     },
 
-    assignApi (role) {},
-    assignDeptData (role) {},
+    assignApi (role) {
+      this.objId = role.id
+      this.checkedId.splice(0)
+      Promise.all([getApi(), getRoleApi({ role_id: role.id })])
+        .then(function (res) {
+          const allApi = res[0].data.slice(0)
+          const allowApi = res[1].data.slice(0)
 
-    assignWorkflow (record) {
-      this.visibleWorkflowTree = false
-      //
-      this.tempRole2 = Object.assign({}, record)
-      this.checkedKeys = []
-      Promise.all([getWorkflowAuthority(), getRoleWorkflowAuthority({ role_id: record.id })])
-        .then((res) => {
-          this.treeData2.splice(0)
-          const temp = this.filterTreeData2(res[0].slice(0))
-          listToTree(temp, this.treeData2)
+          this.allCheckableId.splice(0)
+          allApi.forEach(element => {
+            this.allCheckableId.push(element['id'])
+          })
+          listToTree(allApi, this.treeData, '1')
           //
-          res[1].forEach(element => {
-            this.checkedKeys2.push(element.workflow_authority_id)
+          allowApi.forEach(element => {
+            this.checkedId.push(element.api_id)
           })
-
+          //
           this.$nextTick(() => {
-            this.visibleWorkflowTree = true
+            this.visibleAssignApiDiag = true
           })
-        })
-        .catch((err) => {
-          this.visibleWorkflowTree = false
+        }.bind(this))
+    },
+
+    submitAllowApi (data) {
+      var temp = {
+        role_id: data.objId,
+        api: data.selected
+      }
+      saveRoleApi(temp)
+       .then(() => {
+
+       })
+       .catch((err) => {
           if (err.response) {
           }
         })
     },
 
-    handleSubmitWorkflowAuth (result) {
-      saveRoleWorkflowAuthority(result)
-        .then(() => {
+    assignDept (role) {
+      this.objId = role.id
+      this.checkedId.splice(0)
+      Promise.all([getDept(), getRoleDept({ role_id: role.id })])
+        .then(function (res) {
+          const allDept = res[0].data.slice(0)
+          const allowDept = res[1].data.slice(0)
 
-        })
-        .catch((err) => {
+          var dept = []
+          this.allCheckableId.splice(0)
+          allDept.forEach(element => {
+            if (element['dataMask'] === '1') {
+              element['title'] = element['name']
+              dept.push(element)
+              this.allCheckableId.push(element['id'])
+            }
+          })
+          listToTree(dept, this.treeData, '1')
+          //
+          allowDept.forEach(element => {
+            this.checkedId.push(element.dept_id)
+          })
+          //
+          this.$nextTick(() => {
+            this.visibleAssignDeptDiag = true
+          })
+        }.bind(this))
+    },
+
+    submitAllowDept (data) {
+      var temp = {
+        role_id: data.objId,
+        dept: data.selected
+      }
+      saveRoleDept(temp)
+       .then(() => {
+
+       })
+       .catch((err) => {
           if (err.response) {
           }
         })
     },
 
-    filterTreeData (menu) {
-      this.allCheckableMenuId.splice(0)
-      menu.forEach(element => {
-        if (element.type && element.type === '0') {
-          element.disableCheckbox = true
-          element.checkable = false
-        }
-        if (element.type && element.type === '1') {
-          element.slots = { icon: 'file-image' }
-          this.allCheckableMenuId.push(element['id'])
-        }
-        if (element.type && element.type === '2') {
-          element.slots = { icon: 'form' }
-          this.allCheckableMenuId.push(element['id'])
-        }
-      })
-      return menu
+    handleDeptSetting (record) {
+      const roleId = record.id
+      this.$router.push({ path: `/app/role/dept/${roleId}` })
     },
 
-    filterTreeData2 (tree) {
-      this.allCheckableMenuId2.splice(0)
-      tree.forEach(element => {
-        if (element.alias && element.alias === 'null') {
-          element.disableCheckbox = true
-          element.checkable = false
-        }
-        if (element.alias && element.type !== 'null') {
-          this.allCheckableMenuId2.push(element['id'])
-        }
-      })
-      return tree
+    saveRoleDeptSetting () {
+
+    },
+
+    assignWorkflow (role) {
+      this.objId = role.id
+      this.checkedId.splice(0)
+      Promise.all([getWorkflow(), getRoleWorkflow({ role_id: role.id })])
+        .then(function (res) {
+          const allWorkflow = res[0].data.slice(0)
+          const allowWorkflow = res[1].data.slice(0)
+
+          this.allCheckableId.splice(0)
+          allWorkflow.forEach(element => {
+            element['title'] = element['name']
+            this.allCheckableId.push(element['id'])
+          })
+          listToTree(allWorkflow, this.treeData, '1')
+          //
+          allowWorkflow.forEach(element => {
+            this.checkedId.push(element.wf_id)
+          })
+          //
+          this.$nextTick(() => {
+            this.visibleAssignWorkflowDiag = true
+          })
+        }.bind(this))
+    },
+
+    submitAllowWorkflow (data) {
+      var temp = {
+        role_id: data.objId,
+        workflow: data.selected
+      }
+      saveRoleWorkflow(temp)
+       .then(() => {
+
+       })
+       .catch((err) => {
+          if (err.response) {
+          }
+        })
     }
   }
 }

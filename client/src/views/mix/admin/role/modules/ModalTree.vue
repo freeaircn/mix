@@ -3,15 +3,16 @@
  * @Author: freeair
  * @Date: 2021-06-30 20:13:01
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-18 21:38:34
+ * @LastEditTime: 2022-04-11 14:03:15
 -->
 <template>
   <a-modal
-    :title="modalTitle"
+    :title="title"
     :visible="modalVisible"
     :width="700"
     :centered="true"
     :maskClosable="false"
+    :destroyOnClose="true"
     @ok="handleOk"
     @change="handleVisibleChange"
   >
@@ -22,15 +23,12 @@
       v-model="checkedKeys2"
       checkable
       :showIcon="true"
-      :replaceFields="{ children:'children', title:'title', key:'id' }"
+      :replaceFields="replaceFields"
       :checkStrictly="true"
       autoExpandParent
       defaultExpandAll
-      :selected-keys="selectedKeys"
       :tree-data="treeData"
     >
-      <a-icon slot="file-image" type="file-image" />
-      <a-icon slot="form" type="form" />
     </a-tree>
   </a-modal>
 </template>
@@ -38,15 +36,19 @@
 <script>
 
 export default {
-  name: 'PermissionTree',
+  name: 'ModalTree',
   props: {
     visible: {
       type: Boolean,
       default: false
     },
-    role: {
-      type: Object,
-      default: null
+    title: {
+      type: String,
+      default: ''
+    },
+    objId: {
+      type: String,
+      default: ''
     },
     treeData: {
       type: Array,
@@ -59,16 +61,20 @@ export default {
     checkedKeys: {
       type: Array,
       default: () => []
+    },
+    replaceFields: {
+      type: Object,
+      default: function () {
+        return { children: 'children', title: 'title', key: 'id' }
+      }
     }
   },
   data () {
     return {
-      modalTitle: '',
       checkedKeys2: {
         checked: [],
         halfChecked: []
       },
-      selectedKeys: [],
       //
       modalVisible: false,
       labelCol: {
@@ -84,7 +90,6 @@ export default {
   watch: {
     visible: {
       handler: function (val) {
-        this.modalTitle = '角色权限' + ' - ' + this.role.name
         this.modalVisible = val
       },
       immediate: true
@@ -99,10 +104,10 @@ export default {
   methods: {
     handleOk () {
       const res = {
-        role_id: this.role.id,
-        menus: this.checkedKeys2.checked
+        objId: this.objId,
+        selected: this.checkedKeys2.checked
       }
-      this.$emit('submitPermission', res)
+      this.$emit('submit', res)
       this.modalVisible = false
       this.$emit('update:visible', false)
     },
@@ -112,12 +117,17 @@ export default {
     },
 
     handleSelectAll () {
+      // this.checkedKeys2.checked.splice(0)
+      // this.checkedKeys2.checked = this.allCheckableId
+      // this.checkedKeys2.halfChecked.splice(0)
       this.checkedKeys2 = {}
       this.checkedKeys2.checked = this.allCheckableId
       this.checkedKeys2.halfChecked = []
     },
 
     handleClearAll () {
+      // this.checkedKeys2.checked.splice(0)
+      // this.checkedKeys2.halfChecked.splice(0)
       this.checkedKeys2 = {}
       this.checkedKeys2.checked = []
       this.checkedKeys2.halfChecked = []
@@ -125,10 +135,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-.icons-list >>> .anticon {
-  margin-right: 18px;
-  font-size: 18px;
-}
-</style>

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-08 17:04:46
+ * @LastEditTime: 2022-04-12 15:05:44
  */
 
 namespace App\Controllers;
@@ -15,10 +15,8 @@ use App\Libraries\Workflow\Ticket;
 use App\Models\Dts\DeptModel;
 use App\Models\Dts\DeviceModel;
 use App\Models\Dts\DtsModel;
-use App\Models\Dts\RoleWorkflowAuthorityModel;
 use App\Models\Dts\UserModel;
 use App\Models\Dts\UserRoleModel;
-use App\Models\Dts\WorkflowAuthModel;
 use CodeIgniter\API\ResponseTrait;
 
 class Dts extends BaseController
@@ -240,28 +238,6 @@ class Dts extends BaseController
         $handlers  = [];
         $reviewers = [];
 
-        // $uid            = session('id');
-        // $ownWfAuthority = session('wfAuthority');
-
-        // if ($wf->isCheckPlace($place)) {
-        //     if ($handler === $uid || in_array($wfPlaceAuth, $ownWfAuthority)) {
-        //         $view = $wf->getPlaceMetaOfView($place);
-        //         $temp = $this->getHandler($station_id, $place);
-        //         foreach ($temp as $value) {
-        //             if ($value['id'] !== $handler) {
-        //                 $handlers[] = $value;
-        //             }
-        //         }
-
-        //         $temp = $this->getHandler($station_id, $wf->getReviewPlace());
-        //         foreach ($temp as $value) {
-        //             if ($value['id'] !== $handler) {
-        //                 $reviewers[] = $value;
-        //             }
-        //         }
-        //     }
-        // }
-
         //
         $res['code'] = EXIT_SUCCESS;
         $res['data'] = [
@@ -272,7 +248,6 @@ class Dts extends BaseController
             'handlers'       => $handlers,
             'reviewers'      => $reviewers,
         ];
-        // $res['extra'] = $view;
 
         return $this->respond($res);
     }
@@ -425,16 +400,6 @@ class Dts extends BaseController
         if (!isset($metadata['auth'])) {
             return [];
         }
-
-        // 获取流程权限
-        $model      = new WorkflowAuthModel();
-        $columnName = ['id'];
-        $query      = ['alias' => $metadata['auth']];
-        $wfAuthId   = $model->getByAlias($columnName, $query);
-
-        // 获取角色，多个id
-        $model  = new RoleWorkflowAuthorityModel();
-        $roleId = $model->getByWFAuthority($wfAuthId['id']);
 
         // 获取用户Id
         $model  = new UserRoleModel();

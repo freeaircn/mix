@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-08 20:41:37
+ * @LastEditTime: 2022-04-11 14:30:13
  */
 
 namespace App\Models\Admin;
@@ -15,19 +15,13 @@ class RoleMenuModel extends Model
 {
     protected $DBGroup = 'mix';
 
-    protected $table = 'app_role_menu';
-    // protected $primaryKey    = 'id';
+    protected $table         = 'app_role_menu';
     protected $allowedFields = ['role_id', 'menu_id'];
-
-    // protected $useAutoIncrement = true;
 
     protected $returnType     = 'array';
     protected $useSoftDeletes = false;
 
     protected $useTimestamps = false;
-    // protected $createdField  = 'created_at';
-    // protected $updatedField  = 'updated_at';
-    // protected $deletedField  = 'deleted_at';
 
     public function getMenuByRole($role_id = null)
     {
@@ -69,10 +63,8 @@ class RoleMenuModel extends Model
             return false;
         }
 
+        $this->transStart();
         $this->where('role_id', $role_id)->delete();
-
-        $num = count($menus);
-        $cnt = 0;
         foreach ($menus as $v) {
             if (is_numeric($v)) {
                 $data = [
@@ -80,11 +72,15 @@ class RoleMenuModel extends Model
                     'menu_id' => $v,
                 ];
                 $this->insert($data);
-                $cnt++;
+                unset($data);
             }
         }
+        $this->transComplete();
 
-        return ($cnt == $num) ? true : false;
+        if ($this->transStatus() === false) {
+            return false;
+        } else {
+            return true;
+        }
     }
-
 }

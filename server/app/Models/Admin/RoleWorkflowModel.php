@@ -4,19 +4,19 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-11 14:29:43
+ * @LastEditTime: 2022-04-12 11:25:47
  */
 
 namespace App\Models\Admin;
 
 use CodeIgniter\Model;
 
-class RoleApiModel extends Model
+class RoleWorkflowModel extends Model
 {
     protected $DBGroup = 'mix';
 
-    protected $table         = 'app_role_api';
-    protected $allowedFields = ['role_id', 'api_id'];
+    protected $table         = 'app_role_workflow';
+    protected $allowedFields = ['role_id', 'wf_id'];
 
     protected $returnType     = 'array';
     protected $useSoftDeletes = false;
@@ -29,9 +29,9 @@ class RoleApiModel extends Model
             return [];
         }
 
-        $res = $this->select('api_id')
+        $res = $this->select('wf_id')
             ->where('role_id', $role_id)
-            ->orderBy('api_id', 'ASC')
+            ->orderBy('wf_id', 'ASC')
             ->findAll();
 
         return $res;
@@ -43,21 +43,21 @@ class RoleApiModel extends Model
             return [];
         }
 
-        $db = $this->select('api_id')
+        $db = $this->select('wf_id')
             ->whereIn('role_id', $roleIds)
-            ->orderBy('api_id', 'ASC')
+            ->orderBy('wf_id', 'ASC')
             ->findAll();
 
         $res = [];
         foreach ($db as $value) {
-            $res[] = $value['api_id'];
+            $res[] = $value['wf_id'];
         }
 
         // 多个角色，允许有相同的id，去除重复
         return array_unique($res);
     }
 
-    public function saveRoleApi($role_id = null, $api = [])
+    public function saveRoleWorkflow(string $role_id = null, array $wf = [])
     {
         if (!is_numeric($role_id)) {
             return false;
@@ -65,11 +65,11 @@ class RoleApiModel extends Model
 
         $this->transStart();
         $this->where('role_id', $role_id)->delete();
-        foreach ($api as $v) {
+        foreach ($wf as $v) {
             if (is_numeric($v)) {
                 $data = [
                     'role_id' => $role_id,
-                    'api_id' => $v,
+                    'wf_id'   => $v,
                 ];
                 $this->insert($data);
                 unset($data);

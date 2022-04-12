@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-08 15:58:37
+ * @LastEditTime: 2022-04-12 21:03:29
  */
 
 namespace App\Models\Admin;
@@ -16,17 +16,40 @@ class RoleDeptModel extends Model
     protected $DBGroup = 'mix';
 
     protected $table         = 'app_role_dept';
-    protected $allowedFields = ['role_id', 'dept_id'];
-
-    // protected $useAutoIncrement = true;
+    protected $allowedFields = ['role_id', 'dept_id', 'data_writable', 'is_default'];
 
     protected $returnType     = 'array';
     protected $useSoftDeletes = false;
 
     protected $useTimestamps = false;
-    // protected $createdField  = 'created_at';
-    // protected $updatedField  = 'updated_at';
-    // protected $deletedField  = 'deleted_at';
+
+    public function getByRoleId(string $role_id = null)
+    {
+        if (!is_numeric($role_id)) {
+            return [];
+        }
+
+        $res = $this->select('dept_id')
+            ->where('role_id', $role_id)
+            ->orderBy('dept_id', 'ASC')
+            ->findAll();
+
+        return $res;
+    }
+
+    public function getByRoleId2(string $role_id = null)
+    {
+        if (!is_numeric($role_id)) {
+            return [];
+        }
+
+        $res = $this->select('role_id, dept_id, data_writable, is_default')
+            ->where('role_id', $role_id)
+            ->orderBy('dept_id', 'ASC')
+            ->findAll();
+
+        return $res;
+    }
 
     public function getByRoleIdsForAuth(array $roleIds = null)
     {
@@ -48,28 +71,48 @@ class RoleDeptModel extends Model
         return array_unique($res);
     }
 
-    // public function saveRoleMenu($role_id = null, $menus = [])
-    // {
-    //     if (!is_numeric($role_id)) {
-    //         return false;
-    //     }
+    public function saveRoleDept($role_id = null, $dept = [])
+    {
+        if (!is_numeric($role_id)) {
+            return false;
+        }
 
-    //     $this->where('role_id', $role_id)->delete();
+        $this->transStart();
+        $this->where('role_id', $role_id)->delete();
+        foreach ($dept as $v) {
+            if (is_numeric($v)) {
+                $data = [
+                    'role_id' => $role_id,
+                    'dept_id' => $v,
+                ];
+                $this->insert($data);
+                unset($data);
+            }
+        }
+        $this->transComplete();
 
-    //     $num = count($menus);
-    //     $cnt = 0;
-    //     foreach ($menus as $v) {
-    //         if (is_numeric($v)) {
-    //             $data = [
-    //                 'role_id' => $role_id,
-    //                 'menu_id' => $v,
-    //             ];
-    //             $this->insert($data);
-    //             $cnt++;
-    //         }
-    //     }
+        if ($this->transStatus() === false) {
+            return false;
+        } else {
+            return true;
+        }
+    }
 
-    //     return ($cnt == $num) ? true : false;
-    // }
+    public function setRoleDept(string $role_id = null, string $dept_id = null, array $data = [])
+    {
+        if (!is_numeric($role_id) || !is_numeric($role_id) || empty($data)) {
+            return false;
+        }
+
+        $this->transStart();
+        $this->where('role_id', $role_id)->where('dept_id', $dept_id)->set($data)->update();
+        $this->transComplete();
+
+        if ($this->transStatus() === false) {
+            return false;
+        } else {
+            return true;
+        }
+    }
 
 }

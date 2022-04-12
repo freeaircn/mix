@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-08 20:40:24
+ * @LastEditTime: 2022-04-12 15:01:26
  */
 
 namespace App\Controllers;
@@ -118,21 +118,13 @@ class Auth extends BaseController
             $model  = new RoleApiModel();
             $apiIds = $model->getByRoleIdsForAuth($roleIds);
             if (!empty($apiIds)) {
-                $model    = new ApiModel();
+                $model = new ApiModel();
+                // 读数据库时除掉了辅助树形显示的项type=2
                 $allowApi = $model->getByIds($apiIds);
             }
             //
             $model       = new RoleDeptModel();
             $allowDeptId = $model->getByRoleIdsForAuth($roleIds);
-            //
-            // $model         = new RoleWorkflowAuthorityModel();
-            // $wfAuthorityId = $model->getByRoles($roleIds);
-            // if (!empty($wfAuthorityId)) {
-            //     $model         = new WorkflowAuthorityModel();
-            //     $columnName    = ['alias'];
-            //     $query         = $wfAuthorityId;
-            //     $allowWorkFlow = $model->getAliasByWhereInId($columnName, $query);
-            // }
         }
 
         // 用户头像文件
@@ -181,8 +173,7 @@ class Auth extends BaseController
         $sessionData['displayedDept']       = $displayedDept;
         $sessionData['ownDirectDataDeptId'] = $ownDirectDataDeptId;
         // belongToDeptId
-        //
-        $sessionData['wfAuthority'] = $allowWorkFlow;
+
         $this->session->set($sessionData);
 
         // 日志

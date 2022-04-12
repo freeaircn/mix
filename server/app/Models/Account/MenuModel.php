@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-08 20:54:02
+ * @LastEditTime: 2022-04-11 09:47:37
  */
 
 namespace App\Models\Account;
@@ -33,9 +33,9 @@ class MenuModel extends Model
         $selectSQL = 'id, pid, name, path, component, redirect, hideChildrenInMenu, title, icon, keepAlive, meta_hidden, hiddenHeaderContent, hidden, permission, target';
         $builder   = $this->select($selectSQL);
 
-        if (isset($queryParam['type']) && $queryParam['type'] === '1') {
-            $builder->where('type', '1');
-        }
+        // if (isset($queryParam['type']) && $queryParam['type'] === '1') {
+        //     $builder->where('type', '1');
+        // }
         if (isset($queryParam['pageId']) && !empty($queryParam['pageId'])) {
             $builder->whereIn('id', $queryParam['pageId']);
         }
@@ -97,46 +97,4 @@ class MenuModel extends Model
 
         return $res;
     }
-
-    // public function getApiAclByMenuId(array $menuId = null)
-    // {
-    //     if (!is_array($menuId) || empty($menuId)) {
-    //         return [];
-    //     }
-
-    //     $temp = $this->select('authority')
-    //         ->where('type', '2')
-    //         ->whereIn('id', $menuId)
-    //         ->orderBy('id', 'ASC')
-    //         ->findAll();
-
-    //     $res = [];
-    //     foreach ($temp as $value) {
-    //         if (!empty($value['authority'])) {
-    //             $res[] = $value['authority'];
-    //         }
-    //     }
-
-    //     return $res;
-    // }
-
-    // public function getPageIdByMenuId(array $menuId = null)
-    // {
-    //     if (!is_array($menuId) || empty($menuId)) {
-    //         return [];
-    //     }
-
-    //     $temp = $this->select('id')
-    //         ->where('type', '1')
-    //         ->whereIn('id', $menuId)
-    //         ->orderBy('id', 'ASC')
-    //         ->findAll();
-
-    //     $res = [];
-    //     foreach ($temp as $value) {
-    //         $res[] = $value['id'];
-    //     }
-
-    //     return $res;
-    // }
 }

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-08 16:09:02
+ * @LastEditTime: 2022-04-12 15:01:33
  */
 
 namespace App\Controllers;
@@ -47,9 +47,6 @@ class Account extends BaseController
                 continue;
             }
             if ($key === 'allowDeptId') {
-                continue;
-            }
-            if ($key === 'wfAuthority') {
                 continue;
             }
 

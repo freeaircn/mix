@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-30 20:13:01
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-11 14:45:46
+ * @LastEditTime: 2022-04-12 20:01:35
 -->
 <template>
   <a-modal
@@ -22,40 +22,22 @@
       :label-col="labelCol"
       :wrapper-col="wrapperCol"
     >
-      <a-form-model-item label="标题" prop="title">
-        <a-input v-model="record.title"></a-input>
+      <a-form-model-item label="部门" prop="name">
+        <a-input v-model="record.name" readOnly></a-input>
       </a-form-model-item>
 
-      <a-form-model-item label="类型" prop="type">
-        <a-select v-model="record.type" placeholder="请选择" >
-          <a-select-option value="0">辅助显示</a-select-option>
-          <a-select-option value="2">API</a-select-option>
+      <a-form-model-item label="数据写权限" prop="data_writable">
+        <a-select v-model="record.data_writable" placeholder="请选择" >
+          <a-select-option value="0">否</a-select-option>
+          <a-select-option value="1">是</a-select-option>
         </a-select>
       </a-form-model-item>
 
-      <a-form-model-item label="API" prop="api">
-        <a-input v-model="record.api"></a-input>
-      </a-form-model-item>
-
-      <a-form-model-item label="方法" prop="method">
-        <a-select v-model="record.method" placeholder="请选择" >
-          <a-select-option value="read">读</a-select-option>
-          <a-select-option value="write">写</a-select-option>
+      <a-form-model-item label="默认部门（多部门）" prop="is_default">
+        <a-select v-model="record.is_default" placeholder="请选择" >
+          <a-select-option value="0">否</a-select-option>
+          <a-select-option value="1">是</a-select-option>
         </a-select>
-      </a-form-model-item>
-
-      <a-form-model-item label="上级" prop="pid">
-        <a-tree-select
-          v-model="record.pid"
-          style="width: 100%"
-          :treeData="treeData"
-          :replaceFields="{children:'children', title:'title', key:'id', value: 'id' }"
-          :dropdown-style="{ maxHeight: '400px', overflow: 'auto' }"
-          allow-clear
-          tree-default-expand-all
-          :disabled="record.pid && record.pid === '0'"
-        >
-        </a-tree-select>
       </a-form-model-item>
 
     </a-form-model>
@@ -65,7 +47,7 @@
 <script>
 
 export default {
-  name: 'Form',
+  name: 'BlankForm2',
   props: {
     visible: {
       type: Boolean,
@@ -74,17 +56,12 @@ export default {
     record: {
       type: Object,
       default: null
-    },
-    treeData: {
-      type: Array,
-      default: () => []
     }
   },
   data () {
     return {
       title: '新建',
       modalVisible: false,
-      // pid: '',
       labelCol: {
         xs: { span: 24 },
         sm: { span: 7 }
@@ -94,8 +71,8 @@ export default {
         sm: { span: 13 }
       },
       rules: {
-        title: [{ required: true, message: '请输入', trigger: 'changed' }],
-        type: [{ required: true, message: '请选择', trigger: 'changed' }]
+        data_writable: [{ required: true, message: '请选择', trigger: 'blur' }],
+        is_default: [{ required: true, message: '请选择', trigger: 'blur' }]
       }
     }
   },
