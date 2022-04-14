@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-08 15:39:51
+ * @LastEditTime: 2022-04-14 15:50:32
  */
 
 namespace Config;
@@ -191,20 +191,24 @@ class Validation
         'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
     ];
 
-    // public $DtsGetBlankForm = [
-
-    // ];
+    public $DtsGetDeviceList = [
+        'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
+    ];
 
     public $DtsPostDraft = [
-        // 'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
-        'type'  => 'required|regex_match[^[1-9]$]',
-        'level' => 'required|regex_match[^[1-9]$]',
+        'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
+        'type'       => 'required|regex_match[^[1-9]$]',
+        'level'      => 'required|regex_match[^[1-9]$]',
     ];
 
     public $DtsGetList = [
-        // 'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
-        'limit'  => 'required|regex_match[^[1-9]\d{0,2}$]',
-        'offset' => 'required|regex_match[^[1-9]\d{0,9}$]',
+        'station_id' => 'required|regex_match[^\d{0,2}$]',
+        'type'       => 'required|regex_match[^[0-9]$]',
+        'level'      => 'required|regex_match[^[0-9]$]',
+        // 'dts_id'     => 'regex_match[/^[1-9]\d{0,19}$/]',
+        // 'creator'    => 'regex_match[/^([\x{4e00}-\x{9fa5}]{1,6})$/u]',
+        'limit'      => 'required|regex_match[^[1-9]\d{0,2}$]',
+        'offset'     => 'required|regex_match[^[1-9]\d{0,9}$]',
     ];
 
     public $DtsGetDetails = [

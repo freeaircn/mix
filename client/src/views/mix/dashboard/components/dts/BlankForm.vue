@@ -3,13 +3,10 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-08 15:37:33
+ * @LastEditTime: 2022-04-14 15:53:46
 -->
 <template>
   <page-header-wrapper :title="false">
-    <a-card :title="userInfo.displayedDept" :bordered="false" :headStyle="{marginBottom: '8px'}">
-    </a-card>
-
     <a-card title="新问题单" :bordered="false" :body-style="{marginBottom: '8px'}" >
       <a-form-model
         ref="form"
@@ -18,6 +15,13 @@
         :label-col="labelCol"
         :wrapper-col="wrapperCol"
       >
+        <a-form-model-item label="站点" prop="station_id">
+          <a-select v-model="record.station_id" @change="onStationSelectChange" placeholder="请选择" >
+            <a-select-option v-for="d in stationItems" :key="d.id" :value="d.id">
+              {{ d.name }}
+            </a-select-option>
+          </a-select>
+        </a-form-model-item>
         <a-form-model-item label="类别" prop="type">
           <a-radio-group name="radioGroup1" v-model="record.type">
             <a-radio value="1">隐患</a-radio>
@@ -27,7 +31,7 @@
         <a-form-model-item label="标题" prop="title">
           <a-input v-model="record.title"></a-input>
         </a-form-model-item>
-        <a-form-model-item label="影响程度" prop="level">
+        <a-form-model-item label="影响等级" prop="level">
           <a-select v-model="record.level" placeholder="请选择" >
             <a-select-option value="1">紧急</a-select-option>
             <a-select-option value="2">严重</a-select-option>
@@ -37,7 +41,7 @@
 
         <a-form-model-item label="设备" prop="device">
           <a-cascader
-            :options="deviceOptions"
+            :options="deviceItems"
             v-model="device"
             :allowClear="true"
             expand-trigger="hover"
@@ -77,7 +81,7 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { getBlankForm, postDraft } from '@/api/mix/dts'
+import { getBlankForm, getDeviceList, postDraft } from '@/api/mix/dts'
 import { listToTree } from '@/utils/util'
 
 export default {
@@ -92,15 +96,18 @@ export default {
       },
       //
       ready: false,
-      deviceOptions: [],
+      stationItems: [],
+      deviceItems: [],
       device: [],
       //
       record: {
+        station_id: '',
         description: ''
       },
       uploadAttachmentParam: { uid: '666' },
       attachmentList: [],
       rules: {
+        station_id: [{ required: true, message: '请选择', trigger: ['change'] }],
         type: [{ required: true, message: '请选择', trigger: ['change'] }],
         title: [{ required: true, message: '请输入', trigger: ['change'] }],
         level: [{ required: true, message: '请选择', trigger: ['change'] }]
@@ -121,16 +128,34 @@ export default {
     loadBlankForm () {
       getBlankForm()
         .then((data) => {
-            this.ready = true
-            //
             this.record.description = data.description
-            //
-            listToTree(data.deviceList, this.deviceOptions, this.userInfo.ownDirectDataDeptId)
+            this.stationItems = data.station
+            listToTree(data.deviceList, this.deviceItems, this.userInfo.allowDefaultDeptId)
+            this.record.station_id = this.userInfo.allowDefaultDeptId
+            this.ready = true
           })
           //  网络异常，清空页面数据显示，防止错误的操作
           .catch((err) => {
-            this.deviceOptions.splice(0, this.deviceOptions.length)
+            this.deviceItems.splice(0, this.deviceItems.length)
             this.record.description = ''
+            this.ready = false
+            if (err.response) {
+            }
+          })
+    },
+
+    onStationSelectChange (value) {
+      const query = { station_id: value }
+      getDeviceList(query)
+        .then((data) => {
+            this.deviceItems.splice(0, this.deviceItems.length)
+            listToTree(data.deviceList, this.deviceItems, value)
+            this.ready = true
+          })
+          //  网络异常，清空页面数据显示，防止错误的操作
+          .catch((err) => {
+            this.deviceItems.splice(0, this.deviceItems.length)
+            this.ready = false
             if (err.response) {
             }
           })
@@ -176,6 +201,7 @@ export default {
             })
             //  网络异常，清空页面数据显示，防止错误的操作
             .catch((err) => {
+              this.ready = false
               if (err.response) {
               }
             })

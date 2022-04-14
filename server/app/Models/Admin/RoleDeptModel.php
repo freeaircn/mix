@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-12 21:03:29
+ * @LastEditTime: 2022-04-14 09:54:36
  */
 
 namespace App\Models\Admin;
@@ -57,18 +57,19 @@ class RoleDeptModel extends Model
             return [];
         }
 
-        $db = $this->select('dept_id')
+        $db = $this->select('dept_id, role_id, dept_id, data_writable, is_default')
             ->whereIn('role_id', $roleIds)
             ->orderBy('dept_id', 'ASC')
             ->findAll();
 
-        $res = [];
-        foreach ($db as $value) {
-            $res[] = $value['dept_id'];
-        }
+        return $db;
+        // $res = [];
+        // foreach ($db as $value) {
+        //     $res[] = $value['dept_id'];
+        // }
 
-        // 多个角色，允许有相同的id，去除重复
-        return array_unique($res);
+        // // 多个角色，允许有相同的id，去除重复
+        // return array_unique($res);
     }
 
     public function saveRoleDept($role_id = null, $dept = [])
@@ -80,6 +81,36 @@ class RoleDeptModel extends Model
         $this->transStart();
         $this->where('role_id', $role_id)->delete();
         foreach ($dept as $v) {
+            if (is_numeric($v)) {
+                $data = [
+                    'role_id' => $role_id,
+                    'dept_id' => $v,
+                ];
+                $this->insert($data);
+                unset($data);
+            }
+        }
+        $this->transComplete();
+
+        if ($this->transStatus() === false) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    public function updateRoleDept(string $role_id = null, array $delete = [], array $add = [])
+    {
+        if (!is_numeric($role_id)) {
+            return false;
+        }
+
+        $this->transStart();
+        foreach ($delete as $d) {
+            $this->where('role_id', $role_id)->where('dept_id', $d)->delete();
+        }
+
+        foreach ($add as $v) {
             if (is_numeric($v)) {
                 $data = [
                     'role_id' => $role_id,

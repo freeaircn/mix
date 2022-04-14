@@ -1,9 +1,5 @@
 <template>
   <page-header-wrapper :title="false">
-
-    <a-card :title="userInfo.displayedDept" :bordered="false" :headStyle="{marginBottom: '8px'}">
-    </a-card>
-
     <a-card :bordered="false" title="进度" :loading="loading" :body-style="{marginBottom: '8px', marginRight: '100px'}">
       <router-link slot="extra" to="/dashboard/dts/list">返回</router-link>
 
@@ -48,13 +44,16 @@
         <a-textarea id="textarea_id" v-model="details.description" :defaultValue="details.description" :rows="9" readOnly/>
       </div>
 
-      <div style="margin-top: 8px; margin-bottom: 8px">进展:</div>
-      <div style="width: 100%">
-        <a-textarea id="textarea_id" v-model="details.progress" :defaultValue="details.progress" :rows="8" readOnly/>
+      <div v-if="(details.progress != null)" style="margin-top: 8px; margin-bottom: 8px">进展:</div>
+      <div v-if="(details.progress != null)" style="width: 100%" >
+        <a-textarea
+          id="textarea_id"
+          v-model="details.progress"
+          :rows="8"
+          readOnly/>
       </div>
     </a-card>
 
-    <!-- <a-card v-if="OpVisible" :bordered="false" title="操作" :loading="loading" :body-style="{marginBottom: '8px'}"> -->
     <a-card :bordered="false" title="操作" :loading="loading" :body-style="{marginBottom: '8px'}">
       <router-link slot="extra" to="/dashboard/dts/list">返回</router-link>
       <div style="width: 100%">
@@ -64,51 +63,10 @@
           </a-form-model-item>
           <a-form-model-item>
             <a-button type="primary" @click="handleSubmitNewProgress" style="margin-top: 8px; margin-right: 16px">更新进展</a-button>
-            <a-button-group>
-              <a-button v-if="isCheck" @click="handleChangeHandler">更换处理人</a-button>
-              <a-button v-if="isCheck" @click="handleToReview">提交审核</a-button>
-              <a-button v-if="isReview" @click="handleToCheckAgain">重新检查</a-button>
-              <a-button v-if="isReview" @click="handleToResolve">解决</a-button>
-              <a-button v-if="isCreator" @click="handleToClose">关闭</a-button>
-            </a-button-group>
           </a-form-model-item>
         </a-form-model>
       </div>
     </a-card>
-
-    <a-modal
-      title="更换处理人"
-      :visible="newHandlerDialogVisible"
-      :centered="true"
-      :maskClosable="false"
-      okText="提交"
-      @ok="onSubmitNewHandler"
-      @cancel="() => { this.newHandlerDialogVisible = false }"
-    >
-      <div style="margin-bottom: 8px">新处理人:</div>
-      <a-select v-model="newHandler" placeholder="请选择" style="width: 60%">
-        <a-select-option v-for="d in handlerOptions" :key="d.id" :value="d.id" :disabled="d.status === '0'">
-          {{ d.username }}
-        </a-select-option>
-      </a-select>
-    </a-modal>
-
-    <a-modal
-      title="提交审核"
-      :visible="reviewDialogVisible"
-      :centered="true"
-      :maskClosable="false"
-      okText="提交"
-      @ok="onSubmitReview"
-      @cancel="() => { this.reviewDialogVisible = false }"
-    >
-      <div style="margin-bottom: 8px">审核人:</div>
-      <a-select v-model="reviewer" placeholder="请选择" style="width: 60%">
-        <a-select-option v-for="d in reviewerOptions" :key="d.id" :value="d.id" :disabled="d.status === '0'">
-          {{ d.username }}
-        </a-select-option>
-      </a-select>
-    </a-modal>
 
   </page-header-wrapper>
 </template>
@@ -116,7 +74,7 @@
 <script>
 import { mapGetters } from 'vuex'
 import { baseMixin } from '@/store/app-mixin'
-import { getDetails, putProgress, putDtsTicketHandler, postDtsTicketToReview } from '@/api/mix/dts'
+import { getDetails, putProgress } from '@/api/mix/dts'
 
 export default {
   name: 'DtsTicketDetails',
@@ -144,29 +102,14 @@ export default {
       },
       newProgressTpl: '',
       //
-      operation: {},
-      activeKey: ['1'],
-      //
-      isCreator: false,
-      isCheck: false,
-      isReview: false,
-      //
-      newHandlerDialogVisible: false,
-      handlerOptions: [],
-      newHandler: undefined,
-      //
-      reviewDialogVisible: false,
-      reviewerOptions: [],
-      reviewer: undefined
+      operation: {}
+      // activeKey: ['1'],
     }
   },
   computed: {
     ...mapGetters([
       'userInfo'
-    ]),
-    OpVisible: function () {
-      return this.isCreator || this.isCheck || this.isReview
-    }
+    ])
   },
   created () {
     this.dts_id = (this.$route.params.id) ? this.$route.params.id : '0'
@@ -175,28 +118,19 @@ export default {
     this.onQueryDetails()
   },
   methods: {
-
     // 查询
     onQueryDetails () {
       if (this.dts_id === '0') {
         return
       }
-      const query = {
-        dts_id: this.dts_id
-      }
+      const query = { dts_id: this.dts_id }
       this.loading = true
       getDetails(query)
         .then(data => {
-          this.loading = false
-          //
           Object.assign(this.details, data.details)
           this.steps = data.steps
           this.newProgressTpl = data.newProgressTpl
-          this.isCreator = data.view.isCreator
-          this.isCheck = data.view.isCheck
-          this.isReview = data.view.isReview
-          this.handlerOptions = data.handlers
-          this.reviewerOptions = data.reviewers
+          this.loading = false
         })
         .catch((err) => {
           this.loading = false
@@ -210,7 +144,7 @@ export default {
         return
       }
       this.$confirm({
-        title: '你想要提交新进展吗？',
+        title: '提交新进展吗？',
         onOk: () => {
           const progress = {
             dts_id: this.dts_id,
@@ -219,9 +153,6 @@ export default {
           putProgress(progress)
             .then(() => {
               this.operation.newProgress = this.newProgressTpl
-              // this.details.progress = data
-              // const textarea = document.getElementById('textarea_id')
-              // textarea.scrollTop = 0
               window.scroll(0, 0)
               this.onQueryDetails()
             })
@@ -229,68 +160,6 @@ export default {
               if (err.response) {
               }
             })
-        }
-      })
-    },
-
-    //
-    handleChangeHandler () {
-      this.newHandlerDialogVisible = true
-    },
-
-    onSubmitNewHandler () {
-      if (this.newHandler !== undefined) {
-        this.newHandlerDialogVisible = false
-        const handler = {
-          station_id: this.userInfo.ownDirectDataDeptId,
-          dts_id: this.dts_id,
-          handler: this.newHandler
-        }
-        putDtsTicketHandler(handler)
-          .then(() => {
-            //
-            this.$router.push({ path: '/dashboard/dts/list' })
-          })
-          .catch((err) => {
-            this.newHandler = undefined
-            this.newHandlerDialogVisible = false
-            if (err.response) {
-            }
-          })
-      }
-    },
-
-    handleToReview () {
-      this.reviewDialogVisible = true
-    },
-
-    onSubmitReview () {
-      if (this.reviewer !== undefined) {
-        this.reviewDialogVisible = false
-        const reviewer = {
-          station_id: this.userInfo.ownDirectDataDeptId,
-          dts_id: this.dts_id,
-          reviewer: this.reviewer
-        }
-        postDtsTicketToReview(reviewer)
-          .then(() => {
-            this.$router.push({ path: '/dashboard/dts/list' })
-          })
-          .catch((err) => {
-            this.reviewer = undefined
-            this.reviewDialogVisible = false
-            if (err.response) {
-            }
-          })
-      }
-    },
-
-    //
-    handleToCheckAgain () {
-      this.$confirm({
-        title: '你想要重新检查吗？',
-        onOk: () => {
-          console.log('OK')
         }
       })
     },

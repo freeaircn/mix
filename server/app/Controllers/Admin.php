@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-12 21:08:59
+ * @LastEditTime: 2022-04-12 21:56:28
  */
 
 namespace App\Controllers;
@@ -427,7 +427,7 @@ class Admin extends BaseController
 
         if (!isset($client['method'])) {
             $role_id = $client['role_id'];
-            $dept    = $client['dept'];
+            $new     = $client['dept'];
             //
             $model = new RoleDeptModel();
             $db    = $model->getByRoleId($role_id);
@@ -436,7 +436,35 @@ class Admin extends BaseController
                 $old[] = $value['dept_id'];
             }
 
-            $result = $model->saveRoleDept($role_id, $dept);
+            $delete = [];
+            $add    = [];
+            foreach ($old as $o) {
+                $found = false;
+                foreach ($new as $n) {
+                    if ($o === $n) {
+                        $found = true;
+                        break;
+                    }
+                }
+                if ($found === false) {
+                    $delete[] = $o;
+                }
+            }
+
+            foreach ($new as $n) {
+                $found = false;
+                foreach ($old as $o) {
+                    if ($o === $n) {
+                        $found = true;
+                        break;
+                    }
+                }
+                if ($found === false) {
+                    $add[] = $n;
+                }
+            }
+
+            $result = $model->updateRoleDept($role_id, $delete, $add);
         }
 
         if (isset($client['method']) && $client['method'] === 'set') {

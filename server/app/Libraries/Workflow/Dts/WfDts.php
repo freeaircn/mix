@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2019-12-29 14:06:12
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-02 10:26:18
+ * @LastEditTime: 2022-04-14 16:38:27
  */
 
 namespace App\Libraries\Workflow\Dts;
@@ -35,6 +35,11 @@ class WfDts extends Core
         } else {
             return false;
         }
+    }
+
+    public function getWorkingPlace()
+    {
+        return 'working';
     }
 
     public function getReviewPlace()

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-08 16:00:41
+ * @LastEditTime: 2022-04-14 16:31:04
  */
 
 namespace App\Models\Dts;
@@ -100,6 +100,21 @@ class DtsModel extends Model
         }
         $builder = $this->select($selectSql);
         $builder->whereIn('station_id', $query['station_id']);
+        if (isset($query['type'])) {
+            $builder->where('type', $query['type']);
+        }
+        if (isset($query['level'])) {
+            $builder->where('level', $query['level']);
+        }
+        if (isset($query['dts_id'])) {
+            $builder->where('dts_id', $query['dts_id']);
+        }
+        if (isset($query['creator_id'])) {
+            $builder->where('creator_id', $query['creator_id']);
+        }
+        if (isset($query['place_at'])) {
+            $builder->where('place_at', $query['place_at']);
+        }
         $builder->where('status', $query['status']);
 
         $total = 0;
@@ -134,15 +149,19 @@ class DtsModel extends Model
         return isset($db[0]) ? $db[0] : [];
     }
 
-    public function updateProgress(string $progress = '', $where = [])
+    public function updateProgress(string $progress = '', string $dts_id = '')
     {
-        if (empty($progress) || empty($where)) {
+        if (empty($dts_id)) {
             return false;
         }
+        if (empty($progress)) {
+            return true;
+        }
+
+        $this->transStart();
 
         $columnName = ['id', 'progress'];
-        $this->transStart();
-        $db = $this->getByDtsId($columnName, $where);
+        $db         = $this->getByDtsId($columnName, ['dts_id' => $dts_id]);
         if (empty($db)) {
             return false;
         }

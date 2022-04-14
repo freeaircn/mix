@@ -14,7 +14,7 @@ workflows:
                         isCheck: false
                         isReview: false
                         isCreator: false
-            handling:
+            working:
                 metadata:
                     name: '处理中'
                     auth: 'dts_auth_handling'
@@ -50,13 +50,13 @@ workflows:
                         isReview: false
                         isCreator: false
         transitions:
-            to_handling:
+            to_working:
                 from: create
-                to:   handling
+                to:   working
                 metadata:
                     role: 'WF_ALL'
             to_resolve:
-                from: handling
+                from: working
                 to:   resolve
                 metadata:
                     role: 'WF_ALL'
@@ -66,7 +66,7 @@ workflows:
                 metadata:
                     role: 'WF_ALL'
             to_cancel:
-                from: [handling]
+                from: [working]
                 to:   cancel
                 metadata:
                     role: 'WF_ALL'

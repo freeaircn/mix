@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-12 15:01:26
+ * @LastEditTime: 2022-04-14 10:33:42
  */
 
 namespace App\Controllers;
@@ -100,10 +100,12 @@ class Auth extends BaseController
         $userModel->updateLastLoginAndIP($user['id'], $ip_address);
 
         // 查询用户权限
-        $allowPageId   = [];
-        $allowApi      = [];
-        $allowDeptId   = [];
-        $allowWorkFlow = [];
+        $allowPageId        = [];
+        $allowApi           = [];
+        $allowDefaultDeptId = '0';
+        $allowReadDeptId    = [];
+        $allowWriteDeptId   = [];
+        $allowWorkFlow      = [];
         //
         $model   = new UserRoleModel();
         $roleIds = $model->getUserRole($user['id']);
@@ -123,8 +125,21 @@ class Auth extends BaseController
                 $allowApi = $model->getByIds($apiIds);
             }
             //
-            $model       = new RoleDeptModel();
-            $allowDeptId = $model->getByRoleIdsForAuth($roleIds);
+            $model = new RoleDeptModel();
+            $db    = $model->getByRoleIdsForAuth($roleIds);
+            foreach ($db as $d) {
+                $allowReadDeptId[] = $d['dept_id'];
+                if ($d['data_writable'] === '1') {
+                    $allowWriteDeptId[] = $d['dept_id'];
+                }
+                if ($d['is_default'] === '1') {
+                    $allowDefaultDeptId = $d['dept_id'];
+                }
+            }
+        }
+        $deptIds = [];
+        if (!empty($user['dept_ids'])) {
+            $deptIds = explode("+", trim($user['dept_ids'], '+'));
         }
 
         // 用户头像文件
@@ -136,43 +151,44 @@ class Auth extends BaseController
             }
         }
 
-        // 用户上级部门，用户拥有数据CRUD的部门
-        $deptIds             = [];
-        $ownDirectDataDeptId = '0';
-        $displayedDept       = '';
-        if (!empty($user['dept_ids'])) {
-            $deptIds = explode("+", trim($user['dept_ids'], '+'));
-            $model   = new DeptModel();
-            $db      = $model->getByIds(['id', 'name', 'dataMask'], $deptIds);
-            $cnt     = count($db);
-            if ($cnt > 0) {
-                $level = config('MyGlobalConfig')->userDeptLevel;
-                if ($cnt < $level) {
-                    $item          = end($db);
-                    $displayedDept = $item['name'];
-                    if ($item['dataMask'] == 1) {
-                        $ownDirectDataDeptId = $item['id'];
-                    }
-                } else {
-                    $item          = $db[$level - 1];
-                    $displayedDept = $item['name'];
-                    if ($item['dataMask'] == 1) {
-                        $ownDirectDataDeptId = $item['id'];
-                    }
-                }
-            }
+        // // 用户上级部门，用户拥有数据CRUD的部门
+        // $deptIds             = [];
+        // $ownDirectDataDeptId = '0';
+        // $displayedDept       = '';
+        // if (!empty($user['dept_ids'])) {
+        //     $deptIds = explode("+", trim($user['dept_ids'], '+'));
+        //     $model   = new DeptModel();
+        //     $db      = $model->getByIds(['id', 'name', 'dataMask'], $deptIds);
+        //     $cnt     = count($db);
+        //     if ($cnt > 0) {
+        //         $level = config('MyGlobalConfig')->userDeptLevel;
+        //         if ($cnt < $level) {
+        //             $item          = end($db);
+        //             $displayedDept = $item['name'];
+        //             if ($item['dataMask'] == 1) {
+        //                 $ownDirectDataDeptId = $item['id'];
+        //             }
+        //         } else {
+        //             $item          = $db[$level - 1];
+        //             $displayedDept = $item['name'];
+        //             if ($item['dataMask'] == 1) {
+        //                 $ownDirectDataDeptId = $item['id'];
+        //             }
+        //         }
+        //     }
 
-        }
+        // }
 
         // session
-        $user['dept_ids']                   = $deptIds;
-        $sessionData                        = $user;
-        $sessionData['allowApi']            = $allowApi;
-        $sessionData['allowPageId']         = $allowPageId;
-        $sessionData['allowDeptId']         = $allowDeptId;
-        $sessionData['displayedDept']       = $displayedDept;
-        $sessionData['ownDirectDataDeptId'] = $ownDirectDataDeptId;
-        // belongToDeptId
+        $sessionData                       = $user;
+        $sessionData['allowApi']           = $allowApi;
+        $sessionData['allowPageId']        = $allowPageId;
+        $sessionData['allowDefaultDeptId'] = $allowDefaultDeptId;
+        $sessionData['allowReadDeptId']    = $allowReadDeptId;
+        $sessionData['allowWriteDeptId']   = $allowWriteDeptId;
+        $sessionData['dept_ids']           = $deptIds;
+        //
+        $sessionData['displayedDept'] = 'T';
 
         $this->session->set($sessionData);
 

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-08 16:15:00
+ * @LastEditTime: 2022-04-14 14:55:33
  */
 
 namespace App\Models\Dts;
@@ -89,6 +89,24 @@ class UserModel extends Model
             $selectSql = $selectSql . $name . ', ';
         }
         $builder = $this->select($selectSql);
+
+        $db = $builder->findAll();
+
+        return $db;
+    }
+
+    public function getByUsername(array $columnName = [], string $username = '')
+    {
+        if (empty($columnName) || empty($username)) {
+            return [];
+        }
+
+        $selectSql = '';
+        foreach ($columnName as $name) {
+            $selectSql = $selectSql . $name . ', ';
+        }
+        $builder = $this->select($selectSql);
+        $builder->where('username', $username);
 
         $db = $builder->findAll();
 

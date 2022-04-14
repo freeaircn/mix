@@ -1,72 +1,76 @@
 <template>
   <page-header-wrapper :title="false">
 
-    <a-card :title="userInfo.displayedDept" :bordered="false" :headStyle="{marginBottom: '8px'}">
-    </a-card>
-
-    <a-card :bordered="false" title="问题单" :body-style="{marginBottom: '8px'}">
-      <!-- <router-link slot="extra" to="/dashboard/dts/new">新建</router-link> -->
+    <a-card :bordered="false" title="隐患 缺陷" :body-style="{marginBottom: '8px'}">
 
       <div class="table-page-search-wrapper">
-        <a-form layout="inline">
+        <a-form layout="inline" :label-col="labelCol" :wrapper-col="wrapperCol">
           <a-row :gutter="48">
-            <!-- <a-col :md="8" :sm="24">
-              <a-form-item label="规则编号">
-                <a-input v-model="queryParam.id" placeholder=""/>
-              </a-form-item>
+            <a-col :md="8" :sm="24">
+              <a-form-model-item label="站点" >
+                <a-select v-model="queryParam.station_id" placeholder="请选择" >
+                  <a-select-option v-for="d in stationItems" :key="d.id" :value="d.id">
+                    {{ d.name }}
+                  </a-select-option>
+                </a-select>
+              </a-form-model-item>
             </a-col>
             <a-col :md="8" :sm="24">
-              <a-form-item label="使用状态">
-                <a-select v-model="queryParam.status" placeholder="请选择" default-value="0">
+              <a-form-item label="类型">
+                <a-select v-model="queryParam.type" placeholder="请选择" default-value="0">
                   <a-select-option value="0">全部</a-select-option>
-                  <a-select-option value="1">关闭</a-select-option>
-                  <a-select-option value="2">运行中</a-select-option>
+                  <a-select-option value="1">隐患</a-select-option>
+                  <a-select-option value="2">缺陷</a-select-option>
                 </a-select>
               </a-form-item>
-            </a-col> -->
-            <!-- <template v-if="advanced">
+            </a-col>
+            <template v-if="advanced">
               <a-col :md="8" :sm="24">
-                <a-form-item label="调用次数">
-                  <a-input-number v-model="queryParam.callNo" style="width: 100%"/>
-                </a-form-item>
-              </a-col>
-              <a-col :md="8" :sm="24">
-                <a-form-item label="更新日期">
-                  <a-date-picker v-model="queryParam.date" style="width: 100%" placeholder="请输入更新日期"/>
-                </a-form-item>
-              </a-col>
-              <a-col :md="8" :sm="24">
-                <a-form-item label="使用状态">
-                  <a-select v-model="queryParam.useStatus" placeholder="请选择" default-value="0">
+                <a-form-item label="影响等级">
+                  <a-select v-model="queryParam.level" placeholder="请选择" default-value="0">
                     <a-select-option value="0">全部</a-select-option>
-                    <a-select-option value="1">关闭</a-select-option>
-                    <a-select-option value="2">运行中</a-select-option>
+                    <a-select-option value="1">紧急</a-select-option>
+                    <a-select-option value="2">严重</a-select-option>
+                    <a-select-option value="3">一般</a-select-option>
                   </a-select>
                 </a-form-item>
               </a-col>
               <a-col :md="8" :sm="24">
-                <a-form-item label="使用状态">
-                  <a-select placeholder="请选择" default-value="0">
-                    <a-select-option value="0">全部</a-select-option>
-                    <a-select-option value="1">关闭</a-select-option>
-                    <a-select-option value="2">运行中</a-select-option>
-                  </a-select>
+                <a-form-item label="单号">
+                  <a-input v-model="queryParam.dts_id" placeholder=""/>
                 </a-form-item>
               </a-col>
-            </template> -->
+              <a-col :md="8" :sm="24">
+                <a-form-item label="创建人">
+                  <a-input v-model="queryParam.creator" placeholder=""/>
+                </a-form-item>
+              </a-col>
+              <a-col :md="8" :sm="24">
+                <a-form-model-item label="进度" >
+                  <a-select v-model="queryParam.place_at" placeholder="请选择" >
+                    <a-select-option v-for="d in workflowItems" :key="d.id" :value="d.alias">
+                      {{ d.name }}
+                    </a-select-option>
+                  </a-select>
+                </a-form-model-item>
+              </a-col>
+            </template>
             <a-col :md="!advanced && 8 || 24" :sm="24">
               <span class="table-page-search-submitButtons" :style="advanced && { float: 'right', overflow: 'hidden' } || {} ">
-                <router-link slot="extra" to="/dashboard/dts/new"><a-button type="primary" :style="{ marginRight: '16px' }">新建</a-button></router-link>
-                <a-button @click="onQuery">查询</a-button>
-                <!-- <a-button style="margin-left: 8px" @click="() => this.queryParam = {}">重置</a-button> -->
-                <!-- <a @click="toggleAdvanced" style="margin-left: 8px">
+                <a-button type="primary" @click="onQuery(queryParam)">查询</a-button>
+                <a-button style="margin-left: 8px" @click="resetQueryParam">重置</a-button>
+                <a @click="toggleAdvanced" style="margin-left: 8px">
                   {{ advanced ? '收起' : '展开' }}
                   <a-icon :type="advanced ? 'up' : 'down'"/>
-                </a> -->
+                </a>
               </span>
             </a-col>
           </a-row>
         </a-form>
+      </div>
+
+      <div class="table-operator">
+        <router-link slot="extra" to="/dashboard/dts/new"><a-button type="primary">新建</a-button></router-link>
       </div>
 
       <a-table
@@ -109,11 +113,11 @@
 <script>
 import { mapGetters } from 'vuex'
 import { baseMixin } from '@/store/app-mixin'
-import { getList } from '@/api/mix/dts'
+import { getQueryParams, getList } from '@/api/mix/dts'
 
 const typeMap = {
   '1': { text: '隐患' },
-  '2': { text: '故障' }
+  '2': { text: '缺陷' }
 }
 
 const levelMap = {
@@ -131,7 +135,22 @@ export default {
   data () {
     return {
       advanced: false,
-      queryParam: {},
+      queryParam: {
+        station_id: '0',
+        type: '0',
+        level: '0',
+        dts_id: '',
+        creator: '',
+        place_at: 'all'
+      },
+      stationItems: [{ id: '0', name: '全部' }],
+      workflowItems: [{ alias: 'all', name: '全部' }],
+      labelCol: {
+        lg: { span: 7 }, sm: { span: 7 }
+      },
+      wrapperCol: {
+        lg: { span: 10 }, sm: { span: 17 }
+      },
 
       columns: [
         {
@@ -153,7 +172,7 @@ export default {
           scopedSlots: { customRender: 'type' }
         },
         {
-          title: '影响程度',
+          title: '影响等级',
           dataIndex: 'level',
           scopedSlots: { customRender: 'level' }
         },
@@ -203,11 +222,12 @@ export default {
       'userInfo'
     ])
   },
-  // created () {
-
-  // },
+  beforeMount () {
+    this.beforeQuery()
+  },
   mounted () {
-    this.onQuery()
+    this.queryParam.station_id = this.userInfo.allowDefaultDeptId
+    this.onQuery(this.queryParam)
   },
   methods: {
     toggleAdvanced () {
@@ -215,11 +235,35 @@ export default {
     },
 
     // 查询
-    onQuery () {
-      const query = {
+    beforeQuery () {
+      getQueryParams()
+        .then(res => {
+          res.station.forEach(element => {
+            this.stationItems.push(element)
+          })
+          res.workflow.forEach(element => {
+            this.workflowItems.push(element)
+          })
+        })
+        .catch(() => {
+          //
+        })
+    },
+
+    resetQueryParam () {
+      this.queryParam.station_id = this.userInfo.allowDefaultDeptId
+      this.queryParam.type = '0'
+      this.queryParam.level = '0'
+      this.queryParam.dts_id = ''
+      this.queryParam.creator = ''
+      this.queryParam.place_at = 'all'
+    },
+
+    onQuery (queryParam) {
+      const query = Object.assign(queryParam, {
         limit: this.pagination.pageSize,
         offset: 1
-      }
+      })
       this.pagination.current = 1
       this.loading = true
       getList(query)

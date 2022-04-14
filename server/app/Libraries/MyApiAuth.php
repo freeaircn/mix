@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-09-06 01:17:02
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-11 15:06:50
+ * @LastEditTime: 2022-04-14 10:21:50
  */
 
 namespace App\Libraries;
@@ -63,21 +63,6 @@ class MyApiAuth
         if (in_array($request, $allowApi) === false) {
             return '用户没有权限';
         }
-
-        // 数据
-        // $stationInSession = session('ownDirectDataDeptId');
-        // $stationInRequest = isset($_POST['station_id']) ? $_POST['station_id'] : null;
-        // if ($stationInRequest !== null) {
-        //     if ($stationInRequest != $stationInSession) {
-        //         return '没有访问权限';
-        //     }
-        // }
-        // $stationInRequest = isset($_GET['station_id']) ? $_GET['station_id'] : null;
-        // if ($stationInRequest !== null) {
-        //     if ($stationInRequest != $stationInSession) {
-        //         return '没有访问权限';
-        //     }
-        // }
 
         return true;
     }

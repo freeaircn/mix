@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-12 15:01:33
+ * @LastEditTime: 2022-04-14 10:19:56
  */
 
 namespace App\Controllers;
@@ -46,7 +46,10 @@ class Account extends BaseController
             if ($key === 'allowPageId') {
                 continue;
             }
-            if ($key === 'allowDeptId') {
+            if ($key === 'allowReadDeptId') {
+                continue;
+            }
+            if ($key === 'allowWriteDeptId') {
                 continue;
             }
 

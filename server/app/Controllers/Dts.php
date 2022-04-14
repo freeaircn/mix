@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-12 15:05:44
+ * @LastEditTime: 2022-04-14 16:44:59
  */
 
 namespace App\Controllers;
@@ -64,8 +64,12 @@ class Dts extends BaseController
         //     return $this->respond($res);
         // }
 
-        // $station_id  = $params['station_id'];
-        $station_id  = session('ownDirectDataDeptId');
+        $allowWriteDeptId = session('allowWriteDeptId');
+        $model            = new DeptModel();
+        $columnName       = ['id', 'name'];
+        $station          = $model->getByIds($columnName, $allowWriteDeptId);
+
+        $station_id  = session('allowDefaultDeptId');
         $description = $this->blankTpl;
         $deviceList  = $this->_getDeviceList($station_id);
 
@@ -76,6 +80,35 @@ class Dts extends BaseController
             $res['data'] = [
                 'description' => $description,
                 'deviceList'  => $deviceList,
+                'station'     => $station,
+            ];
+        }
+
+        return $this->respond($res);
+    }
+
+    public function getDeviceList()
+    {
+        $params = $this->request->getGet();
+
+        // 检查请求数据
+        if (!$this->validate('DtsGetDeviceList')) {
+            $res['error'] = $this->validator->getErrors();
+
+            $res['code'] = EXIT_ERROR;
+            $res['msg']  = '请求数据无效';
+            return $this->respond($res);
+        }
+
+        $station_id = $params['station_id'];
+        $deviceList = $this->_getDeviceList($station_id);
+
+        if (empty($deviceList)) {
+            $res['code'] = EXIT_ERROR;
+        } else {
+            $res['code'] = EXIT_SUCCESS;
+            $res['data'] = [
+                'deviceList' => $deviceList,
             ];
         }
 
@@ -100,10 +133,9 @@ class Dts extends BaseController
 
         $client = $this->request->getJSON(true);
         //
-        $uid        = session('id');
-        $station_id = session('ownDirectDataDeptId');
-        $draft      = [
-            'station_id'  => $station_id,
+        $uid   = session('id');
+        $draft = [
+            'station_id'  => $client['station_id'],
             'type'        => $client['type'],
             'title'       => $client['title'],
             'level'       => $client['level'],
@@ -141,6 +173,23 @@ class Dts extends BaseController
         return $this->respond($res);
     }
 
+    public function getQueryParams()
+    {
+        // $param = $this->request->getGet();
+
+        $allowReadDeptId = session('allowReadDeptId');
+        $model           = new DeptModel();
+        $columnName      = ['id', 'name'];
+        $station         = $model->getByIds($columnName, $allowReadDeptId);
+
+        $wf       = new WfDts();
+        $workflow = $wf->getPlaceMetaOfName();
+
+        $res['code'] = EXIT_SUCCESS;
+        $res['data'] = ['station' => $station, 'workflow' => $workflow];
+        return $this->respond($res);
+    }
+
     public function getList()
     {
         $param = $this->request->getGet();
@@ -154,11 +203,64 @@ class Dts extends BaseController
             return $this->respond($res);
         }
 
-        $query['station_id'] = session('allowDeptId');
-        $query['status']     = 'publish';
-        $query['limit']      = $param['limit'];
-        $query['offset']     = $param['offset'];
-        $columnName          = ['id', 'dts_id', 'station_id', 'type', 'title', 'level', 'place_at', 'created_at', 'updated_at', 'creator_id'];
+        if ($param['station_id'] === '0') {
+            $query['station_id'] = session('allowReadDeptId');
+        } else {
+            $query['station_id'] = [$param['station_id']];
+        }
+
+        if ($param['type'] !== '0') {
+            $query['type'] = $param['type'];
+        }
+
+        if ($param['level'] !== '0') {
+            $query['level'] = $param['level'];
+        }
+
+        if ($param['dts_id'] !== '') {
+            if (preg_match('/^[1-9]\d{0,19}$/', $param['dts_id'])) {
+                $query['dts_id'] = $param['dts_id'];
+            } else {
+                $query['dts_id'] = '0';
+            }
+        }
+
+        if ($param['creator'] !== '') {
+            if (preg_match('/^([\x{4e00}-\x{9fa5}]{1,6})$/u', $param['creator'])) {
+                $model      = new UserModel();
+                $columnName = ['id'];
+                $db         = $model->getByUsername($columnName, $param['creator']);
+
+                if (count($db) === 1) {
+                    $query['creator_id'] = $db[0]['id'];
+                } else {
+                    $res['code'] = EXIT_SUCCESS;
+                    $res['data'] = ['total' => 0, 'data' => []];
+                    return $this->respond($res);
+                }
+            } else {
+                $res['code'] = EXIT_SUCCESS;
+                $res['data'] = ['total' => 0, 'data' => []];
+                return $this->respond($res);
+            }
+        }
+
+        if ($param['place_at'] !== 'all') {
+            $wf       = new WfDts();
+            $workflow = $wf->getPlaceAlias();
+            if (in_array($param['place_at'], $workflow)) {
+                $query['place_at'] = $param['place_at'];
+            } else {
+                $res['code'] = EXIT_SUCCESS;
+                $res['data'] = ['total' => 0, 'data' => []];
+                return $this->respond($res);
+            }
+        }
+
+        $query['status'] = 'publish';
+        $query['limit']  = $param['limit'];
+        $query['offset'] = $param['offset'];
+        $columnName      = ['id', 'dts_id', 'station_id', 'type', 'title', 'level', 'place_at', 'created_at', 'updated_at', 'creator_id'];
 
         $model = new DtsModel();
         $db    = $model->getByLimitOffset($columnName, $query);
@@ -173,8 +275,9 @@ class Dts extends BaseController
         $data = $this->_getUserNameAndWorkflowName($db['data']);
         $data = $this->_getDeptName($data);
 
-        $res['code'] = EXIT_SUCCESS;
-        $res['data'] = ['total' => $db['total'], 'data' => $data];
+        $res['code']  = EXIT_SUCCESS;
+        $res['data']  = ['total' => $db['total'], 'data' => $data];
+        $res['debug'] = $param;
         return $this->respond($res);
     }
 
@@ -206,7 +309,7 @@ class Dts extends BaseController
         $details        = $db;
         $newProgressTpl = $this->updateTpl;
 
-        // id => name
+        // id -> name
         $details['type']  = $this->keyValueMap['type'][$db['type']];
         $details['level'] = $this->keyValueMap['level'][$db['level']];
 
@@ -223,30 +326,12 @@ class Dts extends BaseController
 
         $steps = $this->_getStepsBar($details['creator'], $details['reviewer'], $db['created_at'], $db['updated_at'], $db['place_at']);
 
-        // 进度
-        // $wf                  = new WfDts();
-        // $meta                = $wf->getPlaceMetadata($place);
-        // $details['place_at'] = $meta['name'];
-        // $wfPlaceAuth         = $meta['auth'];
-
-        // 用户权限
-        $view = [
-            'isCreator' => false,
-            'isCheck'   => false,
-            'isReview'  => false,
-        ];
-        $handlers  = [];
-        $reviewers = [];
-
         //
         $res['code'] = EXIT_SUCCESS;
         $res['data'] = [
             'details'        => $details,
             'steps'          => $steps,
             'newProgressTpl' => $newProgressTpl,
-            'view'           => $view,
-            'handlers'       => $handlers,
-            'reviewers'      => $reviewers,
         ];
 
         return $this->respond($res);
@@ -276,23 +361,18 @@ class Dts extends BaseController
             return $this->respond($res);
         }
 
-        $stationId = $this->session->get('dept_id');
-        if ($stationId !== $db['station_id']) {
+        $allowWriteDeptId = session('allowWriteDeptId');
+        if (!in_array($db['station_id'], $allowWriteDeptId)) {
             $res['code'] = EXIT_ERROR;
             $res['msg']  = '没有权限修改';
-            $res['x1']   = $stationId;
-            $res['x2']   = $db['station_id'];
-            return $this->respond($res);
         }
 
         $progress = $this->_getContentTplHead() . $client['progress'];
 
-        // $result = $model->updateProgress($progress, $where);
-        $result = true;
+        $result = $model->updateProgress($progress, $dts_id);
         if ($result !== false) {
             $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '更新进展成功';
-            // $res['data'] = $result;
+            $res['msg']  = '已更新进展';
         } else {
             $res['code'] = EXIT_ERROR;
         }

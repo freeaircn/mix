@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-12 15:06:30
+ * @LastEditTime: 2022-04-14 15:39:04
  */
 
 namespace Config;
@@ -139,7 +139,9 @@ $routes->group('api', function ($routes) {
     $routes->get('meters/statistic/chart/data', 'Meters::getStatisticChartData');
     $routes->get('meters/statistic/overall', 'Meters::getStatisticOverall');
     //
+    $routes->get('dts/query_params', 'Dts::getQueryParams');
     $routes->get('dts/blank_form', 'Dts::getBlankForm');
+    $routes->get('dts/device_list', 'Dts::getDeviceList');
     $routes->post('dts/draft', 'Dts::postDraft');
     $routes->get('dts/list', 'Dts::getList');
     $routes->get('dts/details', 'Dts::getDetails');

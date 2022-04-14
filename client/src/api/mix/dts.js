@@ -3,12 +3,14 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-07 22:26:57
+ * @LastEditTime: 2022-04-14 15:33:17
  */
 import request from '@/utils/request'
 
 const api = {
+  dts_query_params: '/dts/query_params',
   dts_blank_form: '/dts/blank_form',
+  dts_device_list: '/dts/device_list',
   dts_draft: '/dts/draft',
   dts_list: '/dts/list',
   //
@@ -19,6 +21,14 @@ const api = {
 }
 
 // DTS
+export function getQueryParams (params) {
+  return request({
+    url: api.dts_query_params,
+    method: 'get',
+    params: params
+  })
+}
+
 export function postDraft (data) {
   return request({
     url: api.dts_draft,
@@ -38,6 +48,14 @@ export function getList (params) {
 export function getBlankForm (params) {
   return request({
     url: api.dts_blank_form,
+    method: 'get',
+    params: params
+  })
+}
+
+export function getDeviceList (params) {
+  return request({
+    url: api.dts_device_list,
     method: 'get',
     params: params
   })

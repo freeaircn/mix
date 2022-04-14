@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2019-12-29 14:06:12
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-01 19:24:43
+ * @LastEditTime: 2022-04-14 15:02:12
  */
 
 namespace App\Libraries\Workflow;
@@ -159,6 +159,18 @@ class Core
             }
         }
         return false;
+    }
+
+    public function getPlaceAlias(): array
+    {
+        $temp = $this->placesMetadata;
+        $res  = [];
+
+        foreach ($temp as $key => $value) {
+            $res[] = $key;
+        }
+
+        return $res;
     }
 
     public function getPlaceMetaOfName(string $branch = 'branchA'): array
