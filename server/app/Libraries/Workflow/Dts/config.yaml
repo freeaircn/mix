@@ -8,47 +8,28 @@ workflows:
             create:
                 metadata:
                     name: '新建'
-                    auth: 'dts_auth_any'
-                    branchA: 'A'
-                    view:
-                        isCheck: false
-                        isReview: false
-                        isCreator: false
+                    allow:
+                        updateProgress: true
             working:
                 metadata:
                     name: '处理中'
-                    auth: 'dts_auth_handling'
-                    branchA: 'A'
-                    view:
-                        isCheck: true
-                        isReview: false
-                        isCreator: false
+                    allow:
+                        updateProgress: true
             resolve:
                 metadata:
                     name: '解决'
-                    auth: 'dts_auth_any'
-                    branchA: 'A'
-                    view:
-                        isCheck: false
-                        isReview: false
-                        isCreator: true
+                    allow:
+                        updateProgress: false
             close:
                 metadata:
                     name: '关闭'
-                    auth: 'dts_auth_any'
-                    branchA: 'A'
-                    view:
-                        isCheck: false
-                        isReview: false
-                        isCreator: false
+                    allow:
+                        updateProgress: false
             cancel:
                 metadata:
                     name: '取消'
-                    auth: 'dts_auth_any'
-                    view:
-                        isCheck: false
-                        isReview: false
-                        isCreator: false
+                    allow:
+                        updateProgress: false
         transitions:
             to_working:
                 from: create

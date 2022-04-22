@@ -56,28 +56,26 @@
 
     <a-card :bordered="false" title="操作" :loading="loading" :body-style="{marginBottom: '8px'}">
       <router-link slot="extra" to="/dashboard/dts/list">返回</router-link>
-      <div style="width: 100%">
-        <a-form-model :model="operation">
-          <a-form-model-item label="新进展">
-            <a-textarea v-model="operation.newProgress" :defaultValue="newProgressTpl" :rows="6" />
-          </a-form-model-item>
-          <a-form-model-item>
-            <a-button type="primary" @click="handleSubmitNewProgress" style="margin-top: 8px; margin-right: 16px">更新进展</a-button>
-          </a-form-model-item>
-        </a-form-model>
-      </div>
+      <a-button v-if="operation.allowUpdateProgress" type="primary" @click="reqUpdateProgress" style="margin-top: 8px; margin-right: 16px">更新进展</a-button>
     </a-card>
+
+    <my-form :visible.sync="visibleNewProgressDiag" title="新进展" :record="newProgress" @confirm="handleUpdateProgress">
+    </my-form>
 
   </page-header-wrapper>
 </template>
 
 <script>
+import MyForm from './Form'
 import { mapGetters } from 'vuex'
 import { baseMixin } from '@/store/app-mixin'
 import { getDetails, putProgress } from '@/api/mix/dts'
 
 export default {
   name: 'DtsTicketDetails',
+  components: {
+    MyForm
+  },
   mixins: [baseMixin],
   data () {
     return {
@@ -102,8 +100,12 @@ export default {
       },
       newProgressTpl: '',
       //
-      operation: {}
+      operation: {
+        allowUpdateProgress: false
+      },
       // activeKey: ['1'],
+      visibleNewProgressDiag: false,
+      newProgress: { content: '' }
     }
   },
   computed: {
@@ -130,6 +132,7 @@ export default {
           Object.assign(this.details, data.details)
           this.steps = data.steps
           this.newProgressTpl = data.newProgressTpl
+          this.operation = { ...data.operation }
           this.loading = false
         })
         .catch((err) => {
@@ -139,29 +142,49 @@ export default {
         })
     },
 
-    handleSubmitNewProgress () {
-      if (this.operation.newProgress === undefined) {
-        return
-      }
-      this.$confirm({
-        title: '提交新进展吗？',
-        onOk: () => {
-          const progress = {
+    reqUpdateProgress () {
+      this.newProgress.content = this.newProgressTpl
+      this.visibleNewProgressDiag = true
+
+      // if (this.operation.newProgress === undefined) {
+      //   return
+      // }
+      // this.$confirm({
+      //   title: '提交新进展吗？',
+      //   onOk: () => {
+      //     const progress = {
+      //       dts_id: this.dts_id,
+      //       progress: this.operation.newProgress
+      //     }
+      //     putProgress(progress)
+      //       .then(() => {
+      //         this.operation.newProgress = this.newProgressTpl
+      //         window.scroll(0, 0)
+      //         this.onQueryDetails()
+      //       })
+      //       .catch((err) => {
+      //         if (err.response) {
+      //         }
+      //       })
+      //   }
+      // })
+    },
+
+    handleUpdateProgress (record) {
+      const progress = {
             dts_id: this.dts_id,
-            progress: this.operation.newProgress
+            progress: record.content
           }
           putProgress(progress)
             .then(() => {
-              this.operation.newProgress = this.newProgressTpl
-              window.scroll(0, 0)
+              // this.operation.newProgress = this.newProgressTpl
+              // window.scroll(0, 0)
               this.onQueryDetails()
             })
             .catch((err) => {
               if (err.response) {
               }
             })
-        }
-      })
     },
 
     handleToResolve () {

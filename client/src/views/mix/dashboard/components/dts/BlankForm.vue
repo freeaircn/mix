@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-14 15:53:46
+ * @LastEditTime: 2022-04-22 23:18:41
 -->
 <template>
   <page-header-wrapper :title="false">
@@ -57,15 +57,14 @@
 
         <a-form-model-item label="附件" prop="attachment">
           <a-upload
-            accept="text/plain, image/jpeg, image/png, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-powerpoint, application/vnd.openxmlformats-officedocument.presentationml.presentation, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel, application/pdf, application/zip"
-            action="/api/dts/ticket/upload/attachment"
+            accept="text/plain, image/jpeg, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-powerpoint, application/vnd.openxmlformats-officedocument.presentationml.presentation, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel, application/pdf, application/zip"
+            action="/api/dts/attachment/upload"
             :before-upload="beforeUploadAttachment"
-            :data="uploadAttachmentParam"
-            :file-list="attachmentList"
-            :showUploadList="{ showDownloadIcon: true, showRemoveIcon: true }"
-            @download="onClickAttachment"
+            :showUploadList="{ showDownloadIcon: false, showRemoveIcon: true }"
+            :remove="onClickDelAttachment"
+            @change="afterUploadAttachment"
           >
-            <a-button> <a-icon type="upload" /> 点击上传 </a-button>
+            <a-button :disabled="disableUploadBtn"> <a-icon type="upload" /> 点击上传 </a-button>
           </a-upload>
         </a-form-model-item>
 
@@ -80,6 +79,7 @@
 </template>
 
 <script>
+import myConfig from '@/config/mix_config'
 import { mapGetters } from 'vuex'
 import { getBlankForm, getDeviceList, postDraft } from '@/api/mix/dts'
 import { listToTree } from '@/utils/util'
@@ -104,19 +104,22 @@ export default {
         station_id: '',
         description: ''
       },
-      uploadAttachmentParam: { uid: '666' },
-      attachmentList: [],
       rules: {
         station_id: [{ required: true, message: '请选择', trigger: ['change'] }],
         type: [{ required: true, message: '请选择', trigger: ['change'] }],
         title: [{ required: true, message: '请输入', trigger: ['change'] }],
         level: [{ required: true, message: '请选择', trigger: ['change'] }]
         // device: [{ required: true, message: '请选择', trigger: ['change'] }]
-      }
+      },
+      fileNumber: 1,
+      fileList: [],
+      disableUploadBtn: false
     }
   },
   created: function () {
     this.ready = false
+    this.fileNumber = 0
+    this.disableUploadBtn = false
     this.loadBlankForm()
   },
   computed: {
@@ -163,28 +166,53 @@ export default {
 
     // 附件
     beforeUploadAttachment (file) {
-      console.log(file)
       let fileType = file.type === 'text/plain' || file.type === 'image/jpeg' || file.type === 'image/png'
       fileType = fileType || file.type === 'application/msword' || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
       fileType = fileType || file.type === 'application/vnd.ms-powerpoint' || file.type === 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
       fileType = fileType || file.type === 'application/vnd.ms-excel' || file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       fileType = fileType || file.type === 'application/pdf' || file.type === 'application/zip'
       if (!fileType) {
-        this.$message.error('允许的文件类型: jpg, png, txt, pdf, doc, docx, xls, xlsx, ppt, pptx, zip')
+        this.$message.error('允许文件类型: jpg, png, txt, pdf, doc, docx, xls, xlsx, ppt, pptx, zip')
+        return false
       }
       //
-      const fileSize = file.size / 1024 / 1024 < 2
-      if (!fileSize) {
-        this.$message.error('允许的文件大小: 小于2MB')
+      if (file.size > myConfig.DtsAttachmentMaxSize) {
+        this.$message.error('文件大小超限')
+        return false
       }
-      return fileType && fileSize
+
+      return true
     },
 
-    onClickAttachment (file) {
-      console.log(file)
+    afterUploadAttachment (info) {
+      if (info.file.status === 'done') {
+        this.fileNumber = this.fileNumber + 1
+        this.disableUploadBtn = this.fileNumber >= myConfig.DtsAttachmentMaxNumber
+        this.fileList = info.fileList
+        this.$message.success('附件上传成功')
+      } else if (info.file.status === 'error') {
+        this.fileList = info.fileList
+        if (info.file.response.hasOwnProperty('msg')) {
+          this.$message.error(info.file.response.msg)
+        } else {
+          this.$message.error('附件上传失败')
+        }
+      }
+    },
+
+    onClickDelAttachment (file) {
+      const index = this.fileList.indexOf(file)
+      const newFileList = this.fileList.slice()
+      newFileList.splice(index, 1)
+      this.fileList = newFileList
+      return true
     },
 
     onSubmit () {
+      const files = []
+      this.fileList.forEach(element => {
+        files.push(element.response)
+      })
       this.$refs.form.validate(valid => {
         if (valid) {
           let temp = '+'
@@ -194,6 +222,7 @@ export default {
           //
           const data = { ...this.record }
           data.device = temp
+          data.files = files
 
           postDraft(data)
             .then(() => {

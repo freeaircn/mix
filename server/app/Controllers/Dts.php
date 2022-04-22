@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-14 16:46:11
+ * @LastEditTime: 2022-04-22 23:22:05
  */
 
 namespace App\Controllers;
@@ -16,8 +16,8 @@ use App\Models\Dts\DeptModel;
 use App\Models\Dts\DeviceModel;
 use App\Models\Dts\DtsModel;
 use App\Models\Dts\UserModel;
-use App\Models\Dts\UserRoleModel;
 use CodeIgniter\API\ResponseTrait;
+use CodeIgniter\Files\Exceptions\FileException;
 
 class Dts extends BaseController
 {
@@ -115,9 +115,50 @@ class Dts extends BaseController
         return $this->respond($res);
     }
 
-    public function postTicketAttachment()
+    public function uploadAttachment()
     {
-        # code...
+        $file = $this->request->getFile('file');
+
+        if (!$file->isValid()) {
+            // $res['code'] = EXIT_ERROR;
+            $res['msg'] = '附件上传失败';
+            return $this->respond($res, 422);
+        }
+
+        $config = config('MyGlobalConfig');
+        if (!$file->getSize() > $config->dtsAttachmentSize) {
+            // $res['code'] = EXIT_ERROR;
+            $res['msg'] = $config->dtsAttachmentExceedSizeMsg;
+            return $this->respond($res, 422);
+        }
+
+        $fileType = $file->getMimeType();
+        if ($fileType === 'image/jpeg' || $fileType === 'image/png') {
+
+        } else {
+            // $res['code'] = EXIT_ERROR;
+            $res['msg'] = $config->dtsAttachmentInvalidTypeMsg;
+            return $this->respond($res, 422);
+        }
+
+        $orgName = $file->getName();
+        // 移动文件
+        $newName = $file->getRandomName();
+        $path    = WRITEPATH . $config->dtsAttachmentPath;
+        if (!$file->hasMoved()) {
+            try {
+                $file->move($path, $newName, true);
+            } catch (FileException $exception) {
+                // $res['code'] = EXIT_ERROR;
+                $res['msg'] = '保存附件出错';
+                return $this->respond($res, 422);
+            }
+        }
+
+        // $res['code'] = EXIT_SUCCESS;
+        $res['orgName']  = $orgName;
+        $res['realName'] = $newName;
+        return $this->respond($res);
     }
 
     public function postDraft()
@@ -169,6 +210,8 @@ class Dts extends BaseController
             $res['code'] = EXIT_ERROR;
             $res['msg']  = '失败，稍后再试';
         }
+        var_dump($client['files']);
+        $res['files'] = $client['files'];
 
         return $this->respond($res);
     }
@@ -324,7 +367,8 @@ class Dts extends BaseController
         $details['device']  = $this->_getDeviceFullName($db['device']);
         $details['station'] = $this->_getDeptName2($db['station_id']);
 
-        $steps = $this->_getStepsBar($details['creator'], $details['reviewer'], $db['created_at'], $db['updated_at'], $db['place_at']);
+        $steps     = $this->_getStepsBar($details['creator'], $details['reviewer'], $db['created_at'], $db['updated_at'], $db['place_at']);
+        $operation = $this->_getWorkflowOperation($db['place_at']);
 
         //
         $res['code'] = EXIT_SUCCESS;
@@ -332,6 +376,7 @@ class Dts extends BaseController
             'details'        => $details,
             'steps'          => $steps,
             'newProgressTpl' => $newProgressTpl,
+            'operation'      => $operation,
         ];
 
         return $this->respond($res);
@@ -372,7 +417,7 @@ class Dts extends BaseController
         $result = $model->updateProgress($progress, $dts_id);
         if ($result !== false) {
             $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '已更新进展';
+            $res['msg']  = '进展已更新';
         } else {
             $res['code'] = EXIT_ERROR;
         }
@@ -464,49 +509,6 @@ class Dts extends BaseController
     }
 
     // 内部方法
-    protected function getProgressTemplate($type = 'draft')
-    {
-        return $this->progressTemplate[$type];
-    }
-
-    protected function getHandler($station_id = 0, $place = '')
-    {
-        if (!is_numeric($station_id) || empty($place)) {
-            return [];
-        }
-
-        $wf       = new WorkflowCore();
-        $metadata = $wf->getPlaceMetadata($place);
-        if (!isset($metadata['auth'])) {
-            return [];
-        }
-
-        // 获取用户Id
-        $model  = new UserRoleModel();
-        $userId = $model->getWhereInRole($roleId);
-
-        // 获取用户
-        $model      = new UserModel();
-        $columnName = ['id', 'username', 'status', 'dept_ids'];
-        $db         = $model->getUserWhereId($columnName, $userId);
-
-        // 过滤
-        $handler = [];
-        $cnt     = count($db);
-        $find    = '+' . $station_id . '+';
-        for ($i = 0; $i < $cnt; $i++) {
-            if (strpos($db[$i]['dept_ids'], $find) !== false) {
-                $handler[] = [
-                    'id'       => $db[$i]['id'],
-                    'username' => $db[$i]['username'],
-                    'status'   => $db[$i]['status'],
-                ];
-            }
-        }
-
-        return $handler;
-    }
-
     protected function _getDeviceList(int $station_id = 0)
     {
         if ($station_id <= 0) {
@@ -722,5 +724,24 @@ class Dts extends BaseController
         $steps['step'] = $temp2;
 
         return $steps;
+    }
+
+    public function _getWorkflowOperation(string $place_at = '')
+    {
+        $result = [
+            'allowUpdateProgress' => false,
+            'allowAppraise'       => false,
+            'allowResolve'        => false,
+            'allowClose'          => false,
+        ];
+
+        if (empty($place_at)) {
+            return $result;
+        }
+
+        $wf                            = new WfDts();
+        $result['allowUpdateProgress'] = $wf->canUpdateProgress($place_at);
+
+        return $result;
     }
 }

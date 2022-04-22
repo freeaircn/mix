@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2019-12-29 14:06:12
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-14 15:02:12
+ * @LastEditTime: 2022-04-20 21:49:02
  */
 
 namespace App\Libraries\Workflow;
@@ -173,94 +173,30 @@ class Core
         return $res;
     }
 
-    public function getPlaceMetaOfName(string $branch = 'branchA'): array
+    public function getPlaceMetaOfName(): array
     {
         $temp = $this->placesMetadata;
         $res  = [];
 
-        if (!empty($branch)) {
-            foreach ($temp as $key => $value) {
-                if (isset($value[$branch])) {
-                    $res[] = [
-                        'name'  => $value['name'],
-                        'alias' => $key,
-                    ];
-                }
-            }
-        } else {
-            foreach ($temp as $key => $value) {
-                $res[] = [
-                    'name'  => $value['name'],
-                    'alias' => $key,
-                ];
-            }
+        // if (!empty($branch)) {
+        //     foreach ($temp as $key => $value) {
+        //         if (isset($value[$branch])) {
+        //             $res[] = [
+        //                 'name'  => $value['name'],
+        //                 'alias' => $key,
+        //             ];
+        //         }
+        //     }
+        // } else {
+        foreach ($temp as $key => $value) {
+            $res[] = [
+                'name'  => $value['name'],
+                'alias' => $key,
+            ];
         }
+        // }
 
         return $res;
     }
-
-    public function getPlaceMetaOfView(string $place = ''): array
-    {
-        if (empty($place)) {
-            return [];
-        }
-
-        $meta = $this->placesMetadata[$place];
-
-        if (isset($meta['view'])) {
-            return $meta['view'];
-        } else {
-            return [];
-        }
-    }
-
-    // public function isHandlingPlace(string $place = '')
-    // {
-    //     if ($place === 'handling') {
-    //         return true;
-    //     } else {
-    //         return false;
-    //     }
-    // }
-
-    // public function isReviewPlace(string $place = '')
-    // {
-    //     if ($place === 'review') {
-    //         return true;
-    //     } else {
-    //         return false;
-    //     }
-    // }
-
-    // public function getReviewPlace()
-    // {
-    //     // $meta = $this->placesMetadata['review'];
-
-    //     return 'review';
-    // }
-
-    // public function toReview()
-    // {
-    //     try {
-    //         if ($this->workflow->can($this->ticket, 'to_review')) {
-    //             $this->workflow->apply($this->ticket, 'to_review');
-    //             return true;
-    //         } else {
-    //             return false;
-    //         }
-    //     } catch (LogicException $exception) {
-    //         // print($exception);
-    //         return false;
-    //     }
-    // }
-
-    // public function toCancel()
-    // {
-    //     try {
-    //         $this->workflow->apply($this->ticket, 'to_cancel');
-    //     } catch (LogicException $exception) {
-    //         print($exception);
-    //     }
-    // }
 
 }

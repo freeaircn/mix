@@ -1,7 +1,10 @@
 <template>
   <page-header-wrapper :title="false">
+    <a-card title="概览" :bordered="false" :body-style="{marginBottom: '8px'}">
+      未完成
+    </a-card>
 
-    <a-card :bordered="false" title="隐患 缺陷" :body-style="{marginBottom: '8px'}">
+    <a-card :bordered="false" title="问题单" :body-style="{marginBottom: '8px'}">
 
       <div class="table-page-search-wrapper">
         <a-form layout="inline" :label-col="labelCol" :wrapper-col="wrapperCol">
@@ -102,11 +105,6 @@
 
       </a-table>
     </a-card>
-
-    <a-card title="统计" :bordered="false" :body-style="{marginBottom: '8px'}">
-      xxxx
-    </a-card>
-
   </page-header-wrapper>
 </template>
 

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2019-12-29 14:06:12
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-14 16:38:27
+ * @LastEditTime: 2022-04-20 22:04:38
  */
 
 namespace App\Libraries\Workflow\Dts;
@@ -19,12 +19,18 @@ class WfDts extends Core
         parent::__construct($config);
     }
 
-    public function isHandlingPlace(string $place = '')
+    public function getPlaceMetaOfAllow(string $place = ''): array
     {
-        if ($place === 'handling') {
-            return true;
+        if (empty($place)) {
+            return [];
+        }
+
+        $meta = $this->placesMetadata[$place];
+
+        if (isset($meta['allow'])) {
+            return $meta['allow'];
         } else {
-            return false;
+            return [];
         }
     }
 
@@ -71,6 +77,17 @@ class WfDts extends Core
         } catch (LogicException $exception) {
             print($exception);
         }
+    }
+
+    public function canUpdateProgress(string $place_at = '')
+    {
+        $allow = $this->getPlaceMetaOfAllow($place_at);
+        if (isset($allow['updateProgress'])) {
+            return $allow['updateProgress'];
+        } else {
+            return false;
+        }
+
     }
 
 }

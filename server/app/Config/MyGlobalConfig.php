@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-07-06 21:44:27
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-14 16:20:51
+ * @LastEditTime: 2022-04-22 21:22:33
  */
 
 namespace Config;
@@ -36,5 +36,9 @@ class MyGlobalConfig extends BaseConfig
     /**
      * DTS 工作流配置文件
      */
-    public $wfDtsConfigFile = 'Libraries/Workflow/Dts/config.yaml';
+    public $wfDtsConfigFile             = 'Libraries/Workflow/Dts/config.yaml';
+    public $dtsAttachmentSize           = 8388608; // 8*1024*1024
+    public $dtsAttachmentExceedSizeMsg  = '附件大小超过限制 8MB'; // 8*1024*1024
+    public $dtsAttachmentInvalidTypeMsg = '附件文件类型不满足要求 jpg, png, txt, doc, xls, ppt, pdf, zip';
+    public $dtsAttachmentPath           = 'uploads/dts';
 }
