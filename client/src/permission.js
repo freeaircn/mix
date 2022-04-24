@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-11-06 13:00:07
+ * @LastEditTime: 2022-04-24 23:57:09
  */
 import router from './router'
 import store from './store'
@@ -96,7 +96,8 @@ router.beforeEach((to, from, next) => {
       // 在免登录名单，直接进入
       next()
     } else {
-      next({ path: loginRoutePath, query: { redirect: to.fullPath } })
+      // next({ path: loginRoutePath, query: { redirect: to.fullPath } })
+      next({ path: loginRoutePath })
       NProgress.done() // if current page is login will not trigger afterEach hook, so manually handle it
     }
   }

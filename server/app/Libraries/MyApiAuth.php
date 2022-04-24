@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-09-06 01:17:02
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-14 10:21:50
+ * @LastEditTime: 2022-04-24 16:44:13
  */
 
 namespace App\Libraries;
@@ -13,6 +13,10 @@ use CodeIgniter\HTTP\RequestInterface;
 
 class MyApiAuth
 {
+    // 400 请求错误
+    // 401.1 用户没有登录
+    // 401.3 用户没有权限
+    // 500 服务端错误
     public function check(RequestInterface $request)
     {
         $url    = $request->uri->getSegments();
@@ -20,24 +24,24 @@ class MyApiAuth
 
         // 方法：登录，登出，重置密码，返回true
         if (isset($url[0]) && $url[0] === 'api' && isset($url[1]) && $url[1] === 'auth') {
-            return true;
+            return ['status' => 0, 'code' => 0, 'msg' => ''];
         }
 
         // 检查是否存在session。存在 - 已登录。
         $phone = session('phone');
         if (is_null($phone)) {
-            return '用户未登录';
+            return ['status' => 401, 'code' => 1, 'msg' => '用户没有登陆'];
         }
 
         // ！！！超级用户，仅测试使用。
         // if ($phone == '13812345678') {
-        //     return true;
+        //     return ['status' => 0, 'code' => 0, 'msg' => ''];
         // }
 
         // API
         $allowApi = session('allowApi');
         if (is_null($allowApi) || empty($allowApi)) {
-            return '用户没有权限';
+            return ['status' => 401, 'code' => 3, 'msg' => '用户没有权限'];
         }
         $request = '';
 
@@ -61,9 +65,9 @@ class MyApiAuth
         }
 
         if (in_array($request, $allowApi) === false) {
-            return '用户没有权限';
+            return ['status' => 401, 'code' => 3, 'msg' => '用户没有权限'];
         }
 
-        return true;
+        return ['status' => 0, 'code' => 0, 'msg' => ''];
     }
 }

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-07-16 23:08:38
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-01 10:27:26
+ * @LastEditTime: 2022-04-24 16:10:16
  */
 
 /**
@@ -56,14 +56,11 @@ class ApiAuthFilter implements FilterInterface
 
         $apiAuth = new MyApiAuth();
 
-        $msg = $apiAuth->check($request);
-        if ($msg !== true) {
+        $result = $apiAuth->check($request);
+        if ($result['status'] === 401) {
             $this->response = Services::response();
 
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = $msg;
-
-            return $this->respond($res);
+            return $this->failUnauthorized($result['msg'], $result['code']);
         }
 
     }

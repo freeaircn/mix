@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-22 23:22:05
+ * @LastEditTime: 2022-04-24 23:41:36
  */
 
 namespace App\Controllers;
@@ -26,19 +26,15 @@ class Dts extends BaseController
     // 模板
     protected $blankTpl;
     protected $updateTpl;
-    // 单号末尾几位
-    protected $ticketIdTailLength;
     //
-    protected $keyValueMap;
+    protected $keyValuePairs;
 
     public function __construct()
     {
         $this->blankTpl  = "【现象】\n\n【时间】\n\n【影响】\n\n【已采取措施】\n\n";
         $this->updateTpl = "【当前进展】\n\n【下一步计划】\n\n";
 
-        $this->ticketIdTailLength = 3;
-
-        $this->keyValueMap = [
+        $this->keyValuePairs = [
             'type'  => [
                 1 => '隐患',
                 2 => '故障',
@@ -51,40 +47,25 @@ class Dts extends BaseController
         ];
     }
 
-    public function getBlankForm()
+    public function queryEntry()
     {
-        // $params = $this->request->getGet();
-
-        // 检查请求数据
-        // if (!$this->validate('DtsGetBlankForm')) {
-        //     $res['error'] = $this->validator->getErrors();
-
-        //     $res['code'] = EXIT_ERROR;
-        //     $res['msg']  = '请求数据无效';
-        //     return $this->respond($res);
-        // }
-
-        $allowWriteDeptId = session('allowWriteDeptId');
-        $model            = new DeptModel();
-        $columnName       = ['id', 'name'];
-        $station          = $model->getByIds($columnName, $allowWriteDeptId);
-
-        $station_id  = session('allowDefaultDeptId');
-        $description = $this->blankTpl;
-        $deviceList  = $this->_getDeviceList($station_id);
-
-        if (empty($deviceList)) {
-            $res['code'] = EXIT_ERROR;
-        } else {
-            $res['code'] = EXIT_SUCCESS;
-            $res['data'] = [
-                'description' => $description,
-                'deviceList'  => $deviceList,
-                'station'     => $station,
-            ];
+        $params = $this->request->getGet();
+        if (!isset($params['source'])) {
+            $res['error'] = '请求数据无效';
+            return $this->fail($res);
         }
 
-        return $this->respond($res);
+        switch ($params['source']) {
+            case 'new_form':
+                $this->_getNewForm();
+                break;
+            case 'list':
+
+                break;
+            default:
+                $res['error'] = '请求数据无效';
+                return $this->fail($res);
+        }
     }
 
     public function getDeviceList()
@@ -93,25 +74,18 @@ class Dts extends BaseController
 
         // 检查请求数据
         if (!$this->validate('DtsGetDeviceList')) {
-            $res['error'] = $this->validator->getErrors();
-
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '请求数据无效';
-            return $this->respond($res);
+            $res['info']  = $this->validator->getErrors();
+            $res['error'] = '请求数据无效';
+            return $this->fail($res);
         }
 
         $station_id = $params['station_id'];
         $deviceList = $this->_getDeviceList($station_id);
-
         if (empty($deviceList)) {
-            $res['code'] = EXIT_ERROR;
-        } else {
-            $res['code'] = EXIT_SUCCESS;
-            $res['data'] = [
-                'deviceList' => $deviceList,
-            ];
+            return $this->failNotFound('请求的数据没有找到');
         }
 
+        $res['data'] = ['deviceList' => $deviceList];
         return $this->respond($res);
     }
 
@@ -120,56 +94,91 @@ class Dts extends BaseController
         $file = $this->request->getFile('file');
 
         if (!$file->isValid()) {
-            // $res['code'] = EXIT_ERROR;
-            $res['msg'] = '附件上传失败';
-            return $this->respond($res, 422);
+            return $this->failServerError('附件上传失败');
         }
 
         $config = config('MyGlobalConfig');
         if (!$file->getSize() > $config->dtsAttachmentSize) {
-            // $res['code'] = EXIT_ERROR;
-            $res['msg'] = $config->dtsAttachmentExceedSizeMsg;
-            return $this->respond($res, 422);
+            return $this->fail($config->dtsAttachmentExceedSizeMsg);
         }
 
         $fileType = $file->getMimeType();
         if ($fileType === 'image/jpeg' || $fileType === 'image/png') {
 
         } else {
-            // $res['code'] = EXIT_ERROR;
-            $res['msg'] = $config->dtsAttachmentInvalidTypeMsg;
-            return $this->respond($res, 422);
+            return $this->fail($config->dtsAttachmentInvalidTypeMsg);
         }
 
         $orgName = $file->getName();
-        // 移动文件
         $newName = $file->getRandomName();
-        $path    = WRITEPATH . $config->dtsAttachmentPath;
+        // 移动文件
+        $path = WRITEPATH . $config->dtsAttachmentPath;
         if (!$file->hasMoved()) {
             try {
                 $file->move($path, $newName, true);
             } catch (FileException $exception) {
-                // $res['code'] = EXIT_ERROR;
-                $res['msg'] = '保存附件出错';
-                return $this->respond($res, 422);
+                return $this->failServerError('保存附件出错');
             }
         }
 
-        // $res['code'] = EXIT_SUCCESS;
-        $res['orgName']  = $orgName;
-        $res['realName'] = $newName;
+        $temp = session('dtsAttachment');
+        $time = time();
+        $data = [
+            'id'      => $time,
+            'newName' => $newName,
+        ];
+        if (!$temp) {
+            $this->session->set('dtsAttachment', [$data]);
+        } else {
+            $this->session->push('dtsAttachment', [$data]);
+        }
+
+        $res['id'] = $time;
         return $this->respond($res);
     }
 
-    public function postDraft()
+    public function delAttachment()
     {
         // 检查请求数据
-        if (!$this->validate('DtsPostDraft')) {
-            $res['error'] = $this->validator->getErrors();
+        if (!$this->validate('DtsDelAttachment')) {
+            return $this->respond(['res' => 'invalid']);
+        }
 
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '请求数据无效';
-            return $this->respond($res);
+        $client = $this->request->getJSON(true);
+
+        $temp = session('dtsAttachment');
+        if (empty($temp)) {
+            return $this->respond(['res' => 'empty']);
+        }
+
+        $config = config('MyGlobalConfig');
+        $path   = WRITEPATH . $config->dtsAttachmentPath;
+        $new    = [];
+        foreach ($temp as $v) {
+            if ($client['id'] == $v['id']) {
+                $file = rtrim($path, '\\/ ') . DIRECTORY_SEPARATOR . $v['newName'];
+                if (file_exists($file)) {
+                    unlink($file);
+                }
+            } else {
+                $new[] = $v;
+            }
+        }
+        $this->session->remove('dtsAttachment');
+        if (!empty($new)) {
+            $this->session->set('dtsAttachment', $new);
+        }
+
+        return $this->respond(['res' => 'done']);
+    }
+
+    public function createOne()
+    {
+        // 检查请求数据
+        if (!$this->validate('DtsCreateOne')) {
+            $res['info']  = $this->validator->getErrors();
+            $res['error'] = '请求数据无效';
+            return $this->fail($res);
         }
 
         $client = $this->request->getJSON(true);
@@ -193,27 +202,19 @@ class Dts extends BaseController
         $maker  = new MyIdMaker();
         $dts_id = $maker->apply('DTS');
         if ($dts_id === false) {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '失败，稍后再试';
-
-            return $this->respond($res);
+            return $this->failServerError('处理发生错误，稍候再试');
         }
         $draft['dts_id'] = $dts_id;
 
         $model  = new DtsModel();
         $result = $model->insertDB($draft);
-        if ($result) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '创建问题单';
-
-        } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '失败，稍后再试';
+        if (!$result) {
+            return $this->failServerError('处理发生错误，稍候再试');
         }
-        var_dump($client['files']);
-        $res['files'] = $client['files'];
 
-        return $this->respond($res);
+        // 记录附件
+
+        return $this->respond(['msg' => '创建问题单']);
     }
 
     public function getQueryParams()
@@ -318,9 +319,8 @@ class Dts extends BaseController
         $data = $this->_getUserNameAndWorkflowName($db['data']);
         $data = $this->_getDeptName($data);
 
-        $res['code']  = EXIT_SUCCESS;
-        $res['data']  = ['total' => $db['total'], 'data' => $data];
-        $res['debug'] = $param;
+        $res['code'] = EXIT_SUCCESS;
+        $res['data'] = ['total' => $db['total'], 'data' => $data];
         return $this->respond($res);
     }
 
@@ -353,8 +353,8 @@ class Dts extends BaseController
         $newProgressTpl = $this->updateTpl;
 
         // id -> name
-        $details['type']  = $this->keyValueMap['type'][$db['type']];
-        $details['level'] = $this->keyValueMap['level'][$db['level']];
+        $details['type']  = $this->keyValuePairs['type'][$db['type']];
+        $details['level'] = $this->keyValuePairs['level'][$db['level']];
 
         $users_id = [
             'creator'  => $db['creator_id'],
@@ -509,6 +509,38 @@ class Dts extends BaseController
     }
 
     // 内部方法
+    // public function getBlankForm()
+    protected function _getNewForm()
+    {
+        $allowWriteDeptId = session('allowWriteDeptId');
+        if (empty($allowWriteDeptId)) {
+            return $this->failUnauthorized('用户没有权限');
+        }
+
+        $station_id = session('allowDefaultDeptId');
+        if (empty($station_id)) {
+            return $this->failUnauthorized('用户没有权限');
+        }
+
+        $deviceList = $this->_getDeviceList($station_id);
+        if (empty($deviceList)) {
+            return $this->failNotFound('请求的数据没有找到');
+        }
+
+        $model       = new DeptModel();
+        $columnName  = ['id', 'name'];
+        $station     = $model->getByIds($columnName, $allowWriteDeptId);
+        $description = $this->blankTpl;
+
+        $res['data'] = [
+            'description' => $description,
+            'deviceList'  => $deviceList,
+            'station'     => $station,
+        ];
+        var_dump('here');
+        return $this->respond($res);
+    }
+
     protected function _getDeviceList(int $station_id = 0)
     {
         if ($station_id <= 0) {

@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-22 23:18:41
+ * @LastEditTime: 2022-04-24 23:35:53
 -->
 <template>
   <page-header-wrapper :title="false">
@@ -58,13 +58,13 @@
         <a-form-model-item label="附件" prop="attachment">
           <a-upload
             accept="text/plain, image/jpeg, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-powerpoint, application/vnd.openxmlformats-officedocument.presentationml.presentation, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel, application/pdf, application/zip"
-            action="/api/dts/attachment/upload"
+            action="/api/dts/attachment"
             :before-upload="beforeUploadAttachment"
             :showUploadList="{ showDownloadIcon: false, showRemoveIcon: true }"
             :remove="onClickDelAttachment"
             @change="afterUploadAttachment"
           >
-            <a-button :disabled="disableUploadBtn"> <a-icon type="upload" /> 点击上传 </a-button>
+            <a-button :disabled="!ready || disableUploadBtn"> <a-icon type="upload" /> 点击上传 </a-button>
           </a-upload>
         </a-form-model-item>
 
@@ -81,7 +81,7 @@
 <script>
 import myConfig from '@/config/mix_config'
 import { mapGetters } from 'vuex'
-import { getBlankForm, getDeviceList, postDraft } from '@/api/mix/dts'
+import { queryDts, getDeviceList, delAttachment, createDts } from '@/api/mix/dts'
 import { listToTree } from '@/utils/util'
 
 export default {
@@ -111,25 +111,28 @@ export default {
         level: [{ required: true, message: '请选择', trigger: ['change'] }]
         // device: [{ required: true, message: '请选择', trigger: ['change'] }]
       },
-      fileNumber: 1,
-      fileList: [],
-      disableUploadBtn: false
+      fileNumber: 0,
+      fileList: []
     }
   },
   created: function () {
     this.ready = false
     this.fileNumber = 0
-    this.disableUploadBtn = false
     this.loadBlankForm()
   },
   computed: {
     ...mapGetters([
       'userInfo'
-    ])
+    ]),
+    disableUploadBtn: function () {
+      return this.fileNumber >= myConfig.DtsAttachmentMaxNumber
+    }
   },
   methods: {
     loadBlankForm () {
-      getBlankForm()
+      // getBlankForm()
+      const params = { source: 'new_form' }
+      queryDts(params)
         .then((data) => {
             this.record.description = data.description
             this.stationItems = data.station
@@ -137,13 +140,10 @@ export default {
             this.record.station_id = this.userInfo.allowDefaultDeptId
             this.ready = true
           })
-          //  网络异常，清空页面数据显示，防止错误的操作
-          .catch((err) => {
+          .catch(() => {
             this.deviceItems.splice(0, this.deviceItems.length)
             this.record.description = ''
             this.ready = false
-            if (err.response) {
-            }
           })
     },
 
@@ -155,12 +155,9 @@ export default {
             listToTree(data.deviceList, this.deviceItems, value)
             this.ready = true
           })
-          //  网络异常，清空页面数据显示，防止错误的操作
-          .catch((err) => {
+          .catch(() => {
             this.deviceItems.splice(0, this.deviceItems.length)
             this.ready = false
-            if (err.response) {
-            }
           })
     },
 
@@ -185,15 +182,15 @@ export default {
     },
 
     afterUploadAttachment (info) {
-      if (info.file.status === 'done') {
+      if (info.file.status === 'error' || info.file.status === 'done') {
         this.fileNumber = this.fileNumber + 1
-        this.disableUploadBtn = this.fileNumber >= myConfig.DtsAttachmentMaxNumber
         this.fileList = info.fileList
+      }
+      if (info.file.status === 'done') {
         this.$message.success('附件上传成功')
       } else if (info.file.status === 'error') {
-        this.fileList = info.fileList
-        if (info.file.response.hasOwnProperty('msg')) {
-          this.$message.error(info.file.response.msg)
+        if (info.file.response.hasOwnProperty('messages')) {
+          this.$message.error(info.file.response.messages.error)
         } else {
           this.$message.error('附件上传失败')
         }
@@ -205,7 +202,19 @@ export default {
       const newFileList = this.fileList.slice()
       newFileList.splice(index, 1)
       this.fileList = newFileList
-      return true
+      this.fileNumber = this.fileNumber - 1
+      if (file.status === 'done') {
+        const param = { id: file.response.id }
+        return delAttachment(param)
+          .then(() => {
+            return true
+          })
+          .catch(() => {
+            return true
+          })
+      } else {
+        return true
+      }
     },
 
     onSubmit () {
@@ -224,15 +233,12 @@ export default {
           data.device = temp
           data.files = files
 
-          postDraft(data)
+          createDts(data)
             .then(() => {
               this.$router.push({ path: `/dashboard/dts/list` })
             })
-            //  网络异常，清空页面数据显示，防止错误的操作
-            .catch((err) => {
-              this.ready = false
-              if (err.response) {
-              }
+            .catch(() => {
+              // this.ready = false
             })
         } else {
           return false
@@ -241,7 +247,11 @@ export default {
     },
 
     onCancel () {
-      this.$router.push({ path: `/dashboard/dts/list` })
+      if (this.fileList.length > 0) {
+        this.$message.info('请删除上传的附件')
+      } else {
+        this.$router.push({ path: `/dashboard/dts/list` })
+      }
     }
   }
 }

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-14 16:31:04
+ * @LastEditTime: 2022-04-24 22:23:29
  */
 
 namespace App\Models\Dts;
@@ -65,21 +65,8 @@ class DtsModel extends Model
             return false;
         }
 
-        // 单号
-        // $time       = time();
-        // $columnName = ['dts_id'];
-        // $query      = ['created_at' => date('Y-m-d', $time)];
-
         $this->transStart();
-        // $db = $this->getLastOneByCreateDate($columnName, $query);
-        // if (empty($db)) {
-        //     $draft['dts_id'] = date('ymd', $time) . substr('00000001', -$ticketIdTailLength);
-        // } else {
-        //     $id              = (int) $db['dts_id'] + 1;
-        //     $draft['dts_id'] = date('ymd', $time) . substr((string) $id, -$ticketIdTailLength);
-        // }
         $result = $this->insert($draft);
-
         $this->transComplete();
         if ($this->transStatus() === false) {
             return false;

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-14 15:50:32
+ * @LastEditTime: 2022-04-24 23:10:28
  */
 
 namespace Config;
@@ -195,7 +195,11 @@ class Validation
         'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
     ];
 
-    public $DtsPostDraft = [
+    public $DtsDelAttachment = [
+        'id' => 'required|is_natural_no_zero',
+    ];
+
+    public $DtsCreateOne = [
         'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
         'type'       => 'required|regex_match[^[1-9]$]',
         'level'      => 'required|regex_match[^[1-9]$]',
