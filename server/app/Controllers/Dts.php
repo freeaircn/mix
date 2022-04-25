@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-24 23:41:36
+ * @LastEditTime: 2022-04-25 22:31:30
  */
 
 namespace App\Controllers;
@@ -14,6 +14,7 @@ use App\Libraries\Workflow\Dts\WfDts;
 use App\Libraries\Workflow\Ticket;
 use App\Models\Dts\DeptModel;
 use App\Models\Dts\DeviceModel;
+use App\Models\Dts\DtsAttachmentModel;
 use App\Models\Dts\DtsModel;
 use App\Models\Dts\UserModel;
 use CodeIgniter\API\ResponseTrait;
@@ -49,44 +50,52 @@ class Dts extends BaseController
 
     public function queryEntry()
     {
-        $params = $this->request->getGet();
-        if (!isset($params['source'])) {
+        $resource = $this->request->getGet('resource');
+        if (empty($resource)) {
             $res['error'] = '请求数据无效';
             return $this->fail($res);
         }
 
-        switch ($params['source']) {
-            case 'new_form':
-                $this->_getNewForm();
+        switch ($resource) {
+            case 'search_params':
+                $result = $this->_reqSearchParams();
                 break;
             case 'list':
-
+                $result = $this->_reqList();
+                break;
+            case 'details':
+                $result = $this->_reqDetails();
+                break;
+            case 'new_form':
+                $result = $this->_reqNewForm();
+                break;
+            case 'device_list':
+                $result = $this->_reqDeviceList();
                 break;
             default:
                 $res['error'] = '请求数据无效';
                 return $this->fail($res);
         }
-    }
 
-    public function getDeviceList()
-    {
-        $params = $this->request->getGet();
-
-        // 检查请求数据
-        if (!$this->validate('DtsGetDeviceList')) {
-            $res['info']  = $this->validator->getErrors();
-            $res['error'] = '请求数据无效';
-            return $this->fail($res);
+        if ($result['http_status'] === 400) {
+            return $this->fail($result['msg']);
+        }
+        if ($result['http_status'] === 401) {
+            return $this->failUnauthorized($result['msg']);
+        }
+        if ($result['http_status'] === 404) {
+            return $this->failNotFound($result['msg']);
+        }
+        if ($result['http_status'] === 500) {
+            return $this->failServerError($result['msg']);
         }
 
-        $station_id = $params['station_id'];
-        $deviceList = $this->_getDeviceList($station_id);
-        if (empty($deviceList)) {
-            return $this->failNotFound('请求的数据没有找到');
+        if ($result['http_status'] === 200) {
+            $response['data'] = $result['data'];
+            return $this->respond($response);
         }
 
-        $res['data'] = ['deviceList' => $deviceList];
-        return $this->respond($res);
+        return $this->failServerError('服务器内部错误');
     }
 
     public function uploadAttachment()
@@ -110,6 +119,7 @@ class Dts extends BaseController
         }
 
         $orgName = $file->getName();
+        $size    = $file->getSize();
         $newName = $file->getRandomName();
         // 移动文件
         $path = WRITEPATH . $config->dtsAttachmentPath;
@@ -125,7 +135,9 @@ class Dts extends BaseController
         $time = time();
         $data = [
             'id'      => $time,
+            'orgName' => $orgName,
             'newName' => $newName,
+            'size'    => $size,
         ];
         if (!$temp) {
             $this->session->set('dtsAttachment', [$data]);
@@ -139,7 +151,6 @@ class Dts extends BaseController
 
     public function delAttachment()
     {
-        // 检查请求数据
         if (!$this->validate('DtsDelAttachment')) {
             return $this->respond(['res' => 'invalid']);
         }
@@ -174,7 +185,6 @@ class Dts extends BaseController
 
     public function createOne()
     {
-        // 检查请求数据
         if (!$this->validate('DtsCreateOne')) {
             $res['info']  = $this->validator->getErrors();
             $res['error'] = '请求数据无效';
@@ -182,6 +192,11 @@ class Dts extends BaseController
         }
 
         $client = $this->request->getJSON(true);
+
+        $allowWriteDeptId = session('allowWriteDeptId');
+        if (!in_array($client['station_id'], $allowWriteDeptId)) {
+            return $this->failUnauthorized('用户没有权限');
+        }
         //
         $uid   = session('id');
         $draft = [
@@ -202,184 +217,119 @@ class Dts extends BaseController
         $maker  = new MyIdMaker();
         $dts_id = $maker->apply('DTS');
         if ($dts_id === false) {
-            return $this->failServerError('处理发生错误，稍候再试');
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
         $draft['dts_id'] = $dts_id;
 
         $model  = new DtsModel();
         $result = $model->insertDB($draft);
         if (!$result) {
-            return $this->failServerError('处理发生错误，稍候再试');
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
 
-        // 记录附件
-
-        return $this->respond(['msg' => '创建问题单']);
-    }
-
-    public function getQueryParams()
-    {
-        // $param = $this->request->getGet();
-
-        $allowReadDeptId = session('allowReadDeptId');
-        $model           = new DeptModel();
-        $columnName      = ['id', 'name'];
-        $station         = $model->getByIds($columnName, $allowReadDeptId);
-
-        $wf       = new WfDts();
-        $workflow = $wf->getPlaceMetaOfName();
-
-        $res['code'] = EXIT_SUCCESS;
-        $res['data'] = ['station' => $station, 'workflow' => $workflow];
-        return $this->respond($res);
-    }
-
-    public function getList()
-    {
-        $param = $this->request->getGet();
-
-        // 检查请求数据
-        if (!$this->validate('DtsGetList')) {
-            $res['error'] = $this->validator->getErrors();
-
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '请求数据无效';
-            return $this->respond($res);
-        }
-
-        if ($param['station_id'] === '0') {
-            $query['station_id'] = session('allowReadDeptId');
-        } else {
-            $query['station_id'] = [$param['station_id']];
-        }
-
-        if ($param['type'] !== '0') {
-            $query['type'] = $param['type'];
-        }
-
-        if ($param['level'] !== '0') {
-            $query['level'] = $param['level'];
-        }
-
-        if ($param['dts_id'] !== '') {
-            if (preg_match('/^[1-9]\d{0,19}$/', $param['dts_id'])) {
-                $query['dts_id'] = $param['dts_id'];
-            } else {
-                $query['dts_id'] = '0';
-            }
-        }
-
-        if ($param['creator'] !== '') {
-            if (preg_match('/^([\x{4e00}-\x{9fa5}]{1,6})$/u', $param['creator'])) {
-                $model      = new UserModel();
-                $columnName = ['id'];
-                $db         = $model->getByUsername($columnName, $param['creator']);
-
-                if (count($db) === 1) {
-                    $query['creator_id'] = $db[0]['id'];
-                } else {
-                    $res['code'] = EXIT_SUCCESS;
-                    $res['data'] = ['total' => 0, 'data' => []];
-                    return $this->respond($res);
+        // 附件
+        $files        = $client['files'];
+        $files_stored = session('dtsAttachment');
+        $temp         = [];
+        if (!empty($files) && !empty($files_stored)) {
+            foreach ($files as $c) {
+                foreach ($files_stored as $s) {
+                    if ($c['id'] == $s['id']) {
+                        $temp[] = $s;
+                    }
                 }
-            } else {
-                $res['code'] = EXIT_SUCCESS;
-                $res['data'] = ['total' => 0, 'data' => []];
-                return $this->respond($res);
+            }
+        }
+        if (!empty($temp)) {
+            $attachment = [];
+            foreach ($temp as $t) {
+                $ext          = explode('.', $t['orgName']);
+                $attachment[] = [
+                    'dts_id'   => $dts_id,
+                    'user_id'  => session('id'),
+                    'username' => session('username'),
+                    'org_name' => $t['orgName'],
+                    'new_name' => $t['newName'],
+                    'size'     => $t['size'],
+                    'file_ext' => end($ext),
+                ];
+            }
+            $model  = new DtsAttachmentModel();
+            $result = $model->insertDB($attachment);
+            if (!$result) {
+                // 回退上一步操作
+                $model  = new DtsModel();
+                $result = $model->delByDtsId($dts_id);
+                return $this->failServerError('服务器处理发生错误，稍候再试');
             }
         }
 
-        if ($param['place_at'] !== 'all') {
-            $wf       = new WfDts();
-            $workflow = $wf->getPlaceAlias();
-            if (in_array($param['place_at'], $workflow)) {
-                $query['place_at'] = $param['place_at'];
-            } else {
-                $res['code'] = EXIT_SUCCESS;
-                $res['data'] = ['total' => 0, 'data' => []];
-                return $this->respond($res);
-            }
+        if ($this->session->has('dtsAttachment')) {
+            $this->session->remove('dtsAttachment');
         }
 
-        $query['status'] = 'publish';
-        $query['limit']  = $param['limit'];
-        $query['offset'] = $param['offset'];
-        $columnName      = ['id', 'dts_id', 'station_id', 'type', 'title', 'level', 'place_at', 'created_at', 'updated_at', 'creator_id'];
-
-        $model = new DtsModel();
-        $db    = $model->getByLimitOffset($columnName, $query);
-
-        if ($db['total'] === 0) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['data'] = $db;
-            return $this->respond($res);
-        }
-
-        // id => name
-        $data = $this->_getUserNameAndWorkflowName($db['data']);
-        $data = $this->_getDeptName($data);
-
-        $res['code'] = EXIT_SUCCESS;
-        $res['data'] = ['total' => $db['total'], 'data' => $data];
-        return $this->respond($res);
+        return $this->respond([
+            'msg' => '创建问题单',
+        ]);
     }
 
-    public function getDetails()
+    public function deleteOne()
     {
-        // 检查请求数据
-        if (!$this->validate('DtsGetDetails')) {
-            $res['error'] = $this->validator->getErrors();
-
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '请求数据无效';
-            return $this->respond($res);
+        if (!$this->validate('DtsDeleteOne')) {
+            $res['info']  = $this->validator->getErrors();
+            $res['error'] = '请求数据无效';
+            return $this->fail($res);
         }
+        $client = $this->request->getJSON(true);
 
-        $params = $this->request->getGet();
-        $dts_id = $params['dts_id'];
-
-        $columnName = ['dts_id', 'type', 'title', 'level', 'station_id', 'place_at', 'device', 'description', 'progress', 'created_at', 'updated_at', 'creator_id', 'reviewer_id'];
-        $query      = ['dts_id' => $dts_id];
+        $columnName      = ['station_id', 'place_at'];
+        $query['dts_id'] = $client['dts_id'];
 
         $model = new DtsModel();
         $db    = $model->getByDtsId($columnName, $query);
         if (empty($db)) {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '问题单不存在';
-            return $this->respond($res);
+            return $this->respond(['info' => 'empty']);
         }
 
-        $details        = $db;
-        $newProgressTpl = $this->updateTpl;
+        $allowWriteDeptId = session('allowWriteDeptId');
+        if (!in_array($db['station_id'], $allowWriteDeptId)) {
+            return $this->failUnauthorized('用户没有权限');
+        }
 
-        // id -> name
-        $details['type']  = $this->keyValuePairs['type'][$db['type']];
-        $details['level'] = $this->keyValuePairs['level'][$db['level']];
+        $wf         = new WfDts();
+        $firstPlace = $wf->getFirstPlace();
+        if ($db['place_at'] !== $firstPlace) {
+            return $this->failUnauthorized('若需删除，请联系管理员');
+        }
 
-        $users_id = [
-            'creator'  => $db['creator_id'],
-            'reviewer' => $db['reviewer_id'],
-        ];
-        $users               = $this->_getUserName($users_id);
-        $details['creator']  = $users['creator'];
-        $details['reviewer'] = $users['reviewer'];
+        // 附件
+        $columnName       = ['new_name'];
+        $query2['dts_id'] = $client['dts_id'];
 
-        $details['device']  = $this->_getDeviceFullName($db['device']);
-        $details['station'] = $this->_getDeptName2($db['station_id']);
-
-        $steps     = $this->_getStepsBar($details['creator'], $details['reviewer'], $db['created_at'], $db['updated_at'], $db['place_at']);
-        $operation = $this->_getWorkflowOperation($db['place_at']);
+        $model = new DtsAttachmentModel();
+        $files = $model->getByDtsId($columnName, $query2);
+        if (!empty($files)) {
+            $config = config('MyGlobalConfig');
+            $path   = WRITEPATH . $config->dtsAttachmentPath;
+            foreach ($files as $v) {
+                $file = rtrim($path, '\\/ ') . DIRECTORY_SEPARATOR . $v['new_name'];
+                if (file_exists($file)) {
+                    unlink($file);
+                }
+            }
+            $result = $model->delByDtsId($query2['dts_id']);
+        }
 
         //
-        $res['code'] = EXIT_SUCCESS;
-        $res['data'] = [
-            'details'        => $details,
-            'steps'          => $steps,
-            'newProgressTpl' => $newProgressTpl,
-            'operation'      => $operation,
-        ];
+        $model  = new DtsModel();
+        $result = $model->delByDtsId($query2['dts_id']);
+        if (!$result) {
+            return $this->failServerError('服务器处理发生错误，稍候再试');
+        }
 
-        return $this->respond($res);
+        return $this->respond([
+            'msg' => '删除问题单',
+        ]);
     }
 
     public function updateProgress()
@@ -508,23 +458,152 @@ class Dts extends BaseController
         return $this->respond($res);
     }
 
-    // 内部方法
-    // public function getBlankForm()
-    protected function _getNewForm()
+    // Part-2
+    protected function _reqSearchParams()
+    {
+        $allowReadDeptId = session('allowReadDeptId');
+        if (empty($allowReadDeptId)) {
+            $res['http_status'] = 200;
+            $res['data']        = ['station' => [], 'workflow' => []];
+            return $res;
+        }
+
+        $model      = new DeptModel();
+        $columnName = ['id', 'name'];
+        $station    = $model->getByIds($columnName, $allowReadDeptId);
+
+        $wf       = new WfDts();
+        $workflow = $wf->getPlaceMetaOfName();
+
+        $res['http_status'] = 200;
+        $res['data']        = ['station' => $station, 'workflow' => $workflow];
+        return $res;
+    }
+
+    protected function _reqList()
+    {
+        if (!$this->validate('DtsReqList')) {
+            $res['http_status'] = 400;
+            $res['msg']         = [
+                'error' => '请求数据无效',
+                'info'  => $this->validator->getErrors(),
+            ];
+            return $res;
+        }
+
+        $param = $this->request->getGet();
+
+        $allowReadDeptId = session('allowReadDeptId');
+        if (empty($allowReadDeptId)) {
+            $res['http_status'] = 200;
+            $res['data']        = ['total' => 0, 'data' => []];
+            return $res;
+        }
+
+        if ($param['station_id'] === '0') {
+            $query['station_id'] = $allowReadDeptId;
+        } else {
+            if (!in_array($param['station_id'], $allowReadDeptId)) {
+                $res['http_status'] = 200;
+                $res['data']        = ['total' => 0, 'data' => []];
+                return $res;
+            } else {
+                $query['station_id'] = [$param['station_id']];
+            }
+        }
+
+        if ($param['type'] !== '0') {
+            $query['type'] = $param['type'];
+        }
+
+        if ($param['level'] !== '0') {
+            $query['level'] = $param['level'];
+        }
+
+        if ($param['dts_id'] !== '') {
+            if (preg_match('/^[1-9]\d{0,19}$/', $param['dts_id'])) {
+                $query['dts_id'] = $param['dts_id'];
+            } else {
+                $query['dts_id'] = '0';
+            }
+        }
+
+        if ($param['creator'] !== '') {
+            if (preg_match('/^([\x{4e00}-\x{9fa5}]{1,6})$/u', $param['creator'])) {
+                $model      = new UserModel();
+                $columnName = ['id'];
+                $db         = $model->getByUsername($columnName, $param['creator']);
+
+                if (count($db) === 1) {
+                    $query['creator_id'] = $db[0]['id'];
+                } else {
+                    $res['http_status'] = 200;
+                    $res['data']        = ['total' => 0, 'data' => []];
+                    return $res;
+                }
+            } else {
+                $res['http_status'] = 200;
+                $res['data']        = ['total' => 0, 'data' => []];
+                return $res;
+            }
+        }
+
+        if ($param['place_at'] !== 'all') {
+            $wf       = new WfDts();
+            $workflow = $wf->getPlaceAlias();
+            if (in_array($param['place_at'], $workflow)) {
+                $query['place_at'] = $param['place_at'];
+            } else {
+                $res['http_status'] = 200;
+                $res['data']        = ['total' => 0, 'data' => []];
+                return $res;
+            }
+        }
+
+        $query['status'] = 'publish';
+        $query['limit']  = $param['limit'];
+        $query['offset'] = $param['offset'];
+        $columnName      = ['id', 'dts_id', 'station_id', 'type', 'title', 'level', 'place_at', 'created_at', 'updated_at', 'creator_id'];
+
+        $model = new DtsModel();
+        $db    = $model->getByLimitOffset($columnName, $query);
+
+        if ($db['total'] === 0) {
+            $res['http_status'] = 200;
+            $res['data']        = $db;
+            return $res;
+        }
+
+        // id => name
+        $data = $this->_getUserNameAndWorkflowName($db['data']);
+        $data = $this->_getDeptName($data);
+
+        $res['http_status'] = 200;
+        $res['data']        = ['total' => $db['total'], 'data' => $data];
+        return $res;
+    }
+
+    protected function _reqNewForm()
     {
         $allowWriteDeptId = session('allowWriteDeptId');
         if (empty($allowWriteDeptId)) {
-            return $this->failUnauthorized('用户没有权限');
+            $res['http_status'] = 401;
+            $res['msg']         = '用户没有权限';
+            return $res;
         }
 
         $station_id = session('allowDefaultDeptId');
-        if (empty($station_id)) {
-            return $this->failUnauthorized('用户没有权限');
+        if (!in_array($station_id, $allowWriteDeptId)) {
+            $res['http_status'] = 401;
+            $res['msg']         = '用户没有权限';
+            return $res;
         }
 
         $deviceList = $this->_getDeviceList($station_id);
         if (empty($deviceList)) {
-            return $this->failNotFound('请求的数据没有找到');
+            $res['http_status'] = 404;
+            $res['msg']         = '没有找到请求的数据';
+            return $res;
         }
 
         $model       = new DeptModel();
@@ -532,15 +611,112 @@ class Dts extends BaseController
         $station     = $model->getByIds($columnName, $allowWriteDeptId);
         $description = $this->blankTpl;
 
-        $res['data'] = [
+        $res['http_status'] = 200;
+        $res['data']        = [
             'description' => $description,
             'deviceList'  => $deviceList,
             'station'     => $station,
         ];
-        var_dump('here');
-        return $this->respond($res);
+        return $res;
     }
 
+    protected function _reqDeviceList()
+    {
+        if (!$this->validate('DtsReqDeviceList')) {
+            $res['http_status'] = 400;
+            $res['msg']         = [
+                'error' => '请求数据无效',
+                'info'  => $this->validator->getErrors(),
+            ];
+            return $res;
+        }
+        $params     = $this->request->getGet();
+        $station_id = $params['station_id'];
+
+        $allowWriteDeptId = session('allowWriteDeptId');
+        if (!in_array($station_id, $allowWriteDeptId)) {
+            $res['http_status'] = 401;
+            $res['msg']         = '用户没有权限';
+            return $res;
+        }
+
+        $deviceList = $this->_getDeviceList($station_id);
+        if (empty($deviceList)) {
+            $res['http_status'] = 404;
+            $res['msg']         = '没有找到请求的数据';
+            return $res;
+        }
+
+        $res['http_status'] = 200;
+        $res['data']        = ['deviceList' => $deviceList];
+        return $res;
+    }
+
+    protected function _reqDetails()
+    {
+        // 检查请求数据
+        if (!$this->validate('DtsReqDetails')) {
+            $res['http_status'] = 400;
+            $res['msg']         = [
+                'error' => '请求数据无效',
+                'info'  => $this->validator->getErrors(),
+            ];
+            return $res;
+        }
+
+        $params = $this->request->getGet();
+        $dts_id = $params['dts_id'];
+
+        $columnName = ['dts_id', 'type', 'title', 'level', 'station_id', 'place_at', 'device', 'description', 'progress', 'created_at', 'updated_at', 'creator_id', 'reviewer_id'];
+        $query      = ['dts_id' => $dts_id];
+
+        $model = new DtsModel();
+        $db    = $model->getByDtsId($columnName, $query);
+        if (empty($db)) {
+            $res['http_status'] = 404;
+            $res['msg']         = '没有找到请求的数据';
+            return $res;
+        }
+
+        $allowReadDeptId = session('allowReadDeptId');
+        if (!in_array($db['station_id'], $allowReadDeptId)) {
+            $res['http_status'] = 401;
+            $res['msg']         = '用户没有权限';
+            return $res;
+        }
+
+        $details        = $db;
+        $newProgressTpl = $this->updateTpl;
+
+        // id -> name
+        $details['type']  = $this->keyValuePairs['type'][$db['type']];
+        $details['level'] = $this->keyValuePairs['level'][$db['level']];
+
+        $users_id = [
+            'creator'  => $db['creator_id'],
+            'reviewer' => $db['reviewer_id'],
+        ];
+        $users               = $this->_getUserName($users_id);
+        $details['creator']  = $users['creator'];
+        $details['reviewer'] = $users['reviewer'];
+
+        $details['device']  = $this->_getDeviceFullName($db['device']);
+        $details['station'] = $this->_getDeptName2($db['station_id']);
+
+        $steps     = $this->_getStepsBar($details['creator'], $details['reviewer'], $db['created_at'], $db['updated_at'], $db['place_at']);
+        $operation = $this->_getWorkflowOperation($db['place_at']);
+
+        $res['http_status'] = 200;
+        $res['data']        = [
+            'details'        => $details,
+            'steps'          => $steps,
+            'newProgressTpl' => $newProgressTpl,
+            'operation'      => $operation,
+        ];
+        return $res;
+    }
+
+    // Part-3
     protected function _getDeviceList(int $station_id = 0)
     {
         if ($station_id <= 0) {

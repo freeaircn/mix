@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-24 23:27:34
+ * @LastEditTime: 2022-04-25 18:52:35
  */
 
 namespace Config;
@@ -139,21 +139,13 @@ $routes->group('api', function ($routes) {
     $routes->get('meters/statistic/chart/data', 'Meters::getStatisticChartData');
     $routes->get('meters/statistic/overall', 'Meters::getStatisticOverall');
     //
-    $routes->get('dts/query_params', 'Dts::getQueryParams');
-    $routes->get('dts/blank_form', 'Dts::getBlankForm');
-    $routes->get('dts/device_list', 'Dts::getDeviceList');
-
-    $routes->get('dts/list', 'Dts::getList');
-    $routes->get('dts/details', 'Dts::getDetails');
-    $routes->put('dts/progress', 'Dts::updateProgress');
-    //
     $routes->post('dts/attachment', 'Dts::uploadAttachment');
     $routes->delete('dts/attachment', 'Dts::delAttachment');
-    //
-    $routes->post('dts', 'Dts::createOne');
+    $routes->put('dts/progress', 'Dts::updateProgress');
     $routes->get('dts', 'Dts::queryEntry');
+    $routes->post('dts', 'Dts::createOne');
+    $routes->delete('dts', 'Dts::deleteOne');
     //
-    $routes->get('dts/ticket/download/attachment', 'Dts::getTicketAttachment');
     $routes->put('dts/ticket/handler', 'Dts::putTicketHandler');
     $routes->post('dts/ticket/toReview', 'Dts::postTicketToReview');
     //

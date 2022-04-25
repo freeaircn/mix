@@ -11,7 +11,7 @@
           <a-row :gutter="48">
             <a-col :md="8" :sm="24">
               <a-form-model-item label="站点" >
-                <a-select v-model="queryParam.station_id" placeholder="请选择" >
+                <a-select v-model="searchParams.station_id" placeholder="请选择" >
                   <a-select-option v-for="d in stationItems" :key="d.id" :value="d.id">
                     {{ d.name }}
                   </a-select-option>
@@ -20,7 +20,7 @@
             </a-col>
             <a-col :md="8" :sm="24">
               <a-form-item label="类型">
-                <a-select v-model="queryParam.type" placeholder="请选择" default-value="0">
+                <a-select v-model="searchParams.type" placeholder="请选择" default-value="0">
                   <a-select-option value="0">全部</a-select-option>
                   <a-select-option value="1">隐患</a-select-option>
                   <a-select-option value="2">缺陷</a-select-option>
@@ -30,7 +30,7 @@
             <template v-if="advanced">
               <a-col :md="8" :sm="24">
                 <a-form-item label="影响等级">
-                  <a-select v-model="queryParam.level" placeholder="请选择" default-value="0">
+                  <a-select v-model="searchParams.level" placeholder="请选择" default-value="0">
                     <a-select-option value="0">全部</a-select-option>
                     <a-select-option value="1">紧急</a-select-option>
                     <a-select-option value="2">严重</a-select-option>
@@ -40,17 +40,17 @@
               </a-col>
               <a-col :md="8" :sm="24">
                 <a-form-item label="单号">
-                  <a-input v-model="queryParam.dts_id" placeholder=""/>
+                  <a-input v-model="searchParams.dts_id" placeholder=""/>
                 </a-form-item>
               </a-col>
               <a-col :md="8" :sm="24">
                 <a-form-item label="创建人">
-                  <a-input v-model="queryParam.creator" placeholder=""/>
+                  <a-input v-model="searchParams.creator" placeholder=""/>
                 </a-form-item>
               </a-col>
               <a-col :md="8" :sm="24">
                 <a-form-model-item label="进度" >
-                  <a-select v-model="queryParam.place_at" placeholder="请选择" >
+                  <a-select v-model="searchParams.place_at" placeholder="请选择" >
                     <a-select-option v-for="d in workflowItems" :key="d.id" :value="d.alias">
                       {{ d.name }}
                     </a-select-option>
@@ -60,8 +60,9 @@
             </template>
             <a-col :md="!advanced && 8 || 24" :sm="24">
               <span class="table-page-search-submitButtons" :style="advanced && { float: 'right', overflow: 'hidden' } || {} ">
-                <a-button type="primary" @click="onQuery(queryParam)">查询</a-button>
-                <a-button style="margin-left: 8px" @click="resetQueryParam">重置</a-button>
+                <a-button type="primary" @click="handleSearchDts(searchParams)">查询</a-button>
+                <a-button style="margin-left: 8px" @click="resetSearchParams">重置</a-button>
+                <!-- <router-link slot="extra" to="/dashboard/dts/new"><a-button type="primary" style="margin-left: 8px;">新建</a-button></router-link> -->
                 <a @click="toggleAdvanced" style="margin-left: 8px">
                   {{ advanced ? '收起' : '展开' }}
                   <a-icon :type="advanced ? 'up' : 'down'"/>
@@ -83,6 +84,7 @@
         :data-source="listData"
         :pagination="pagination"
         :loading="loading"
+        @change="handleTableChange"
       >
         <span slot="dts_id" slot-scope="text, record">
           <template>
@@ -98,8 +100,8 @@
         <span slot="action" slot-scope="text, record">
           <template>
             <a @click="onQueryDetails(record)">详情</a>
-            <!-- <a-divider type="vertical" />
-            <a @click="handleDel(record)">删除</a> -->
+            <a-divider type="vertical" />
+            <a @click="handleDel(record)">删除</a>
           </template>
         </span>
 
@@ -111,7 +113,7 @@
 <script>
 import { mapGetters } from 'vuex'
 import { baseMixin } from '@/store/app-mixin'
-import { getQueryParams, getList } from '@/api/mix/dts'
+import { queryDts, delDts } from '@/api/mix/dts'
 
 const typeMap = {
   '1': { text: '隐患' },
@@ -127,13 +129,10 @@ const levelMap = {
 export default {
   name: 'DTS',
   mixins: [baseMixin],
-  // components: {
-
-  // },
   data () {
     return {
       advanced: false,
-      queryParam: {
+      searchParams: {
         station_id: '0',
         type: '0',
         level: '0',
@@ -221,11 +220,11 @@ export default {
     ])
   },
   beforeMount () {
-    this.beforeQuery()
+    this.prepareSearchFunc()
   },
   mounted () {
-    this.queryParam.station_id = this.userInfo.allowDefaultDeptId
-    this.onQuery(this.queryParam)
+    this.searchParams.station_id = this.userInfo.allowDefaultDeptId
+    this.sendSearchReq(this.searchParams)
   },
   methods: {
     toggleAdvanced () {
@@ -233,8 +232,9 @@ export default {
     },
 
     // 查询
-    beforeQuery () {
-      getQueryParams()
+    prepareSearchFunc () {
+      const params = { resource: 'search_params' }
+      queryDts(params)
         .then(res => {
           res.station.forEach(element => {
             this.stationItems.push(element)
@@ -244,32 +244,33 @@ export default {
           })
         })
         .catch(() => {
-          //
         })
     },
 
-    resetQueryParam () {
-      this.queryParam.station_id = this.userInfo.allowDefaultDeptId
-      this.queryParam.type = '0'
-      this.queryParam.level = '0'
-      this.queryParam.dts_id = ''
-      this.queryParam.creator = ''
-      this.queryParam.place_at = 'all'
+    resetSearchParams () {
+      this.searchParams.station_id = this.userInfo.allowDefaultDeptId
+      this.searchParams.type = '0'
+      this.searchParams.level = '0'
+      this.searchParams.dts_id = ''
+      this.searchParams.creator = ''
+      this.searchParams.place_at = 'all'
     },
 
-    onQuery (queryParam) {
-      const query = Object.assign(queryParam, {
+    sendSearchReq (searchParams) {
+      const params = Object.assign(searchParams, {
+        resource: 'list',
         limit: this.pagination.pageSize,
-        offset: 1
+        offset: this.pagination.current
       })
-      this.pagination.current = 1
       this.loading = true
-      getList(query)
+      queryDts(params)
         .then(res => {
-          this.loading = false
-          //
-          this.pagination.total = res.total
+          const pagination = { ...this.pagination }
+          pagination.total = res.total
+          this.pagination = pagination
           this.listData = res.data
+          //
+          this.loading = false
         })
         .catch((err) => {
           this.loading = false
@@ -279,10 +280,41 @@ export default {
         })
     },
 
+    handleSearchDts () {
+      this.pagination.current = 1
+      this.sendSearchReq(this.searchParams)
+    },
+
+    handleTableChange (pagination) {
+      const pager = { ...this.pagination }
+      pager.current = pagination.current
+      this.pagination = pager
+
+      this.sendSearchReq(this.searchParams)
+    },
+
     onQueryDetails (record) {
       if (record.dts_id) {
         const id = record.dts_id
         this.$router.push({ path: `/dashboard/dts/details/${id}` })
+      }
+    },
+
+    handleDel (record) {
+      if (record.dts_id) {
+        this.$confirm({
+        title: '确定删除吗?',
+        content: record.title,
+        onOk: () => {
+          const param = { dts_id: record.dts_id }
+          delDts(param)
+            .then(() => {
+              this.handleSearchDts()
+            })
+            .catch(() => {
+            })
+        }
+      })
       }
     }
 

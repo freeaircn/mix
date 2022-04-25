@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-14 10:33:42
+ * @LastEditTime: 2022-04-25 22:15:42
  */
 
 namespace App\Controllers;
@@ -129,11 +129,13 @@ class Auth extends BaseController
             $db    = $model->getByRoleIdsForAuth($roleIds);
             foreach ($db as $d) {
                 $allowReadDeptId[] = $d['dept_id'];
-                if ($d['data_writable'] === '1') {
-                    $allowWriteDeptId[] = $d['dept_id'];
-                }
                 if ($d['is_default'] === '1') {
                     $allowDefaultDeptId = $d['dept_id'];
+                    $allowWriteDeptId[] = $d['dept_id'];
+                    continue;
+                }
+                if ($d['data_writable'] === '1') {
+                    $allowWriteDeptId[] = $d['dept_id'];
                 }
             }
         }

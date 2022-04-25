@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-24 23:10:28
+ * @LastEditTime: 2022-04-25 19:21:28
  */
 
 namespace Config;
@@ -191,7 +191,7 @@ class Validation
         'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
     ];
 
-    public $DtsGetDeviceList = [
+    public $DtsReqDeviceList = [
         'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
     ];
 
@@ -205,7 +205,7 @@ class Validation
         'level'      => 'required|regex_match[^[1-9]$]',
     ];
 
-    public $DtsGetList = [
+    public $DtsReqList = [
         'station_id' => 'required|regex_match[^\d{0,2}$]',
         'type'       => 'required|regex_match[^[0-9]$]',
         'level'      => 'required|regex_match[^[0-9]$]',
@@ -215,7 +215,11 @@ class Validation
         'offset'     => 'required|regex_match[^[1-9]\d{0,9}$]',
     ];
 
-    public $DtsGetDetails = [
+    public $DtsReqDetails = [
+        'dts_id' => 'required|regex_match[/^[1-9]\d{0,19}$/]',
+    ];
+
+    public $DtsDeleteOne = [
         'dts_id' => 'required|regex_match[/^[1-9]\d{0,19}$/]',
     ];
 

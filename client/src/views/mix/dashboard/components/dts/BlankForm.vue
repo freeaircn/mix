@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-24 23:35:53
+ * @LastEditTime: 2022-04-25 11:44:39
 -->
 <template>
   <page-header-wrapper :title="false">
@@ -81,7 +81,7 @@
 <script>
 import myConfig from '@/config/mix_config'
 import { mapGetters } from 'vuex'
-import { queryDts, getDeviceList, delAttachment, createDts } from '@/api/mix/dts'
+import { queryDts, delAttachment, createDts } from '@/api/mix/dts'
 import { listToTree } from '@/utils/util'
 
 export default {
@@ -130,8 +130,7 @@ export default {
   },
   methods: {
     loadBlankForm () {
-      // getBlankForm()
-      const params = { source: 'new_form' }
+      const params = { resource: 'new_form' }
       queryDts(params)
         .then((data) => {
             this.record.description = data.description
@@ -148,8 +147,8 @@ export default {
     },
 
     onStationSelectChange (value) {
-      const query = { station_id: value }
-      getDeviceList(query)
+      const params = { resource: 'device_list', station_id: value }
+      queryDts(params)
         .then((data) => {
             this.deviceItems.splice(0, this.deviceItems.length)
             listToTree(data.deviceList, this.deviceItems, value)

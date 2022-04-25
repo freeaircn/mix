@@ -69,7 +69,7 @@
 import MyForm from './Form'
 import { mapGetters } from 'vuex'
 import { baseMixin } from '@/store/app-mixin'
-import { getDetails, putProgress } from '@/api/mix/dts'
+import { queryDts, putProgress } from '@/api/mix/dts'
 
 export default {
   name: 'DtsTicketDetails',
@@ -125,9 +125,9 @@ export default {
       if (this.dts_id === '0') {
         return
       }
-      const query = { dts_id: this.dts_id }
       this.loading = true
-      getDetails(query)
+      const params = { resource: 'details', dts_id: this.dts_id }
+      queryDts(params)
         .then(data => {
           Object.assign(this.details, data.details)
           this.steps = data.steps
@@ -135,10 +135,8 @@ export default {
           this.operation = { ...data.operation }
           this.loading = false
         })
-        .catch((err) => {
+        .catch(() => {
           this.loading = false
-          if (err.response) {
-          }
         })
     },
 

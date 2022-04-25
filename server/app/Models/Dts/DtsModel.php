@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-24 22:23:29
+ * @LastEditTime: 2022-04-25 19:16:55
  */
 
 namespace App\Models\Dts;
@@ -65,10 +65,9 @@ class DtsModel extends Model
             return false;
         }
 
-        $this->transStart();
         $result = $this->insert($draft);
-        $this->transComplete();
-        if ($this->transStatus() === false) {
+
+        if ($result === false) {
             return false;
         } else {
             return true;
@@ -184,6 +183,21 @@ class DtsModel extends Model
         }
 
         return $this->save($data);
+    }
+
+    public function delByDtsId(string $dts_id)
+    {
+        if (!is_numeric($dts_id)) {
+            return true;
+        }
+
+        $result = $this->where('dts_id', $dts_id)->delete();
+
+        if ($result === false) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
 }
