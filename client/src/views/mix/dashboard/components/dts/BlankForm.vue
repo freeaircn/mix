@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-25 11:44:39
+ * @LastEditTime: 2022-04-26 23:52:50
 -->
 <template>
   <page-header-wrapper :title="false">
@@ -59,6 +59,7 @@
           <a-upload
             accept="text/plain, image/jpeg, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-powerpoint, application/vnd.openxmlformats-officedocument.presentationml.presentation, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel, application/pdf, application/zip"
             action="/api/dts/attachment"
+            :data="{dts_id: '0'}"
             :before-upload="beforeUploadAttachment"
             :showUploadList="{ showDownloadIcon: false, showRemoveIcon: true }"
             :remove="onClickDelAttachment"
@@ -162,22 +163,38 @@ export default {
 
     // 附件
     beforeUploadAttachment (file) {
-      let fileType = file.type === 'text/plain' || file.type === 'image/jpeg' || file.type === 'image/png'
-      fileType = fileType || file.type === 'application/msword' || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-      fileType = fileType || file.type === 'application/vnd.ms-powerpoint' || file.type === 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
-      fileType = fileType || file.type === 'application/vnd.ms-excel' || file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-      fileType = fileType || file.type === 'application/pdf' || file.type === 'application/zip'
-      if (!fileType) {
-        this.$message.error('允许文件类型: jpg, png, txt, pdf, doc, docx, xls, xlsx, ppt, pptx, zip')
-        return false
-      }
-      //
-      if (file.size > myConfig.DtsAttachmentMaxSize) {
-        this.$message.error('文件大小超限')
-        return false
-      }
+      return new Promise((resolve, reject) => {
+        let conflict = false
+        this.fileList.forEach(f => {
+          if (file.name === f.name) {
+            conflict = true
+          }
+        })
+        if (conflict) {
+          this.$message.error('已上传相同文件名的附件')
+          // eslint-disable-next-line prefer-promise-reject-errors
+          return reject(false)
+        }
 
-      return true
+        let fileType = file.type === 'text/plain' || file.type === 'image/jpeg' || file.type === 'image/png'
+        fileType = fileType || file.type === 'application/msword' || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        fileType = fileType || file.type === 'application/vnd.ms-powerpoint' || file.type === 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+        fileType = fileType || file.type === 'application/vnd.ms-excel' || file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        fileType = fileType || file.type === 'application/pdf' || file.type === 'application/zip'
+        if (!fileType) {
+          this.$message.error('允许文件类型: jpg, png, txt, pdf, doc, docx, xls, xlsx, ppt, pptx, zip')
+          // eslint-disable-next-line prefer-promise-reject-errors
+          return reject(false)
+        }
+
+        if (file.size > myConfig.DtsAttachmentMaxSize) {
+          this.$message.error('文件大小超限')
+          // eslint-disable-next-line prefer-promise-reject-errors
+          return reject(false)
+        }
+
+        return resolve(true)
+      })
     },
 
     afterUploadAttachment (info) {
@@ -203,7 +220,7 @@ export default {
       this.fileList = newFileList
       this.fileNumber = this.fileNumber - 1
       if (file.status === 'done') {
-        const param = { id: file.response.id }
+        const param = { id: file.response.id, dts_id: '0' }
         return delAttachment(param)
           .then(() => {
             return true

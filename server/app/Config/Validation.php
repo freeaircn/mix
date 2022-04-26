@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-25 19:21:28
+ * @LastEditTime: 2022-04-26 23:52:16
  */
 
 namespace Config;
@@ -196,7 +196,8 @@ class Validation
     ];
 
     public $DtsDelAttachment = [
-        'id' => 'required|is_natural_no_zero',
+        'id'     => 'required|is_natural_no_zero',
+        'dts_id' => 'required|is_natural',
     ];
 
     public $DtsCreateOne = [

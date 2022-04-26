@@ -52,6 +52,23 @@
           :rows="8"
           readOnly/>
       </div>
+
+      <div style="margin-top: 8px; margin-bottom: 8px">附件:</div>
+      <div style="width: 380px">
+        <a-upload
+          accept="text/plain, image/jpeg, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-powerpoint, application/vnd.openxmlformats-officedocument.presentationml.presentation, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel, application/pdf, application/zip"
+          action="/api/dts/attachment"
+          :data="{dts_id: dts_id}"
+          :before-upload="beforeUploadAttachment"
+          :showUploadList="{ showDownloadIcon: true, showRemoveIcon: true }"
+          :fileList="fileList"
+          :remove="onClickDelAttachment"
+          @change="afterUploadAttachment"
+          @download="onClickDownloadAttachment"
+        >
+          <a-button :disabled="disableUploadBtn"> <a-icon type="upload" /> 点击上传 </a-button>
+        </a-upload>
+      </div>
     </a-card>
 
     <a-card :bordered="false" title="操作" :loading="loading" :body-style="{marginBottom: '8px'}">
@@ -66,10 +83,11 @@
 </template>
 
 <script>
+import myConfig from '@/config/mix_config'
 import MyForm from './Form'
 import { mapGetters } from 'vuex'
 import { baseMixin } from '@/store/app-mixin'
-import { queryDts, putProgress } from '@/api/mix/dts'
+import { queryDts, delAttachment, putProgress } from '@/api/mix/dts'
 
 export default {
   name: 'DtsTicketDetails',
@@ -105,13 +123,19 @@ export default {
       },
       // activeKey: ['1'],
       visibleNewProgressDiag: false,
-      newProgress: { content: '' }
+      newProgress: { content: '' },
+      //
+      fileNumber: 0,
+      fileList: []
     }
   },
   computed: {
     ...mapGetters([
       'userInfo'
-    ])
+    ]),
+    disableUploadBtn: function () {
+      return this.fileNumber >= myConfig.DtsAttachmentMaxNumber
+    }
   },
   created () {
     this.dts_id = (this.$route.params.id) ? this.$route.params.id : '0'
@@ -133,6 +157,8 @@ export default {
           this.steps = data.steps
           this.newProgressTpl = data.newProgressTpl
           this.operation = { ...data.operation }
+          this.fileList = data.attachments
+          this.fileNumber = data.attachments.length
           this.loading = false
         })
         .catch(() => {
@@ -140,32 +166,86 @@ export default {
         })
     },
 
+    // 附件
+    beforeUploadAttachment (file) {
+      return new Promise((resolve, reject) => {
+        let conflict = false
+        this.fileList.forEach(f => {
+          if (file.name === f.name) {
+            conflict = true
+          }
+        })
+        if (conflict) {
+          this.$message.error('已上传相同文件名的附件')
+          // eslint-disable-next-line prefer-promise-reject-errors
+          return reject(false)
+        }
+
+        let fileType = file.type === 'text/plain' || file.type === 'image/jpeg' || file.type === 'image/png'
+        fileType = fileType || file.type === 'application/msword' || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        fileType = fileType || file.type === 'application/vnd.ms-powerpoint' || file.type === 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+        fileType = fileType || file.type === 'application/vnd.ms-excel' || file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        fileType = fileType || file.type === 'application/pdf' || file.type === 'application/zip'
+        if (!fileType) {
+          this.$message.error('允许文件类型: jpg, png, txt, pdf, doc, docx, xls, xlsx, ppt, pptx, zip')
+          // eslint-disable-next-line prefer-promise-reject-errors
+          return reject(false)
+        }
+
+        if (file.size > myConfig.DtsAttachmentMaxSize) {
+          this.$message.error('文件大小超限')
+          // eslint-disable-next-line prefer-promise-reject-errors
+          return reject(false)
+        }
+
+        return resolve(true)
+      })
+    },
+
+    afterUploadAttachment (info) {
+      const fileList = [...info.fileList]
+      this.fileList = fileList
+      if (info.file.status === 'error' || info.file.status === 'done') {
+        this.fileNumber = this.fileNumber + 1
+      }
+      if (info.file.status === 'done') {
+        this.$message.success('附件上传成功')
+      } else if (info.file.status === 'error') {
+        if (info.file.response.hasOwnProperty('messages')) {
+          this.$message.error(info.file.response.messages.error)
+        } else {
+          this.$message.error('附件上传失败')
+        }
+      }
+    },
+
+    onClickDelAttachment (file) {
+      const index = this.fileList.indexOf(file)
+      const newFileList = this.fileList.slice()
+      newFileList.splice(index, 1)
+      this.fileList = newFileList
+      this.fileNumber = this.fileNumber - 1
+      if (file.status === 'done') {
+        const param = { id: file.response.id, dts_id: this.dts_id }
+        return delAttachment(param)
+          .then(() => {
+            return true
+          })
+          .catch(() => {
+            return true
+          })
+      } else {
+        return true
+      }
+    },
+
+    onClickDownloadAttachment () {
+
+    },
+
     reqUpdateProgress () {
       this.newProgress.content = this.newProgressTpl
       this.visibleNewProgressDiag = true
-
-      // if (this.operation.newProgress === undefined) {
-      //   return
-      // }
-      // this.$confirm({
-      //   title: '提交新进展吗？',
-      //   onOk: () => {
-      //     const progress = {
-      //       dts_id: this.dts_id,
-      //       progress: this.operation.newProgress
-      //     }
-      //     putProgress(progress)
-      //       .then(() => {
-      //         this.operation.newProgress = this.newProgressTpl
-      //         window.scroll(0, 0)
-      //         this.onQueryDetails()
-      //       })
-      //       .catch((err) => {
-      //         if (err.response) {
-      //         }
-      //       })
-      //   }
-      // })
     },
 
     handleUpdateProgress (record) {

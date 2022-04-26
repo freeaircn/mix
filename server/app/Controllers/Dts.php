@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-25 22:31:30
+ * @LastEditTime: 2022-04-27 01:07:19
  */
 
 namespace App\Controllers;
@@ -100,7 +100,8 @@ class Dts extends BaseController
 
     public function uploadAttachment()
     {
-        $file = $this->request->getFile('file');
+        $dts_id = $this->request->getPost('dts_id');
+        $file   = $this->request->getFile('file');
 
         if (!$file->isValid()) {
             return $this->failServerError('附件上传失败');
@@ -131,22 +132,53 @@ class Dts extends BaseController
             }
         }
 
-        $temp = session('dtsAttachment');
-        $time = time();
-        $data = [
-            'id'      => $time,
-            'orgName' => $orgName,
-            'newName' => $newName,
-            'size'    => $size,
-        ];
-        if (!$temp) {
-            $this->session->set('dtsAttachment', [$data]);
-        } else {
-            $this->session->push('dtsAttachment', [$data]);
+        if ($dts_id === '0') {
+            $temp = session('dtsAttachment');
+            $time = time();
+            $data = [
+                'id'      => $time,
+                'orgName' => $orgName,
+                'newName' => $newName,
+                'size'    => $size,
+            ];
+            if (!$temp) {
+                $this->session->set('dtsAttachment', [$data]);
+            } else {
+                $this->session->push('dtsAttachment', [$data]);
+            }
+
+            $res['id'] = $time;
+            return $this->respond($res);
+        }
+        //
+        if ($dts_id !== '0' && is_numeric($dts_id)) {
+            $ext        = explode('.', $orgName);
+            $attachment = [
+                'dts_id'   => $dts_id,
+                'user_id'  => session('id'),
+                'username' => session('username'),
+                'org_name' => $orgName,
+                'new_name' => $newName,
+                'size'     => $size,
+                'file_ext' => end($ext),
+            ];
+            $model = new DtsAttachmentModel();
+            $id    = $model->insertOne($attachment);
+            if ($id === false) {
+                // 删除移动后的文件
+                $config = config('MyGlobalConfig');
+                $path   = WRITEPATH . $config->dtsAttachmentPath;
+                $file   = rtrim($path, '\\/ ') . DIRECTORY_SEPARATOR . $newName;
+                if (file_exists($file)) {
+                    unlink($file);
+                }
+                return $this->failServerError('服务器处理发生错误，稍候再试');
+            }
+
+            $res['id'] = $id;
+            return $this->respond($res);
         }
 
-        $res['id'] = $time;
-        return $this->respond($res);
     }
 
     public function delAttachment()
@@ -156,31 +188,63 @@ class Dts extends BaseController
         }
 
         $client = $this->request->getJSON(true);
+        $id     = $client['id'];
+        $dts_id = $client['dts_id'];
 
-        $temp = session('dtsAttachment');
-        if (empty($temp)) {
-            return $this->respond(['res' => 'empty']);
-        }
-
-        $config = config('MyGlobalConfig');
-        $path   = WRITEPATH . $config->dtsAttachmentPath;
-        $new    = [];
-        foreach ($temp as $v) {
-            if ($client['id'] == $v['id']) {
-                $file = rtrim($path, '\\/ ') . DIRECTORY_SEPARATOR . $v['newName'];
-                if (file_exists($file)) {
-                    unlink($file);
-                }
-            } else {
-                $new[] = $v;
+        if ($dts_id === '0') {
+            $temp = session('dtsAttachment');
+            if (empty($temp)) {
+                return $this->respond(['res' => 'empty']);
             }
-        }
-        $this->session->remove('dtsAttachment');
-        if (!empty($new)) {
-            $this->session->set('dtsAttachment', $new);
+
+            $config = config('MyGlobalConfig');
+            $path   = WRITEPATH . $config->dtsAttachmentPath;
+            $new    = [];
+            foreach ($temp as $v) {
+                if ($id == $v['id']) {
+                    $file = rtrim($path, '\\/ ') . DIRECTORY_SEPARATOR . $v['newName'];
+                    if (file_exists($file)) {
+                        unlink($file);
+                    }
+                } else {
+                    $new[] = $v;
+                }
+            }
+            $this->session->remove('dtsAttachment');
+            if (!empty($new)) {
+                $this->session->set('dtsAttachment', $new);
+            }
+
+            return $this->respond([
+                'res' => 'done',
+            ]);
         }
 
-        return $this->respond(['res' => 'done']);
+        if ($dts_id !== '0') {
+            $columnName = ['dts_id', 'new_name'];
+            $query      = ['id' => $id];
+
+            $model = new DtsAttachmentModel();
+            $db    = $model->getById($columnName, $query);
+            if (empty($db)) {
+                return $this->respond(['res' => 'done']);
+            }
+            if ($db['dts_id'] !== $dts_id) {
+                return $this->failServerError('请求错误，刷新后再试');
+            }
+            $result = $model->delById($id);
+            if (!$result) {
+                return $this->failServerError('服务器处理发生错误，稍候再试');
+            }
+            $config = config('MyGlobalConfig');
+            $path   = WRITEPATH . $config->dtsAttachmentPath;
+            $file   = rtrim($path, '\\/ ') . DIRECTORY_SEPARATOR . $db['new_name'];
+            if (file_exists($file)) {
+                unlink($file);
+            }
+
+            return $this->respond(['res' => 'done']);
+        }
     }
 
     public function createOne()
@@ -703,8 +767,9 @@ class Dts extends BaseController
         $details['device']  = $this->_getDeviceFullName($db['device']);
         $details['station'] = $this->_getDeptName2($db['station_id']);
 
-        $steps     = $this->_getStepsBar($details['creator'], $details['reviewer'], $db['created_at'], $db['updated_at'], $db['place_at']);
-        $operation = $this->_getWorkflowOperation($db['place_at']);
+        $steps       = $this->_getStepsBar($details['creator'], $details['reviewer'], $db['created_at'], $db['updated_at'], $db['place_at']);
+        $operation   = $this->_getWorkflowOperation($db['place_at']);
+        $attachments = $this->_getAttachment($dts_id);
 
         $res['http_status'] = 200;
         $res['data']        = [
@@ -712,6 +777,7 @@ class Dts extends BaseController
             'steps'          => $steps,
             'newProgressTpl' => $newProgressTpl,
             'operation'      => $operation,
+            'attachments'    => $attachments,
         ];
         return $res;
     }
@@ -934,7 +1000,7 @@ class Dts extends BaseController
         return $steps;
     }
 
-    public function _getWorkflowOperation(string $place_at = '')
+    protected function _getWorkflowOperation(string $place_at = '')
     {
         $result = [
             'allowUpdateProgress' => false,
@@ -951,5 +1017,30 @@ class Dts extends BaseController
         $result['allowUpdateProgress'] = $wf->canUpdateProgress($place_at);
 
         return $result;
+    }
+
+    protected function _getAttachment(string $dts_id = null)
+    {
+        if (!is_numeric($dts_id)) {
+            return [];
+        }
+
+        $columnName      = ['id', 'org_name'];
+        $query['dts_id'] = $dts_id;
+
+        $model = new DtsAttachmentModel();
+        $files = $model->getByDtsId($columnName, $query);
+
+        $attachments = [];
+        foreach ($files as $f) {
+            $attachments[] = [
+                'uid'      => $f['id'],
+                'name'     => $f['org_name'],
+                'status'   => 'done',
+                'response' => ['id' => $f['id']],
+            ];
+        }
+
+        return $attachments;
     }
 }

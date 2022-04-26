@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-25 19:27:10
+ * @LastEditTime: 2022-04-27 00:52:05
  */
 
 namespace App\Models\Dts;
@@ -56,6 +56,16 @@ class DtsAttachmentModel extends Model
         }
     }
 
+    public function insertOne(array $attachment)
+    {
+        if (empty($attachment)) {
+            return true;
+        }
+
+        $result = $this->insert($attachment);
+        return $result;
+    }
+
     public function getByDtsId(array $columnName = [], array $query = [])
     {
         if (empty($columnName) || empty($query)) {
@@ -82,6 +92,40 @@ class DtsAttachmentModel extends Model
         }
 
         $result = $this->where('dts_id', $dts_id)->delete();
+
+        if ($result === false) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    public function getById(array $columnName = [], array $query = [])
+    {
+        if (empty($columnName) || empty($query)) {
+            return [];
+        }
+
+        $selectSql = '';
+        foreach ($columnName as $key) {
+            $selectSql = $selectSql . $key . ', ';
+        }
+        $builder = $this->select($selectSql);
+
+        $builder->where('id', $query['id']);
+
+        $db = $builder->findAll();
+
+        return isset($db[0]) ? $db[0] : [];
+    }
+
+    public function delById(string $id)
+    {
+        if (!is_numeric($id)) {
+            return false;
+        }
+
+        $result = $this->where('id', $id)->delete();
 
         if ($result === false) {
             return false;
