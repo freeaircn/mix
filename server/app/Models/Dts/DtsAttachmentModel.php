@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-27 00:52:05
+ * @LastEditTime: 2022-04-27 21:47:48
  */
 
 namespace App\Models\Dts;
@@ -37,38 +37,29 @@ class DtsAttachmentModel extends Model
         parent::__construct();
     }
 
-    public function insertDB(array $attachment)
+    public function insertMultiRecords(array $attachments = null)
     {
-        if (empty($attachment)) {
+        if (empty($attachments)) {
             return true;
         }
 
-        $this->transStart();
-        foreach ($attachment as $f) {
-            $this->insert($f);
-        }
-
-        $this->transComplete();
-        if ($this->transStatus() === false) {
-            return false;
-        } else {
-            return true;
-        }
+        $result = $this->insertBatch($attachments);
+        return $result;
     }
 
-    public function insertOne(array $attachment)
+    public function insertSingleRecord(array $attachment)
     {
         if (empty($attachment)) {
-            return true;
+            return false;
         }
 
         $result = $this->insert($attachment);
         return $result;
     }
 
-    public function getByDtsId(array $columnName = [], array $query = [])
+    public function getByDtsId(array $columnName = [], string $dts_id = '')
     {
-        if (empty($columnName) || empty($query)) {
+        if (empty($columnName) || empty($dts_id)) {
             return [];
         }
 
@@ -78,7 +69,7 @@ class DtsAttachmentModel extends Model
         }
         $builder = $this->select($selectSql);
 
-        $builder->where('dts_id', $query['dts_id']);
+        $builder->where('dts_id', $dts_id);
 
         $db = $builder->findAll();
 

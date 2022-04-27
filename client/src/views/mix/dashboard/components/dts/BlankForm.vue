@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-26 23:52:50
+ * @LastEditTime: 2022-04-27 17:44:09
 -->
 <template>
   <page-header-wrapper :title="false">
@@ -226,7 +226,7 @@ export default {
             return true
           })
           .catch(() => {
-            return true
+            return false
           })
       } else {
         return true
@@ -236,7 +236,9 @@ export default {
     onSubmit () {
       const files = []
       this.fileList.forEach(element => {
-        files.push(element.response)
+        if (element.status === 'done') {
+          files.push(element.response)
+        }
       })
       this.$refs.form.validate(valid => {
         if (valid) {

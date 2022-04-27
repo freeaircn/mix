@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-25 19:16:55
+ * @LastEditTime: 2022-04-27 21:59:00
  */
 
 namespace App\Models\Dts;
@@ -17,7 +17,7 @@ class DtsModel extends Model
     protected $table;
 
     protected $primaryKey    = 'id';
-    protected $allowedFields = ['station_id', 'dts_id', 'status', 'type', 'title', 'level', 'device', 'description', 'progress', 'creator_id', 'reviewer_id', 'place_at', 'cause'];
+    protected $allowedFields = ['station_id', 'dts_id', 'status', 'type', 'title', 'level', 'device', 'description', 'progress', 'creator_id', 'reviewer_id', 'place_at', 'score', 'scored_by', 'cause'];
 
     protected $useAutoIncrement = true;
 
@@ -59,19 +59,14 @@ class DtsModel extends Model
         return isset($db[0]) ? $db[0] : [];
     }
 
-    public function insertDB(array $draft)
+    public function insertSingleRecord(array $data)
     {
-        if (empty($draft)) {
+        if (empty($data)) {
             return false;
         }
 
-        $result = $this->insert($draft);
-
-        if ($result === false) {
-            return false;
-        } else {
-            return true;
-        }
+        $result = $this->insert($data);
+        return $result;
     }
 
     public function getByLimitOffset($columnName = [], $query = [])
@@ -116,9 +111,9 @@ class DtsModel extends Model
         }
     }
 
-    public function getByDtsId($columnName = [], $query = [])
+    public function getByDtsId(array $columnName = [], string $dts_id = '')
     {
-        if (empty($columnName) || empty($query)) {
+        if (empty($columnName) || empty($dts_id)) {
             return [];
         }
 
@@ -128,38 +123,23 @@ class DtsModel extends Model
         }
         $builder = $this->select($selectSql);
 
-        $builder->where('dts_id', $query['dts_id']);
+        $builder->where('dts_id', $dts_id);
 
         $db = $builder->findAll();
 
         return isset($db[0]) ? $db[0] : [];
     }
 
-    public function updateProgress(string $progress = '', string $dts_id = '')
+    public function updateById(array $data = null, string $id = null)
     {
-        if (empty($dts_id)) {
+        if (empty($id)) {
             return false;
         }
-        if (empty($progress)) {
+        if (empty($data)) {
             return true;
         }
 
-        $this->transStart();
-
-        $columnName = ['id', 'progress'];
-        $db         = $this->getByDtsId($columnName, ['dts_id' => $dts_id]);
-        if (empty($db)) {
-            return false;
-        }
-        $db['progress'] = $progress . "\n" . $db['progress'];
-        $this->save($db);
-
-        $this->transComplete();
-        if ($this->transStatus() === false) {
-            return false;
-        } else {
-            return true;
-        }
+        return $this->where('id', $id)->set($data)->update();
     }
 
     public function updateHandler($handler = '', $where = [])

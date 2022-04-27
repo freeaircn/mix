@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-26 23:52:16
+ * @LastEditTime: 2022-04-27 21:20:24
  */
 
 namespace Config;
@@ -195,6 +195,10 @@ class Validation
         'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
     ];
 
+    public $DtsUploadAttachment = [
+        'dts_id' => 'required|is_natural',
+    ];
+
     public $DtsDelAttachment = [
         'id'     => 'required|is_natural_no_zero',
         'dts_id' => 'required|is_natural',
@@ -224,8 +228,9 @@ class Validation
         'dts_id' => 'required|regex_match[/^[1-9]\d{0,19}$/]',
     ];
 
-    public $DtsUpdateProgress = [
-        'dts_id' => 'required|regex_match[/^[1-9]\d{0,19}$/]',
+    public $DtsUpdateEntry = [
+        'resource' => 'required',
+        'dts_id'   => 'required|regex_match[/^[1-9]\d{0,19}$/]',
     ];
 
     public $DtsHandlerPut = [

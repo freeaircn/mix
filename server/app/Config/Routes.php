@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-25 18:52:35
+ * @LastEditTime: 2022-04-27 22:02:38
  */
 
 namespace Config;
@@ -141,13 +141,10 @@ $routes->group('api', function ($routes) {
     //
     $routes->post('dts/attachment', 'Dts::uploadAttachment');
     $routes->delete('dts/attachment', 'Dts::delAttachment');
-    $routes->put('dts/progress', 'Dts::updateProgress');
     $routes->get('dts', 'Dts::queryEntry');
     $routes->post('dts', 'Dts::createOne');
     $routes->delete('dts', 'Dts::deleteOne');
-    //
-    $routes->put('dts/ticket/handler', 'Dts::putTicketHandler');
-    $routes->post('dts/ticket/toReview', 'Dts::postTicketToReview');
+    $routes->put('dts', 'Dts::updateEntry');
     //
     $routes->add('(:any)', '404');
 });

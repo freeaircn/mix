@@ -3,17 +3,13 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-25 18:46:59
+ * @LastEditTime: 2022-04-27 21:17:21
  */
 import request from '@/utils/request'
 
 const api = {
   dts: '/dts',
-  dts_attachment: '/dts/attachment',
-  //
-  dts_progress: '/dts/progress',
-  dts_ticket_handler: '/dts/ticket/handler',
-  dts_ticket_toReview: '/dts/ticket/toReview'
+  dts_attachment: '/dts/attachment'
 }
 
 export function queryDts (params) {
@@ -48,26 +44,10 @@ export function delAttachment (params) {
   })
 }
 
-export function putProgress (data) {
+export function updateDts (data) {
   return request({
-    url: api.dts_progress,
+    url: api.dts,
     method: 'put',
-    data: data
-  })
-}
-
-export function putDtsTicketHandler (data) {
-  return request({
-    url: api.dts_ticket_handler,
-    method: 'put',
-    data: data
-  })
-}
-
-export function postDtsTicketToReview (data) {
-  return request({
-    url: api.dts_ticket_toReview,
-    method: 'post',
     data: data
   })
 }

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-25 22:15:42
+ * @LastEditTime: 2022-04-27 23:45:13
  */
 
 namespace App\Controllers;
@@ -18,9 +18,11 @@ use App\Models\Admin\PoliticModel;
 use App\Models\Admin\RoleApiModel;
 use App\Models\Admin\RoleDeptModel;
 use App\Models\Admin\RoleMenuModel;
+use App\Models\Admin\RoleWorkflowModel;
 use App\Models\Admin\TitleModel;
 use App\Models\Admin\UserModel;
 use App\Models\Admin\UserRoleModel;
+use App\Models\Admin\WorkflowModel;
 use App\Models\Auth\AuthModel;
 use App\Models\SmsCodeModel;
 use CodeIgniter\API\ResponseTrait;
@@ -105,7 +107,7 @@ class Auth extends BaseController
         $allowDefaultDeptId = '0';
         $allowReadDeptId    = [];
         $allowWriteDeptId   = [];
-        $allowWorkFlow      = [];
+        $allowWorkflow      = [];
         //
         $model   = new UserRoleModel();
         $roleIds = $model->getUserRole($user['id']);
@@ -137,6 +139,14 @@ class Auth extends BaseController
                 if ($d['data_writable'] === '1') {
                     $allowWriteDeptId[] = $d['dept_id'];
                 }
+            }
+            //
+            $model = new RoleWorkflowModel();
+            $wfIds = $model->getByRoleIdsForAuth($roleIds);
+            if (!empty($wfIds)) {
+                $model = new WorkflowModel();
+                // 读数据库时除掉了辅助树形显示的项type=2
+                $allowWorkflow = $model->getByIds($wfIds);
             }
         }
         $deptIds = [];
@@ -188,6 +198,7 @@ class Auth extends BaseController
         $sessionData['allowDefaultDeptId'] = $allowDefaultDeptId;
         $sessionData['allowReadDeptId']    = $allowReadDeptId;
         $sessionData['allowWriteDeptId']   = $allowWriteDeptId;
+        $sessionData['allowWorkflow']      = $allowWorkflow;
         $sessionData['dept_ids']           = $deptIds;
         //
         $sessionData['displayedDept'] = 'T';

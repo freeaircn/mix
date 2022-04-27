@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-09-06 01:17:02
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-01 10:35:21
+ * @LastEditTime: 2022-04-27 19:33:11
  */
 
 namespace App\Libraries;
@@ -45,11 +45,9 @@ class MyIdMaker
     public function apply(string $cacheKey = '')
     {
         $redis = new Redis();
-        if (!$redis->connect($this->redisHost, $this->redisPort, $this->redisTimeOut)) {
-            return false;
-        }
 
         try {
+            $redis->connect($this->redisHost, $this->redisPort, $this->redisTimeOut);
             $seqResolver = new RedisSequenceResolver($redis);
         } catch (RedisException $e) {
             return false;

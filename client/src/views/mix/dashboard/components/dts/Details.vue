@@ -38,14 +38,18 @@
         <a-descriptions-item label="创建">{{ details.creator }}</a-descriptions-item>
         <a-descriptions-item label="审核" v-if="details.reviewer.length !== 0">{{ details.reviewer }}</a-descriptions-item>
       </a-descriptions>
+      <a-descriptions v-if="details.score != '0'" title="" :column="{ xxl: 4, xl: 3, lg: 3, md: 3, sm: 2, xs: 1 }">
+        <a-descriptions-item label="评分">{{ details.score }}</a-descriptions-item>
+        <a-descriptions-item label="评分说明">{{ details.scored_by }}</a-descriptions-item>
+      </a-descriptions>
 
       <div style="margin-bottom: 8px">描述:</div>
       <div style="width: 100%">
         <a-textarea id="textarea_id" v-model="details.description" :defaultValue="details.description" :rows="9" readOnly/>
       </div>
 
-      <div v-if="(details.progress != null)" style="margin-top: 8px; margin-bottom: 8px">进展:</div>
-      <div v-if="(details.progress != null)" style="width: 100%" >
+      <div v-if="(details.progress.length !== 0)" style="margin-top: 8px; margin-bottom: 8px">进展:</div>
+      <div v-if="(details.progress.length !== 0)" style="width: 100%" >
         <a-textarea
           id="textarea_id"
           v-model="details.progress"
@@ -73,7 +77,10 @@
 
     <a-card :bordered="false" title="操作" :loading="loading" :body-style="{marginBottom: '8px'}">
       <router-link slot="extra" to="/dashboard/dts/list">返回</router-link>
-      <a-button v-if="operation.allowUpdateProgress" type="primary" @click="reqUpdateProgress" style="margin-top: 8px; margin-right: 16px">更新进展</a-button>
+      <a-button v-if="operation.allowUpdateProgress" type="primary" @click="reqUpdateProgress" style="margin-right: 16px">更新进展</a-button>
+      <a-button v-if="operation.allowResolve" type="primary" @click="reqUpdateProgress" style="margin-right: 16px">解决</a-button>
+      <a-button v-if="operation.allowClose" type="primary" @click="reqUpdateProgress" style="margin-right: 16px">关闭</a-button>
+      <a-button v-if="operation.allowScore" type="primary" @click="reqUpdateProgress" style="margin-right: 16px">评分</a-button>
     </a-card>
 
     <my-form :visible.sync="visibleNewProgressDiag" title="新进展" :record="newProgress" @confirm="handleUpdateProgress">
@@ -87,7 +94,7 @@ import myConfig from '@/config/mix_config'
 import MyForm from './Form'
 import { mapGetters } from 'vuex'
 import { baseMixin } from '@/store/app-mixin'
-import { queryDts, delAttachment, putProgress } from '@/api/mix/dts'
+import { queryDts, delAttachment, updateDts } from '@/api/mix/dts'
 
 export default {
   name: 'DtsTicketDetails',
@@ -232,7 +239,7 @@ export default {
             return true
           })
           .catch(() => {
-            return true
+            return false
           })
       } else {
         return true
@@ -249,20 +256,21 @@ export default {
     },
 
     handleUpdateProgress (record) {
-      const progress = {
-            dts_id: this.dts_id,
-            progress: record.content
+      const data = {
+        resource: 'progress',
+        dts_id: this.dts_id,
+        progress: record.content
+      }
+      updateDts(data)
+        .then(() => {
+          // this.operation.newProgress = this.newProgressTpl
+          // window.scroll(0, 0)
+          this.onQueryDetails()
+        })
+        .catch((err) => {
+          if (err.response) {
           }
-          putProgress(progress)
-            .then(() => {
-              // this.operation.newProgress = this.newProgressTpl
-              // window.scroll(0, 0)
-              this.onQueryDetails()
-            })
-            .catch((err) => {
-              if (err.response) {
-              }
-            })
+        })
     },
 
     handleToResolve () {

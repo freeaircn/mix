@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2019-12-29 14:06:12
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-20 21:49:02
+ * @LastEditTime: 2022-04-27 23:01:09
  */
 
 namespace App\Libraries\Workflow;
@@ -178,23 +178,12 @@ class Core
         $temp = $this->placesMetadata;
         $res  = [];
 
-        // if (!empty($branch)) {
-        //     foreach ($temp as $key => $value) {
-        //         if (isset($value[$branch])) {
-        //             $res[] = [
-        //                 'name'  => $value['name'],
-        //                 'alias' => $key,
-        //             ];
-        //         }
-        //     }
-        // } else {
         foreach ($temp as $key => $value) {
             $res[] = [
                 'name'  => $value['name'],
                 'alias' => $key,
             ];
         }
-        // }
 
         return $res;
     }

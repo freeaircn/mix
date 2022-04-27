@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-12 10:41:50
+ * @LastEditTime: 2022-04-27 23:36:29
  */
 
 namespace App\Models\Admin;
@@ -35,7 +35,7 @@ class WorkflowModel extends Model
             return [];
         }
 
-        $db = $this->select('api, method')
+        $db = $this->select('workflow, method')
             ->where('type', '2')
             ->whereIn('id', $Ids)
             ->orderBy('id', 'ASC')
@@ -43,8 +43,8 @@ class WorkflowModel extends Model
 
         $res = [];
         foreach ($db as $v) {
-            if (!empty($v['api']) && !empty($v['method'])) {
-                $res[] = $v['api'] . ':' . $v['method'];
+            if (!empty($v['workflow']) && !empty($v['method'])) {
+                $res[] = $v['workflow'] . '_' . $v['method'];
             }
         }
 

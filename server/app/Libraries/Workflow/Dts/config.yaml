@@ -8,26 +8,31 @@ workflows:
             create:
                 metadata:
                     name: '新建'
+                    line: 'main'
                     allow:
                         updateProgress: true
             working:
                 metadata:
                     name: '处理中'
+                    line: 'main'
                     allow:
                         updateProgress: true
             resolve:
                 metadata:
                     name: '解决'
+                    line: 'main'
                     allow:
                         updateProgress: false
             close:
                 metadata:
                     name: '关闭'
+                    line: 'main'
                     allow:
                         updateProgress: false
             cancel:
                 metadata:
                     name: '取消'
+                    line: ''
                     allow:
                         updateProgress: false
         transitions:

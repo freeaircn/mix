@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-14 10:19:56
+ * @LastEditTime: 2022-04-27 23:46:44
  */
 
 namespace App\Controllers;
@@ -50,6 +50,9 @@ class Account extends BaseController
                 continue;
             }
             if ($key === 'allowWriteDeptId') {
+                continue;
+            }
+            if ($key === 'allowWorkflow') {
                 continue;
             }
 
