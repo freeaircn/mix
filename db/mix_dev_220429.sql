@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- 主机： 127.0.0.1:3306
--- 生成日期： 2022-04-27 16:02:48
+-- 生成日期： 2022-04-28 16:18:09
 -- 服务器版本： 10.3.14-MariaDB
 -- PHP 版本： 7.3.5
 
@@ -102,9 +102,9 @@ INSERT INTO `app_api` (`id`, `type`, `pid`, `title`, `api`, `method`, `created_a
 (68, 2, 67, '读', 'equipment_unit', 'read', '2021-06-27 20:00:00', '2022-04-11 14:59:21', NULL),
 (69, 2, 67, '写', 'equipment_unit', 'write', '2021-06-27 20:00:00', '2022-04-11 14:59:28', NULL),
 (72, 0, 1, 'DTS信息', '', '', '2021-06-27 20:00:00', NULL, NULL),
-(73, 2, 72, '写：创建新问题单', 'dts', 'write', '2021-06-27 20:00:00', '2022-04-25 15:14:17', NULL),
+(73, 2, 72, '写：创建，更新，删除等', 'dts', 'write', '2021-06-27 20:00:00', '2022-04-28 14:59:00', NULL),
 (74, 2, 72, '读：查询、统计，详情，附件等', 'dts', 'read', '2021-06-27 20:00:00', '2022-04-25 15:15:26', NULL),
-(78, 2, 72, '写：更新进展', 'dts/progress', 'write', '2021-06-27 20:00:00', '2022-04-11 15:02:10', NULL),
+(78, 2, 72, '读：下载附件', 'dts/attachment', 'read', '2021-06-27 20:00:00', '2022-04-28 14:59:24', NULL),
 (81, 0, 1, '工作流处理人', '', '', '2021-06-27 20:00:00', NULL, NULL),
 (82, 2, 81, '读', 'workflow/authority', 'read', '2021-06-27 20:00:00', '2022-04-11 15:02:40', NULL),
 (83, 0, 1, '角色-工作流处理人', '', '', '2021-06-27 20:00:00', NULL, NULL),
@@ -188,8 +188,9 @@ CREATE TABLE IF NOT EXISTS `app_dts` (
   `creator_id` int(11) UNSIGNED DEFAULT 0 COMMENT '创建人',
   `reviewer_id` int(11) UNSIGNED DEFAULT 0 COMMENT '审核人',
   `place_at` varchar(15) DEFAULT '' COMMENT '流程',
-  `score` smallint(3) DEFAULT 0 COMMENT '得分',
-  `scored_by` varchar(255) DEFAULT '' COMMENT '得分说明',
+  `score` smallint(3) DEFAULT 0 COMMENT '评分',
+  `score_desc` varchar(255) DEFAULT '' COMMENT '评分说明',
+  `scored_by` varchar(255) DEFAULT '' COMMENT '评分组',
   `cause` tinyint(3) UNSIGNED DEFAULT 0 COMMENT '原因分类',
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
@@ -202,9 +203,9 @@ CREATE TABLE IF NOT EXISTS `app_dts` (
 -- 转存表中的数据 `app_dts`
 --
 
-INSERT INTO `app_dts` (`id`, `dts_id`, `status`, `type`, `title`, `level`, `station_id`, `device`, `description`, `progress`, `creator_id`, `reviewer_id`, `place_at`, `score`, `scored_by`, `cause`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 6925048288454512640, 'publish', 2, 'AAA', 1, 2, '+4+', '【现象】\nAAA\n【时间】\n\n【影响】\n\n【已采取措施】\n\n', '2022-04-27 22:38 小明\n【当前进展】\n2222\n【下一步计划】\n\n\n2022-04-27 21:59 小明\n【当前进展】\naaaa\n【下一步计划】\n\n\n', 1, 0, 'create', 0, '', 0, '2022-04-27 19:49:33', '2022-04-27 22:38:03', NULL),
-(2, 6925095736338157568, 'publish', 1, 'BBB', 1, 2, '+4+6+', '【现象】\nBBBB\n【时间】\nBB\n【影响】\nBB\n【已采取措施】\nBB\n', '2022-04-27 22:58 小明\n【当前进展】\n1111\n【下一步计划】\n11111\n\n', 1, 0, 'working', 0, '', 0, '2022-04-27 22:58:06', '2022-04-27 22:58:49', NULL);
+INSERT INTO `app_dts` (`id`, `dts_id`, `status`, `type`, `title`, `level`, `station_id`, `device`, `description`, `progress`, `creator_id`, `reviewer_id`, `place_at`, `score`, `score_desc`, `scored_by`, `cause`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 6925048288454512640, 'publish', 2, 'AAA', 1, 2, '+4+', '【现象】\nAAA\n【时间】\n\n【影响】\n\n【已采取措施】\n\n', '2022-04-27 22:38 小明\n【当前进展】\n2222\n【下一步计划】\n\n\n2022-04-27 21:59 小明\n【当前进展】\naaaa\n【下一步计划】\n\n\n', 1, 0, 'create', 0, '', '', 0, '2022-04-27 19:49:33', '2022-04-27 22:38:03', NULL),
+(2, 6925095736338157568, 'publish', 1, 'BBB', 1, 2, '+4+6+', '【现象】\nBBBB\n【时间】\nBB\n【影响】\nBB\n【已采取措施】\nBB\n', '2022-04-27 22:58 小明\n【当前进展】\n1111\n【下一步计划】\n11111\n\n', 1, 0, 'working', 0, '', '2022-04-29 00:14 小明\n', 0, '2022-04-27 22:58:06', '2022-04-29 00:14:03', NULL);
 
 -- --------------------------------------------------------
 
@@ -247,7 +248,7 @@ CREATE TABLE IF NOT EXISTS `app_dts_attachment` (
   PRIMARY KEY (`id`),
   KEY `key_dts_id` (`dts_id`) USING BTREE,
   KEY `key_file_ext` (`file_ext`)
-) ENGINE=InnoDB AUTO_INCREMENT=44 DEFAULT CHARSET=utf8mb4 COMMENT='DTS附件' ROW_FORMAT=COMPACT;
+) ENGINE=InnoDB AUTO_INCREMENT=56 DEFAULT CHARSET=utf8mb4 COMMENT='DTS附件' ROW_FORMAT=COMPACT;
 
 --
 -- 转存表中的数据 `app_dts_attachment`
@@ -256,8 +257,8 @@ CREATE TABLE IF NOT EXISTS `app_dts_attachment` (
 INSERT INTO `app_dts_attachment` (`id`, `dts_id`, `user_id`, `username`, `org_name`, `new_name`, `file_ext`, `size`, `path`, `info`, `created_at`, `updated_at`, `deleted_at`) VALUES
 (40, 6925048288454512640, 1, '小明', '2.jpg', '1651060168_13e65e01b99ded36a961.jpg', 'jpg', 7100, '', '', '2022-04-27 19:49:33', '2022-04-27 19:49:33', NULL),
 (41, 6925048288454512640, 1, '小明', '3.jpg', '1651060171_096f6394f840e128cf2d.jpg', 'jpg', 7100, '', '', '2022-04-27 19:49:33', '2022-04-27 19:49:33', NULL),
-(42, 6925095736338157568, 1, '小明', '3.jpg', '1651071481_f24293aeaa69e862b1cf.jpg', 'jpg', 7100, '', '', '2022-04-27 22:58:06', '2022-04-27 22:58:06', NULL),
-(43, 6925095736338157568, 1, '小明', '4.jpg', '1651071484_63969afc82202244c5d4.jpg', 'jpg', 7100, '', '', '2022-04-27 22:58:06', '2022-04-27 22:58:06', NULL);
+(48, 6925095736338157568, 1, '小明', '4.jpg', '1651128848_2f9e57efa02a6022a8cf.jpg', 'jpg', 7100, '', '', '2022-04-28 14:54:08', '2022-04-28 14:54:08', NULL),
+(49, 6925095736338157568, 1, '小明', '2.jpg', '1651139399_b1a0ea8563cd43c3e11b.jpg', 'jpg', 7100, '', '', '2022-04-28 17:49:59', '2022-04-28 17:49:59', NULL);
 
 -- --------------------------------------------------------
 
@@ -5117,10 +5118,10 @@ INSERT INTO `app_menu` (`id`, `pid`, `title`, `path`, `redirect`, `name`, `compo
 (18, 16, '安全设置', '/account/settings/security', '', 'SecuritySettings', 'mix/account/settings/Security', 0, 0, 1, '', 0, 0, '', '', '2021-06-27 20:00:00', NULL, NULL),
 (19, 3, '电度表', '/dashboard/meters', '', 'Meters', 'mix/dashboard/Meters', 0, 0, 0, '', 0, 0, '', '', '2021-06-27 20:00:00', NULL, NULL),
 (20, 3, '隐患&缺陷', '/dashboard/dts', '/dashboard/dts/list', 'DTS', 'mix/dashboard/Dts', 0, 0, 0, '', 0, 0, '', '', '2021-06-27 20:00:00', NULL, NULL),
-(21, 20, '问题列表', '/dashboard/dts/list', '', 'DtsList', 'mix/dashboard/components/dts/List', 0, 0, 0, '', 0, 0, '', '', '2021-06-27 20:00:00', NULL, NULL),
-(22, 20, '新问题单', '/dashboard/dts/new', '', 'DtsBlankForm', 'mix/dashboard/components/dts/BlankForm', 1, 0, 0, '', 0, 0, '', '', '2021-06-27 20:00:00', NULL, NULL),
+(21, 20, '检索', '/dashboard/dts/list', '', 'DtsList', 'mix/dashboard/components/dts/List', 0, 0, 0, '', 0, 0, '', '', '2021-06-27 20:00:00', '2022-04-28 23:27:41', NULL),
+(22, 20, '新建', '/dashboard/dts/new', '', 'DtsBlankForm', 'mix/dashboard/components/dts/BlankForm', 1, 0, 0, '', 0, 0, '', '', '2021-06-27 20:00:00', '2022-04-28 23:27:54', NULL),
 (23, 6, '设备单元', '/app/equipment_unit', '', 'equipmentUnit', 'mix/admin/equipment_unit/index', 0, 0, 0, '', 0, 0, '', '', '2021-06-27 20:00:00', NULL, NULL),
-(24, 20, '问题单详情', '/dashboard/dts/details/:id', '', 'DtsDetails', 'mix/dashboard/components/dts/Details', 1, 0, 0, '', 0, 0, '', '', '2021-06-27 20:00:00', NULL, NULL),
+(24, 20, '详情', '/dashboard/dts/details/:id', '', 'DtsDetails', 'mix/dashboard/components/dts/Details', 1, 0, 0, '', 0, 0, '', '', '2021-06-27 20:00:00', '2022-04-28 23:28:00', NULL),
 (25, 6, '前端页面', '/app/menu', '', 'AppMenu', 'mix/admin/menu/index', 0, 0, 0, '', 0, 0, '', '', '2021-06-27 20:00:00', '2022-04-12 10:33:19', NULL),
 (27, 6, 'API管理', '/app/api', '', 'AppApi', 'mix/admin/api/index', 0, 0, 0, '', 0, 0, '', '', '2021-06-27 20:00:00', '2022-04-12 10:03:23', NULL),
 (28, 6, '工作流程', '/app/workflow', NULL, 'AppWorkflow', 'mix/admin/workflow/index', 0, 0, 0, NULL, 0, 0, NULL, NULL, '2022-04-12 10:01:14', '2022-04-12 10:03:42', NULL),
@@ -35153,7 +35154,7 @@ CREATE TABLE IF NOT EXISTS `app_user` (
 --
 
 INSERT INTO `app_user` (`id`, `workID`, `username`, `sex`, `IdCard`, `phone`, `email`, `status`, `forceChgPwd`, `avatar`, `dept_ids`, `job`, `title`, `politic`, `ip_address`, `last_login`, `created_at`, `updated_at`, `deleted_at`, `password`, `forgotten_password_selector`, `forgotten_password_code`, `forgotten_password_time`) VALUES
-(1, '1', '小明', '男', '', '13812345678', '1@1.1', '1', '0', 1, '+1+2+', 1, 5, 1, '127.0.0.1', '2022-04-27 23:59:02', '2021-06-27 20:00:00', '2022-04-27 23:59:02', NULL, '$argon2i$v=19$m=16384,t=4,p=2$Q0ZXc2NIWFJrcUxKSzA5UQ$Qt//SEIMKQDKVKsLzztLnTbVZQs/ysxKKhls908T0hQ', NULL, NULL, NULL),
+(1, '1', '小明', '男', '', '13812345678', '1@1.1', '1', '0', 1, '+1+2+', 1, 5, 1, '127.0.0.1', '2022-04-28 23:28:07', '2021-06-27 20:00:00', '2022-04-28 23:28:07', NULL, '$argon2i$v=19$m=16384,t=4,p=2$Q0ZXc2NIWFJrcUxKSzA5UQ$Qt//SEIMKQDKVKsLzztLnTbVZQs/ysxKKhls908T0hQ', NULL, NULL, NULL),
 (9, '8022', '张明学', '男', NULL, '13577552301', '13577552301@163.com', '1', '1', 20, '+1+2+10+', 7, 5, 2, '172.16.16.70', '2021-11-05 19:57:58', '2021-10-31 21:11:17', NULL, NULL, '$argon2i$v=19$m=16384,t=4,p=1$Kb0SbrF2+iYOibwApD4pjQ$vgs7rTFP7e/nThSTr8NvoFmXI6n3A7mqpERcbX6QogY', NULL, NULL, NULL),
 (15, '8024', '徐晓志', '男', NULL, '13987569253', '13987569253@163.com', '1', '1', 26, '+1+2+10+', 9, 5, 2, '172.16.16.34', '2021-11-04 00:54:17', '2021-10-31 21:13:35', NULL, NULL, '$argon2i$v=19$m=16384,t=4,p=1$NMm4Z2mHK3yEHFAlN++jfg$JZg5GTvXIzJ11OW8c7aKo488b2tavHgX54quNcdvrXI', NULL, NULL, NULL),
 (16, '8034', '王建文', '男', NULL, '15906982997', '15906982997@163.com', '1', '1', 27, '+1+2+4+', 1, 5, 1, '192.168.1.74', '2021-11-11 21:17:42', '2021-10-31 21:14:18', NULL, NULL, '$argon2i$v=19$m=16384,t=4,p=1$LcgDdFhLrBAEwlc964Y9XQ$ElVJuqGC8t5BCkAs0MyWTzDCO5JWmf50MG0JGITvHFE', NULL, NULL, NULL),

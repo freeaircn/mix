@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-27 23:55:17
+ * @LastEditTime: 2022-04-29 00:07:20
  */
 
 namespace App\Controllers;
@@ -119,9 +119,7 @@ class Dts extends BaseController
         }
 
         $fileType = $file->getMimeType();
-        if ($fileType === 'image/jpeg' || $fileType === 'image/png') {
-
-        } else {
+        if (!in_array($fileType, $config->dtsAttachmentFileTypes)) {
             return $this->fail($config->dtsAttachmentInvalidTypeMsg);
         }
 
@@ -230,10 +228,9 @@ class Dts extends BaseController
 
         if ($dts_id !== '0') {
             $columnName = ['dts_id', 'new_name'];
-            $query      = ['id' => $id];
 
             $model = new DtsAttachmentModel();
-            $db    = $model->getById($columnName, $query);
+            $db    = $model->getById($columnName, $id);
             if (empty($db)) {
                 return $this->respond(['res' => 'done']);
             }
@@ -253,6 +250,57 @@ class Dts extends BaseController
 
             return $this->respond(['res' => 'done']);
         }
+    }
+
+    public function downloadAttachment()
+    {
+        if (!$this->validate('DtsDownloadAttachment')) {
+            $res['info']  = $this->validator->getErrors();
+            $res['error'] = '请求数据无效';
+            return $this->fail($res);
+        }
+
+        $params = $this->request->getGet();
+        $id     = $params['id'];
+        $dts_id = $params['dts_id'];
+
+        $columnName = ['dts_id', 'org_name', 'new_name', 'size'];
+        $model      = new DtsAttachmentModel();
+        $db         = $model->getById($columnName, $id);
+        if (empty($db)) {
+            return $this->failNotFound('附件不存在');
+        }
+
+        if ($db['dts_id'] !== $dts_id) {
+            return $this->failNotFound('附件不存在');
+        }
+
+        $columnName = ['station_id'];
+        $model      = new DtsModel();
+        $db2        = $model->getByDtsId($columnName, $dts_id);
+        if (empty($db2)) {
+            return $this->failNotFound('附件不存在');
+        }
+        $allowReadDeptId = session('allowReadDeptId');
+        if (!in_array($db2['station_id'], $allowReadDeptId)) {
+            return $this->failUnauthorized('用户没有权限');
+        }
+
+        $config = config('MyGlobalConfig');
+        $path   = WRITEPATH . $config->dtsAttachmentPath;
+        $file   = rtrim($path, '\\/ ') . DIRECTORY_SEPARATOR . $db['new_name'];
+        if (!file_exists($file)) {
+            return $this->failNotFound('附件不存在');
+        }
+
+        $type = filetype($file);
+        header("Content-type:" . $type);
+        header("Content-Disposition: attachment; filename=" . urlencode($db['org_name']));
+        header("Content-Transfer-Encoding: binary");
+        header('Pragma: no-cache');
+        header('Expires: 0');
+        readfile($file);
+        exit;
     }
 
     public function createOne()
@@ -417,13 +465,12 @@ class Dts extends BaseController
         $client   = $this->request->getJSON(true);
         $resource = $client['resource'];
 
-        $resources = ['progress'];
+        $resources = ['progress', 'score'];
         if (!in_array($resource, $resources)) {
             return $this->fail('请求数据无效');
         }
 
         if ($resource === 'progress') {
-            $resource = $client['resource'];
             $dts_id   = $client['dts_id'];
             $progress = $client['progress'];
             if (empty($progress)) {
@@ -455,6 +502,35 @@ class Dts extends BaseController
                 return $this->failServerError('服务器处理发生错误，稍候再试');
             } else {
                 return $this->respond(['msg' => '已更新进展']);
+            }
+        }
+
+        if ($resource === 'score') {
+            $dts_id = $client['dts_id'];
+
+            $model      = new DtsModel();
+            $columnName = ['id', 'dts_id', 'station_id', 'place_at'];
+            $db         = $model->getByDtsId($columnName, $dts_id);
+            if (empty($db)) {
+                return $this->fail('请求数据无效');
+            }
+
+            $allowWriteDeptId = session('allowWriteDeptId');
+            if (!in_array($db['station_id'], $allowWriteDeptId)) {
+                return $this->failUnauthorized('用户没有权限');
+            }
+
+            $data = [
+                'score'      => $client['score'],
+                'score_desc' => $client['score_desc'],
+                'scored_by'  => $this->_getContentHeadTpl(),
+            ];
+
+            $result = $model->updateById($data, $db['id']);
+            if ($result === false) {
+                return $this->failServerError('服务器处理发生错误，稍候再试');
+            } else {
+                return $this->respond(['msg' => '已评分']);
             }
         }
 
@@ -724,7 +800,7 @@ class Dts extends BaseController
         $params = $this->request->getGet();
         $dts_id = $params['dts_id'];
 
-        $columnName = ['dts_id', 'type', 'title', 'level', 'station_id', 'place_at', 'device', 'description', 'progress', 'created_at', 'updated_at', 'creator_id', 'reviewer_id', 'score', 'scored_by'];
+        $columnName = ['dts_id', 'type', 'title', 'level', 'station_id', 'place_at', 'device', 'description', 'progress', 'created_at', 'updated_at', 'creator_id', 'reviewer_id', 'score', 'score_desc', 'scored_by'];
         $model      = new DtsModel();
         $db         = $model->getByDtsId($columnName, $dts_id);
         if (empty($db)) {

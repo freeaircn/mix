@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-03-31 23:06:17
+ * @LastEditTime: 2022-04-28 20:04:15
  */
 
 namespace App\Controllers;
@@ -446,11 +446,6 @@ class GeneratorEvent extends BaseController
         $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
         $writer->save('php://output');
         exit;
-
-        // $res['code'] = EXIT_SUCCESS;
-        // $res['data'] = ['data' => $param];
-
-        // return $this->respond($res);
     }
 
     public function getStatisticChartData()

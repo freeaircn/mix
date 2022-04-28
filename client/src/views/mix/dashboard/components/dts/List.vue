@@ -303,18 +303,18 @@ export default {
     handleDel (record) {
       if (record.dts_id) {
         this.$confirm({
-        title: '确定删除吗?',
-        content: record.title,
-        onOk: () => {
-          const param = { dts_id: record.dts_id }
-          delDts(param)
-            .then(() => {
-              this.handleSearchDts()
-            })
-            .catch(() => {
-            })
-        }
-      })
+          title: '确定删除吗?',
+          content: record.title,
+          onOk: () => {
+            const param = { dts_id: record.dts_id }
+            delDts(param)
+              .then(() => {
+                this.handleSearchDts()
+              })
+              .catch(() => {
+              })
+          }
+        })
       }
     }
 

@@ -40,7 +40,8 @@
       </a-descriptions>
       <a-descriptions v-if="details.score != '0'" title="" :column="{ xxl: 4, xl: 3, lg: 3, md: 3, sm: 2, xs: 1 }">
         <a-descriptions-item label="评分">{{ details.score }}</a-descriptions-item>
-        <a-descriptions-item label="评分说明">{{ details.scored_by }}</a-descriptions-item>
+        <a-descriptions-item label="评分组">{{ details.scored_by }}</a-descriptions-item>
+        <a-descriptions-item label="评分说明">{{ details.score_desc }}</a-descriptions-item>
       </a-descriptions>
 
       <div style="margin-bottom: 8px">描述:</div>
@@ -60,7 +61,7 @@
       <div style="margin-top: 8px; margin-bottom: 8px">附件:</div>
       <div style="width: 380px">
         <a-upload
-          accept="text/plain, image/jpeg, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-powerpoint, application/vnd.openxmlformats-officedocument.presentationml.presentation, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel, application/pdf, application/zip"
+          :accept="acceptFileTypes"
           action="/api/dts/attachment"
           :data="{dts_id: dts_id}"
           :before-upload="beforeUploadAttachment"
@@ -80,26 +81,32 @@
       <a-button v-if="operation.allowUpdateProgress" type="primary" @click="reqUpdateProgress" style="margin-right: 16px">更新进展</a-button>
       <a-button v-if="operation.allowResolve" type="primary" @click="reqUpdateProgress" style="margin-right: 16px">解决</a-button>
       <a-button v-if="operation.allowClose" type="primary" @click="reqUpdateProgress" style="margin-right: 16px">关闭</a-button>
-      <a-button v-if="operation.allowScore" type="primary" @click="reqUpdateProgress" style="margin-right: 16px">评分</a-button>
+      <a-button v-if="operation.allowScore" type="primary" @click="reqUpdateScore" style="margin-right: 16px">评分</a-button>
+      <router-link to="/dashboard/dts/list"><a-button type="default" style="margin-right: 16px">返回</a-button></router-link>
     </a-card>
 
     <my-form :visible.sync="visibleNewProgressDiag" title="新进展" :record="newProgress" @confirm="handleUpdateProgress">
     </my-form>
 
+    <score-form :visible.sync="visibleScoreDiag" title="评分" :record="scoreRecord" @confirm="handleUpdateScore">
+    </score-form>
+
   </page-header-wrapper>
 </template>
 
 <script>
-import myConfig from '@/config/mix_config'
+import myConfig from '@/config/myConfig'
 import MyForm from './Form'
+import ScoreForm from './ScoreForm'
 import { mapGetters } from 'vuex'
 import { baseMixin } from '@/store/app-mixin'
-import { queryDts, delAttachment, updateDts } from '@/api/mix/dts'
+import { queryDts, delAttachment, downloadAttachment, updateDts } from '@/api/mix/dts'
 
 export default {
   name: 'DtsTicketDetails',
   components: {
-    MyForm
+    MyForm,
+    ScoreForm
   },
   mixins: [baseMixin],
   data () {
@@ -128,12 +135,15 @@ export default {
       operation: {
         allowUpdateProgress: false
       },
-      // activeKey: ['1'],
       visibleNewProgressDiag: false,
       newProgress: { content: '' },
       //
+      acceptFileTypes: '',
       fileNumber: 0,
-      fileList: []
+      fileList: [],
+      //
+      visibleScoreDiag: false,
+      scoreRecord: { score: '0', score_desc: '' }
     }
   },
   computed: {
@@ -141,11 +151,14 @@ export default {
       'userInfo'
     ]),
     disableUploadBtn: function () {
-      return this.fileNumber >= myConfig.DtsAttachmentMaxNumber
+      return this.fileNumber >= myConfig.dtsAttachmentMaxNumber
     }
   },
   created () {
     this.dts_id = (this.$route.params.id) ? this.$route.params.id : '0'
+    myConfig.dtsAttachmentFileTypes.forEach((item) => {
+      this.acceptFileTypes = this.acceptFileTypes + item + ', '
+    })
   },
   mounted () {
     this.onQueryDetails()
@@ -188,19 +201,20 @@ export default {
           return reject(false)
         }
 
-        let fileType = file.type === 'text/plain' || file.type === 'image/jpeg' || file.type === 'image/png'
-        fileType = fileType || file.type === 'application/msword' || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        fileType = fileType || file.type === 'application/vnd.ms-powerpoint' || file.type === 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
-        fileType = fileType || file.type === 'application/vnd.ms-excel' || file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        fileType = fileType || file.type === 'application/pdf' || file.type === 'application/zip'
-        if (!fileType) {
+        if (myConfig.dtsAttachmentFileTypes.indexOf(file.type) === -1) {
           this.$message.error('允许文件类型: jpg, png, txt, pdf, doc, docx, xls, xlsx, ppt, pptx, zip')
           // eslint-disable-next-line prefer-promise-reject-errors
           return reject(false)
         }
 
-        if (file.size > myConfig.DtsAttachmentMaxSize) {
-          this.$message.error('文件大小超限')
+        if (file.size === 0) {
+          this.$message.error('上传空文件')
+          // eslint-disable-next-line prefer-promise-reject-errors
+          return reject(false)
+        }
+
+        if (file.size > myConfig.dtsAttachmentMaxSize) {
+          this.$message.error('附件大小超限')
           // eslint-disable-next-line prefer-promise-reject-errors
           return reject(false)
         }
@@ -227,27 +241,69 @@ export default {
     },
 
     onClickDelAttachment (file) {
-      const index = this.fileList.indexOf(file)
-      const newFileList = this.fileList.slice()
-      newFileList.splice(index, 1)
-      this.fileList = newFileList
-      this.fileNumber = this.fileNumber - 1
+      if (file.status !== 'done') {
+        this.fileNumber = this.fileNumber - 1
+        return true
+      }
+
       if (file.status === 'done') {
-        const param = { id: file.response.id, dts_id: this.dts_id }
-        return delAttachment(param)
-          .then(() => {
-            return true
-          })
-          .catch(() => {
-            return false
-          })
+        this.$confirm({
+          title: '确定删除附件?',
+          content: file.name,
+          onOk: () => {
+            const param = { id: file.response.id, dts_id: this.dts_id }
+            return delAttachment(param)
+              .then(() => {
+                const index = this.fileList.indexOf(file)
+                const newFileList = this.fileList.slice()
+                newFileList.splice(index, 1)
+                this.fileList = newFileList
+                this.fileNumber = this.fileNumber - 1
+                return true
+              })
+              .catch(() => {
+                return false
+              })
+          }
+        })
+        return false
       } else {
         return true
       }
     },
 
-    onClickDownloadAttachment () {
+    onClickDownloadAttachment (file) {
+      const param = { id: file.response.id, dts_id: this.dts_id }
+      console.log(param)
+      downloadAttachment(param)
+        .then((res) => {
+          console.log(res)
+          const { data, headers } = res
+          console.log(headers['content-disposition'])
 
+          const str = headers['content-type']
+          if (str.indexOf('json') !== -1) {
+            this.$message.warning('没有权限')
+          } else {
+            // 下载文件
+            const blob = new Blob([data], { type: headers['content-type'] })
+            const dom = document.createElement('a')
+            const url = window.URL.createObjectURL(blob)
+            dom.href = url
+            const filename = headers['content-disposition'].split(';')[1].split('=')[1]
+            dom.download = decodeURI(filename)
+            dom.style.display = 'none'
+            document.body.appendChild(dom)
+            dom.click()
+            dom.parentNode.removeChild(dom)
+            window.URL.revokeObjectURL(url)
+
+            this.$message.info('已下载附件')
+          }
+        })
+        .catch(() => {
+          this.$message.info('下载附件失败')
+        })
     },
 
     reqUpdateProgress () {
@@ -273,9 +329,33 @@ export default {
         })
     },
 
+    reqUpdateScore () {
+      this.scoreRecord.score = this.details.score
+      this.scoreRecord.score_desc = this.details.score_desc
+      this.visibleScoreDiag = true
+    },
+
+    handleUpdateScore (record) {
+      console.log('score', record)
+      const data = {
+        resource: 'score',
+        dts_id: this.dts_id,
+        score: record.score,
+        score_desc: record.score_desc
+      }
+      updateDts(data)
+        .then(() => {
+          this.onQueryDetails()
+        })
+        .catch((err) => {
+          if (err.response) {
+          }
+        })
+    },
+
     handleToResolve () {
       this.$confirm({
-        title: '问题解决了吗？',
+        title: '确认问题解决？',
         onOk: () => {
           console.log('OK')
         }
@@ -284,7 +364,7 @@ export default {
 
     handleToClose () {
       this.$confirm({
-        title: '你想要关闭问题单吗？',
+        title: '确认关闭问题单？',
         onOk: () => {
           console.log('OK')
         }

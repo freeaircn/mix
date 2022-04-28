@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-27 17:44:09
+ * @LastEditTime: 2022-04-29 00:12:50
 -->
 <template>
   <page-header-wrapper :title="false">
@@ -57,7 +57,7 @@
 
         <a-form-model-item label="附件" prop="attachment">
           <a-upload
-            accept="text/plain, image/jpeg, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-powerpoint, application/vnd.openxmlformats-officedocument.presentationml.presentation, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel, application/pdf, application/zip"
+            :accept="acceptFileTypes"
             action="/api/dts/attachment"
             :data="{dts_id: '0'}"
             :before-upload="beforeUploadAttachment"
@@ -80,7 +80,7 @@
 </template>
 
 <script>
-import myConfig from '@/config/mix_config'
+import myConfig from '@/config/myConfig'
 import { mapGetters } from 'vuex'
 import { queryDts, delAttachment, createDts } from '@/api/mix/dts'
 import { listToTree } from '@/utils/util'
@@ -110,8 +110,8 @@ export default {
         type: [{ required: true, message: '请选择', trigger: ['change'] }],
         title: [{ required: true, message: '请输入', trigger: ['change'] }],
         level: [{ required: true, message: '请选择', trigger: ['change'] }]
-        // device: [{ required: true, message: '请选择', trigger: ['change'] }]
       },
+      acceptFileTypes: '',
       fileNumber: 0,
       fileList: []
     }
@@ -119,6 +119,9 @@ export default {
   created: function () {
     this.ready = false
     this.fileNumber = 0
+    myConfig.dtsAttachmentFileTypes.forEach((item) => {
+      this.acceptFileTypes = this.acceptFileTypes + item + ', '
+    })
     this.loadBlankForm()
   },
   computed: {
@@ -126,7 +129,7 @@ export default {
       'userInfo'
     ]),
     disableUploadBtn: function () {
-      return this.fileNumber >= myConfig.DtsAttachmentMaxNumber
+      return this.fileNumber >= myConfig.dtsAttachmentMaxNumber
     }
   },
   methods: {
@@ -176,18 +179,19 @@ export default {
           return reject(false)
         }
 
-        let fileType = file.type === 'text/plain' || file.type === 'image/jpeg' || file.type === 'image/png'
-        fileType = fileType || file.type === 'application/msword' || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        fileType = fileType || file.type === 'application/vnd.ms-powerpoint' || file.type === 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
-        fileType = fileType || file.type === 'application/vnd.ms-excel' || file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        fileType = fileType || file.type === 'application/pdf' || file.type === 'application/zip'
-        if (!fileType) {
+        if (myConfig.dtsAttachmentFileTypes.indexOf(file.type) === -1) {
           this.$message.error('允许文件类型: jpg, png, txt, pdf, doc, docx, xls, xlsx, ppt, pptx, zip')
           // eslint-disable-next-line prefer-promise-reject-errors
           return reject(false)
         }
 
-        if (file.size > myConfig.DtsAttachmentMaxSize) {
+        if (file.size === 0) {
+          this.$message.error('上传空文件')
+          // eslint-disable-next-line prefer-promise-reject-errors
+          return reject(false)
+        }
+
+        if (file.size > myConfig.dtsAttachmentMaxSize) {
           this.$message.error('文件大小超限')
           // eslint-disable-next-line prefer-promise-reject-errors
           return reject(false)

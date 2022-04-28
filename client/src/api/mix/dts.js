@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-27 21:17:21
+ * @LastEditTime: 2022-04-28 17:12:43
  */
 import request from '@/utils/request'
 
@@ -33,6 +33,15 @@ export function delDts (data) {
     url: api.dts,
     method: 'delete',
     data: data
+  })
+}
+
+export function downloadAttachment (params) {
+  return request({
+    url: api.dts_attachment,
+    method: 'get',
+    responseType: 'blob',
+    params: params
   })
 }
 

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-27 21:47:48
+ * @LastEditTime: 2022-04-28 15:06:58
  */
 
 namespace App\Models\Dts;
@@ -91,9 +91,9 @@ class DtsAttachmentModel extends Model
         }
     }
 
-    public function getById(array $columnName = [], array $query = [])
+    public function getById(array $columnName = [], string $id)
     {
-        if (empty($columnName) || empty($query)) {
+        if (empty($columnName) || empty($id)) {
             return [];
         }
 
@@ -103,7 +103,7 @@ class DtsAttachmentModel extends Model
         }
         $builder = $this->select($selectSql);
 
-        $builder->where('id', $query['id']);
+        $builder->where('id', $id);
 
         $db = $builder->findAll();
 

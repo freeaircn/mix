@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-27 22:02:38
+ * @LastEditTime: 2022-04-28 15:02:10
  */
 
 namespace Config;
@@ -139,6 +139,7 @@ $routes->group('api', function ($routes) {
     $routes->get('meters/statistic/chart/data', 'Meters::getStatisticChartData');
     $routes->get('meters/statistic/overall', 'Meters::getStatisticOverall');
     //
+    $routes->get('dts/attachment', 'Dts::downloadAttachment');
     $routes->post('dts/attachment', 'Dts::uploadAttachment');
     $routes->delete('dts/attachment', 'Dts::delAttachment');
     $routes->get('dts', 'Dts::queryEntry');

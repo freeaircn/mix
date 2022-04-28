@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-07-06 21:44:27
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-22 21:22:33
+ * @LastEditTime: 2022-04-28 23:37:06
  */
 
 namespace Config;
@@ -27,7 +27,7 @@ class MyGlobalConfig extends BaseConfig
     // public $userDeptLevel = 2; // 部门组织为树形结构，页面显示用户的2级部门名称。
 
     /**
-     * 默认头像
+     * 头像
      */
     public $defaultAvatarPath   = 'avatar/default/';
     public $defaultAvatarMale   = 'male.jpg';
@@ -37,8 +37,26 @@ class MyGlobalConfig extends BaseConfig
      * DTS 工作流配置文件
      */
     public $wfDtsConfigFile             = 'Libraries/Workflow/Dts/config.yaml';
+    public $dtsAttachmentPath           = 'uploads/dts';
     public $dtsAttachmentSize           = 8388608; // 8*1024*1024
     public $dtsAttachmentExceedSizeMsg  = '附件大小超过限制 8MB'; // 8*1024*1024
-    public $dtsAttachmentInvalidTypeMsg = '附件文件类型不满足要求 jpg, png, txt, doc, xls, ppt, pdf, zip';
-    public $dtsAttachmentPath           = 'uploads/dts';
+    public $dtsAttachmentInvalidTypeMsg = '允许文件类型: jpg, png, txt, pdf, doc, docx, xls, xlsx, ppt, pptx, zip';
+    public $dtsAttachmentFileTypes      = [
+        'image/jpeg',
+        'image/png',
+        'text/plain',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-powerpoint',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'application/zip',
+        'application/pdf',
+    ];
+
+    /**
+     * Http Content文件类型
+     */
+    // public $fileType =
 }

@@ -4,14 +4,13 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:02:42
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-01 10:45:22
+ * @LastEditTime: 2022-04-28 17:40:08
  */
 
 namespace Config;
 
+use App\Libraries\MyUtils;
 use CodeIgniter\Config\BaseService;
-
-// use App\Libraries\MixUtils;
 
 /**
  * Services Configuration file.
@@ -38,25 +37,25 @@ class Services extends BaseService
     //     return new \CodeIgniter\Example();
     // }
 
-    // public static function mixUtils($getShared = true)
+    // public static function MyUtils($getShared = true)
     // {
     //     if ($getShared) {
-    //         return static::getSharedInstance('mixUtils');
+    //         return static::getSharedInstance('MyUtils');
     //     }
 
-    //     return new MixUtils();
+    //     return new MyUtils();
     // }
 
-    // public static function mixUtils($config = null, bool $getShared = true)
-    // {
-    //     if ($getShared) {
-    //         return static::getSharedInstance('mixUtils', $config);
-    //     }
+    public static function MyUtils($config = null, bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('MyUtils', $config);
+        }
 
-    //     if (empty($config) || !(is_array($config) || $config instanceof MixUtils)) {
-    //         $config = config('MixUtils');
-    //     }
+        if (empty($config) || !(is_array($config) || $config instanceof MyUtils)) {
+            $config = config('MyUtils');
+        }
 
-    //     return new MixUtils($config);
-    // }
+        return new MyUtils($config);
+    }
 }
