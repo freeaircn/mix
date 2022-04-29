@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-28 15:06:58
+ * @LastEditTime: 2022-04-29 08:59:24
  */
 
 namespace App\Models\Dts;
@@ -47,7 +47,7 @@ class DtsAttachmentModel extends Model
         return $result;
     }
 
-    public function insertSingleRecord(array $attachment)
+    public function insertSingleRecord(array $attachment = null)
     {
         if (empty($attachment)) {
             return false;
@@ -57,7 +57,7 @@ class DtsAttachmentModel extends Model
         return $result;
     }
 
-    public function getByDtsId(array $columnName = [], string $dts_id = '')
+    public function getByDtsId(array $columnName = [], string $dts_id = null)
     {
         if (empty($columnName) || empty($dts_id)) {
             return [];
@@ -76,7 +76,7 @@ class DtsAttachmentModel extends Model
         return $db;
     }
 
-    public function delByDtsId(string $dts_id)
+    public function delByDtsId(string $dts_id = null)
     {
         if (!is_numeric($dts_id)) {
             return true;
@@ -91,7 +91,7 @@ class DtsAttachmentModel extends Model
         }
     }
 
-    public function getById(array $columnName = [], string $id)
+    public function getById(array $columnName = [], string $id = null)
     {
         if (empty($columnName) || empty($id)) {
             return [];
@@ -110,7 +110,7 @@ class DtsAttachmentModel extends Model
         return isset($db[0]) ? $db[0] : [];
     }
 
-    public function delById(string $id)
+    public function delById(string $id = null)
     {
         if (!is_numeric($id)) {
             return false;

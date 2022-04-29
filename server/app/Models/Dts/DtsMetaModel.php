@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-22 21:27:50
+ * @LastEditTime: 2022-04-29 09:02:21
  */
 
 namespace App\Models\Dts;
@@ -184,14 +184,4 @@ class DtsMetaModel extends Model
         $builder->set($data);
         return $builder->update();
     }
-
-    public function myUpdate($data = [])
-    {
-        if (empty($data)) {
-            return false;
-        }
-
-        return $this->save($data);
-    }
-
 }

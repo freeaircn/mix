@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-29 00:07:20
+ * @LastEditTime: 2022-04-29 11:10:36
  */
 
 namespace App\Controllers;
@@ -25,27 +25,15 @@ class Dts extends BaseController
     use ResponseTrait;
 
     // 模板
-    protected $blankTpl;
-    protected $updateTpl;
+    protected $progressTemplates;
     //
     protected $keyValuePairs;
 
     public function __construct()
     {
-        $this->blankTpl  = "【现象】\n\n【时间】\n\n【影响】\n\n【已采取措施】\n\n";
-        $this->updateTpl = "【当前进展】\n\n【下一步计划】\n\n";
-
-        $this->keyValuePairs = [
-            'type'  => [
-                1 => '隐患',
-                2 => '故障',
-            ],
-            'level' => [
-                1 => '紧急',
-                2 => '严重',
-                3 => '一般',
-            ],
-        ];
+        $config                  = config('MyGlobalConfig');
+        $this->progressTemplates = $config->dtsProgressTemplates;
+        $this->keyValuePairs     = $config->dtsKeyValuePairs;
     }
 
     public function queryEntry()
@@ -116,6 +104,9 @@ class Dts extends BaseController
         $config = config('MyGlobalConfig');
         if (!$file->getSize() > $config->dtsAttachmentSize) {
             return $this->fail($config->dtsAttachmentExceedSizeMsg);
+        }
+        if (!$file->getSize() === 0) {
+            return $this->fail('上传空文件');
         }
 
         $fileType = $file->getMimeType();
@@ -421,15 +412,13 @@ class Dts extends BaseController
         $wf         = new WfDts();
         $firstPlace = $wf->getFirstPlace();
         if ($db['place_at'] !== $firstPlace) {
-            return $this->failUnauthorized('若需删除，请联系管理员');
+            return $this->failUnauthorized('用户没有权限，请联系管理员删除');
         }
 
         // 附件
         $columnName = ['new_name'];
-        $dts_id     = $client['dts_id'];
-
-        $model = new DtsAttachmentModel();
-        $files = $model->getByDtsId($columnName, $dts_id);
+        $model      = new DtsAttachmentModel();
+        $files      = $model->getByDtsId($columnName, $dts_id);
         if (!empty($files)) {
             $config = config('MyGlobalConfig');
             $path   = WRITEPATH . $config->dtsAttachmentPath;
@@ -439,12 +428,12 @@ class Dts extends BaseController
                     unlink($file);
                 }
             }
-            $result = $model->delByDtsId($query2['dts_id']);
+            $result = $model->delByDtsId($dts_id);
         }
 
         //
         $model  = new DtsModel();
-        $result = $model->delByDtsId($query2['dts_id']);
+        $result = $model->delByDtsId($dts_id);
         if (!$result) {
             return $this->failServerError('服务器处理发生错误，稍候再试');
         }
@@ -742,7 +731,7 @@ class Dts extends BaseController
         $model       = new DeptModel();
         $columnName  = ['id', 'name'];
         $station     = $model->getByIds($columnName, $allowWriteDeptId);
-        $description = $this->blankTpl;
+        $description = $this->progressTemplates['new_form'];
 
         $res['http_status'] = 200;
         $res['data']        = [
@@ -815,9 +804,7 @@ class Dts extends BaseController
             $res['msg']         = '用户没有权限';
             return $res;
         }
-
-        $details        = $db;
-        $newProgressTpl = $this->updateTpl;
+        $details = $db;
 
         // id -> name
         $details['type']  = $this->keyValuePairs['type'][$db['type']];
@@ -840,11 +827,11 @@ class Dts extends BaseController
 
         $res['http_status'] = 200;
         $res['data']        = [
-            'details'        => $details,
-            'steps'          => $steps,
-            'newProgressTpl' => $newProgressTpl,
-            'operation'      => $operation,
-            'attachments'    => $attachments,
+            'details'           => $details,
+            'steps'             => $steps,
+            'progressTemplates' => $this->progressTemplates,
+            'operation'         => $operation,
+            'attachments'       => $attachments,
         ];
         return $res;
     }
@@ -1018,9 +1005,8 @@ class Dts extends BaseController
             'step'    => [],
         ];
 
-        $wf = new WfDts();
-        // $metas = $wf->getPlaceMetaOfName();
-        $metas = $wf->getPlaceLine('main');
+        $wf    = new WfDts();
+        $metas = $wf->getPlaceLine();
         if (empty($metas)) {
             return $steps;
         }
@@ -1071,22 +1057,33 @@ class Dts extends BaseController
     protected function _getWorkflowOperation(string $place_at = '')
     {
         $result = [
-            'allowUpdateProgress' => true,
+            'allowUpdateProgress' => false,
             'allowScore'          => false,
             'allowResolve'        => false,
             'allowClose'          => false,
+            'allowBackWork'       => false,
         ];
 
-        if (!$this->session->has('allowWorkflow')) {
-            return $result;
-        }
+        $wf  = new WfDts($place_at);
+        $ops = $wf->getPlaceAllowOp();
 
-        $allowWorkflow        = session('allowWorkflow');
-        $result['allowScore'] = in_array('dts_score', $allowWorkflow) ? true : false;
+        $result['allowUpdateProgress'] = isset($ops['updateProgress']) ? $ops['updateProgress'] : false;
 
-        $wf = new WfDts($place_at);
-        if ($wf->toResolve()) {
-            $result['allowResolve'] = in_array('dts_resolve', $allowWorkflow) ? true : false;
+        if ($this->session->has('allowWorkflow')) {
+            $allowWorkflow        = session('allowWorkflow');
+            $result['allowScore'] = in_array('dts_score', $allowWorkflow) ? true : false;
+
+            if ($wf->canResolve()) {
+                $result['allowResolve'] = in_array('dts_resolve', $allowWorkflow) ? true : false;
+            }
+
+            if ($wf->canClose()) {
+                $result['allowClose'] = in_array('dts_close', $allowWorkflow) ? true : false;
+            }
+
+            if ($wf->canWorking()) {
+                $result['allowBackWork'] = in_array('dts_back_work', $allowWorkflow) ? true : false;
+            }
         }
 
         return $result;

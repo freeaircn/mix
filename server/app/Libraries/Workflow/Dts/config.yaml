@@ -3,7 +3,7 @@
 workflows:
     dts:
         metadata:
-            title: 'DTS 流程'
+            title: 'DTS 工作流'
         places:
             create:
                 metadata:
@@ -29,15 +29,9 @@ workflows:
                     line: 'main'
                     allow:
                         updateProgress: false
-            cancel:
-                metadata:
-                    name: '取消'
-                    line: ''
-                    allow:
-                        updateProgress: false
         transitions:
             to_working:
-                from: create
+                from: [create, resolve, close]
                 to:   working
                 metadata:
                     role: 'WF_ALL'
@@ -49,10 +43,5 @@ workflows:
             to_close:
                 from: resolve
                 to:   close
-                metadata:
-                    role: 'WF_ALL'
-            to_cancel:
-                from: [working]
-                to:   cancel
                 metadata:
                     role: 'WF_ALL'

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-28 11:25:46
+ * @LastEditTime: 2022-04-29 09:01:43
  */
 
 namespace App\Models\Dts;
@@ -37,7 +37,7 @@ class DtsModel extends Model
         parent::__construct();
     }
 
-    public function getLastOneByCreateDate($columnName = [], $query = [])
+    public function getLastOneByCreateDate(array $columnName = null, array $query = null)
     {
         if (empty($columnName) || empty($query)) {
             return false;
@@ -59,7 +59,7 @@ class DtsModel extends Model
         return isset($db[0]) ? $db[0] : [];
     }
 
-    public function insertSingleRecord(array $data)
+    public function insertSingleRecord(array $data = null)
     {
         if (empty($data)) {
             return false;
@@ -69,7 +69,7 @@ class DtsModel extends Model
         return $result;
     }
 
-    public function getByLimitOffset($columnName = [], $query = [])
+    public function getByLimitOffset(array $columnName = null, array $query = null)
     {
         if (empty($columnName) || empty($query)) {
             return ['total' => 0, 'data' => []];
@@ -111,7 +111,7 @@ class DtsModel extends Model
         }
     }
 
-    public function getByDtsId(array $columnName = [], string $dts_id = '')
+    public function getByDtsId(array $columnName = null, string $dts_id = null)
     {
         if (empty($columnName) || empty($dts_id)) {
             return [];
@@ -142,30 +142,7 @@ class DtsModel extends Model
         return $this->where('id', $id)->set($data)->update();
     }
 
-    public function updateHandler($handler = '', $where = [])
-    {
-        if (!is_numeric($handler) || empty($where)) {
-            return false;
-        }
-
-        $data = [
-            'handler' => $handler,
-        ];
-        $builder = $this->where('dts_id', $where['dts_id']);
-        $builder->set($data);
-        return $builder->update();
-    }
-
-    public function myUpdate($data = [])
-    {
-        if (empty($data)) {
-            return false;
-        }
-
-        return $this->save($data);
-    }
-
-    public function delByDtsId(string $dts_id)
+    public function delByDtsId(string $dts_id = null)
     {
         if (!is_numeric($dts_id)) {
             return true;

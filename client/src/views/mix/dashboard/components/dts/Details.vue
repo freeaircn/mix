@@ -79,13 +79,15 @@
     <a-card :bordered="false" title="操作" :loading="loading" :body-style="{marginBottom: '8px'}">
       <router-link slot="extra" to="/dashboard/dts/list">返回</router-link>
       <a-button v-if="operation.allowUpdateProgress" type="primary" @click="reqUpdateProgress" style="margin-right: 16px">更新进展</a-button>
-      <a-button v-if="operation.allowResolve" type="primary" @click="reqUpdateProgress" style="margin-right: 16px">解决</a-button>
+      <a-button v-if="operation.allowResolve" type="primary" @click="reqToResolve" style="margin-right: 16px">解决</a-button>
       <a-button v-if="operation.allowClose" type="primary" @click="reqUpdateProgress" style="margin-right: 16px">关闭</a-button>
       <a-button v-if="operation.allowScore" type="primary" @click="reqUpdateScore" style="margin-right: 16px">评分</a-button>
       <router-link to="/dashboard/dts/list"><a-button type="default" style="margin-right: 16px">返回</a-button></router-link>
     </a-card>
 
     <my-form :visible.sync="visibleNewProgressDiag" title="新进展" :record="newProgress" @confirm="handleUpdateProgress">
+    </my-form>
+    <my-form :visible.sync="visibleResolveDiag" title="解决" :record="resolveProgress" @confirm="handleToResolve">
     </my-form>
 
     <score-form :visible.sync="visibleScoreDiag" title="评分" :record="scoreRecord" @confirm="handleUpdateScore">
@@ -130,13 +132,19 @@ export default {
         description: '',
         progress: ''
       },
-      newProgressTpl: '',
+      progressTemplates: {},
       //
       operation: {
-        allowUpdateProgress: false
+        allowUpdateProgress: false,
+        allowScore: false,
+        allowResolve: false,
+        allowClose: false,
+        allowBackWork: false
       },
       visibleNewProgressDiag: false,
-      newProgress: { content: '' },
+      newProgress: { text: '' },
+      visibleResolveDiag: false,
+      resolveProgress: { text: '' },
       //
       acceptFileTypes: '',
       fileNumber: 0,
@@ -175,7 +183,7 @@ export default {
         .then(data => {
           Object.assign(this.details, data.details)
           this.steps = data.steps
-          this.newProgressTpl = data.newProgressTpl
+          this.progressTemplates = data.progressTemplates
           this.operation = { ...data.operation }
           this.fileList = data.attachments
           this.fileNumber = data.attachments.length
@@ -274,12 +282,9 @@ export default {
 
     onClickDownloadAttachment (file) {
       const param = { id: file.response.id, dts_id: this.dts_id }
-      console.log(param)
       downloadAttachment(param)
         .then((res) => {
-          console.log(res)
           const { data, headers } = res
-          console.log(headers['content-disposition'])
 
           const str = headers['content-type']
           if (str.indexOf('json') !== -1) {
@@ -307,7 +312,7 @@ export default {
     },
 
     reqUpdateProgress () {
-      this.newProgress.content = this.newProgressTpl
+      this.newProgress.text = this.progressTemplates.update_progress
       this.visibleNewProgressDiag = true
     },
 
@@ -315,11 +320,10 @@ export default {
       const data = {
         resource: 'progress',
         dts_id: this.dts_id,
-        progress: record.content
+        progress: record.text
       }
       updateDts(data)
         .then(() => {
-          // this.operation.newProgress = this.newProgressTpl
           // window.scroll(0, 0)
           this.onQueryDetails()
         })
@@ -336,7 +340,6 @@ export default {
     },
 
     handleUpdateScore (record) {
-      console.log('score', record)
       const data = {
         resource: 'score',
         dts_id: this.dts_id,
@@ -353,13 +356,25 @@ export default {
         })
     },
 
-    handleToResolve () {
-      this.$confirm({
-        title: '确认问题解决？',
-        onOk: () => {
-          console.log('OK')
-        }
-      })
+    reqToResolve () {
+      this.resolveProgress.text = this.progressTemplates.to_resolve
+      this.visibleResolveDiag = true
+    },
+
+    handleToResolve (record) {
+      const data = {
+        resource: 'to_resolve',
+        dts_id: this.dts_id,
+        resolve: record.text
+      }
+      updateDts(data)
+        .then(() => {
+          this.onQueryDetails()
+        })
+        .catch((err) => {
+          if (err.response) {
+          }
+        })
     },
 
     handleToClose () {

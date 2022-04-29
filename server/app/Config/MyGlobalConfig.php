@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-07-06 21:44:27
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-28 23:37:06
+ * @LastEditTime: 2022-04-29 10:42:03
  */
 
 namespace Config;
@@ -36,6 +36,17 @@ class MyGlobalConfig extends BaseConfig
     /**
      * DTS 工作流配置文件
      */
+    public $dtsKeyValuePairs = [
+        'type'  => [
+            1 => '隐患',
+            2 => '故障',
+        ],
+        'level' => [
+            1 => '紧急',
+            2 => '严重',
+            3 => '一般',
+        ],
+    ];
     public $wfDtsConfigFile             = 'Libraries/Workflow/Dts/config.yaml';
     public $dtsAttachmentPath           = 'uploads/dts';
     public $dtsAttachmentSize           = 8388608; // 8*1024*1024
@@ -54,9 +65,11 @@ class MyGlobalConfig extends BaseConfig
         'application/zip',
         'application/pdf',
     ];
-
-    /**
-     * Http Content文件类型
-     */
-    // public $fileType =
+    public $dtsProgressTemplates = [
+        'new_form'        => "【现象】\n\n【时间】\n\n【影响】\n\n【已采取措施】\n\n",
+        'update_progress' => "【当前进展】\n\n【下一步计划】\n\n",
+        'to_resolve'      => "【现象】\n\n【影响】\n\n【根因】\n\n【恢复方法】\n\n",
+        'to_close'        => "【审核意见】\n\n",
+        'back_work'       => "【重新处理意见】\n\n",
+    ];
 }

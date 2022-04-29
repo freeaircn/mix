@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-30 20:13:01
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-28 11:26:52
+ * @LastEditTime: 2022-04-29 10:13:43
 -->
 <template>
   <a-modal
@@ -76,10 +76,18 @@ export default {
   },
   methods: {
     handleOk () {
-      const result = Object.assign({}, this.record)
-      this.$emit('confirm', result)
-      this.modalVisible = false
-      this.$emit('update:visible', false)
+      this.$confirm({
+        title: '确认提交？',
+        onOk: () => {
+          return new Promise((resolve, reject) => {
+            const result = Object.assign({}, this.record)
+            this.$emit('confirm', result)
+            this.modalVisible = false
+            this.$emit('update:visible', false)
+            resolve()
+          })
+        }
+      })
     },
     handleVisibleChange (visible) {
       this.$emit('update:visible', visible)

@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-30 20:13:01
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-20 22:54:17
+ * @LastEditTime: 2022-04-29 10:38:43
 -->
 <template>
   <a-modal
@@ -16,9 +16,8 @@
     @ok="handleOk"
     @change="handleVisibleChange"
   >
-    <!-- <div style="margin-bottom: 8px">描述:</div> -->
     <div style="width: 100%">
-      <a-textarea id="textarea_id" v-model="record.content" :rows="6"/>
+      <a-textarea id="textarea_id" v-model="record.text" :rows="9"/>
     </div>
   </a-modal>
 </template>
@@ -56,10 +55,18 @@ export default {
   },
   methods: {
     handleOk () {
-      const result = Object.assign({}, this.record)
-      this.$emit('confirm', result)
-      this.modalVisible = false
-      this.$emit('update:visible', false)
+      this.$confirm({
+        title: '确认提交？',
+        onOk: () => {
+          return new Promise((resolve, reject) => {
+            const result = Object.assign({}, this.record)
+            this.$emit('confirm', result)
+            this.modalVisible = false
+            this.$emit('update:visible', false)
+            resolve()
+          })
+        }
+      })
     },
     handleVisibleChange (visible) {
       this.$emit('update:visible', visible)

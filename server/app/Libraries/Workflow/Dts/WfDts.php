@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2019-12-29 14:06:12
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-27 23:54:32
+ * @LastEditTime: 2022-04-29 10:45:49
  */
 
 namespace App\Libraries\Workflow\Dts;
@@ -24,28 +24,24 @@ class WfDts extends Core
         parent::__construct($config);
     }
 
-    public function getPlaceLine(string $line = ''): array
+    public function getPlaceLine(): array
     {
-        if (empty($line)) {
-            return [];
-        }
         $temp = $this->placesMetadata;
         $res  = [];
 
         foreach ($temp as $key => $value) {
-            if ($value['line'] === $line) {
-                $res[] = [
-                    'name'  => $value['name'],
-                    'alias' => $key,
-                ];
-            }
+            $res[] = [
+                'name'  => $value['name'],
+                'alias' => $key,
+            ];
         }
 
         return $res;
     }
 
-    public function getPlaceMetaOfAllow(string $place = ''): array
+    public function getPlaceAllowOp(): array
     {
+        $place = $this->ticket->getCurrentPlace();
         if (empty($place)) {
             return [];
         }
@@ -59,7 +55,7 @@ class WfDts extends Core
         }
     }
 
-    public function isReviewPlace(string $place = '')
+    public function isReviewPlace(string $place = null)
     {
         if ($place === 'review') {
             return true;
@@ -80,11 +76,39 @@ class WfDts extends Core
         return 'review';
     }
 
+    public function canWorking()
+    {
+        try {
+            if ($this->workflow->can($this->ticket, 'to_working')) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (LogicException $exception) {
+            // print($exception);
+            return false;
+        }
+    }
+
     public function toWorking()
     {
         try {
             if ($this->workflow->can($this->ticket, 'to_working')) {
                 $this->workflow->apply($this->ticket, 'to_working');
+                return true;
+            } else {
+                return false;
+            }
+        } catch (LogicException $exception) {
+            // print($exception);
+            return false;
+        }
+    }
+
+    public function canResolve()
+    {
+        try {
+            if ($this->workflow->can($this->ticket, 'to_resolve')) {
                 return true;
             } else {
                 return false;
@@ -110,11 +134,10 @@ class WfDts extends Core
         }
     }
 
-    public function toReview()
+    public function canClose()
     {
         try {
-            if ($this->workflow->can($this->ticket, 'to_review')) {
-                $this->workflow->apply($this->ticket, 'to_review');
+            if ($this->workflow->can($this->ticket, 'to_close')) {
                 return true;
             } else {
                 return false;
@@ -125,24 +148,30 @@ class WfDts extends Core
         }
     }
 
-    public function toCancel()
+    public function toClose()
     {
         try {
-            $this->workflow->apply($this->ticket, 'to_cancel');
+            if ($this->workflow->can($this->ticket, 'to_close')) {
+                $this->workflow->apply($this->ticket, 'to_close');
+                return true;
+            } else {
+                return false;
+            }
         } catch (LogicException $exception) {
-            print($exception);
-        }
-    }
-
-    public function canUpdateProgress(string $place_at = '')
-    {
-        $allow = $this->getPlaceMetaOfAllow($place_at);
-        if (isset($allow['updateProgress'])) {
-            return $allow['updateProgress'];
-        } else {
+            // print($exception);
             return false;
         }
-
     }
+
+    // public function canUpdateProgress(string $place_at = null)
+    // {
+    //     $allow = $this->getPlaceMetaOfAllow($place_at);
+    //     if (isset($allow['updateProgress'])) {
+    //         return $allow['updateProgress'];
+    //     } else {
+    //         return false;
+    //     }
+
+    // }
 
 }
