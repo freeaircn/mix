@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-28 15:02:10
+ * @LastEditTime: 2022-04-30 00:53:15
  */
 
 namespace Config;
@@ -118,14 +118,10 @@ $routes->group('api', function ($routes) {
     $routes->put('equipment_unit', 'Admin::updateEquipmentUnit');
     $routes->delete('equipment_unit', 'Admin::deleteEquipmentUnit');
     //
-    $routes->get('generator/event', 'GeneratorEvent::getRecord');
+    $routes->get('generator/event', 'GeneratorEvent::queryEntry');
     $routes->post('generator/event', 'GeneratorEvent::newRecord');
     $routes->put('generator/event', 'GeneratorEvent::updateRecord');
     $routes->delete('generator/event', 'GeneratorEvent::delRecord');
-
-    $routes->get('generator/event/statistic', 'GeneratorEvent::getStatisticChartData');
-    $routes->get('generator/event/export', 'GeneratorEvent::getExportRecordsAsExcel');
-    $routes->get('generator/event/sync/kkx', 'GeneratorEvent::getSyncRecordToKKX');
     //
     $routes->post('meters', 'Meters::newRecord');
     $routes->get('meters', 'Meters::getRecord');

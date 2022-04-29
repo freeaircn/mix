@@ -1,6 +1,14 @@
 <template>
   <div>
     <a-form-model ref="form" :model="record" :rules="rules" :label-col="labelCol" :wrapper-col="wrapperCol">
+      <a-form-model-item label="站点">
+        <a-select v-model="record.station_id">
+          <a-select-option v-for="d in stationItems" :key="d.id" :value="d.id">
+            {{ d.name }}
+          </a-select-option>
+        </a-select>
+      </a-form-model-item>
+
       <a-form-model-item label="机组" prop="generator_id">
         <a-select v-model="record.generator_id" disabled>
           <a-select-option value="1">1G</a-select-option>
@@ -57,6 +65,10 @@ export default {
     stationId: {
       type: String,
       default: ''
+    },
+    stationItems: {
+      type: Array,
+      default: () => []
     },
     genId: {
       type: String,

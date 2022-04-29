@@ -902,7 +902,6 @@ class Dts extends BaseController
 
     protected function _reqDetails()
     {
-        // 检查请求数据
         if (!$this->validate('DtsReqDetails')) {
             $res['http_status'] = 400;
             $res['msg']         = [

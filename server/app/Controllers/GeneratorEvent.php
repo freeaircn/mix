@@ -4,11 +4,12 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-28 20:04:15
+ * @LastEditTime: 2022-04-30 01:19:26
  */
 
 namespace App\Controllers;
 
+use App\Models\Dts\DeptModel;
 use App\Models\Generator\Event\RecordModel;
 use CodeIgniter\API\ResponseTrait;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -39,20 +40,68 @@ class GeneratorEvent extends BaseController
         helper('my_date');
     }
 
-    public function newRecord()
+    public function queryEntry()
     {
-        // 检查请求数据
-        if (!$this->validate('GeneratorEventNewRecord')) {
-            $res['error'] = $this->validator->getErrors();
-
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '请求数据无效';
-            return $this->respond($res);
+        $resource = $this->request->getGet('resource');
+        if (empty($resource)) {
+            $res['error'] = '请求数据无效';
+            return $this->fail($res);
         }
 
+        switch ($resource) {
+            case 'search_params':
+                $result = $this->_reqSearchParams();
+                break;
+            case 'statistic':
+                $result = $this->_reqStatisticChartData();
+                break;
+            case 'list':
+                $result = $this->_reqList();
+                break;
+            case 'export_excel':
+                $result = $this->_reqExportExcel();
+                break;
+            case 'sync_kkx':
+                $result = $this->_reqSyncToKKX();
+                break;
+            default:
+                $res['error'] = '请求数据无效';
+                return $this->fail($res);
+        }
+
+        if ($result['http_status'] === 400) {
+            return $this->fail($result['msg']);
+        }
+        if ($result['http_status'] === 401) {
+            return $this->failUnauthorized($result['msg']);
+        }
+        if ($result['http_status'] === 404) {
+            return $this->failNotFound($result['msg']);
+        }
+        if ($result['http_status'] === 500) {
+            return $this->failServerError($result['msg']);
+        }
+
+        if ($result['http_status'] === 200) {
+            $response['data'] = $result['data'];
+            if (isset($result['msg'])) {
+                $response['msg'] = $result['msg'];
+            }
+            return $this->respond($response);
+        }
+
+        return $this->failServerError('服务器内部错误');
+    }
+
+    public function newRecord()
+    {
+        if (!$this->validate('GeneratorEventNewRecord')) {
+            $res['info']  = $this->validator->getErrors();
+            $res['error'] = '请求数据无效';
+            return $this->fail($res);
+        }
         $client = $this->request->getJSON(true);
 
-        // 取出检验后的数据
         $station_id   = $client['station_id'];
         $generator_id = $client['generator_id'];
         $event        = $client['event'];
@@ -65,6 +114,11 @@ class GeneratorEvent extends BaseController
             'creator'      => $client['creator'],
             'description'  => $client['description'],
         ];
+
+        $allowWriteDeptId = session('allowWriteDeptId');
+        if (!in_array($station_id, $allowWriteDeptId)) {
+            return $this->failUnauthorized('用户没有权限');
+        }
 
         $model = new RecordModel();
 
@@ -86,106 +140,41 @@ class GeneratorEvent extends BaseController
             ];
         }
         $lastEvent = $model->getLastByStationGIdEvents([], $query);
-        $msg       = $this->validateNewEvent($lastEvent, $newEvent);
+        $msg       = $this->_validateNewEvent($lastEvent, $newEvent);
         if ($msg !== true) {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = $msg;
-            return $this->respond($res);
+            $res['error'] = $msg;
+            return $this->fail($res);
         }
 
         // 添加
         $db = $model->insertRecord($newEvent);
 
         if ($db) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '添加成功';
+            return $this->respond(['msg' => '已添加一条记录']);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '添加失败，稍后再试';
+            $res['error'] = '服务器处理发生错误，稍候再试';
+            return $this->fail($res);
         }
-
-        return $this->respond($res);
-    }
-
-    public function getRecord()
-    {
-        $param = $this->request->getGet();
-
-        // 检查请求数据
-        if (!$this->validate('GeneratorGetEvent')) {
-            $res['error'] = $this->validator->getErrors();
-
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '请求数据无效';
-            return $this->respond($res);
-        }
-
-        $query = [
-            'station_id'   => $param['station_id'],
-            'generator_id' => $param['generator_id'],
-            'event'        => $param['event'],
-            'description'  => $param['description'],
-            'limit'        => $param['limit'],
-            'offset'       => $param['offset'],
-        ];
-
-        $date  = date('Y-m-d', time());
-        $model = new RecordModel();
-
-        // 预处理-查询日期
-        if (empty($param['date'])) {
-            $query2     = ['station_id' => $query['station_id']];
-            $columnName = ['event_at'];
-            $db         = $model->getLastDateByStation($columnName, $query2);
-            if (!isset($db['event_at'])) {
-                $res['code'] = EXIT_SUCCESS;
-                $res['data'] = ['total' => 0, 'date' => $date, 'data' => []];
-
-                return $this->respond($res);
-            }
-            $date = $db['event_at'];
-        } else {
-            $regexDate = '/^20\d{2}[\-](0?[1-9]|1[012])[\-](0?[1-9]|[12][0-9]|3[01])$/';
-
-            if (preg_match($regexDate, $param['date']) === 0) {
-                $res['error'] = 'invalid date';
-
-                $res['code'] = EXIT_ERROR;
-                $res['msg']  = '请求数据无效';
-                return $this->respond($res);
-            }
-            $date = $param['date'];
-        }
-
-        $query['start'] = my_first_day_of_month($date);
-        $query['end']   = my_last_day_of_month($date);
-
-        $columnName = ['id', 'station_id', 'generator_id', 'event', 'cause', 'event_at', 'creator', 'description'];
-        $db         = $model->getByStationGIdDateRange($columnName, $query);
-
-        $res['code'] = EXIT_SUCCESS;
-        $res['data'] = ['total' => $db['total'], 'date' => date('Y-m-d', strtotime($date)), 'data' => $db['result']];
-
-        return $this->respond($res);
     }
 
     public function delRecord()
     {
-        // 检查请求数据
         if (!$this->validate('GeneratorEventDelRecord')) {
-            $res['error'] = $this->validator->getErrors();
-
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '请求数据无效';
-            return $this->respond($res);
+            $res['info']  = $this->validator->getErrors();
+            $res['error'] = '请求数据无效';
+            return $this->fail($res);
         }
-
         $client = $this->request->getJSON(true);
 
         $id           = $client['id'];
         $station_id   = $client['station_id'];
         $generator_id = $client['generator_id'];
         $event        = $client['event'];
+
+        $allowWriteDeptId = session('allowWriteDeptId');
+        if (!in_array($station_id, $allowWriteDeptId)) {
+            return $this->failUnauthorized('用户没有权限');
+        }
 
         $model = new RecordModel();
         // 查找时间最近
@@ -209,48 +198,42 @@ class GeneratorEvent extends BaseController
             ];
         }
         $db = $model->getLastByStationGIdEvents([], $query);
+        if (empty($db)) {
+            $res['error'] = '请求数据无效';
+            return $this->fail($res);
+        }
 
-        // 检查
         if ($db['id'] != $id) {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '不能删除该条记录';
-            return $this->respond($res);
+            $res['error'] = '不能删除该条记录';
+            return $this->fail($res);
         }
 
         if ($db['event'] != $event) {
-            $res['code']  = EXIT_ERROR;
-            $res['msg']   = '请求数据无效';
-            $res['error'] = 'invalid event';
-            return $this->respond($res);
+            $res['info']  = 'invalid event';
+            $res['error'] = '请求数据无效';
+            return $this->fail($res);
         }
 
         $result = $model->delById($id);
 
         if ($result === true) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '删除成功';
+            $res['msg'] = '已删除一条记录';
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '删除失败，稍后再试';
+            $res['error'] = '服务器处理发生错误，稍候再试';
+            return $this->fail($res);
         }
-
-        return $this->respond($res);
     }
 
     public function updateRecord()
     {
-        // 检查请求数据
         if (!$this->validate('GeneratorEventUpdateRecord')) {
-            $res['error'] = $this->validator->getErrors();
-
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '请求数据无效';
-            return $this->respond($res);
+            $res['info']  = $this->validator->getErrors();
+            $res['error'] = '请求数据无效';
+            return $this->fail($res);
         }
-
         $client = $this->request->getJSON(true);
 
-        // 取出检验后的数据
         $id           = $client['id'];
         $station_id   = $client['station_id'];
         $generator_id = $client['generator_id'];
@@ -266,21 +249,22 @@ class GeneratorEvent extends BaseController
             'description'  => $client['description'],
         ];
 
-        $model = new RecordModel();
+        $allowWriteDeptId = session('allowWriteDeptId');
+        if (!in_array($station_id, $allowWriteDeptId)) {
+            return $this->failUnauthorized('用户没有权限');
+        }
 
-        // 检查
-        $db = $model->getById([], $id);
+        $model = new RecordModel();
+        $db    = $model->getById([], $id);
         if (empty($db)) {
-            $res['code']  = EXIT_ERROR;
-            $res['msg']   = '请求数据无效';
-            $res['error'] = 'invalid id';
-            return $this->respond($res);
+            $res['info']  = 'invalid id';
+            $res['error'] = '请求数据无效';
+            return $this->fail($res);
         }
         if ($db['event'] != $event) {
-            $res['code']  = EXIT_ERROR;
-            $res['msg']   = '请求数据无效';
-            $res['error'] = 'invalid event';
-            return $this->respond($res);
+            $res['info']  = 'invalid event';
+            $res['error'] = '请求数据无效';
+            return $this->fail($res);
         }
 
         // 预处理: start stop事件
@@ -311,161 +295,75 @@ class GeneratorEvent extends BaseController
         $now = time();
         if (!empty($prev) && empty($next)) {
             if (strtotime($newEvent['event_at']) <= strtotime($prev['event_at'])) {
-                $res['code'] = EXIT_ERROR;
-                $res['msg']  = '修改的日期/时间，早于上一条相同事件类型的记录';
-                return $this->respond($res);
+                $res['error'] = '修改的日期/时间，早于上一条相同事件类型的记录';
+                return $this->fail($res);
             }
             if (strtotime($newEvent['event_at']) >= $now) {
-                $res['code'] = EXIT_ERROR;
-                $res['msg']  = '检查修改的日期/时间';
-                return $this->respond($res);
+                $res['error'] = '检查修改的日期/时间';
+                return $this->fail($res);
             }
         }
         if (!empty($prev) && !empty($next)) {
             if (strtotime($newEvent['event_at']) <= strtotime($prev['event_at'])) {
-                $res['code'] = EXIT_ERROR;
-                $res['msg']  = '修改的日期/时间，早于上一条相同事件类型的记录';
-                return $this->respond($res);
+                $res['error'] = '修改的日期/时间，早于上一条相同事件类型的记录';
+                return $this->fail($res);
             }
             if (strtotime($newEvent['event_at']) >= strtotime($next['event_at'])) {
-                $res['code'] = EXIT_ERROR;
-                $res['msg']  = '修改的日期/时间，晚于下一条相同事件类型的记录';
-                return $this->respond($res);
+                $res['error'] = '修改的日期/时间，晚于下一条相同事件类型的记录';
+                return $this->fail($res);
             }
         }
 
-        // 修改
         $result = $model->saveRecord($newEvent);
-
         if ($result) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '修改成功';
+            $res['msg'] = '已修改一条记录';
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '修改失败，稍后再试';
+            $res['error'] = '服务器处理发生错误，稍候再试';
+            return $this->fail($res);
         }
-
-        return $this->respond($res);
     }
 
-    // 导出excel文件
-    public function getExportRecordsAsExcel()
+    // Part-2
+    protected function _reqSearchParams()
     {
-        $param = $this->request->getGet();
-
-        // 检查输入
-        if (!$this->validate('GeneratorEventExportRecords')) {
-            $res['error'] = $this->validator->getErrors();
-
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '请求数据无效';
-            return $this->respond($res);
+        $allowReadDeptId = session('allowReadDeptId');
+        if (empty($allowReadDeptId)) {
+            $res['http_status'] = 200;
+            $res['data']        = ['station' => []];
+            return $res;
         }
 
-        // 查询数据
-        $columnName = ['event', 'event_at', 'creator', 'description'];
-        $query      = [
-            'station_id'   => $param['station_id'],
-            'year'         => substr($param['date'], 0, 4),
-            'generator_id' => 0,
-        ];
+        $model      = new DeptModel();
+        $columnName = ['id', 'name'];
+        $station    = $model->getByIds($columnName, $allowReadDeptId);
 
-        $spreadsheet = new Spreadsheet();
-        $sheetTitle  = ['序号', '机组', '事件', '时间', '记录人', '说明'];
-
-        $model = new RecordModel();
-
-        for ($GID = 1; $GID <= $this->genTotalNumber; $GID++) {
-            $query['generator_id'] = $GID;
-
-            $db  = $model->getByStationDateGen($columnName, $query);
-            $cnt = count($db);
-            if ($cnt > 0) {
-                $sheet  = $spreadsheet->createSheet($GID - 1)->setTitle($GID . 'G');
-                $column = 1;
-                $row    = 1;
-                // 表头
-                foreach ($sheetTitle as $key => $value) {
-                    $sheet->setCellValueByColumnAndRow($key + $column, $row, $value);
-                }
-                // 样式
-                $style = [
-                    'font'      => [
-                        'bold' => true,
-                    ],
-                    'alignment' => [
-                        'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
-                        'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
-                    ],
-                ];
-                $sheet->getStyle('A1:F1')->applyFromArray($style);
-                $sheet->getColumnDimension('D')->setAutoSize(true);
-                $sheet->getColumnDimension('F')->setWidth(35);
-                // 填写数据
-                $row = 2;
-                foreach ($db as $item) {
-                    $sheet->setCellValueByColumnAndRow(1, $row, $row - 1);
-                    $sheet->setCellValueByColumnAndRow(2, $row, $GID . 'G');
-                    if ($item['event'] == '1') {
-                        $sheet->setCellValueByColumnAndRow(3, $row, '停机');
-                    }
-                    if ($item['event'] == '2') {
-                        $sheet->setCellValueByColumnAndRow(3, $row, '开机');
-                    }
-                    $sheet->setCellValueByColumnAndRow(4, $row, $item['event_at']);
-                    $sheet->setCellValueByColumnAndRow(5, $row, $item['creator']);
-                    $sheet->setCellValueByColumnAndRow(6, $row, $item['description']);
-                    $row++;
-                }
-                // 样式
-                $style['font']['bold'] = false;
-                $sheet->getStyle('A2:F' . $row)->applyFromArray($style);
-            } else {
-                continue;
-            }
-        }
-        $spreadsheet->setActiveSheetIndex(0);
-        $sheetCount = $spreadsheet->getSheetCount();
-        if ($sheetCount > 1) {
-            $spreadsheet->removeSheetByIndex($sheetCount - 1);
-        }
-
-        // Redirect output to a client’s web browser (Xlsx)
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="download.xlsx"');
-        header('Cache-Control: max-age=0');
-        // If you're serving to IE 9, then the following may be needed
-        // header('Cache-Control: max-age=1');
-
-        // If you're serving to IE over SSL, then the following may be needed
-        // header('Expires: Mon, 26 Jul 1997 05:00:00 GMT'); // Date in the past
-        // header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT'); // always modified
-        // header('Cache-Control: cache, must-revalidate'); // HTTP/1.1
-        // header('Pragma: public'); // HTTP/1.0
-
-        $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
-        $writer->save('php://output');
-        exit;
+        $res['http_status'] = 200;
+        $res['data']        = ['station' => $station];
+        return $res;
     }
 
-    public function getStatisticChartData()
+    protected function _reqStatisticChartData()
     {
-        $param = $this->request->getGet();
-
-        // 检查输入
-        if (empty($param) || !isset($param['station_id']) || !isset($param['year'])) {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '请求数据无效';
-            return $this->respond($res);
-        }
-        if (!is_numeric($param['station_id']) || !is_numeric($param['year'])) {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '请求数据无效';
-            return $this->respond($res);
+        if (!$this->validate('GeneratorEventReqStatistic')) {
+            $res['http_status'] = 400;
+            $res['msg']         = [
+                'error' => '请求数据无效',
+                'info'  => $this->validator->getErrors(),
+            ];
+            return $res;
         }
 
-        $year  = $param['year'];
-        $model = new RecordModel();
+        $params     = $this->request->getGet();
+        $station_id = $params['station_id'];
+        $year       = $params['date'];
+
+        $allowReadDeptId = session('allowReadDeptId');
+        if (!in_array($station_id, $allowReadDeptId)) {
+            $res['http_status'] = 401;
+            $res['msg']         = '用户没有权限';
+            return $res;
+        }
 
         // 初值
         $run_time  = [];
@@ -502,14 +400,15 @@ class GeneratorEvent extends BaseController
             'G3_start' => 0,
         ];
 
-        // 查询记录
+        $model      = new RecordModel();
         $columnName = ['event', 'event_at'];
         $query      = [
-            'station_id'   => $param['station_id'],
+            'station_id'   => $station_id,
             'generator_id' => 0,
-            'year'         => $param['year'],
+            'year'         => $year,
             'event'        => [$this->eventStart, $this->eventStop],
         ];
+        $month = 0;
         for ($i = 1; $i <= $this->genTotalNumber; $i++) {
             $query['generator_id'] = $i;
 
@@ -589,48 +488,232 @@ class GeneratorEvent extends BaseController
             }
         }
 
-        // 计算：年累计
-        $g1 = 0;
-        $g2 = 0;
-        $g3 = 0;
-        for ($i = 0; $i < $month; $i++) {
-            $g1 += $run_time[$i]['G1'];
-            $g2 += $run_time[$i]['G2'];
-            $g3 += $run_time[$i]['G3'];
-            //
-            $total_start['G1_start'] += $start_num[$i]['G1'];
-            $total_start['G2_start'] += $start_num[$i]['G2'];
-            $total_start['G3_start'] += $start_num[$i]['G3'];
+        // 累计
+        if ($month !== 0) {
+            $g1 = 0;
+            $g2 = 0;
+            $g3 = 0;
+            for ($i = 0; $i < $month; $i++) {
+                $g1 += $run_time[$i]['G1'];
+                $g2 += $run_time[$i]['G2'];
+                $g3 += $run_time[$i]['G3'];
+                //
+                $total_start['G1_start'] += $start_num[$i]['G1'];
+                $total_start['G2_start'] += $start_num[$i]['G2'];
+                $total_start['G3_start'] += $start_num[$i]['G3'];
+            }
+            $total_run['G1_run'] = round($g1, 2);
+            $total_run['G2_run'] = round($g2, 2);
+            $total_run['G3_run'] = round($g3, 2);
+
+            $totalHours = 8760;
+            if ($year % 4 == 0 && $year % 100 != 0 || $year % 400 == 0) {
+                $totalHours = 8784;
+            }
+            $total_run['total'] = $totalHours;
         }
-        $total_run['G1_run'] = round($g1, 2);
-        $total_run['G2_run'] = round($g2, 2);
-        $total_run['G3_run'] = round($g3, 2);
 
-        $totalHours = 8760;
-        if ($year % 4 == 0 && $year % 100 != 0 || $year % 400 == 0) {
-            $totalHours = 8784;
-        }
-        $total_run['total'] = $totalHours;
-
-        $response['code'] = EXIT_SUCCESS;
-        $response['data'] = ['start_num' => $start_num, 'run_time' => $run_time, 'last_at' => $last_at, 'total_run' => $total_run, 'total_start' => $total_start];
-
-        return $this->respond($response);
+        $res['http_status'] = 200;
+        $res['data']        = ['start_num' => $start_num, 'run_time' => $run_time, 'last_at' => $last_at, 'total_run' => $total_run, 'total_start' => $total_start];
+        return $res;
     }
 
-    public function getSyncRecordToKKX()
+    protected function _reqList()
     {
-        $param = $this->request->getGet();
-
-        // 检查输入
-        if (!$this->validate('GeneratorEventSyncToKKX')) {
-            $res['error'] = $this->validator->getErrors();
-
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '请求数据无效';
-            return $this->respond($res);
+        if (!$this->validate('GeneratorEventReqList')) {
+            $res['http_status'] = 400;
+            $res['msg']         = [
+                'error' => '请求数据无效',
+                'info'  => $this->validator->getErrors(),
+            ];
+            return $res;
         }
-        $date = $param['date'];
+
+        $params     = $this->request->getGet();
+        $station_id = $params['station_id'];
+
+        $allowReadDeptId = session('allowReadDeptId');
+        if (!in_array($station_id, $allowReadDeptId)) {
+            $res['http_status'] = 401;
+            $res['msg']         = '用户没有权限';
+            return $res;
+        }
+
+        $query = [
+            'station_id'   => $params['station_id'],
+            'generator_id' => $params['generator_id'],
+            'event'        => $params['event'],
+            'description'  => $params['description'],
+            'limit'        => $params['limit'],
+            'offset'       => $params['offset'],
+        ];
+        $date = date('Y-m-d', time());
+
+        $model = new RecordModel();
+
+        // 预处理-查询日期
+        if (empty($params['date'])) {
+            $columnName = ['event_at'];
+            $db         = $model->getLastDateByStation($columnName, $station_id);
+            if (!isset($db['event_at'])) {
+                $res['http_status'] = 200;
+                $res['data']        = ['total' => 0, 'date' => $date, 'data' => []];
+                return $res;
+            }
+            $date = $db['event_at'];
+        } else {
+            $regexDate = '/^20\d{2}[\-](0?[1-9]|1[012])[\-](0?[1-9]|[12][0-9]|3[01])$/';
+
+            if (preg_match($regexDate, $params['date']) === 0) {
+                $res['http_status'] = 400;
+                $res['msg']         = [
+                    'error' => '请求数据无效',
+                    'info'  => 'invalid date',
+                ];
+                return $res;
+            }
+            $date = $params['date'];
+        }
+
+        $query['start'] = my_first_day_of_month($date);
+        $query['end']   = my_last_day_of_month($date);
+
+        $columnName = ['id', 'station_id', 'generator_id', 'event', 'cause', 'event_at', 'creator', 'description'];
+        $db         = $model->getByStationGIdDateRange($columnName, $query);
+
+        $res['http_status'] = 200;
+        $res['data']        = ['total' => $db['total'], 'date' => date('Y-m-d', strtotime($date)), 'data' => $db['result']];
+        return $res;
+    }
+
+    protected function _reqExportExcel()
+    {
+        if (!$this->validate('GeneratorEventExportExcel')) {
+            $res['http_status'] = 400;
+            $res['msg']         = [
+                'error' => '请求数据无效',
+                'info'  => $this->validator->getErrors(),
+            ];
+            return $res;
+        }
+
+        $params     = $this->request->getGet();
+        $station_id = $params['station_id'];
+        $date       = $params['date'];
+
+        $allowReadDeptId = session('allowReadDeptId');
+        if (!in_array($station_id, $allowReadDeptId)) {
+            $res['http_status'] = 401;
+            $res['msg']         = '用户没有权限';
+            return $res;
+        }
+
+        $spreadsheet = new Spreadsheet();
+        $sheetTitle  = ['序号', '机组', '事件', '时间', '记录人', '说明'];
+
+        $columnName = ['event', 'event_at', 'creator', 'description'];
+        $query      = [
+            'station_id'   => $station_id,
+            'year'         => substr($date, 0, 4),
+            'generator_id' => 0,
+        ];
+        $model = new RecordModel();
+
+        for ($GID = 1; $GID <= $this->genTotalNumber; $GID++) {
+            $query['generator_id'] = $GID;
+
+            $db  = $model->getByStationDateGen($columnName, $query);
+            $cnt = count($db);
+            if ($cnt > 0) {
+                $sheet  = $spreadsheet->createSheet($GID - 1)->setTitle($GID . 'G');
+                $column = 1;
+                $row    = 1;
+                // 表头
+                foreach ($sheetTitle as $key => $value) {
+                    $sheet->setCellValueByColumnAndRow($key + $column, $row, $value);
+                }
+                // 样式
+                $style = [
+                    'font'      => [
+                        'bold' => true,
+                    ],
+                    'alignment' => [
+                        'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                        'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                    ],
+                ];
+                $sheet->getStyle('A1:F1')->applyFromArray($style);
+                $sheet->getColumnDimension('D')->setAutoSize(true);
+                $sheet->getColumnDimension('F')->setWidth(35);
+                // 填写数据
+                $row = 2;
+                foreach ($db as $item) {
+                    $sheet->setCellValueByColumnAndRow(1, $row, $row - 1);
+                    $sheet->setCellValueByColumnAndRow(2, $row, $GID . 'G');
+                    if ($item['event'] == '1') {
+                        $sheet->setCellValueByColumnAndRow(3, $row, '停机');
+                    }
+                    if ($item['event'] == '2') {
+                        $sheet->setCellValueByColumnAndRow(3, $row, '开机');
+                    }
+                    $sheet->setCellValueByColumnAndRow(4, $row, $item['event_at']);
+                    $sheet->setCellValueByColumnAndRow(5, $row, $item['creator']);
+                    $sheet->setCellValueByColumnAndRow(6, $row, $item['description']);
+                    $row++;
+                }
+                // 样式
+                $style['font']['bold'] = false;
+                $sheet->getStyle('A2:F' . $row)->applyFromArray($style);
+            } else {
+                continue;
+            }
+        }
+        $spreadsheet->setActiveSheetIndex(0);
+        // $sheetCount = $spreadsheet->getSheetCount();
+        // if ($sheetCount > 1) {
+        //     // $spreadsheet->removeSheetByIndex($sheetCount - 1);
+        // }
+
+        // Redirect output to a client’s web browser (Xlsx)
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="download.xlsx"');
+        header('Cache-Control: max-age=0');
+        // If you're serving to IE 9, then the following may be needed
+        // header('Cache-Control: max-age=1');
+
+        // If you're serving to IE over SSL, then the following may be needed
+        // header('Expires: Mon, 26 Jul 1997 05:00:00 GMT'); // Date in the past
+        // header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT'); // always modified
+        // header('Cache-Control: cache, must-revalidate'); // HTTP/1.1
+        // header('Pragma: public'); // HTTP/1.0
+
+        $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $writer->save('php://output');
+        exit;
+    }
+
+    protected function _reqSyncToKKX()
+    {
+
+        if (!$this->validate('GeneratorEventSyncToKKX')) {
+            $res['http_status'] = 400;
+            $res['msg']         = [
+                'error' => '请求数据无效',
+                'info'  => $this->validator->getErrors(),
+            ];
+            return $res;
+        }
+
+        $params     = $this->request->getGet();
+        $station_id = $params['station_id'];
+        $date       = $params['date'];
+
+        $allowReadDeptId = session('allowReadDeptId');
+        if (!in_array($station_id, $allowReadDeptId)) {
+            $res['http_status'] = 401;
+            $res['msg']         = '用户没有权限';
+            return $res;
+        }
 
         $py_path   = 'python3';
         $py_script = '/var/www/html/mix/server/vendor/python_scripts/kkx/kkx.py';
@@ -639,21 +722,23 @@ class GeneratorEvent extends BaseController
         if ($ret === 0) {
             $msg2 = str_replace('_n_', "\n", $msg[0]);
             if (strpos($msg2, 'Result') !== false) {
-                $res['code'] = EXIT_SUCCESS;
-                $msg2        = str_replace('Result', "", $msg2);
+                $res['http_status'] = 200;
+                $res['data']        = [];
+                $res['msg']         = str_replace('Result', "", $msg2);
+                return $res;
             } else {
-                $res['code'] = EXIT_ERROR;
+                $res['http_status'] = 500;
+                $res['msg']         = $msg2;
+                return $res;
             }
-            $res['msg'] = $msg2;
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '同步处理出错，稍后再试';
+            $res['http_status'] = 500;
+            $res['msg']         = '服务器处理发生错误，稍后再试';
+            return $res;
         }
-        return $this->respond($res);
     }
 
-    // 内部方法
-    protected function validateNewEvent(array $lastEvent = [], array $newEvent = [])
+    protected function _validateNewEvent(array $lastEvent = [], array $newEvent = [])
     {
         if (empty($newEvent)) {
             return false;

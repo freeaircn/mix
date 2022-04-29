@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-12-28 17:46:12
+ * @LastEditTime: 2022-04-30 01:08:22
  */
 
 namespace App\Models\Generator\Event;
@@ -62,10 +62,10 @@ class RecordModel extends Model
         return isset($result[0]) ? $result[0] : [];
     }
 
-    public function getByStationDateGen($columnName = [], $query = [])
+    public function getByStationDateGen(array $columnName = [], array $query = [])
     {
-        if (empty($columnName)) {
-            return false;
+        if (empty($columnName) || empty($query)) {
+            return [];
         }
 
         $selectSql = '';
@@ -126,11 +126,10 @@ class RecordModel extends Model
         return $this->delete($id);
     }
 
-    // 2021-12-15
-    public function getLastDateByStation($columnName = [], $query = [], $limit = 1)
+    public function getLastDateByStation(array $columnName = [], string $station_id = null, $limit = 1)
     {
         if (empty($columnName)) {
-            return false;
+            return [];
         }
 
         $selectSql = '';
@@ -139,7 +138,7 @@ class RecordModel extends Model
         }
         $builder = $this->select($selectSql);
 
-        $builder->where($query);
+        $builder->where('station_id', $station_id);
 
         $res = $builder->orderBy('event_at', 'DESC')
             ->findAll($limit);
@@ -215,10 +214,10 @@ class RecordModel extends Model
         }
     }
 
-    public function getLastByStationGIdEvents($columnName = [], $query = [], $limit = 1)
+    public function getLastByStationGIdEvents(array $columnName = [], array $query = [], int $limit = 1)
     {
         if (empty($query)) {
-            return false;
+            return [];
         }
 
         $selectSql = '';

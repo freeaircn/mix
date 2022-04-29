@@ -1,93 +1,99 @@
 <template>
-  <div>
-    <a-card title="统计" :bordered="false" :body-style="{marginBottom: '8px'}">
-      <div :style="{marginBottom: '16px'}">
-        <a-form-model ref="queryForm" layout="inline" :model="query" @submit.native.prevent>
-          <a-form-model-item>
-            <a-select v-model="query.date" style="width: 100px" >
-              <a-select-option v-for="d in yearRange" :key="d.value" :value="d.value" >
-                {{ d.name }}
-              </a-select-option>
-            </a-select>
-          </a-form-model-item>
+  <page-header-wrapper :title="false">
+    <a-card :bordered="false" :body-style="{marginBottom: '8px'}">
+      <a-form-model ref="queryForm" layout="inline" :model="query" @submit.native.prevent>
+        <a-form-model-item >
+          <a-select v-model="query.station_id" placeholder="站点" style="width: 160px">
+            <a-select-option v-for="d in stationItems" :key="d.id" :value="d.id">
+              {{ d.name }}
+            </a-select-option>
+          </a-select>
+        </a-form-model-item>
 
-          <a-form-model-item>
-            <a-button type="primary" @click="onGetChartData">查询</a-button>
-          </a-form-model-item>
-        </a-form-model>
-      </div>
+        <a-form-model-item>
+          <a-select v-model="query.date" style="width: 100px" >
+            <a-select-option v-for="d in yearRange" :key="d.value" :value="d.value" >
+              {{ d.name }}
+            </a-select-option>
+          </a-select>
+        </a-form-model-item>
 
-      <div :style="{ marginBottom: '8px' }">
-        <a-row :gutter="[32, 16]">
-          <a-col :xl="12" :lg="12" :md="12" :sm="24" :xs="24" >
-            <div :style="{ marginBottom: '16px', fontWeight: 'bold', color: '#F4664A' }">累计运行时长 / 小时</div>
-            <div :style="{ marginBottom: '16px'}">
-              <a-row :gutter="[16, 16]">
-                <a-col :xl="8" :lg="8" :md="8" :sm="8" :xs="8" >
-                  <a-statistic title="全年" :value="g1TotalRunTime" :value-style="{ color: '#FF745A' }">
-                    <template #suffix>
-                      <span> / G1</span>
-                    </template>
-                  </a-statistic>
-                </a-col>
-                <a-col :xl="8" :lg="8" :md="8" :sm="8" :xs="8" >
-                  <a-statistic title="全年" :value="g2TotalRunTime" :value-style="{ color: '#FF745A' }">
-                    <template #suffix>
-                      <span> / G2</span>
-                    </template>
-                  </a-statistic>
-                </a-col>
-                <a-col :xl="8" :lg="8" :md="8" :sm="8" :xs="8" >
-                  <a-statistic title="全年" :value="g3TotalRunTime" :value-style="{ color: '#FF745A' }">
-                    <template #suffix>
-                      <span> / G3</span>
-                    </template>
-                  </a-statistic>
-                </a-col>
-              </a-row>
-            </div>
-            <div id="running-time-chart" :style="{height: '400px'}"></div>
-          </a-col>
-          <a-col :xl="12" :lg="12" :md="12" :sm="24" :xs="24">
-            <div :style="{ marginBottom: '16px', fontWeight: 'bold', color: '#F4664A' }">累计开机次数 / 次</div>
-            <div :style="{ marginBottom: '16px'}">
-              <a-row :gutter="[16, 16]">
-                <a-col :xl="8" :lg="8" :md="8" :sm="8" :xs="8" >
-                  <a-statistic title="全年" :value="g1TotalStart" :value-style="{ color: '#21A97A' }">
-                    <template #suffix>
-                      <span> / G1</span>
-                    </template>
-                  </a-statistic>
-                </a-col>
-                <a-col :xl="8" :lg="8" :md="8" :sm="8" :xs="8" >
-                  <a-statistic title="全年" :value="g2TotalStart" :value-style="{ color: '#21A97A' }">
-                    <template #suffix>
-                      <span> / G2</span>
-                    </template>
-                  </a-statistic>
-                </a-col>
-                <a-col :xl="8" :lg="8" :md="8" :sm="8" :xs="8" >
-                  <a-statistic title="全年" :value="g3TotalStart" :value-style="{ color: '#21A97A' }">
-                    <template #suffix>
-                      <span> / G3</span>
-                    </template>
-                  </a-statistic>
-                </a-col>
-              </a-row>
-            </div>
-            <div id="start-num-chart" :style="{height: '400px'}"></div>
-          </a-col>
-        </a-row>
-      </div>
-
+        <a-form-model-item>
+          <a-button type="primary" @click="onClickSearch">查询</a-button>
+        </a-form-model-item>
+      </a-form-model>
     </a-card>
-  </div>
+
+    <a-row :gutter="[8, 8]" :style="{marginBottom: '8px'}">
+      <a-col :xl="12" :lg="12" :md="12" :sm="24" :xs="24" >
+        <a-card title="累计运行时长 / 小时" :bordered="false" >
+          <div :style="{ marginBottom: '16px'}">
+            <a-row :gutter="[16, 16]">
+              <a-col :xl="8" :lg="8" :md="8" :sm="8" :xs="8" >
+                <a-statistic title="全年" :value="g1TotalRunTime" :value-style="{ color: '#FF745A' }">
+                  <template #suffix>
+                    <span> / G1</span>
+                  </template>
+                </a-statistic>
+              </a-col>
+              <a-col :xl="8" :lg="8" :md="8" :sm="8" :xs="8" >
+                <a-statistic title="全年" :value="g2TotalRunTime" :value-style="{ color: '#FF745A' }">
+                  <template #suffix>
+                    <span> / G2</span>
+                  </template>
+                </a-statistic>
+              </a-col>
+              <a-col :xl="8" :lg="8" :md="8" :sm="8" :xs="8" >
+                <a-statistic title="全年" :value="g3TotalRunTime" :value-style="{ color: '#FF745A' }">
+                  <template #suffix>
+                    <span> / G3</span>
+                  </template>
+                </a-statistic>
+              </a-col>
+            </a-row>
+          </div>
+          <div id="running-time-chart" :style="{height: '400px'}"></div>
+        </a-card>
+      </a-col>
+      <a-col :xl="12" :lg="12" :md="12" :sm="24" :xs="24" >
+        <a-card title="累计开机次数 / 次" :bordered="false" >
+          <div :style="{ marginBottom: '16px'}">
+            <a-row :gutter="[16, 16]">
+              <a-col :xl="8" :lg="8" :md="8" :sm="8" :xs="8" >
+                <a-statistic title="全年" :value="g1TotalStart" :value-style="{ color: '#21A97A' }">
+                  <template #suffix>
+                    <span> / G1</span>
+                  </template>
+                </a-statistic>
+              </a-col>
+              <a-col :xl="8" :lg="8" :md="8" :sm="8" :xs="8" >
+                <a-statistic title="全年" :value="g2TotalStart" :value-style="{ color: '#21A97A' }">
+                  <template #suffix>
+                    <span> / G2</span>
+                  </template>
+                </a-statistic>
+              </a-col>
+              <a-col :xl="8" :lg="8" :md="8" :sm="8" :xs="8" >
+                <a-statistic title="全年" :value="g3TotalStart" :value-style="{ color: '#21A97A' }">
+                  <template #suffix>
+                    <span> / G3</span>
+                  </template>
+                </a-statistic>
+              </a-col>
+            </a-row>
+          </div>
+          <div id="start-num-chart" :style="{height: '400px'}"></div>
+        </a-card>
+      </a-col>
+    </a-row>
+  </page-header-wrapper>
 </template>
 
 <script>
 import moment from 'moment'
+import { mapGetters } from 'vuex'
 import { Column } from '@antv/g2plot'
-import { apiGetEventStatisticChartData } from '@/api/mix/generator'
+import { apiQueryEvent } from '@/api/mix/generator'
 
 const DataSet = require('@antv/data-set')
 
@@ -101,7 +107,9 @@ export default {
   },
   data () {
     return {
+      stationItems: [],
       query: {
+        station_id: 0,
         date: null
       },
       yearRange: [],
@@ -125,10 +133,12 @@ export default {
       g1TotalStart: 0,
       g2TotalStart: 0,
       g3TotalStart: 0
-      // g1TotalIdleTime: 0,
-      // g2TotalIdleTime: 0,
-      // g3TotalIdleTime: 0
     }
+  },
+  computed: {
+    ...mapGetters([
+      'userInfo'
+    ])
   },
   created () {
     const year = moment().year()
@@ -140,22 +150,35 @@ export default {
     }
     this.query.date = year
   },
+  beforeMount () {
+    this.prepareSearchFunc()
+  },
   mounted () {
+    this.query.station_id = this.userInfo.allowDefaultDeptId
     this.initRunningTimeChart()
     this.initStartNumChart()
-    // this.initG1TotalRunTimeChart()
     //
     this.isMounted = true
     //
-    this.onGetChartData()
+    this.onClickSearch()
   },
   methods: {
-    onGetChartData () {
-      const query = {
-        station_id: this.stationId,
-        year: this.query.date
-      }
-      apiGetEventStatisticChartData(query)
+    // 查询
+    prepareSearchFunc () {
+      const params = { resource: 'search_params' }
+      apiQueryEvent(params)
+        .then(res => {
+          res.station.forEach(element => {
+            this.stationItems.push(element)
+          })
+        })
+        .catch(() => {
+        })
+    },
+
+    onClickSearch () {
+      const params = { resource: 'statistic', station_id: this.query.station_id, date: this.query.date }
+      apiQueryEvent(params)
         .then(res => {
           this.run_time = res.run_time
           this.start_num = res.start_num
@@ -167,14 +190,9 @@ export default {
           this.g1TotalStart = res.total_start.G1_start
           this.g2TotalStart = res.total_start.G2_start
           this.g3TotalStart = res.total_start.G3_start
-          // this.g1TotalIdleTime = res.total_run.G1_idle
-          // this.g2TotalIdleTime = res.total_run.G2_idle
-          // this.g3TotalIdleTime = res.total_run.G3_idle
           if (this.isMounted) {
             this.updateRunningTimeChart()
             this.updateStartNumChart()
-            // this.updateLastAt()
-            // this.updateG1TotalRunTimeChart()
           }
         })
         .catch((err) => {
@@ -277,75 +295,6 @@ export default {
 
       this.startNumChart.changeData(chartData)
     }
-
-    // initG1TotalRunTimeChart () {
-    //   this.g1TotalRunTimeChart = new Pie('G1-total-run-time-chart', {
-    //     appendPadding: 10,
-    //     data: [{ type: '运行', value: this.g1TotalRunTime }, { type: '停机', value: this.g1TotalIdleTime }],
-    //     angleField: 'value',
-    //     colorField: 'type',
-    //     radius: 1,
-    //     innerRadius: 0.64,
-    //     meta: {
-    //       value: {
-    //         formatter: (v) => `${v}小时`
-    //       }
-    //     },
-    //     label: {
-    //       type: 'inner',
-    //       offset: '-50%',
-    //       autoRotate: false,
-    //       style: { textAlign: 'center' },
-    //       formatter: ({ percent }) => `${(percent * 100).toFixed(0)}%`
-    //     },
-    //     statistic: {
-    //       title: {
-    //         offsetY: -8
-    //       },
-    //       content: {
-    //         offsetY: -4
-    //       }
-    //     },
-    //     // 添加 中心统计文本 交互
-    //     interactions: [
-    //       { type: 'element-selected' },
-    //       { type: 'element-active' },
-    //       {
-    //         type: 'pie-statistic-active',
-    //         cfg: {
-    //           start: [
-    //             { trigger: 'element:mouseenter', action: 'pie-statistic:change' },
-    //             { trigger: 'legend-item:mouseenter', action: 'pie-statistic:change' }
-    //           ],
-    //           end: [
-    //             { trigger: 'element:mouseleave', action: 'pie-statistic:reset' },
-    //             { trigger: 'legend-item:mouseleave', action: 'pie-statistic:reset' }
-    //           ]
-    //         }
-    //       }
-    //     ]
-    //   })
-
-    //   this.g1TotalRunTimeChart.render()
-    // },
-
-    // updateG1TotalRunTimeChart () {
-    //   const chartData = [{ type: '运行', value: this.g1TotalRunTime }, { type: '停机', value: this.g1TotalIdleTime }]
-    //   this.g1TotalRunTimeChart.changeData(chartData)
-    // }
-
-    // updateLastAt () {
-    //   this.last_at.splice(0, this.last_at.length)
-    //   const len = this.chartData.length
-    //   for (let i = 0; i < len; i++) {
-    //     let temp = {
-    //       gid: this.chartData[i].gid,
-    //       date: this.chartData[i].last_at.substr(0, 10)
-    //     }
-    //     this.last_at.push(temp)
-    //     temp = {}
-    //   }
-    // }
   }
 }
 </script>

@@ -74,7 +74,7 @@ const responseHandler = (response) => {
 
 // 异常响应处理
 const errorHandler = (error) => {
-  console.log('--- failed response ---', error.response.data)
+  console.log('--- failed response ---', error.response)
   if (error.response) {
     if (error.response.status === 400) {
       notification.error({

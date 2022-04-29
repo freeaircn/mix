@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- 主机： 127.0.0.1:3306
--- 生成日期： 2022-04-28 16:18:09
+-- 生成日期： 2022-04-29 17:24:34
 -- 服务器版本： 10.3.14-MariaDB
 -- PHP 版本： 7.3.5
 
@@ -84,11 +84,8 @@ INSERT INTO `app_api` (`id`, `type`, `pid`, `title`, `api`, `method`, `created_a
 (46, 2, 39, '提交验证码', 'account/sms', 'write', '2021-06-27 20:00:00', '2022-04-11 14:54:30', NULL),
 (47, 2, 39, '修改邮箱', 'account/email', 'write', '2021-06-27 20:00:00', '2022-04-11 14:54:36', NULL),
 (48, 0, 1, '机组事件信息', '', '', '2021-06-27 20:00:00', NULL, NULL),
-(49, 2, 48, '读', 'generator/event', 'read', '2021-06-27 20:00:00', '2022-04-11 14:55:32', NULL),
-(50, 2, 48, '写', 'generator/event', 'write', '2021-06-27 20:00:00', '2022-04-11 14:55:18', NULL),
-(53, 2, 48, '读：事件统计', 'generator/event/statistic', 'read', '2021-06-27 20:00:00', '2022-04-11 14:57:00', NULL),
-(54, 2, 48, '读：数据导出excel', 'generator/event/export', 'read', '2021-06-27 20:00:00', '2022-04-11 14:57:07', NULL),
-(55, 2, 48, '读：同步至发电可靠性系统', 'generator/event/sync/kkx', 'read', '2021-06-27 20:00:00', '2022-04-11 14:57:12', NULL),
+(49, 2, 48, '读：统计图表，记录，导出，同步至可靠性', 'generator/event', 'read', '2021-06-27 20:00:00', '2022-04-30 00:49:30', NULL),
+(50, 2, 48, '写：新加，修改，删除 用户默认站点的记录', 'generator/event', 'write', '2021-06-27 20:00:00', '2022-04-30 00:50:24', NULL),
 (56, 0, 1, '电度表信息', '', '', '2021-06-27 20:00:00', NULL, NULL),
 (57, 2, 56, '写：电表记录', 'meters', 'write', '2021-06-27 20:00:00', '2022-04-11 14:57:28', NULL),
 (58, 2, 56, '读：电表记录', 'meters', 'read', '2021-06-27 20:00:00', '2022-04-11 14:57:36', NULL),
@@ -197,15 +194,14 @@ CREATE TABLE IF NOT EXISTS `app_dts` (
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE KEY `uc_dts_id` (`dts_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COMMENT='DTS' ROW_FORMAT=COMPACT;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COMMENT='DTS' ROW_FORMAT=COMPACT;
 
 --
 -- 转存表中的数据 `app_dts`
 --
 
 INSERT INTO `app_dts` (`id`, `dts_id`, `status`, `type`, `title`, `level`, `station_id`, `device`, `description`, `progress`, `creator_id`, `reviewer_id`, `place_at`, `score`, `score_desc`, `scored_by`, `cause`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 6925048288454512640, 'publish', 2, 'AAA', 1, 2, '+4+', '【现象】\nAAA\n【时间】\n\n【影响】\n\n【已采取措施】\n\n', '2022-04-27 22:38 小明\n【当前进展】\n2222\n【下一步计划】\n\n\n2022-04-27 21:59 小明\n【当前进展】\naaaa\n【下一步计划】\n\n\n', 1, 0, 'create', 0, '', '', 0, '2022-04-27 19:49:33', '2022-04-27 22:38:03', NULL),
-(2, 6925095736338157568, 'publish', 1, 'BBB', 1, 2, '+4+6+', '【现象】\nBBBB\n【时间】\nBB\n【影响】\nBB\n【已采取措施】\nBB\n', '2022-04-27 22:58 小明\n【当前进展】\n1111\n【下一步计划】\n11111\n\n', 1, 0, 'working', 0, '', '2022-04-29 00:14 小明\n', 0, '2022-04-27 22:58:06', '2022-04-29 00:14:03', NULL);
+(5, 6925641250313998336, 'publish', 1, 'AAA', 1, 2, '+4+7+', '【现象】\nAAAA\n【时间】\n\n【影响】\n\n【已采取措施】\n\n', '2022-04-29 15:28 小明\n【关闭审核意见】\naaaaaa\n\n2022-04-29 15:27 小明\n【现象】\naaa\n【影响】\naaa\n【根因】\naaa\n【恢复方法】\naaaa\n\n2022-04-29 15:27 小明\n【当前进展】\naaa\n【下一步计划】\naaa\n\n2022-04-29 15:18 小明\n【重新处理意见】\nAAAAAA\n\n2022-04-29 15:17 小明\n【关闭审核意见】\nAAAAAA\n\n2022-04-29 15:07 小明\n【现象】\nAAA\n【影响】\nAA\n【根因】\nAA\n【恢复方法】\nAAA\n\n2022-04-29 15:05 小明\n【重新处理意见】\nAAAAA\n\n2022-04-29 14:54 小明\n【现象】\nAAA\n【影响】\nAAA\n【根因】\nAA\n【恢复方法】\nAAA\n\n2022-04-29 11:06 小明\n【当前进展】\n222\n【下一步计划】\n222\n\n2022-04-29 11:06 小明\n【当前进展】\n111\n【下一步计划】\n111\n\n', 1, 0, 'close', 4, 'ADFASDFASD', '2022-04-29 11:07 小明\n', 0, '2022-04-29 11:05:46', '2022-04-29 15:28:00', NULL);
 
 -- --------------------------------------------------------
 
@@ -248,17 +244,14 @@ CREATE TABLE IF NOT EXISTS `app_dts_attachment` (
   PRIMARY KEY (`id`),
   KEY `key_dts_id` (`dts_id`) USING BTREE,
   KEY `key_file_ext` (`file_ext`)
-) ENGINE=InnoDB AUTO_INCREMENT=56 DEFAULT CHARSET=utf8mb4 COMMENT='DTS附件' ROW_FORMAT=COMPACT;
+) ENGINE=InnoDB AUTO_INCREMENT=65 DEFAULT CHARSET=utf8mb4 COMMENT='DTS附件' ROW_FORMAT=COMPACT;
 
 --
 -- 转存表中的数据 `app_dts_attachment`
 --
 
 INSERT INTO `app_dts_attachment` (`id`, `dts_id`, `user_id`, `username`, `org_name`, `new_name`, `file_ext`, `size`, `path`, `info`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(40, 6925048288454512640, 1, '小明', '2.jpg', '1651060168_13e65e01b99ded36a961.jpg', 'jpg', 7100, '', '', '2022-04-27 19:49:33', '2022-04-27 19:49:33', NULL),
-(41, 6925048288454512640, 1, '小明', '3.jpg', '1651060171_096f6394f840e128cf2d.jpg', 'jpg', 7100, '', '', '2022-04-27 19:49:33', '2022-04-27 19:49:33', NULL),
-(48, 6925095736338157568, 1, '小明', '4.jpg', '1651128848_2f9e57efa02a6022a8cf.jpg', 'jpg', 7100, '', '', '2022-04-28 14:54:08', '2022-04-28 14:54:08', NULL),
-(49, 6925095736338157568, 1, '小明', '2.jpg', '1651139399_b1a0ea8563cd43c3e11b.jpg', 'jpg', 7100, '', '', '2022-04-28 17:49:59', '2022-04-28 17:49:59', NULL);
+(63, 6925641250313998336, 1, '小明', '2.jpg', '1651217230_db82f98332c902ddeee4.jpg', 'jpg', 7100, '', '', '2022-04-29 15:27:10', '2022-04-29 15:27:10', NULL);
 
 -- --------------------------------------------------------
 
@@ -324,7 +317,7 @@ CREATE TABLE IF NOT EXISTS `app_generator_event_log` (
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=4331 DEFAULT CHARSET=utf8mb4 COMMENT='发电机事件' ROW_FORMAT=COMPACT;
+) ENGINE=InnoDB AUTO_INCREMENT=4334 DEFAULT CHARSET=utf8mb4 COMMENT='发电机事件' ROW_FORMAT=COMPACT;
 
 --
 -- 转存表中的数据 `app_generator_event_log`
@@ -4662,8 +4655,8 @@ INSERT INTO `app_generator_event_log` (`id`, `station_id`, `generator_id`, `even
 (4322, 2, 2, 2, '2021-12-31 04:35:39', 1, '杨继光', '无', '2021-12-31 05:03:04', '2021-12-31 05:03:04', NULL),
 (4323, 2, 2, 1, '2021-12-31 13:10:04', 1, '欧阳军', '无', '2021-12-31 13:10:27', '2021-12-31 13:10:27', NULL),
 (4324, 2, 2, 2, '2021-12-31 16:44:14', 1, '杨继光', '无', '2021-12-31 16:44:31', '2021-12-31 16:44:31', NULL),
-(4325, 2, 2, 1, '2021-12-31 21:49:12', 1, '李宗明', '无', '2021-12-31 21:49:24', '2021-12-31 21:49:24', NULL),
-(4326, 2, 2, 2, '2022-01-01 08:37:35', 1, '杨继光', '无', '2022-01-01 08:43:38', '2022-01-01 08:43:38', NULL);
+(4325, 2, 2, 1, '2021-12-31 21:50:12', 1, '小明', '无', '2021-12-31 21:49:24', '2022-04-30 00:47:08', NULL),
+(4326, 2, 2, 2, '2022-01-01 08:39:35', 1, '小明', '无', '2022-01-01 08:43:38', '2022-04-30 01:18:37', NULL);
 
 -- --------------------------------------------------------
 
@@ -5091,7 +5084,7 @@ CREATE TABLE IF NOT EXISTS `app_menu` (
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   KEY `key_menu_pid` (`pid`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8mb4 COMMENT='前端页面路由' ROW_FORMAT=COMPACT;
+) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=utf8mb4 COMMENT='前端页面路由' ROW_FORMAT=COMPACT;
 
 --
 -- 转存表中的数据 `app_menu`
@@ -5102,7 +5095,7 @@ INSERT INTO `app_menu` (`id`, `pid`, `title`, `path`, `redirect`, `name`, `compo
 (2, 1, '首页', '/', '/dashboard/workplace', 'index', 'BasicLayout', 0, 0, 0, '', 0, 0, '', '', '2021-06-27 20:00:00', NULL, NULL),
 (3, 2, '仪表盘', '/dashboard', '/dashboard/workplace', 'dashboard', 'RouteView', 0, 0, 0, 'dashboard', 0, 0, '', '', '2021-06-27 20:00:00', NULL, NULL),
 (4, 3, '工作台', '/dashboard/workplace', '', 'Workplace', 'mix/dashboard/Workplace', 0, 0, 0, '', 0, 0, '', '', '2021-06-27 20:00:00', NULL, NULL),
-(5, 3, '机组事件', '/dashboard/generator_event', '', 'GeneratorEvent', 'mix/dashboard/GeneratorEvent', 0, 0, 0, '', 0, 0, '', '', '2021-06-27 20:00:00', NULL, NULL),
+(5, 3, '机组事件', '/dashboard/generator_event', '/dashboard/generator_event/statistic', 'GeneratorEvent', 'mix/dashboard/GeneratorEvent', 0, 0, 0, '', 0, 0, '', '', '2021-06-27 20:00:00', '2022-04-29 16:00:50', NULL),
 (6, 2, '应用管理', '/app', '/app/role', 'AppHome', 'RouteView', 0, 0, 0, 'control', 0, 0, '', '', '2021-06-27 20:00:00', '2022-04-12 10:10:03', NULL),
 (7, 6, '用户角色', '/app/role', '/app/role/list', 'AppRole', 'mix/admin/role/index', 0, 1, 0, '', 0, 0, '', '', '2021-06-27 20:00:00', '2022-04-12 20:37:59', NULL),
 (8, 6, '部门机构', '/app/dept', '', 'AppDept', 'mix/admin/dept/index', 0, 0, 0, '', 0, 0, '', '', '2021-06-27 20:00:00', '2022-04-12 10:08:53', NULL),
@@ -5118,7 +5111,7 @@ INSERT INTO `app_menu` (`id`, `pid`, `title`, `path`, `redirect`, `name`, `compo
 (18, 16, '安全设置', '/account/settings/security', '', 'SecuritySettings', 'mix/account/settings/Security', 0, 0, 1, '', 0, 0, '', '', '2021-06-27 20:00:00', NULL, NULL),
 (19, 3, '电度表', '/dashboard/meters', '', 'Meters', 'mix/dashboard/Meters', 0, 0, 0, '', 0, 0, '', '', '2021-06-27 20:00:00', NULL, NULL),
 (20, 3, '隐患&缺陷', '/dashboard/dts', '/dashboard/dts/list', 'DTS', 'mix/dashboard/Dts', 0, 0, 0, '', 0, 0, '', '', '2021-06-27 20:00:00', NULL, NULL),
-(21, 20, '检索', '/dashboard/dts/list', '', 'DtsList', 'mix/dashboard/components/dts/List', 0, 0, 0, '', 0, 0, '', '', '2021-06-27 20:00:00', '2022-04-28 23:27:41', NULL),
+(21, 20, '记录', '/dashboard/dts/list', '', 'DtsList', 'mix/dashboard/components/dts/List', 0, 0, 0, '', 0, 0, '', '', '2021-06-27 20:00:00', '2022-04-29 16:06:39', NULL),
 (22, 20, '新建', '/dashboard/dts/new', '', 'DtsBlankForm', 'mix/dashboard/components/dts/BlankForm', 1, 0, 0, '', 0, 0, '', '', '2021-06-27 20:00:00', '2022-04-28 23:27:54', NULL),
 (23, 6, '设备单元', '/app/equipment_unit', '', 'equipmentUnit', 'mix/admin/equipment_unit/index', 0, 0, 0, '', 0, 0, '', '', '2021-06-27 20:00:00', NULL, NULL),
 (24, 20, '详情', '/dashboard/dts/details/:id', '', 'DtsDetails', 'mix/dashboard/components/dts/Details', 1, 0, 0, '', 0, 0, '', '', '2021-06-27 20:00:00', '2022-04-28 23:28:00', NULL),
@@ -5126,7 +5119,9 @@ INSERT INTO `app_menu` (`id`, `pid`, `title`, `path`, `redirect`, `name`, `compo
 (27, 6, 'API管理', '/app/api', '', 'AppApi', 'mix/admin/api/index', 0, 0, 0, '', 0, 0, '', '', '2021-06-27 20:00:00', '2022-04-12 10:03:23', NULL),
 (28, 6, '工作流程', '/app/workflow', NULL, 'AppWorkflow', 'mix/admin/workflow/index', 0, 0, 0, NULL, 0, 0, NULL, NULL, '2022-04-12 10:01:14', '2022-04-12 10:03:42', NULL),
 (29, 7, '角色列表', '/app/role/list', NULL, 'AppRoleList', 'mix/admin/role/List', 0, 0, 1, NULL, 0, 0, NULL, NULL, '2022-04-12 19:37:26', '2022-04-12 20:38:10', NULL),
-(30, 7, '部门数据设置', '/app/role/dept/:roleId', NULL, 'AppRoleDept2', 'mix/admin/role/DeptDataSetting', 0, 0, 1, NULL, 0, 0, NULL, NULL, '2022-04-12 20:34:42', '2022-04-12 20:38:18', NULL);
+(30, 7, '部门数据设置', '/app/role/dept/:roleId', NULL, 'AppRoleDept2', 'mix/admin/role/DeptDataSetting', 0, 0, 1, NULL, 0, 0, NULL, NULL, '2022-04-12 20:34:42', '2022-04-12 20:38:18', NULL),
+(31, 5, '统计', '/dashboard/generator_event/statistic', NULL, 'GeneratorEventStatistic', 'mix/dashboard/components/generator/StatisticChart', 0, 0, 0, NULL, 0, 0, NULL, NULL, '2022-04-29 16:00:29', '2022-04-29 17:43:58', NULL),
+(32, 5, '记录', '/dashboard/generator_event/list', NULL, 'GeneratorEventList', 'mix/dashboard/components/generator/List', 0, 0, 0, NULL, 0, 0, NULL, NULL, '2022-04-29 16:10:53', '2022-04-29 16:11:36', NULL);
 
 -- --------------------------------------------------------
 
@@ -34890,9 +34885,6 @@ INSERT INTO `app_role_api` (`role_id`, `api_id`) VALUES
 (1, 48),
 (1, 49),
 (1, 50),
-(1, 53),
-(1, 54),
-(1, 55),
 (1, 56),
 (1, 57),
 (1, 58),
@@ -34955,8 +34947,7 @@ CREATE TABLE IF NOT EXISTS `app_role_dept` (
 --
 
 INSERT INTO `app_role_dept` (`role_id`, `dept_id`, `data_writable`, `is_default`) VALUES
-(1, 2, 1, 1),
-(1, 11, 1, 0);
+(1, 2, 1, 1);
 
 -- --------------------------------------------------------
 
@@ -35005,7 +34996,9 @@ INSERT INTO `app_role_menu` (`role_id`, `menu_id`) VALUES
 (1, 27),
 (1, 28),
 (1, 29),
-(1, 30);
+(1, 30),
+(1, 31),
+(1, 32);
 
 -- --------------------------------------------------------
 
@@ -35030,7 +35023,9 @@ INSERT INTO `app_role_workflow` (`role_id`, `wf_id`) VALUES
 (1, 1),
 (1, 2),
 (1, 4),
-(1, 5);
+(1, 5),
+(1, 6),
+(1, 7);
 
 -- --------------------------------------------------------
 
@@ -35154,7 +35149,7 @@ CREATE TABLE IF NOT EXISTS `app_user` (
 --
 
 INSERT INTO `app_user` (`id`, `workID`, `username`, `sex`, `IdCard`, `phone`, `email`, `status`, `forceChgPwd`, `avatar`, `dept_ids`, `job`, `title`, `politic`, `ip_address`, `last_login`, `created_at`, `updated_at`, `deleted_at`, `password`, `forgotten_password_selector`, `forgotten_password_code`, `forgotten_password_time`) VALUES
-(1, '1', '小明', '男', '', '13812345678', '1@1.1', '1', '0', 1, '+1+2+', 1, 5, 1, '127.0.0.1', '2022-04-28 23:28:07', '2021-06-27 20:00:00', '2022-04-28 23:28:07', NULL, '$argon2i$v=19$m=16384,t=4,p=2$Q0ZXc2NIWFJrcUxKSzA5UQ$Qt//SEIMKQDKVKsLzztLnTbVZQs/ysxKKhls908T0hQ', NULL, NULL, NULL),
+(1, '1', '小明', '男', '', '13812345678', '1@1.1', '1', '0', 1, '+1+2+', 1, 5, 1, '127.0.0.1', '2022-04-30 00:57:44', '2021-06-27 20:00:00', '2022-04-30 00:57:44', NULL, '$argon2i$v=19$m=16384,t=4,p=2$Q0ZXc2NIWFJrcUxKSzA5UQ$Qt//SEIMKQDKVKsLzztLnTbVZQs/ysxKKhls908T0hQ', NULL, NULL, NULL),
 (9, '8022', '张明学', '男', NULL, '13577552301', '13577552301@163.com', '1', '1', 20, '+1+2+10+', 7, 5, 2, '172.16.16.70', '2021-11-05 19:57:58', '2021-10-31 21:11:17', NULL, NULL, '$argon2i$v=19$m=16384,t=4,p=1$Kb0SbrF2+iYOibwApD4pjQ$vgs7rTFP7e/nThSTr8NvoFmXI6n3A7mqpERcbX6QogY', NULL, NULL, NULL),
 (15, '8024', '徐晓志', '男', NULL, '13987569253', '13987569253@163.com', '1', '1', 26, '+1+2+10+', 9, 5, 2, '172.16.16.34', '2021-11-04 00:54:17', '2021-10-31 21:13:35', NULL, NULL, '$argon2i$v=19$m=16384,t=4,p=1$NMm4Z2mHK3yEHFAlN++jfg$JZg5GTvXIzJ11OW8c7aKo488b2tavHgX54quNcdvrXI', NULL, NULL, NULL),
 (16, '8034', '王建文', '男', NULL, '15906982997', '15906982997@163.com', '1', '1', 27, '+1+2+4+', 1, 5, 1, '192.168.1.74', '2021-11-11 21:17:42', '2021-10-31 21:14:18', NULL, NULL, '$argon2i$v=19$m=16384,t=4,p=1$LcgDdFhLrBAEwlc964Y9XQ$ElVJuqGC8t5BCkAs0MyWTzDCO5JWmf50MG0JGITvHFE', NULL, NULL, NULL),
@@ -35289,7 +35284,7 @@ CREATE TABLE IF NOT EXISTS `app_workflow` (
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   KEY `pid` (`pid`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COMMENT='工作流权限' ROW_FORMAT=COMPACT;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COMMENT='工作流权限' ROW_FORMAT=COMPACT;
 
 --
 -- 转存表中的数据 `app_workflow`
@@ -35299,7 +35294,9 @@ INSERT INTO `app_workflow` (`id`, `type`, `pid`, `name`, `workflow`, `method`, `
 (1, 0, 0, '工作流设置', '', '', '2021-06-27 20:00:00', NULL, NULL),
 (2, 0, 1, 'DTS单流程', NULL, NULL, '2022-04-12 10:45:49', '2022-04-12 10:49:17', NULL),
 (4, 2, 2, '评分', 'dts', 'score', '2022-04-12 10:51:06', '2022-04-27 23:24:52', NULL),
-(5, 2, 2, '解决', 'dts', 'resolve', '2022-04-27 23:58:46', '2022-04-27 23:58:46', NULL);
+(5, 2, 2, '解决', 'dts', 'resolve', '2022-04-27 23:58:46', '2022-04-27 23:58:46', NULL),
+(6, 2, 2, '关闭', 'dts', 'close', '2022-04-29 09:17:40', '2022-04-29 09:17:40', NULL),
+(7, 2, 2, '重新处理', 'dts', 'back_work', '2022-04-29 10:52:29', '2022-04-29 10:52:29', NULL);
 
 -- --------------------------------------------------------
 

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-07-06 21:44:27
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-29 15:13:09
+ * @LastEditTime: 2022-04-29 15:43:17
  */
 
 namespace Config;
@@ -34,7 +34,7 @@ class MyGlobalConfig extends BaseConfig
     public $defaultAvatarFemale = 'female.jpg';
 
     /**
-     * DTS 工作流配置文件
+     * DTS 工作流
      */
     public $dtsKeyValuePairs = [
         'type'  => [

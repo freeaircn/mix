@@ -4,11 +4,11 @@
       未完成
     </a-card>
 
-    <a-card :bordered="false" title="问题单" :body-style="{marginBottom: '8px'}">
+    <a-card :bordered="false" title="" :body-style="{marginBottom: '8px'}">
 
       <div class="table-page-search-wrapper">
         <a-form layout="inline" :label-col="labelCol" :wrapper-col="wrapperCol">
-          <a-row :gutter="48">
+          <a-row :gutter="24">
             <a-col :md="8" :sm="24">
               <a-form-model-item label="站点" >
                 <a-select v-model="searchParams.station_id" placeholder="请选择" >
