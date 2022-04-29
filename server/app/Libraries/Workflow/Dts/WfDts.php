@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2019-12-29 14:06:12
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-29 10:45:49
+ * @LastEditTime: 2022-04-29 15:29:15
  */
 
 namespace App\Libraries\Workflow\Dts;
@@ -55,25 +55,9 @@ class WfDts extends Core
         }
     }
 
-    public function isReviewPlace(string $place = null)
-    {
-        if ($place === 'review') {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
     public function getWorkingPlace()
     {
         return 'working';
-    }
-
-    public function getReviewPlace()
-    {
-        // $meta = $this->placesMetadata['review'];
-
-        return 'review';
     }
 
     public function canWorking()
@@ -134,6 +118,35 @@ class WfDts extends Core
         }
     }
 
+    public function canBackWorking()
+    {
+        try {
+            if ($this->workflow->can($this->ticket, 'to_working')) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (LogicException $exception) {
+            // print($exception);
+            return false;
+        }
+    }
+
+    public function toBackWorking()
+    {
+        try {
+            if ($this->workflow->can($this->ticket, 'to_working')) {
+                $this->workflow->apply($this->ticket, 'to_working');
+                return true;
+            } else {
+                return false;
+            }
+        } catch (LogicException $exception) {
+            // print($exception);
+            return false;
+        }
+    }
+
     public function canClose()
     {
         try {
@@ -162,16 +175,5 @@ class WfDts extends Core
             return false;
         }
     }
-
-    // public function canUpdateProgress(string $place_at = null)
-    // {
-    //     $allow = $this->getPlaceMetaOfAllow($place_at);
-    //     if (isset($allow['updateProgress'])) {
-    //         return $allow['updateProgress'];
-    //     } else {
-    //         return false;
-    //     }
-
-    // }
 
 }

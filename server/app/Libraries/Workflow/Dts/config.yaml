@@ -11,24 +11,28 @@ workflows:
                     line: 'main'
                     allow:
                         updateProgress: true
+                        showRmvAttachmentIcon: true
             working:
                 metadata:
                     name: '处理中'
                     line: 'main'
                     allow:
                         updateProgress: true
+                        showRmvAttachmentIcon: true
             resolve:
                 metadata:
                     name: '解决'
                     line: 'main'
                     allow:
                         updateProgress: false
+                        showRmvAttachmentIcon: true
             close:
                 metadata:
                     name: '关闭'
                     line: 'main'
                     allow:
                         updateProgress: false
+                        showRmvAttachmentIcon: false
         transitions:
             to_working:
                 from: [create, resolve, close]

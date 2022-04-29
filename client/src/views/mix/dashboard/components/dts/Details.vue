@@ -65,7 +65,7 @@
           action="/api/dts/attachment"
           :data="{dts_id: dts_id}"
           :before-upload="beforeUploadAttachment"
-          :showUploadList="{ showDownloadIcon: true, showRemoveIcon: true }"
+          :showUploadList="{ showDownloadIcon: true, showRemoveIcon: showRmvAttachmentIcon }"
           :fileList="fileList"
           :remove="onClickDelAttachment"
           @change="afterUploadAttachment"
@@ -79,15 +79,20 @@
     <a-card :bordered="false" title="操作" :loading="loading" :body-style="{marginBottom: '8px'}">
       <router-link slot="extra" to="/dashboard/dts/list">返回</router-link>
       <a-button v-if="operation.allowUpdateProgress" type="primary" @click="reqUpdateProgress" style="margin-right: 16px">更新进展</a-button>
-      <a-button v-if="operation.allowResolve" type="primary" @click="reqToResolve" style="margin-right: 16px">解决</a-button>
-      <a-button v-if="operation.allowClose" type="primary" @click="reqUpdateProgress" style="margin-right: 16px">关闭</a-button>
-      <a-button v-if="operation.allowScore" type="primary" @click="reqUpdateScore" style="margin-right: 16px">评分</a-button>
+      <a-button v-if="operation.allowResolve" type="primary" @click="reqToResolve" style="margin-right: 16px">提交解决</a-button>
+      <a-button v-if="operation.allowClose" type="primary" @click="reqToClose" style="margin-right: 16px">提交关闭</a-button>
+      <a-button v-if="operation.allowBackWork" type="primary" @click="reqBackWork" style="margin-right: 16px">重新处理</a-button>
+      <a-button v-if="operation.allowScore" type="default" @click="reqUpdateScore" style="margin-right: 16px">提交评分</a-button>
       <router-link to="/dashboard/dts/list"><a-button type="default" style="margin-right: 16px">返回</a-button></router-link>
     </a-card>
 
     <my-form :visible.sync="visibleNewProgressDiag" title="新进展" :record="newProgress" @confirm="handleUpdateProgress">
     </my-form>
     <my-form :visible.sync="visibleResolveDiag" title="解决" :record="resolveProgress" @confirm="handleToResolve">
+    </my-form>
+    <my-form :visible.sync="visibleBackWorkDiag" title="重新处理" :record="backWorkProgress" @confirm="handleBackWork">
+    </my-form>
+    <my-form :visible.sync="visibleCloseDiag" title="关闭" :record="closeProgress" @confirm="handleToClose">
     </my-form>
 
     <score-form :visible.sync="visibleScoreDiag" title="评分" :record="scoreRecord" @confirm="handleUpdateScore">
@@ -139,12 +144,17 @@ export default {
         allowScore: false,
         allowResolve: false,
         allowClose: false,
-        allowBackWork: false
+        allowBackWork: false,
+        showRmvAttachmentIcon: false
       },
       visibleNewProgressDiag: false,
       newProgress: { text: '' },
       visibleResolveDiag: false,
       resolveProgress: { text: '' },
+      visibleBackWorkDiag: false,
+      backWorkProgress: { text: '' },
+      visibleCloseDiag: false,
+      closeProgress: { text: '' },
       //
       acceptFileTypes: '',
       fileNumber: 0,
@@ -160,6 +170,9 @@ export default {
     ]),
     disableUploadBtn: function () {
       return this.fileNumber >= myConfig.dtsAttachmentMaxNumber
+    },
+    showRmvAttachmentIcon: function () {
+      return this.operation.showRmvAttachmentIcon
     }
   },
   created () {
@@ -365,7 +378,7 @@ export default {
       const data = {
         resource: 'to_resolve',
         dts_id: this.dts_id,
-        resolve: record.text
+        progress: record.text
       }
       updateDts(data)
         .then(() => {
@@ -377,15 +390,47 @@ export default {
         })
     },
 
-    handleToClose () {
-      this.$confirm({
-        title: '确认关闭问题单？',
-        onOk: () => {
-          console.log('OK')
-        }
-      })
-    }
+    reqBackWork () {
+      this.backWorkProgress.text = this.progressTemplates.back_work
+      this.visibleBackWorkDiag = true
+    },
 
+    handleBackWork (record) {
+      const data = {
+        resource: 'back_work',
+        dts_id: this.dts_id,
+        progress: record.text
+      }
+      updateDts(data)
+        .then(() => {
+          this.onQueryDetails()
+        })
+        .catch((err) => {
+          if (err.response) {
+          }
+        })
+    },
+
+    reqToClose () {
+      this.closeProgress.text = this.progressTemplates.to_close
+      this.visibleCloseDiag = true
+    },
+
+    handleToClose (record) {
+      const data = {
+        resource: 'to_close',
+        dts_id: this.dts_id,
+        progress: record.text
+      }
+      updateDts(data)
+        .then(() => {
+          this.onQueryDetails()
+        })
+        .catch((err) => {
+          if (err.response) {
+          }
+        })
+    }
   }
 }
 </script>

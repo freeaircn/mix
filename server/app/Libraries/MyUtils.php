@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-09-06 01:17:02
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-28 17:46:06
+ * @LastEditTime: 2022-04-29 15:30:52
  */
 
 namespace App\Libraries;
@@ -50,23 +50,23 @@ class MyUtils
         return $this;
     }
 
-    public function getContentType(string $ext = null)
-    {
-        $contentType = '';
-        switch ($ext) {
-            case 'jpeg':
-                $contentType = 'image/jpeg';
-                break;
-            case 'jpg':
-                $contentType = 'image/jpeg';
-                break;
-            case 'png':
-                $contentType = 'image/png';
-                break;
+    // public function getContentType(string $ext = null)
+    // {
+    //     $contentType = '';
+    //     switch ($ext) {
+    //         case 'jpeg':
+    //             $contentType = 'image/jpeg';
+    //             break;
+    //         case 'jpg':
+    //             $contentType = 'image/jpeg';
+    //             break;
+    //         case 'png':
+    //             $contentType = 'image/png';
+    //             break;
 
-            default:
-                # code...
-                break;
-        }
-    }
+    //         default:
+    //             # code...
+    //             break;
+    //     }
+    // }
 }
