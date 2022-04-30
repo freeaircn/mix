@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-29 23:16:10
+ * @LastEditTime: 2022-05-01 01:13:12
  */
 
 namespace Config;
@@ -190,11 +190,12 @@ class Validation
         'log_time'   => 'required|regex_match[/^([0-1]\d|20|21|22|23):[0-5]\d:[0-5]\d$/]',
     ];
 
-    public $MeterGetStatisticChartData = [
+    public $MeterReqStatisticCharts = [
         'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
+        'date'       => 'required|valid_date[Y]',
     ];
 
-    public $MeterBasicStatisticGet = [
+    public $MeterReqStatisticOverall = [
         'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
     ];
 

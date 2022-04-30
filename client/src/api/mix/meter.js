@@ -3,11 +3,13 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-12-14 16:27:10
+ * @LastEditTime: 2022-05-01 00:11:13
  */
 import request from '@/utils/request'
 
 const api = {
+  meter: '/meter',
+  //
   meters: '/meters',
   record_detail: '/meters/record/detail',
   report_daily: '/meters/report/daily',
@@ -17,6 +19,16 @@ const api = {
   //
   plan_deal: '/meters/plan_deal'
 }
+
+// 2022-5-1
+export function apiQueryMeter (params) {
+  return request({
+    url: api.meter,
+    method: 'get',
+    params: params
+  })
+}
+// 2022-5-1
 
 export function newRecord (data) {
   return request({

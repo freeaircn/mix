@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-12-13 22:40:07
+ * @LastEditTime: 2022-05-01 00:21:53
  */
 
 namespace App\Models\Meter;
@@ -302,10 +302,10 @@ class RecordModel extends Model
         }
     }
 
-    public function getByStationDateRangeTime($columnName = [], $query = [], $limit = 1)
+    public function getByStationDateRangeTime(array $columnName = [], array $query = [], int $limit = 1)
     {
         if (empty($columnName)) {
-            return false;
+            return [];
         }
 
         $selectSql = '';

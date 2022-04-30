@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-30 01:19:26
+ * @LastEditTime: 2022-05-01 00:24:22
  */
 
 namespace App\Controllers;
@@ -83,7 +83,10 @@ class GeneratorEvent extends BaseController
         }
 
         if ($result['http_status'] === 200) {
-            $response['data'] = $result['data'];
+            $response = [];
+            if (isset($result['data'])) {
+                $response['data'] = $result['data'];
+            }
             if (isset($result['msg'])) {
                 $response['msg'] = $result['msg'];
             }

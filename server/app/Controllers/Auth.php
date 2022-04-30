@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-27 23:45:13
+ * @LastEditTime: 2022-05-01 00:00:19
  */
 
 namespace App\Controllers;
@@ -153,6 +153,12 @@ class Auth extends BaseController
         if (!empty($user['dept_ids'])) {
             $deptIds = explode("+", trim($user['dept_ids'], '+'));
         }
+        $readDept = [];
+        if (!empty($allowReadDeptId)) {
+            $model      = new DeptModel();
+            $columnName = ['id', 'name'];
+            $readDept   = $model->getByIds($columnName, $allowReadDeptId);
+        }
 
         // 用户头像文件
         if (isset($user['avatar']) && is_numeric($user['avatar'])) {
@@ -198,6 +204,7 @@ class Auth extends BaseController
         $sessionData['allowDefaultDeptId'] = $allowDefaultDeptId;
         $sessionData['allowReadDeptId']    = $allowReadDeptId;
         $sessionData['allowWriteDeptId']   = $allowWriteDeptId;
+        $sessionData['readDept']           = $readDept;
         $sessionData['allowWorkflow']      = $allowWorkflow;
         $sessionData['dept_ids']           = $deptIds;
         //

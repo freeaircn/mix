@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-30 00:53:15
+ * @LastEditTime: 2022-05-01 01:26:18
  */
 
 namespace Config;
@@ -122,7 +122,9 @@ $routes->group('api', function ($routes) {
     $routes->post('generator/event', 'GeneratorEvent::newRecord');
     $routes->put('generator/event', 'GeneratorEvent::updateRecord');
     $routes->delete('generator/event', 'GeneratorEvent::delRecord');
-    //
+    // 2022-5-1
+    $routes->get('meter', 'Meter::queryEntry');
+    // 2022-5-1
     $routes->post('meters', 'Meters::newRecord');
     $routes->get('meters', 'Meters::getRecord');
     $routes->get('meters/record/detail', 'Meters::getRecordDetail');
@@ -132,8 +134,8 @@ $routes->group('api', function ($routes) {
     //
     $routes->get('meters/plan_deal', 'Meters::getPlanAndDealList');
     $routes->put('meters/plan_deal', 'Meters::updatePlanAndDealRecord');
-    $routes->get('meters/statistic/chart/data', 'Meters::getStatisticChartData');
-    $routes->get('meters/statistic/overall', 'Meters::getStatisticOverall');
+    // $routes->get('meters/statistic/chart/data', 'Meters::getStatisticChartData');
+    // $routes->get('meters/statistic/overall', 'Meters::getStatisticOverall');
     //
     $routes->get('dts/attachment', 'Dts::downloadAttachment');
     $routes->post('dts/attachment', 'Dts::uploadAttachment');

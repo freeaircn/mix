@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-11-01 20:30:09
+ * @LastEditTime: 2022-04-30 23:51:01
  */
 
 namespace App\Models\Account;
@@ -29,7 +29,7 @@ class DeptModel extends Model
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
 
-    public function getDept($columnName = [], $queryParam = [])
+    public function getDept(array $columnName = [], array $queryParam = [])
     {
         $selectSQL = '';
         if (empty($columnName)) {

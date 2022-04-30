@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-08 13:49:42
+ * @LastEditTime: 2022-04-30 23:56:31
  */
 
 namespace App\Models\Admin;
@@ -74,7 +74,7 @@ class DeptModel extends Model
 
     public function getByIds(array $columnName = null, array $Ids = null)
     {
-        if (!is_array($columnName) || empty($columnName) || !is_array($Ids) || empty($Ids)) {
+        if (empty($columnName) || empty($Ids)) {
             return [];
         }
 
