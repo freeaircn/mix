@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-01 01:16:34
+ * @LastEditTime: 2022-05-01 17:31:17
  */
 
 namespace App\Controllers;
@@ -85,6 +85,18 @@ class Meter extends BaseController
             case 'statistic_overall':
                 $result = $this->_reqStatisticOverall();
                 break;
+            case 'list':
+                $result = $this->_reqList();
+                break;
+            case 'details':
+                $result = $this->_reqRecordDetails();
+                break;
+            case 'daily_report':
+                $result = $this->_reqDailyReport();
+                break;
+            case 'plan_and_deal':
+                $result = $this->_reqPlanAndDeal();
+                break;
             default:
                 $res['error'] = '请求数据无效';
                 return $this->fail($res);
@@ -121,11 +133,9 @@ class Meter extends BaseController
     {
         // 检查请求数据
         if (!$this->validate('MeterNewRecord')) {
-            $res['error'] = $this->validator->getErrors();
-
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '请求数据无效';
-            return $this->respond($res);
+            $res['info']  = $this->validator->getErrors();
+            $res['error'] = '请求数据无效';
+            return $this->fail($res);
         }
 
         $client = $this->request->getJSON(true);
@@ -150,13 +160,17 @@ class Meter extends BaseController
             $valid = false;
         }
         if (!$valid) {
-            $res['error'] = 'invalid meter value';
-            $res['code']  = EXIT_ERROR;
-            $res['msg']   = '请求数据无效';
-            return $this->respond($res);
+            $res['info']  = 'invalid meter value';
+            $res['error'] = '请求数据无效';
+            return $this->fail($res);
         }
 
-        // 取出数据
+        $station_id       = $client['station_id'];
+        $allowWriteDeptId = session('allowWriteDeptId');
+        if (!in_array($station_id, $allowWriteDeptId)) {
+            return $this->failUnauthorized('用户没有权限');
+        }
+
         $meters = $client['meter'];
         $others = [
             'station_id' => $client['station_id'],
@@ -164,110 +178,45 @@ class Meter extends BaseController
             'log_time'   => $client['log_time'],
             'creator'    => $client['creator'],
         ];
-
-        $station_id = $client['station_id'];
-        $log_date   = $client['log_date'];
-        $log_time   = $client['log_time'];
+        $log_date = $client['log_date'];
+        $log_time = $client['log_time'];
 
         $model = new RecordModel();
 
         // 是否已存在该日期/时间的记录
         $hasLogs = $model->hasSameLogByStationAndDateTime($station_id, $log_date, $log_time);
         if ($hasLogs) {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '输入的日期已存在记录';
-            return $this->respond($res);
+            $res['error'] = '输入的日期已存在记录';
+            return $this->fail($res);
         }
 
         //
         $result = $model->batchInsert($meters, $others);
 
         if ($result) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '添加一条新记录';
-        } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '添加失败，稍后再试';
-        }
-
-        return $this->respond($res);
-    }
-
-    public function getRecord()
-    {
-        $param = $this->request->getGet();
-
-        // 检查请求数据
-        if (!$this->validate('MeterGetRecord')) {
-            $res['error'] = $this->validator->getErrors();
-
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '请求数据无效';
+            $res['msg'] = '已保存';
             return $this->respond($res);
-        }
-
-        $query['station_id'] = $param['station_id'];
-        $query['limit']      = $param['limit'];
-        $query['offset']     = $param['offset'];
-
-        $date  = date('Y-m-d', time());
-        $model = new RecordModel();
-
-        // 预处理-查询日期
-        if (empty($param['date'])) {
-            $query2     = ['station_id' => $query['station_id']];
-            $columnName = ['log_date'];
-            $db         = $model->getLastDateByStation($columnName, $query2);
-            if (!isset($db['log_date'])) {
-                $res['code'] = EXIT_SUCCESS;
-                $res['data'] = ['total' => 0, 'date' => $date, 'data' => []];
-
-                return $this->respond($res);
-            }
-            $date = $db['log_date'];
         } else {
-            $regexDate = '/^20\d{2}[\-](0?[1-9]|1[012])[\-](0?[1-9]|[12][0-9]|3[01])$/';
-
-            if (preg_match($regexDate, $param['date']) === 0) {
-                $res['error'] = 'invalid date';
-
-                $res['code'] = EXIT_ERROR;
-                $res['msg']  = '请求数据无效';
-                return $this->respond($res);
-            }
-            $date = $param['date'];
+            $res['error'] = '服务器处理发生错误，稍候再试';
+            return $this->fail($res);
         }
-
-        // 限定查询日期
-        $query['start'] = my_first_day_of_month($date);
-        $query['end']   = my_last_day_of_month($date);
-
-        $columnName = ['id', 'station_id', 'log_date', 'log_time', 'creator'];
-        $result     = $model->getForRecordList($columnName, $query);
-
-        if ($result) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['data'] = ['total' => $result['total'], 'date' => $date, 'data' => $result['result']];
-        } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '稍后再试';
-        }
-
-        return $this->respond($res);
     }
 
     public function updateRecord()
     {
-        // 检查请求数据
         if (!$this->validate('MeterNewRecord')) {
-            $res['error'] = $this->validator->getErrors();
-
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '请求数据无效';
-            return $this->respond($res);
+            $res['info']  = $this->validator->getErrors();
+            $res['error'] = '请求数据无效';
+            return $this->fail($res);
         }
 
-        $client = $this->request->getJSON(true);
+        $client     = $this->request->getJSON(true);
+        $station_id = $client['station_id'];
+
+        $allowWriteDeptId = session('allowWriteDeptId');
+        if (!in_array($station_id, $allowWriteDeptId)) {
+            return $this->failUnauthorized('用户没有权限');
+        }
 
         // 检查数据
         $valid = true;
@@ -289,10 +238,9 @@ class Meter extends BaseController
             $valid = false;
         }
         if (!$valid) {
-            $res['error'] = 'invalid meter value';
-            $res['code']  = EXIT_ERROR;
-            $res['msg']   = '请求数据无效';
-            return $this->respond($res);
+            $res['info']  = 'invalid meter value';
+            $res['error'] = '请求数据无效';
+            return $this->fail($res);
         }
 
         // 取出数据
@@ -310,25 +258,21 @@ class Meter extends BaseController
         $result = $model->batchUpdate($meters, $others, $where);
 
         if ($result) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '修改成功';
+            $res['msg'] = '完成修改';
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '修改失败，稍后再试';
+            $res['error'] = '服务器处理发生错误，稍候再试';
+            return $this->fail($res);
         }
-
-        return $this->respond($res);
     }
 
     public function delRecord()
     {
         // 检查请求数据
         if (!$this->validate('MeterDelRecord')) {
-            $res['error'] = $this->validator->getErrors();
-
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '请求数据无效';
-            return $this->respond($res);
+            $res['info']  = $this->validator->getErrors();
+            $res['error'] = '请求数据无效';
+            return $this->fail($res);
         }
 
         $client = $this->request->getJSON(true);
@@ -338,21 +282,24 @@ class Meter extends BaseController
         $log_date   = $client['log_date'];
         $log_time   = $client['log_time'];
 
+        $allowWriteDeptId = session('allowWriteDeptId');
+        if (!in_array($station_id, $allowWriteDeptId)) {
+            return $this->failUnauthorized('用户没有权限');
+        }
+
         // 根据id查找记录
         $model = new RecordModel();
         $db    = $model->getById($id);
         if (!isset($db[0])) {
-            $res['code']  = EXIT_ERROR;
-            $res['msg']   = '请求数据无效';
-            $res['error'] = 'invalid id';
-            return $this->respond($res);
+            $res['info']  = 'invalid id';
+            $res['error'] = '请求数据无效';
+            return $this->fail($res);
         }
         // 对比
         if ($db[0]['station_id'] !== $station_id || $db[0]['log_date'] !== $log_date || $db[0]['log_time'] !== $log_time || $db[0]['meter_id'] !== '1') {
-            $res['code']  = EXIT_ERROR;
-            $res['msg']   = '请求数据无效';
-            $res['error'] = 'invalid record';
-            return $this->respond($res);
+            $res['info']  = 'invalid record';
+            $res['error'] = '请求数据无效';
+            return $this->fail($res);
         }
 
         // 执行删除，多电表
@@ -364,33 +311,160 @@ class Meter extends BaseController
         $result = $model->deleteByStationDateTime($query);
 
         if ($result === true) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '已删除';
+            $res['msg'] = '完成删除';
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '删除失败，稍后再试';
+            $res['error'] = '服务器处理发生错误，稍候再试';
+            return $this->fail($res);
         }
-
-        return $this->respond($res);
     }
 
-    public function getRecordDetail()
+    public function updatePlanAndDealRecord()
     {
-        $param = $this->request->getGet();
+        if (!$this->validate('MeterUpdatePlanAndDealRecord')) {
+            $res['info']  = $this->validator->getErrors();
+            $res['error'] = '请求数据无效';
+            return $this->fail($res);
+        }
+        $client     = $this->request->getJSON(true);
+        $station_id = $client['station_id'];
 
-        // 检查请求数据
-        if (!$this->validate('MeterGetRecordDetail')) {
-            $res['error'] = $this->validator->getErrors();
+        $allowWriteDeptId = session('allowWriteDeptId');
+        if (!in_array($station_id, $allowWriteDeptId)) {
+            return $this->failUnauthorized('用户没有权限');
+        }
 
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '请求数据无效';
+        if (!is_numeric($client['planning']) || !is_numeric($client['deal'])) {
+            $res['info']  = 'invalid planning or deal';
+            $res['error'] = '请求数据无效';
+            return $this->fail($res);
+        }
+
+        $id    = $client['id'];
+        $query = [
+            'station_id' => $client['station_id'],
+            'year'       => $client['year'],
+            'month'      => $client['month'],
+        ];
+
+        $data = [
+            'id'       => $client['id'],
+            'planning' => $client['planning'],
+            'deal'     => $client['deal'],
+            'creator'  => $this->session->get('username'),
+        ];
+
+        // 与库中的数据比较
+        $model = new PlanKWhModel();
+        $db    = $model->getByStationYearMonth($query);
+        if ($id !== $db[0]['id']) {
+            $res['info']  = 'conflict with DB';
+            $res['error'] = '请求数据无效';
+            return $this->fail($res);
+        }
+
+        // 修改
+        $result = $model->doSave($data);
+        if ($result) {
+            $res['msg'] = '完成修改';
             return $this->respond($res);
+        } else {
+            $res['error'] = '服务器处理发生错误，稍候再试';
+            return $this->fail($res);
+        }
+    }
+
+    // Part-2
+    protected function _reqList()
+    {
+        if (!$this->validate('MeterReqList')) {
+            $res['http_status'] = 400;
+            $res['msg']         = [
+                'error' => '请求数据无效',
+                'info'  => $this->validator->getErrors(),
+            ];
+            return $res;
+        }
+        $params     = $this->request->getGet();
+        $station_id = $params['station_id'];
+
+        $allowReadDeptId = session('allowReadDeptId');
+        if (!in_array($station_id, $allowReadDeptId)) {
+            $res['http_status'] = 401;
+            $res['msg']         = '用户没有权限';
+            return $res;
         }
 
         $query = [
-            'station_id' => $param['station_id'],
-            'log_date'   => $param['log_date'],
-            'log_time'   => $param['log_time'],
+            'station_id' => $params['station_id'],
+            'limit'      => $params['limit'],
+            'offset'     => $params['offset'],
+        ];
+        $date = date('Y-m-d', time());
+
+        $model = new RecordModel();
+
+        // 预处理-查询日期
+        if (empty($params['date'])) {
+            $query2     = ['station_id' => $query['station_id']];
+            $columnName = ['log_date'];
+            $db         = $model->getLastDateByStation($columnName, $query2);
+            if (!isset($db['log_date'])) {
+                $res['http_status'] = 200;
+                $res['data']        = ['total' => 0, 'date' => $date, 'data' => []];
+                return $res;
+            }
+            $date = $db['log_date'];
+        } else {
+            $regexDate = '/^20\d{2}[\-](0?[1-9]|1[012])[\-](0?[1-9]|[12][0-9]|3[01])$/';
+
+            if (preg_match($regexDate, $params['date']) === 0) {
+                $res['http_status'] = 400;
+                $res['msg']         = [
+                    'error' => '请求数据无效',
+                    'info'  => 'invalid date',
+                ];
+                return $res;
+            }
+            $date = $params['date'];
+        }
+
+        // 限定查询日期
+        $query['start'] = my_first_day_of_month($date);
+        $query['end']   = my_last_day_of_month($date);
+
+        $columnName = ['id', 'station_id', 'log_date', 'log_time', 'creator'];
+        $db         = $model->getForRecordList($columnName, $query);
+
+        $res['http_status'] = 200;
+        $res['data']        = ['date' => date('Y-m-d', strtotime($date)), 'total' => $db['total'], 'data' => $db['data']];
+        return $res;
+    }
+
+    protected function _reqRecordDetails()
+    {
+        if (!$this->validate('MeterReqRecordDetail')) {
+            $res['http_status'] = 400;
+            $res['msg']         = [
+                'error' => '请求数据无效',
+                'info'  => $this->validator->getErrors(),
+            ];
+            return $res;
+        }
+        $params     = $this->request->getGet();
+        $station_id = $params['station_id'];
+
+        $allowReadDeptId = session('allowReadDeptId');
+        if (!in_array($station_id, $allowReadDeptId)) {
+            $res['http_status'] = 401;
+            $res['msg']         = '用户没有权限';
+            return $res;
+        }
+
+        $query = [
+            'station_id' => $params['station_id'],
+            'log_date'   => $params['log_date'],
+            'log_time'   => $params['log_time'],
         ];
 
         $model      = new RecordModel();
@@ -399,9 +473,9 @@ class Meter extends BaseController
 
         // 指定日期+时间的记录不存在
         if (empty($db)) {
-            $response['code'] = EXIT_SUCCESS;
-            $response['data'] = ['size' => 0, 'record' => []];
-            return $this->respond($response);
+            $res['http_status'] = 200;
+            $res['data']        = ['size' => 0, 'record' => []];
+            return $res;
         }
 
         $cnt    = count($db);
@@ -425,29 +499,33 @@ class Meter extends BaseController
             }
         }
 
-        $response['code'] = EXIT_SUCCESS;
-        $response['data'] = ['size' => $cnt, 'record' => $result];
-
-        return $this->respond($response);
+        $res['http_status'] = 200;
+        $res['data']        = ['size' => $cnt, 'record' => $result];
+        return $res;
     }
 
-    public function getReportDaily()
+    protected function _reqDailyReport()
     {
-        $param = $this->request->getGet();
+        if (!$this->validate('MeterReqDailyReport')) {
+            $res['http_status'] = 400;
+            $res['msg']         = [
+                'error' => '请求数据无效',
+                'info'  => $this->validator->getErrors(),
+            ];
+            return $res;
+        }
+        $params     = $this->request->getGet();
+        $station_id = $params['station_id'];
 
-        // 检查请求数据
-        if (!$this->validate('MeterDailyReportGet')) {
-            $res['error'] = $this->validator->getErrors();
-
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '请求数据无效';
-            return $this->respond($res);
+        $allowReadDeptId = session('allowReadDeptId');
+        if (!in_array($station_id, $allowReadDeptId)) {
+            $res['http_status'] = 401;
+            $res['msg']         = '用户没有权限';
+            return $res;
         }
 
-        // 取查询参数
-        $station_id = $param['station_id'];
-        $log_date   = $param['log_date'];
-        $log_time   = $param['log_time'];
+        $log_date = $params['log_date'];
+        $log_time = $params['log_time'];
 
         // 查询年计划、月成交量
         $query = [
@@ -463,7 +541,7 @@ class Meter extends BaseController
         ];
 
         if (strpos($log_time, '23:59') !== false) {
-            $reportData = $this->getReportDailyData($query);
+            $reportData = $this->_getDailyReportData($query);
 
             $rate['plan']['month']   = '0%';
             $rate['plan']['quarter'] = '0%';
@@ -503,117 +581,59 @@ class Meter extends BaseController
             $stationName = isset($db['name']) ? $db['name'] : '电厂';
 
             // 简报
-            $report = $this->reportDailyText($stationName, $log_date, $rate, $reportData);
+            $report = $this->_reportDailyText($stationName, $log_date, $rate, $reportData);
 
-            $res['code'] = EXIT_SUCCESS;
-            $res['data'] = ['data' => $report, 'type' => '23'];
-
-            return $this->respond($res);
+            $res['http_status'] = 200;
+            $res['data']        = ['data' => $report, 'type' => '23'];
+            return $res;
         }
 
         // 针对 20:00
         if (strpos($log_time, '20:00') !== false) {
-            $genEnergy = $this->getReportDailyData20Clock($query);
+            $genEnergy = $this->_getDailyReportData20Clock($query);
 
-            $res['code'] = EXIT_SUCCESS;
-            $res['data'] = ['data' => $genEnergy, 'type' => '20'];
-
-            return $this->respond($res);
+            $res['http_status'] = 200;
+            $res['data']        = ['data' => $genEnergy, 'type' => '20'];
+            return $res;
         }
 
-        $res['code'] = EXIT_ERROR;
-        return $this->respond($res);
+        $res['http_status'] = 500;
+        $res['msg']         = '服务器处理发生错误，稍候再试';
+        return $res;
     }
 
-    public function getPlanAndDealList()
+    protected function _reqPlanAndDeal()
     {
-        $param = $this->request->getGet();
+        if (!$this->validate('MeterReqPlanAndDeal')) {
+            $res['http_status'] = 400;
+            $res['msg']         = [
+                'error' => '请求数据无效',
+                'info'  => $this->validator->getErrors(),
+            ];
+            return $res;
+        }
+        $params     = $this->request->getGet();
+        $station_id = $params['station_id'];
+        $date       = $params['date'];
 
-        // 检查请求数据
-        if (!$this->validate('MetersGetPlanAndDeal')) {
-            $res['error'] = $this->validator->getErrors();
-
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '请求数据无效';
-            return $this->respond($res);
+        $allowReadDeptId = session('allowReadDeptId');
+        if (!in_array($station_id, $allowReadDeptId)) {
+            $res['http_status'] = 401;
+            $res['msg']         = '用户没有权限';
+            return $res;
         }
 
-        $date = $param['date'];
-
-        $query['station_id'] = $param['station_id'];
+        $query['station_id'] = $station_id;
         $query['year']       = substr($date, 0, 4);
 
         $model = new PlanKWhModel();
         $db    = $model->getByStationYear($query);
 
-        $res['code'] = EXIT_SUCCESS;
-        $res['data'] = ['data' => $db];
-
-        return $this->respond($res);
+        $res['http_status'] = 200;
+        $res['data']        = ['data' => $db];
+        return $res;
     }
 
-    public function updatePlanAndDealRecord()
-    {
-        // 检查请求数据
-        if (!$this->validate('MeterUpdatePlanAndDealRecord')) {
-            $res['error'] = $this->validator->getErrors();
-
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '请求数据无效';
-            return $this->respond($res);
-        }
-
-        $client = $this->request->getJSON(true);
-
-        if (!is_numeric($client['planning']) || !is_numeric($client['deal'])) {
-            $res['error'] = 'invalid planning or deal';
-
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '请求数据无效';
-            return $this->respond($res);
-        }
-
-        $id    = $client['id'];
-        $query = [
-            'station_id' => $client['station_id'],
-            'year'       => $client['year'],
-            'month'      => $client['month'],
-        ];
-
-        $data = [
-            'id'       => $client['id'],
-            'planning' => $client['planning'],
-            'deal'     => $client['deal'],
-            'creator'  => $this->session->get('username'),
-        ];
-
-        // 与库中的数据比较
-        $model = new PlanKWhModel();
-        $db    = $model->getByStationYearMonth($query);
-        if ($id !== $db[0]['id']) {
-            $res['error'] = 'conflict with DB';
-            $res['code']  = EXIT_ERROR;
-            $res['msg']   = '请求数据无效';
-            return $this->respond($res);
-        }
-
-        // 修改
-        $result = $model->doSave($data);
-
-        if ($result) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '修改一条记录';
-        } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '修改失败，稍后再试';
-        }
-
-        return $this->respond($res);
-    }
-
-    // 2021-11-21
-
-    // Part-2
     protected function _reqStatisticCharts()
     {
         if (!$this->validate('MeterReqStatisticCharts')) {
@@ -803,18 +823,19 @@ class Meter extends BaseController
             'meter_id'   => $this->mainMeterId,
         ];
 
-        $db        = $this->getForOverallStatistic($query);
+        $db        = $this->_getForOverallStatistic($query);
         $yearData  = $db['yearData'];
         $monthData = $db['monthData'];
 
-        $result = $this->chgUnitForOverallStatistic($total, $yearData, $monthData);
+        $result = $this->_chgUnitForOverallStatistic($total, $yearData, $monthData);
 
         $res['http_status'] = 200;
         $res['data']        = $result;
         return $res;
     }
 
-    protected function getForOverallStatistic($query)
+    // Part - 3
+    protected function _getForOverallStatistic($query)
     {
         $station_id = $query['station_id'];
         $log_date   = $query['log_date'];
@@ -941,7 +962,7 @@ class Meter extends BaseController
         return ['yearData' => $yearData, 'monthData' => $monthData];
     }
 
-    protected function chgUnitForOverallStatistic($total, $yearData, $monthData)
+    protected function _chgUnitForOverallStatistic($total, $yearData, $monthData)
     {
 
         // 上网，电表倍率，单位换算 kWh -> 万kWh
@@ -962,7 +983,6 @@ class Meter extends BaseController
 
     }
 
-    // 2021-11-21
     protected function _getPlanAndDealForStatisticChart($query)
     {
         // 初值
@@ -1292,7 +1312,7 @@ class Meter extends BaseController
         return $res;
     }
 
-    protected function getReportDailyData($query)
+    protected function _getDailyReportData($query)
     {
         $station_id = $query['station_id'];
         $log_date   = $query['log_date'];
@@ -1453,7 +1473,7 @@ class Meter extends BaseController
         return $res;
     }
 
-    protected function getReportDailyData20Clock($query)
+    protected function _getDailyReportData20Clock($query)
     {
         $station_id = $query['station_id'];
         $log_date   = $query['log_date'];
@@ -1514,7 +1534,7 @@ class Meter extends BaseController
         return $res;
     }
 
-    protected function reportDailyText($stationName, $date, $rate, $reportData)
+    protected function _reportDailyText($stationName, $date, $rate, $reportData)
     {
         $res = [
             'extra1' => '',

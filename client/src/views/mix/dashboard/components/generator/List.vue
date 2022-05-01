@@ -114,7 +114,7 @@
 
 <script>
 import moment from 'moment'
-import { RecordForm } from './'
+import { RecordForm } from './modules'
 import { mapGetters } from 'vuex'
 import { apiQueryEvent, apiDelEvent, apiExportExcel, apiSyncToKKX } from '@/api/mix/generator'
 import { baseMixin } from '@/store/app-mixin'
@@ -235,7 +235,7 @@ export default {
   },
   mounted () {
     this.query.station_id = this.userInfo.allowDefaultDeptId
-    this.sendSearchReq(this.query)
+    this.onClickSearch()
   },
   filters: {
     generatorIdFilter (type) {
@@ -259,7 +259,7 @@ export default {
     onRecordFormSuccess (method) {
       this.recordDiagVisible = false
       if (method === 'post') {
-        this.sendSearchReq(this.query)
+        this.onClickSearch()
       }
       if (method === 'put') {
         this.sendSearchReq(this.query)

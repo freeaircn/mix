@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-01 00:21:53
+ * @LastEditTime: 2022-05-01 15:39:35
  */
 
 namespace App\Models\Meter;
@@ -341,8 +341,12 @@ class RecordModel extends Model
         return $this->where($query)->delete();
     }
 
-    public function getForRecordList($columnName = [], $query = [])
+    public function getForRecordList(array $columnName = [], array $query = [])
     {
+        if (empty($query)) {
+            return ['total' => 0, 'data' => []];
+        }
+
         $selectSql = '';
         if (empty($columnName)) {
             $selectSql = 'id, log_date, log_time, creator';
@@ -361,8 +365,8 @@ class RecordModel extends Model
         $total = $builder->countAllResults(false);
 
         $builder->orderBy('log_date', 'DESC');
-        $result = $builder->findAll($query['limit'], ($query['offset'] - 1) * $query['limit']);
+        $db = $builder->findAll($query['limit'], ($query['offset'] - 1) * $query['limit']);
 
-        return ['total' => $total, 'result' => $result];
+        return ['total' => $total, 'data' => $db];
     }
 }

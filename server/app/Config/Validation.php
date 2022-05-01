@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-01 01:13:12
+ * @LastEditTime: 2022-05-01 17:16:24
  */
 
 namespace Config;
@@ -129,7 +129,7 @@ class Validation
         'creator'    => 'required|regex_match[/^([\x{4e00}-\x{9fa5}]{1,6})$/u]',
     ];
 
-    public $MeterGetRecord = [
+    public $MeterReqList = [
         'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
         // 'date'       => 'required',
         // 'date'       => 'required|valid_date[Y-m-d]',
@@ -145,32 +145,18 @@ class Validation
         'log_time'   => 'required|regex_match[/^([0-1]\d|20|21|22|23):[0-5]\d:[0-5]\d$/]',
     ];
 
-    public $MeterDailyReportGet = [
+    public $MeterReqDailyReport = [
         'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
         'log_date'   => 'required|valid_date[Y-m-d]',
         'log_time'   => 'required|regex_match[/^([0-1]\d|20|21|22|23):[0-5]\d:[0-5]\d$/]',
     ];
-
-    // public $MetersPlanningKWhGet = [
-    //     'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
-    //     'date'       => 'required|valid_date[Y-m-d]',
-    // ];
-
-    // public $MeterPlanningKWhRecordUpdate = [
-    //     'id'         => 'required|regex_match[^[1-9]\d{0,10}$]',
-    //     'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
-    //     'year'       => 'required|valid_date[Y]',
-    //     'month'      => 'required|regex_match[/^([1-9]|10|11|12)$/]',
-    //     'planning'   => 'required',
-    //     'deal'       => 'required',
-    // ];
 
     // 2021-11-08
     public $MeterGetDailyStatistic = [
         'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
     ];
 
-    public $MetersGetPlanAndDeal = [
+    public $MeterReqPlanAndDeal = [
         'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
         'date'       => 'required|valid_date[Y-m-d]',
     ];
@@ -184,7 +170,7 @@ class Validation
         'deal'       => 'required',
     ];
 
-    public $MeterGetRecordDetail = [
+    public $MeterReqRecordDetail = [
         'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
         'log_date'   => 'required|valid_date[Y-m-d]',
         'log_time'   => 'required|regex_match[/^([0-1]\d|20|21|22|23):[0-5]\d:[0-5]\d$/]',

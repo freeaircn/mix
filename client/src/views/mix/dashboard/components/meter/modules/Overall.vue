@@ -3,7 +3,7 @@
     <a-card :bordered="false" :body-style="{marginBottom: '8px'}">
       <div :style="{marginBottom: '16px'}">
         <a-form-model ref="queryForm" layout="inline" :model="query">
-          <a-form-model-item label="全景">
+          <a-form-model-item >
             <a-select v-model="query.station_id" placeholder="站点" style="width: 160px">
               <a-select-option v-for="d in userInfo.readDept" :key="d.id" :value="d.id">
                 {{ d.name }}
@@ -12,7 +12,7 @@
           </a-form-model-item>
 
           <a-form-model-item>
-            <a-button type="primary" @click="onClickSearch">查询</a-button>
+            <a-button type="primary" @click="onClickSearch">全景</a-button>
           </a-form-model-item>
         </a-form-model>
       </div>

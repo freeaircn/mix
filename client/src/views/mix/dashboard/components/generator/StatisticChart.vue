@@ -146,7 +146,7 @@ export default {
   },
   created () {
     const year = moment().year()
-    for (let i = 2017; i <= year; i++) {
+    for (let i = year; i >= 2017; i--) {
       this.yearRange.push({
         name: i + '年',
         value: i

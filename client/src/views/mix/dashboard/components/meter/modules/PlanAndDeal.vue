@@ -2,6 +2,14 @@
   <div>
     <a-form-model ref="queryForm" layout="inline" :model="query" @submit.native.prevent>
       <a-form-model-item>
+        <a-select v-model="query.station_id">
+          <a-select-option v-for="d in stationItems" :key="d.id" :value="d.id">
+            {{ d.name }}
+          </a-select-option>
+        </a-select>
+      </a-form-model-item>
+
+      <a-form-model-item>
         <a-date-picker
           v-model="query.date"
           mode="year"
@@ -14,10 +22,6 @@
       <a-form-model-item>
         <a-button type="primary" @click="handleQuery">查询</a-button>
       </a-form-model-item>
-
-      <!-- <a-form-model-item>
-        <a-button @click="handleExportHisEvent">导出</a-button>
-      </a-form-model-item> -->
     </a-form-model>
 
     <div style="margin: 12px 0px">
@@ -93,7 +97,7 @@
 import moment from 'moment'
 
 export default {
-  name: 'MetersPlanAndDeal',
+  name: 'MeterPlanAndDeal',
   props: {
     loading: {
       type: Boolean,
@@ -102,6 +106,14 @@ export default {
     date: {
       type: String,
       default: ''
+    },
+    stationId: {
+      type: String,
+      default: ''
+    },
+    stationItems: {
+      type: Array,
+      default: () => []
     },
     listData: {
       type: Array,
@@ -157,8 +169,8 @@ export default {
 
       // 查询表单
       query: {
-        // moment Obj
-        date: null
+        station_id: '0',
+        date: ''
       },
       year: '',
 
@@ -174,6 +186,7 @@ export default {
     }
   },
   mounted () {
+    this.query.station_id = this.stationId
   },
   watch: {
     date: {

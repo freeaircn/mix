@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- 主机： 127.0.0.1:3306
--- 生成日期： 2022-04-29 17:24:34
+-- 生成日期： 2022-05-01 10:36:08
 -- 服务器版本： 10.3.14-MariaDB
 -- PHP 版本： 7.3.5
 
@@ -87,14 +87,9 @@ INSERT INTO `app_api` (`id`, `type`, `pid`, `title`, `api`, `method`, `created_a
 (49, 2, 48, '读：统计图表，记录，导出，同步至可靠性', 'generator/event', 'read', '2021-06-27 20:00:00', '2022-04-30 00:49:30', NULL),
 (50, 2, 48, '写：新加，修改，删除 用户默认站点的记录', 'generator/event', 'write', '2021-06-27 20:00:00', '2022-04-30 00:50:24', NULL),
 (56, 0, 1, '电度表信息', '', '', '2021-06-27 20:00:00', NULL, NULL),
-(57, 2, 56, '写：电表记录', 'meters', 'write', '2021-06-27 20:00:00', '2022-04-11 14:57:28', NULL),
-(58, 2, 56, '读：电表记录', 'meters', 'read', '2021-06-27 20:00:00', '2022-04-11 14:57:36', NULL),
-(59, 2, 56, '读：简报-每日', 'meters/report/daily', 'read', '2021-06-27 20:00:00', '2022-04-11 14:58:04', NULL),
-(60, 2, 56, '读：计划和成交电量', 'meters/plan_deal', 'read', '2021-06-27 20:00:00', '2022-04-11 14:58:11', NULL),
-(61, 2, 56, '写：计划和成交电量', 'meters/plan_deal', 'write', '2021-06-27 20:00:00', '2022-04-11 14:58:23', NULL),
-(63, 2, 56, '读：统计全景', 'meters/statistic/overall', 'read', '2021-06-27 20:00:00', '2022-04-11 14:58:40', NULL),
-(64, 2, 56, '读：指定日期电表读数', 'meters/record/detail', 'read', '2021-06-27 20:00:00', '2022-04-11 14:58:47', NULL),
-(65, 2, 56, '读：统计图数据', 'meters/statistic/chart/data', 'read', '2021-06-27 20:00:00', '2022-04-11 14:58:53', NULL),
+(57, 2, 56, '写：电表记录', 'meter', 'write', '2021-06-27 20:00:00', '2022-05-01 16:13:12', NULL),
+(58, 2, 56, '读：记录，统计图，计划和成交值，简报', 'meter', 'read', '2021-06-27 20:00:00', '2022-05-01 00:32:45', NULL),
+(61, 2, 56, '写：计划和成交电量', 'meter/plan_deal', 'write', '2021-06-27 20:00:00', '2022-05-01 17:21:02', NULL),
 (67, 0, 1, '后台：设备单元', '', '', '2021-06-27 20:00:00', '2022-04-11 14:59:14', NULL),
 (68, 2, 67, '读', 'equipment_unit', 'read', '2021-06-27 20:00:00', '2022-04-11 14:59:21', NULL),
 (69, 2, 67, '写', 'equipment_unit', 'write', '2021-06-27 20:00:00', '2022-04-11 14:59:28', NULL),
@@ -4861,7 +4856,7 @@ INSERT INTO `app_kwh_planning` (`id`, `station_id`, `year`, `month`, `planning`,
 (143, 2, 2021, 11, 57000000, 38000000, '桑宇', '2021-09-17 22:56:46', '2021-11-07 19:17:13', NULL),
 (144, 2, 2021, 12, 40000000, 36800000, '欧阳军', '2021-09-17 22:56:46', '2021-12-01 07:18:36', NULL),
 (145, 2, 2022, 1, 47700000, 42350000, '李宗明', '2021-09-17 22:56:46', '2021-12-31 20:38:27', NULL),
-(146, 2, 2022, 2, 37100000, 0, '李宗明', '2021-09-17 22:56:46', '2021-12-31 20:34:56', NULL),
+(146, 2, 2022, 2, 37100000, 30000000, '小明', '2021-09-17 22:56:46', '2022-05-01 17:46:50', NULL),
 (147, 2, 2022, 3, 47700000, 0, '李宗明', '2021-09-17 22:56:46', '2021-12-31 20:35:13', NULL),
 (148, 2, 2022, 4, 42400000, 0, '李宗明', '2021-09-17 22:56:46', '2021-12-31 20:35:28', NULL),
 (149, 2, 2022, 5, 34450000, 0, '李宗明', '2021-09-17 22:56:46', '2021-12-31 20:35:39', NULL),
@@ -5084,7 +5079,7 @@ CREATE TABLE IF NOT EXISTS `app_menu` (
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   KEY `key_menu_pid` (`pid`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=utf8mb4 COMMENT='前端页面路由' ROW_FORMAT=COMPACT;
+) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8mb4 COMMENT='前端页面路由' ROW_FORMAT=COMPACT;
 
 --
 -- 转存表中的数据 `app_menu`
@@ -5109,7 +5104,7 @@ INSERT INTO `app_menu` (`id`, `pid`, `title`, `path`, `redirect`, `name`, `compo
 (16, 15, '个人设置', '/account/settings', '/account/settings/basic', 'Settings', 'mix/account/settings/Index', 0, 1, 0, '', 0, 0, '', '', '2021-06-27 20:00:00', NULL, NULL),
 (17, 16, '个人信息', '/account/settings/basic', '', 'BasicSettings', 'mix/account/settings/BasicSetting', 0, 0, 1, '', 0, 0, '', '', '2021-06-27 20:00:00', NULL, NULL),
 (18, 16, '安全设置', '/account/settings/security', '', 'SecuritySettings', 'mix/account/settings/Security', 0, 0, 1, '', 0, 0, '', '', '2021-06-27 20:00:00', NULL, NULL),
-(19, 3, '电度表', '/dashboard/meters', '', 'Meters', 'mix/dashboard/Meters', 0, 0, 0, '', 0, 0, '', '', '2021-06-27 20:00:00', NULL, NULL),
+(19, 3, '电度表', '/dashboard/meter', '/dashboard/meter/statistic', 'Meter', 'mix/dashboard/Meter', 0, 0, 0, '', 0, 0, '', '', '2021-06-27 20:00:00', '2022-04-30 23:29:07', NULL),
 (20, 3, '隐患&缺陷', '/dashboard/dts', '/dashboard/dts/list', 'DTS', 'mix/dashboard/Dts', 0, 0, 0, '', 0, 0, '', '', '2021-06-27 20:00:00', NULL, NULL),
 (21, 20, '记录', '/dashboard/dts/list', '', 'DtsList', 'mix/dashboard/components/dts/List', 0, 0, 0, '', 0, 0, '', '', '2021-06-27 20:00:00', '2022-04-29 16:06:39', NULL),
 (22, 20, '新建', '/dashboard/dts/new', '', 'DtsBlankForm', 'mix/dashboard/components/dts/BlankForm', 1, 0, 0, '', 0, 0, '', '', '2021-06-27 20:00:00', '2022-04-28 23:27:54', NULL),
@@ -5121,7 +5116,9 @@ INSERT INTO `app_menu` (`id`, `pid`, `title`, `path`, `redirect`, `name`, `compo
 (29, 7, '角色列表', '/app/role/list', NULL, 'AppRoleList', 'mix/admin/role/List', 0, 0, 1, NULL, 0, 0, NULL, NULL, '2022-04-12 19:37:26', '2022-04-12 20:38:10', NULL),
 (30, 7, '部门数据设置', '/app/role/dept/:roleId', NULL, 'AppRoleDept2', 'mix/admin/role/DeptDataSetting', 0, 0, 1, NULL, 0, 0, NULL, NULL, '2022-04-12 20:34:42', '2022-04-12 20:38:18', NULL),
 (31, 5, '统计', '/dashboard/generator_event/statistic', NULL, 'GeneratorEventStatistic', 'mix/dashboard/components/generator/StatisticChart', 0, 0, 0, NULL, 0, 0, NULL, NULL, '2022-04-29 16:00:29', '2022-04-29 17:43:58', NULL),
-(32, 5, '记录', '/dashboard/generator_event/list', NULL, 'GeneratorEventList', 'mix/dashboard/components/generator/List', 0, 0, 0, NULL, 0, 0, NULL, NULL, '2022-04-29 16:10:53', '2022-04-29 16:11:36', NULL);
+(32, 5, '记录', '/dashboard/generator_event/list', NULL, 'GeneratorEventList', 'mix/dashboard/components/generator/List', 0, 0, 0, NULL, 0, 0, NULL, NULL, '2022-04-29 16:10:53', '2022-04-29 16:11:36', NULL),
+(33, 19, '统计', '/dashboard/meter/statistic', NULL, 'MeterStatistic', 'mix/dashboard/components/meter/Statistic', 0, 0, 0, NULL, 0, 0, NULL, NULL, '2022-04-30 23:28:47', '2022-04-30 23:30:15', NULL),
+(34, 19, '记录', '/dashboard/meter/list', NULL, 'MeterList', 'mix/dashboard/components/meter/List', 0, 0, 0, NULL, 0, 0, NULL, NULL, '2022-05-01 15:21:14', '2022-05-01 15:21:55', NULL);
 
 -- --------------------------------------------------------
 
@@ -5147,7 +5144,7 @@ CREATE TABLE IF NOT EXISTS `app_meter` (
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=29899 DEFAULT CHARSET=utf8mb4 COMMENT='电度表' ROW_FORMAT=COMPACT;
+) ENGINE=InnoDB AUTO_INCREMENT=29926 DEFAULT CHARSET=utf8mb4 COMMENT='电度表' ROW_FORMAT=COMPACT;
 
 --
 -- 转存表中的数据 `app_meter`
@@ -34888,12 +34885,7 @@ INSERT INTO `app_role_api` (`role_id`, `api_id`) VALUES
 (1, 56),
 (1, 57),
 (1, 58),
-(1, 59),
-(1, 60),
 (1, 61),
-(1, 63),
-(1, 64),
-(1, 65),
 (1, 67),
 (1, 68),
 (1, 69),
@@ -34998,7 +34990,9 @@ INSERT INTO `app_role_menu` (`role_id`, `menu_id`) VALUES
 (1, 29),
 (1, 30),
 (1, 31),
-(1, 32);
+(1, 32),
+(1, 33),
+(1, 34);
 
 -- --------------------------------------------------------
 
@@ -35149,7 +35143,7 @@ CREATE TABLE IF NOT EXISTS `app_user` (
 --
 
 INSERT INTO `app_user` (`id`, `workID`, `username`, `sex`, `IdCard`, `phone`, `email`, `status`, `forceChgPwd`, `avatar`, `dept_ids`, `job`, `title`, `politic`, `ip_address`, `last_login`, `created_at`, `updated_at`, `deleted_at`, `password`, `forgotten_password_selector`, `forgotten_password_code`, `forgotten_password_time`) VALUES
-(1, '1', '小明', '男', '', '13812345678', '1@1.1', '1', '0', 1, '+1+2+', 1, 5, 1, '127.0.0.1', '2022-04-30 00:57:44', '2021-06-27 20:00:00', '2022-04-30 00:57:44', NULL, '$argon2i$v=19$m=16384,t=4,p=2$Q0ZXc2NIWFJrcUxKSzA5UQ$Qt//SEIMKQDKVKsLzztLnTbVZQs/ysxKKhls908T0hQ', NULL, NULL, NULL),
+(1, '1', '小明', '男', '', '13812345678', '1@1.1', '1', '0', 1, '+1+2+', 1, 5, 1, '127.0.0.1', '2022-05-01 18:32:45', '2021-06-27 20:00:00', '2022-05-01 18:32:45', NULL, '$argon2i$v=19$m=16384,t=4,p=2$Q0ZXc2NIWFJrcUxKSzA5UQ$Qt//SEIMKQDKVKsLzztLnTbVZQs/ysxKKhls908T0hQ', NULL, NULL, NULL),
 (9, '8022', '张明学', '男', NULL, '13577552301', '13577552301@163.com', '1', '1', 20, '+1+2+10+', 7, 5, 2, '172.16.16.70', '2021-11-05 19:57:58', '2021-10-31 21:11:17', NULL, NULL, '$argon2i$v=19$m=16384,t=4,p=1$Kb0SbrF2+iYOibwApD4pjQ$vgs7rTFP7e/nThSTr8NvoFmXI6n3A7mqpERcbX6QogY', NULL, NULL, NULL),
 (15, '8024', '徐晓志', '男', NULL, '13987569253', '13987569253@163.com', '1', '1', 26, '+1+2+10+', 9, 5, 2, '172.16.16.34', '2021-11-04 00:54:17', '2021-10-31 21:13:35', NULL, NULL, '$argon2i$v=19$m=16384,t=4,p=1$NMm4Z2mHK3yEHFAlN++jfg$JZg5GTvXIzJ11OW8c7aKo488b2tavHgX54quNcdvrXI', NULL, NULL, NULL),
 (16, '8034', '王建文', '男', NULL, '15906982997', '15906982997@163.com', '1', '1', 27, '+1+2+4+', 1, 5, 1, '192.168.1.74', '2021-11-11 21:17:42', '2021-10-31 21:14:18', NULL, NULL, '$argon2i$v=19$m=16384,t=4,p=1$LcgDdFhLrBAEwlc964Y9XQ$ElVJuqGC8t5BCkAs0MyWTzDCO5JWmf50MG0JGITvHFE', NULL, NULL, NULL),

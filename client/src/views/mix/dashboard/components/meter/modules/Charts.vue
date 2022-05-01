@@ -22,6 +22,10 @@
           <a-form-model-item>
             <a-button type="primary" @click="onClickSearch">查询</a-button>
           </a-form-model-item>
+
+          <a-form-model-item>
+            <a-button type="primary" @click="onClickRecordIn">录入</a-button>
+          </a-form-model-item>
         </a-form-model>
       </div>
 
@@ -501,6 +505,10 @@ export default {
       const chartData = dv.rows
 
       this.quartersChart.changeData(chartData)
+    },
+
+    onClickRecordIn () {
+      this.$router.push({ path: '/dashboard/meter/list' })
     }
   }
 }

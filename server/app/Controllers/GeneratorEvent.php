@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-01 00:24:22
+ * @LastEditTime: 2022-05-01 16:27:15
  */
 
 namespace App\Controllers;
@@ -153,7 +153,8 @@ class GeneratorEvent extends BaseController
         $db = $model->insertRecord($newEvent);
 
         if ($db) {
-            return $this->respond(['msg' => '已添加一条记录']);
+            $res['msg'] = '已保存';
+            return $this->respond($res);
         } else {
             $res['error'] = '服务器处理发生错误，稍候再试';
             return $this->fail($res);
@@ -220,7 +221,7 @@ class GeneratorEvent extends BaseController
         $result = $model->delById($id);
 
         if ($result === true) {
-            $res['msg'] = '已删除一条记录';
+            $res['msg'] = '完成删除';
             return $this->respond($res);
         } else {
             $res['error'] = '服务器处理发生错误，稍候再试';
@@ -319,7 +320,7 @@ class GeneratorEvent extends BaseController
 
         $result = $model->saveRecord($newEvent);
         if ($result) {
-            $res['msg'] = '已修改一条记录';
+            $res['msg'] = '完成修改';
             return $this->respond($res);
         } else {
             $res['error'] = '服务器处理发生错误，稍候再试';

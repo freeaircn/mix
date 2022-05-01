@@ -5,6 +5,14 @@
         <div style="font-size: 16px; font-weight:bold">{{ STEPS[currentStep].title }}</div>
       </a-form-model-item>
 
+      <a-form-model-item label="站点">
+        <a-select v-model="record.station_id">
+          <a-select-option v-for="d in stationItems" :key="d.id" :value="d.id">
+            {{ d.name }}
+          </a-select-option>
+        </a-select>
+      </a-form-model-item>
+
       <div v-show="currentStep == 0" >
         <a-form-model-item label="日期" prop="log_date">
           <a-date-picker v-model="record.log_date" valueFormat="YYYY-MM-DD" placeholder="请选择" />
@@ -62,9 +70,8 @@
 </template>
 
 <script>
-// import moment from 'moment'
 import { BigNumber } from 'bignumber.js'
-import { getRecordDetail, newRecord, updateRecord } from '@/api/mix/meter'
+import { apiQueryMeter, newRecord, updateRecord } from '@/api/mix/meter'
 
 export default {
   name: 'RecordForm',
@@ -76,6 +83,10 @@ export default {
     stationId: {
       type: String,
       default: ''
+    },
+    stationItems: {
+      type: Array,
+      default: () => []
     },
     creator: {
       type: String,
@@ -108,6 +119,7 @@ export default {
       ],
       STEPS_LEN: 9,
       record: {
+        station_id: '0',
         log_date: '',
         log_time: '',
         meter: this.setDataZero()
@@ -127,6 +139,7 @@ export default {
     }
   },
   mounted () {
+    this.record.station_id = this.stationId
     this.currentStep = 0
     this.record.meter = this.setDataZero()
     // this.isUpdate = false
@@ -139,13 +152,14 @@ export default {
 
           this.record.log_date = this.recordInfo.log_date
           this.record.log_time = this.recordInfo.log_time
-          const query = {
+          const params = {
+            resource: 'details',
             station_id: this.recordInfo.station_id,
             log_date: this.recordInfo.log_date,
             log_time: this.recordInfo.log_time
           }
           this.disableBtn = true
-          getRecordDetail(query)
+          apiQueryMeter(params)
             .then((res) => {
               if (res.size !== 0) {
                 this.record.meter = res.record

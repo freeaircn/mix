@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-01 01:26:18
+ * @LastEditTime: 2022-05-01 17:19:22
  */
 
 namespace Config;
@@ -124,6 +124,10 @@ $routes->group('api', function ($routes) {
     $routes->delete('generator/event', 'GeneratorEvent::delRecord');
     // 2022-5-1
     $routes->get('meter', 'Meter::queryEntry');
+    $routes->post('meter', 'Meter::newRecord');
+    $routes->put('meter', 'Meter::updateRecord');
+    $routes->delete('meter', 'Meter::delRecord');
+    $routes->put('meter/plan_deal', 'Meter::updatePlanAndDealRecord');
     // 2022-5-1
     $routes->post('meters', 'Meters::newRecord');
     $routes->get('meters', 'Meters::getRecord');
