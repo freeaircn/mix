@@ -13,7 +13,7 @@
     <a-modal :title="recordDiagTitle" v-model="recordDiagVisible" :footer="null" :destroyOnClose="true">
       <RecordForm
         :stationId="userInfo.allowDefaultDeptId"
-        :stationItems="stationItems"
+        :stationItems="userInfo.readDept"
         :genId="genId"
         :creator="this.userInfo.username"
         :update="recordUpdate"
@@ -28,7 +28,7 @@
         <a-form-model ref="queryForm" layout="inline" :model="query" @submit.native.prevent>
           <a-form-model-item >
             <a-select v-model="query.station_id" placeholder="站点" style="width: 160px">
-              <a-select-option v-for="d in stationItems" :key="d.id" :value="d.id">
+              <a-select-option v-for="d in userInfo.readDept" :key="d.id" :value="d.id">
                 {{ d.name }}
               </a-select-option>
             </a-select>
@@ -205,7 +205,7 @@ export default {
       genId: '',
 
       // 记录 显示
-      stationItems: [],
+      // stationItems: [],
       query: {
         station_id: '0',
         date: '',
@@ -230,9 +230,9 @@ export default {
       'userInfo'
     ])
   },
-  beforeMount () {
-    this.prepareSearchFunc()
-  },
+  // beforeMount () {
+  //   this.prepareSearchFunc()
+  // },
   mounted () {
     this.query.station_id = this.userInfo.allowDefaultDeptId
     this.onClickSearch()
@@ -267,18 +267,17 @@ export default {
     },
 
     // 2022-4-29
-    // 查询
-    prepareSearchFunc () {
-      const params = { resource: 'search_params' }
-      apiQueryEvent(params)
-        .then(res => {
-          res.station.forEach(element => {
-            this.stationItems.push(element)
-          })
-        })
-        .catch(() => {
-        })
-    },
+    // prepareSearchFunc () {
+    //   const params = { resource: 'search_params' }
+    //   apiQueryEvent(params)
+    //     .then(res => {
+    //       res.station.forEach(element => {
+    //         this.stationItems.push(element)
+    //       })
+    //     })
+    //     .catch(() => {
+    //     })
+    // },
 
     sendSearchReq (searchParams) {
       const params = Object.assign(searchParams, {

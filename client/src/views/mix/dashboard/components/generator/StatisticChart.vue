@@ -4,7 +4,7 @@
       <a-form-model ref="queryForm" layout="inline" :model="query" @submit.native.prevent>
         <a-form-model-item >
           <a-select v-model="query.station_id" placeholder="站点" style="width: 160px">
-            <a-select-option v-for="d in stationItems" :key="d.id" :value="d.id">
+            <a-select-option v-for="d in userInfo.readDept" :key="d.id" :value="d.id">
               {{ d.name }}
             </a-select-option>
           </a-select>
@@ -111,7 +111,7 @@ export default {
   },
   data () {
     return {
-      stationItems: [],
+      // stationItems: [],
       query: {
         station_id: 0,
         date: null
@@ -154,9 +154,9 @@ export default {
     }
     this.query.date = year
   },
-  beforeMount () {
-    this.prepareSearchFunc()
-  },
+  // beforeMount () {
+  //   this.prepareSearchFunc()
+  // },
   mounted () {
     this.query.station_id = this.userInfo.allowDefaultDeptId
     this.initRunningTimeChart()
@@ -168,17 +168,17 @@ export default {
   },
   methods: {
     // 查询
-    prepareSearchFunc () {
-      const params = { resource: 'search_params' }
-      apiQueryEvent(params)
-        .then(res => {
-          res.station.forEach(element => {
-            this.stationItems.push(element)
-          })
-        })
-        .catch(() => {
-        })
-    },
+    // prepareSearchFunc () {
+    //   const params = { resource: 'search_params' }
+    //   apiQueryEvent(params)
+    //     .then(res => {
+    //       res.station.forEach(element => {
+    //         this.stationItems.push(element)
+    //       })
+    //     })
+    //     .catch(() => {
+    //     })
+    // },
 
     onClickSearch () {
       const params = { resource: 'statistic', station_id: this.query.station_id, date: this.query.date }
