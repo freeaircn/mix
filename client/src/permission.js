@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-24 23:57:09
+ * @LastEditTime: 2022-05-07 21:54:33
  */
 import router from './router'
 import store from './store'
@@ -39,7 +39,7 @@ router.beforeEach((to, from, next) => {
       // check login user.roles is null
       if (store.getters.roles && store.getters.roles.length === 0) {
         // request login userInfo
-        store.dispatch('GetInfo')
+        store.dispatch('GetUserResource')
           .then(res => {
             // const roles = res.result && res.result.role
             // // generate dynamic router
@@ -58,7 +58,7 @@ router.beforeEach((to, from, next) => {
             //   }
             // })
 
-            // Mix code
+            // My code
             const menus = res
             store.dispatch('GenerateRoutes', { menus }).then(() => {
               router.addRoutes(store.getters.addRouters)

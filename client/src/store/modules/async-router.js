@@ -34,7 +34,7 @@ const permission = {
     //   })
     // }
 
-    // Mix code
+    // My code
     GenerateRoutes ({ commit }, data) {
       return new Promise(resolve => {
         const { menus } = data

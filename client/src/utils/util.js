@@ -115,7 +115,7 @@ export function scorePassword (pass) {
   return parseInt(score)
 }
 
-// Mix code
+// My code
 export const listToTree = (list, tree = [], pid = '0') => {
   tree.splice(0, tree.length)
   list.forEach(item => {

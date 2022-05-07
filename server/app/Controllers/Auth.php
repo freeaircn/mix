@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-01 00:00:19
+ * @LastEditTime: 2022-05-07 13:18:57
  */
 
 namespace App\Controllers;
@@ -169,34 +169,6 @@ class Auth extends BaseController
             }
         }
 
-        // // 用户上级部门，用户拥有数据CRUD的部门
-        // $deptIds             = [];
-        // $ownDirectDataDeptId = '0';
-        // $displayedDept       = '';
-        // if (!empty($user['dept_ids'])) {
-        //     $deptIds = explode("+", trim($user['dept_ids'], '+'));
-        //     $model   = new DeptModel();
-        //     $db      = $model->getByIds(['id', 'name', 'dataMask'], $deptIds);
-        //     $cnt     = count($db);
-        //     if ($cnt > 0) {
-        //         $level = config('MyGlobalConfig')->userDeptLevel;
-        //         if ($cnt < $level) {
-        //             $item          = end($db);
-        //             $displayedDept = $item['name'];
-        //             if ($item['dataMask'] == 1) {
-        //                 $ownDirectDataDeptId = $item['id'];
-        //             }
-        //         } else {
-        //             $item          = $db[$level - 1];
-        //             $displayedDept = $item['name'];
-        //             if ($item['dataMask'] == 1) {
-        //                 $ownDirectDataDeptId = $item['id'];
-        //             }
-        //         }
-        //     }
-
-        // }
-
         // session
         $sessionData                       = $user;
         $sessionData['allowApi']           = $allowApi;
@@ -207,8 +179,6 @@ class Auth extends BaseController
         $sessionData['readDept']           = $readDept;
         $sessionData['allowWorkflow']      = $allowWorkflow;
         $sessionData['dept_ids']           = $deptIds;
-        //
-        $sessionData['displayedDept'] = 'T';
 
         $this->session->set($sessionData);
 

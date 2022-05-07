@@ -89,9 +89,8 @@
 <script>
 import myConfig from '@/config/myConfig'
 import { baseMixin } from '@/store/app-mixin'
-// import store from '@/store'
 import { mapGetters, mapActions } from 'vuex'
-import { getBasicSettingFormParam } from '@/api/mix/account'
+import { apiQueryAccount } from '@/api/mix/account'
 import { listToTree } from '@/utils/util'
 import * as pattern from '@/utils/validateRegex'
 
@@ -101,7 +100,7 @@ export default {
     return {
       uploadAction: myConfig.uploadAvatarApi,
       isUploading: false,
-      // Mix code
+      // My code
       labelCol: {
         lg: { span: 7 }, sm: { span: 7 }
       },
@@ -145,10 +144,11 @@ export default {
     }
   },
   methods: {
-    ...mapActions(['UpdateUserInfo', 'UpdateUserAvatar']),
+    ...mapActions(['UpdateUserBasicSetting', 'UpdateUserAvatar']),
 
     loadFormParam () {
-      getBasicSettingFormParam()
+      const params = { resource: 'basic_setting_form' }
+      apiQueryAccount(params)
         .then((res) => {
           this.politicOptions.splice(0)
           this.politicOptions = res.politic
@@ -169,28 +169,26 @@ export default {
           this.titleOptions.splice(0)
           this.titleOptions = res.title
           //
-          this.filterUserInfo(this.userInfo)
+          this.copyUserSetting(this.userInfo)
         })
         //  网络异常，清空页面数据显示，防止错误的操作
-        .catch((err) => {
+        .catch(() => {
           this.politicOptions.splice(0)
           this.jobOptions.splice(0)
           this.titleOptions.splice(0)
-          if (err.response) { }
         })
     },
 
     handleSaveUserInfo () {
       this.$refs.form.validate(valid => {
         if (valid) {
-          this.UpdateUserInfo(this.record)
+          this.UpdateUserBasicSetting(this.record)
             .then(() => {
-              this.filterUserInfo(this.userInfo)
+              this.copyUserSetting(this.userInfo)
             })
             //  网络异常，清空页面数据显示，防止错误的操作
-            .catch((err) => {
-              this.filterUserInfo(this.userInfo)
-              if (err.response) { }
+            .catch(() => {
+              this.copyUserSetting(this.userInfo)
             })
         } else {
           return false
@@ -234,7 +232,7 @@ export default {
     },
 
     // 内部方法
-    filterUserInfo (user) {
+    copyUserSetting (user) {
       const department = user.dept_ids
       const { id, username, sex, IdCard, politic, job, title } = user
 
@@ -245,12 +243,6 @@ export default {
 </script>
 
 <style lang="less" scoped>
-
-  .avatar-upload-wrapper {
-    height: 200px;
-    width: 100%;
-  }
-
   .ant-upload-preview {
     position: relative;
     // margin: 0 auto;

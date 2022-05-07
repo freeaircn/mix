@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-27 23:46:44
+ * @LastEditTime: 2022-05-07 23:21:39
  */
 
 namespace App\Controllers;
@@ -29,106 +29,60 @@ class Account extends BaseController
         helper('my_auth');
     }
 
-    public function getUserInfo()
+    public function queryEntry()
     {
-        // 取session保存的用户数据
-        $sessionData = $this->session->get();
-
-        // 过滤 内部字段
-        $data = [];
-        foreach ($sessionData as $key => $value) {
-            if (strpos($key, '_ci_') !== false) {
-                continue;
-            }
-            if ($key === 'allowApi') {
-                continue;
-            }
-            if ($key === 'allowPageId') {
-                continue;
-            }
-            if ($key === 'allowReadDeptId') {
-                continue;
-            }
-            if ($key === 'allowWriteDeptId') {
-                continue;
-            }
-            if ($key === 'allowWorkflow') {
-                continue;
-            }
-
-            $data[$key] = $value;
+        $resource = $this->request->getGet('resource');
+        if (empty($resource)) {
+            $res['error'] = '请求数据无效';
+            return $this->fail($res);
         }
 
-        if (isset($sessionData['phone'])) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['data'] = ['info' => $data];
-        } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '用户信息空！';
+        switch ($resource) {
+            case 'session_and_menus':
+                $result = $this->_reqSessionAndMenus();
+                break;
+            case 'basic_setting_form':
+                $result = $this->_reqBasicSettingForm();
+                break;
+            default:
+                $res['error'] = '请求数据无效';
+                return $this->fail($res);
         }
 
-        return $this->respond($res);
-    }
-
-    public function getBasicSettingFormParam()
-    {
-        $result = [
-            'politic' => [],
-            'dept'    => [],
-            'job'     => [],
-            'title'   => [],
-        ];
-
-        $politicModel      = new politicModel();
-        $result['politic'] = $politicModel->getPolitic(['id', 'name', 'status']);
-
-        $deptModel      = new DeptModel();
-        $result['dept'] = $deptModel->getDept(['id', 'name', 'pid', 'status']);
-
-        $jobModel      = new JobModel();
-        $result['job'] = $jobModel->getJob(['id', 'name', 'status']);
-
-        $titleModel      = new titleModel();
-        $result['title'] = $titleModel->getTitle(['id', 'name', 'status']);
-
-        $res['code'] = EXIT_SUCCESS;
-        $res['data'] = $result;
-
-        return $this->respond($res);
-
-    }
-
-    public function getUserMenus()
-    {
-        // 取session保存的用户数据
-        $sessionData = $this->session->get();
-
-        // 取用户有权访问的前端页面路由
-        if (isset($sessionData['allowPageId']) && !empty($sessionData['allowPageId'])) {
-            $pageId = $sessionData['allowPageId'];
-
-            $model  = new MenuModel();
-            $result = $model->getMenu(['pageId' => $pageId]);
-
-            $res['code'] = EXIT_SUCCESS;
-            $res['data'] = ['menus' => $result];
-        } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '用户没有授权';
+        if ($result['http_status'] === 400) {
+            return $this->fail($result['msg']);
+        }
+        if ($result['http_status'] === 401) {
+            return $this->failUnauthorized($result['msg']);
+        }
+        if ($result['http_status'] === 404) {
+            return $this->failNotFound($result['msg']);
+        }
+        if ($result['http_status'] === 500) {
+            return $this->failServerError($result['msg']);
         }
 
-        return $this->respond($res);
+        if ($result['http_status'] === 200) {
+            $response = [];
+            if (isset($result['data'])) {
+                $response['data'] = $result['data'];
+            }
+            if (isset($result['msg'])) {
+                $response['msg'] = $result['msg'];
+            }
+            return $this->respond($response);
+        }
+
+        return $this->failServerError('服务器内部错误');
     }
 
-    public function updateUserInfo()
+    public function updateBasicSetting()
     {
         // 检查请求数据
-        if (!$this->validate('AccountUpdateUserInfo')) {
-            $res['error'] = $this->validator->getErrors();
-
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '请求数据无效！';
-            return $this->respond($res);
+        if (!$this->validate('AccountUpdateBasicSetting')) {
+            $res['info']  = $this->validator->getErrors();
+            $res['error'] = '请求数据无效';
+            return $this->fail($res);
         }
 
         // 取session的id
@@ -136,7 +90,7 @@ class Account extends BaseController
         $sid    = $this->session->get('id');
 
         // 取出检验后的数据
-        $userInfo = [
+        $newSetting = [
             'id'         => $sid,
             'username'   => $client['username'],
             'sex'        => $client['sex'],
@@ -149,14 +103,12 @@ class Account extends BaseController
 
         // 修改数据库
         $model = new AccountModel();
-        $uid   = $model->updateUserInfo($userInfo);
+        $uid   = $model->updateUserInfo($newSetting);
         if (!$uid) {
             $phone = $this->session->get('phone');
             log_message('error', '{file}:{line} --> update user info db failed ' . '[' . substr(session_id(), 0, 15) . '] ' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4));
 
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '保存失败，稍后再试！';
-            return $this->respond($res);
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
 
         // 读数据库
@@ -176,9 +128,8 @@ class Account extends BaseController
         $user['dept_ids'] = explode("+", trim($user['dept_ids'], '+'));
         $this->session->set($user);
 
-        $res['code'] = EXIT_SUCCESS;
-        $res['msg']  = '保存成功！';
-        $res['data'] = ['info' => $user];
+        $res['msg']  = '保存成功';
+        $res['data'] = ['session' => $this->_getUserSession()];
 
         return $this->respond($res);
     }
@@ -507,7 +458,160 @@ class Account extends BaseController
         return $this->respond($res);
     }
 
-    // 内部方法
+    // Part - 2
+    protected function _reqSessionAndMenus()
+    {
+        $userSession = $this->_getUserSession();
+        $userMenus   = $this->_getUserMenus();
+
+        $res['http_status'] = 200;
+        $res['data']        = ['session' => $userSession, 'menus' => $userMenus];
+        return $res;
+    }
+
+    protected function _getUserSession()
+    {
+        $userSession = $this->session->get();
+        if (!isset($userSession['phone'])) {
+            return [];
+        }
+
+        // 过滤 后端字段
+        $data = [];
+        foreach ($userSession as $key => $value) {
+            if (strpos($key, '_ci_') !== false) {
+                continue;
+            }
+            if ($key === 'allowApi') {
+                continue;
+            }
+            if ($key === 'allowPageId') {
+                continue;
+            }
+            if ($key === 'allowReadDeptId') {
+                continue;
+            }
+            if ($key === 'allowWriteDeptId') {
+                continue;
+            }
+            if ($key === 'allowWorkflow') {
+                continue;
+            }
+
+            $data[$key] = $value;
+        }
+
+        return $data;
+    }
+
+    protected function _getUserMenus()
+    {
+        $userSession = $this->session->get();
+        if (empty($userSession['allowPageId'])) {
+            return [];
+        }
+
+        $pageId = $userSession['allowPageId'];
+        $fields = ['id', 'pid', 'name', 'path', 'component', 'redirect', 'hideChildrenInMenu', 'title', 'icon', 'keepAlive', 'meta_hidden', 'hiddenHeaderContent', 'hidden', 'permission', 'target'];
+
+        $model = new MenuModel();
+        $db    = $model->getByPageIds($fields, $pageId);
+        if (empty($db)) {
+            return [];
+        }
+
+        $menus = $this->_adaptMenus($db);
+
+        return $menus;
+    }
+
+    protected function _adaptMenus(array $db = null)
+    {
+        if (empty($db)) {
+            return [];
+        }
+
+        $menus = [];
+        foreach ($db as $item) {
+            $menu = [];
+            $meta = [];
+            //
+            $menu['id']   = $item['id'];
+            $menu['pid']  = $item['pid'];
+            $menu['name'] = $item['name'];
+            $menu['path'] = $item['path'];
+            if ($item['component'] !== '') {
+                $menu['component'] = $item['component'];
+            }
+            if ($item['redirect'] !== '') {
+                $menu['redirect'] = $item['redirect'];
+            }
+            $menu['hidden']             = $item['hidden'];
+            $menu['hideChildrenInMenu'] = $item['hideChildrenInMenu'];
+            // if ($item['hidden'] === '1') {
+            //     $menu['hidden'] = '1';
+            // }
+            // if ($item['hideChildrenInMenu'] === '1') {
+            //     $menu['hideChildrenInMenu'] = '1';
+            // }
+            //
+            $meta['title'] = $item['title'];
+            if ($item['icon'] !== '') {
+                $meta['icon'] = $item['icon'];
+            }
+            if ($item['keepAlive'] === '1') {
+                $meta['keepAlive'] = '1';
+            }
+            if ($item['meta_hidden'] === '1') {
+                $meta['hidden'] = '1';
+            }
+            if ($item['hiddenHeaderContent'] === '1') {
+                $meta['hiddenHeaderContent'] = '1';
+            }
+            if ($item['permission'] !== '') {
+                $meta['permission'] = [];
+            }
+            if ($item['target'] !== '') {
+                $meta['target'] = $item['target'];
+            }
+            //
+            $menu['meta'] = $meta;
+            $menus[]      = $menu;
+        }
+
+        helper('my_array');
+        $res = my_arr2tree($menus);
+
+        return $res;
+    }
+
+    protected function _reqBasicSettingForm()
+    {
+        $result = [
+            'politic' => [],
+            'dept'    => [],
+            'job'     => [],
+            'title'   => [],
+        ];
+
+        $politicModel      = new politicModel();
+        $result['politic'] = $politicModel->getPolitic(['id', 'name', 'status']);
+
+        $deptModel      = new DeptModel();
+        $result['dept'] = $deptModel->getDept(['id', 'name', 'pid', 'status']);
+
+        $jobModel      = new JobModel();
+        $result['job'] = $jobModel->getJob(['id', 'name', 'status']);
+
+        $titleModel      = new titleModel();
+        $result['title'] = $titleModel->getTitle(['id', 'name', 'status']);
+
+        $res['http_status'] = 200;
+        $res['data']        = $result;
+        return $res;
+
+    }
+
     protected function getUserByQuery($queryParam = [])
     {
         $deptModel = new DeptModel();

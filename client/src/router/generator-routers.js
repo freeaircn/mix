@@ -59,7 +59,7 @@ const _import = require('@/utils/_import_' + process.env.NODE_ENV)
 //   // 'TestWork': () => import(/* webpackChunkName: "TestWork" */ '@/views/dashboard/TestWork')
 // }
 
-// Mix code
+// My code
 const constantRouterComponents = {
   // 基础页面 layout 必须引入
   BasicLayout: BasicLayout,
@@ -165,7 +165,7 @@ export const generator = (routerMap, parent) => {
   })
 }
 
-// Mix code
+// My code
 export const buildDynamicRouter = (menus) => {
   // const menuNav = []
   // rootRouter.children = menus

@@ -39,7 +39,7 @@ const assetsCDN = {
 
 // vue.config.js
 const vueConfig = {
-  // Mix code
+  // My code
   // html header src路径
   publicPath: process.env.NODE_ENV === 'development' ? '/' : '/dist/',
   // 存放路径
@@ -122,7 +122,7 @@ const vueConfig = {
     // }
   },
   */
-  // Mix code
+  // My code
   devServer: {
     // development server port 8000
     port: 8081,

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-11 09:47:37
+ * @LastEditTime: 2022-05-07 22:26:08
  */
 
 namespace App\Models\Account;
@@ -28,73 +28,27 @@ class MenuModel extends Model
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
 
-    public function getMenu($queryParam = [])
+    public function getByPageIds(array $fields = null, array $pageIds = null)
     {
-        $selectSQL = 'id, pid, name, path, component, redirect, hideChildrenInMenu, title, icon, keepAlive, meta_hidden, hiddenHeaderContent, hidden, permission, target';
-        $builder   = $this->select($selectSQL);
-
-        // if (isset($queryParam['type']) && $queryParam['type'] === '1') {
-        //     $builder->where('type', '1');
-        // }
-        if (isset($queryParam['pageId']) && !empty($queryParam['pageId'])) {
-            $builder->whereIn('id', $queryParam['pageId']);
+        if (empty($pageIds)) {
+            return [];
         }
-        $builder->orderBy('id', 'ASC');
-        $data = $builder->findAll();
 
-        $menus = [];
-        if (!empty($data)) {
-            foreach ($data as $item) {
-                $menu = [];
-                $meta = [];
-                //
-                $menu['id']   = $item['id'];
-                $menu['pid']  = $item['pid'];
-                $menu['name'] = $item['name'];
-                $menu['path'] = $item['path'];
-                if ($item['component'] !== '') {
-                    $menu['component'] = $item['component'];
-                }
-                if ($item['redirect'] !== '') {
-                    $menu['redirect'] = $item['redirect'];
-                }
-                $menu['hidden']             = $item['hidden'];
-                $menu['hideChildrenInMenu'] = $item['hideChildrenInMenu'];
-                // if ($item['hidden'] === '1') {
-                //     $menu['hidden'] = '1';
-                // }
-                // if ($item['hideChildrenInMenu'] === '1') {
-                //     $menu['hideChildrenInMenu'] = '1';
-                // }
-                //
-                $meta['title'] = $item['title'];
-                if ($item['icon'] !== '') {
-                    $meta['icon'] = $item['icon'];
-                }
-                if ($item['keepAlive'] === '1') {
-                    $meta['keepAlive'] = '1';
-                }
-                if ($item['meta_hidden'] === '1') {
-                    $meta['hidden'] = '1';
-                }
-                if ($item['hiddenHeaderContent'] === '1') {
-                    $meta['hiddenHeaderContent'] = '1';
-                }
-                if ($item['permission'] !== '') {
-                    $meta['permission'] = [];
-                }
-                if ($item['target'] !== '') {
-                    $meta['target'] = $item['target'];
-                }
-                //
-                $menu['meta'] = $meta;
-                $menus[]      = $menu;
+        $selectSql = '';
+        if (empty($fields)) {
+            $selectSql = 'id, pid, name, path, component, redirect, hideChildrenInMenu, title, icon, keepAlive, meta_hidden, hiddenHeaderContent, hidden, permission, target';
+        } else {
+            foreach ($fields as $f) {
+                $selectSql = $selectSql . $f . ', ';
             }
         }
 
-        helper('my_array');
-        $res = my_arr2tree($menus);
+        $builder = $this->select($selectSql);
+        $builder->whereIn('id', $pageIds);
+        $builder->orderBy('id', 'ASC');
 
-        return $res;
+        $db = $builder->findAll();
+
+        return $db;
     }
 }

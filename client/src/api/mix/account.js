@@ -3,39 +3,47 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-11-01 19:58:27
+ * @LastEditTime: 2022-05-07 23:18:31
  */
 import request from '@/utils/request'
 
-const api = {
-  basic_setting_form: '/account/basic_setting/form'
-}
+// const api = {
+//   basic_setting_form: '/account/basic_setting/form'
+// }
 
-export function apiGetUserInfo (params) {
+export function apiQueryAccount (params) {
   return request({
-    url: '/account/info',
+    url: '/account',
     method: 'get',
     params: params
   })
 }
 
-export function getBasicSettingFormParam (params) {
-  return request({
-    url: api.basic_setting_form,
-    method: 'get',
-    params: params
-  })
-}
+// export function apiGetUserInfo (params) {
+//   return request({
+//     url: '/account/info',
+//     method: 'get',
+//     params: params
+//   })
+// }
 
-export function apiGetUserMenus (params) {
-  return request({
-    url: '/account/menus',
-    method: 'get',
-    params: params
-  })
-}
+// export function getBasicSettingFormParam (params) {
+//   return request({
+//     url: api.basic_setting_form,
+//     method: 'get',
+//     params: params
+//   })
+// }
 
-export function apiUpdateUserInfo (data) {
+// export function apiGetUserMenus (params) {
+//   return request({
+//     url: '/account/menus',
+//     method: 'get',
+//     params: params
+//   })
+// }
+
+export function apiUpdateUserBasicSetting (data) {
   return request({
     url: '/account',
     method: 'put',

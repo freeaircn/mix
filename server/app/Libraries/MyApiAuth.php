@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-09-06 01:17:02
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-24 16:44:13
+ * @LastEditTime: 2022-05-07 22:39:56
  */
 
 namespace App\Libraries;
@@ -33,7 +33,7 @@ class MyApiAuth
             return ['status' => 401, 'code' => 1, 'msg' => '用户没有登陆'];
         }
 
-        // ！！！超级用户，仅测试使用。
+        // ！！！超级用户，仅测试使用
         // if ($phone == '13812345678') {
         //     return ['status' => 0, 'code' => 0, 'msg' => ''];
         // }

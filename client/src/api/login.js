@@ -3,15 +3,15 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-29 23:00:02
+ * @LastEditTime: 2022-05-07 21:51:37
  */
 import request from '@/utils/request'
 
 const userApi = {
   Login: '/auth/login',
   Logout: '/auth/logout',
-  SendSms: '/auth/sms', // Mix code
-  resetPassword: '/auth/reset-password', // Mix code
+  SendSms: '/auth/sms', // My code
+  resetPassword: '/auth/reset-password', // My code
   ForgePassword: '/auth/forge-password',
   Register: '/auth/register',
   twoStepCode: '/auth/2step-code',
@@ -49,7 +49,7 @@ export function getSmsCaptcha (parameter) {
   })
 }
 
-// Mix code
+// My code
 export function resetPassword (parameter) {
   return request({
     url: userApi.resetPassword,

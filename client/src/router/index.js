@@ -23,7 +23,7 @@ Vue.use(Router)
 //   routes: constantRouterMap
 // })
 
-// Mix code
+// My code
 const createRouter = () => new Router({
   mode: 'history', // require service support
   routes: constantRouterMap

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-01 17:19:22
+ * @LastEditTime: 2022-05-07 23:03:04
  */
 
 namespace Config;
@@ -40,21 +40,19 @@ $routes->setAutoRoute(true);
 // route since we don't have to scan directories.
 // $routes->get('/', 'Home::index');
 
-// Mix code: API routes
+// My code: API routes
 $routes->group('api', function ($routes) {
     $routes->post('auth/login', 'Auth::login');
     $routes->post('auth/logout', 'Auth::logout');
     $routes->post('auth/sms', 'Auth::sms');
     $routes->post('auth/reset-password', 'Auth::resetPassword');
     //
-    $routes->get('account/info', 'Account::getUserInfo');
-    $routes->get('account/basic_setting/form', 'Account::getBasicSettingFormParam');
-    $routes->get('account/menus', 'Account::getUserMenus');
-    $routes->put('account', 'Account::updateUserInfo');
+    $routes->get('account', 'Account::queryEntry');
     $routes->put('account/password', 'Account::updatePassword');
     $routes->put('account/phone', 'Account::updatePhone');
     $routes->put('account/sms', 'Account::sms');
     $routes->put('account/email', 'Account::updateEmail');
+    $routes->put('account', 'Account::updateBasicSetting');
     $routes->post('account/avatar', 'Account::updateAvatar');
     //
     $routes->get('role', 'Admin::getRole');

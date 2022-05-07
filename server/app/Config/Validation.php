@@ -42,7 +42,7 @@ class Validation
     // /u 表示按unicode(utf-8)匹配（主要针对多字节比如汉字）
     // 女 Unicode编码16进制 5973
     // 男 Unicode编码16进制 7537
-    public $AccountUpdateUserInfo = [
+    public $AccountUpdateBasicSetting = [
         'username' => 'required|regex_match[/^([\x{4e00}-\x{9fa5}]{1,6})$/u]',
         'sex'      => 'required|regex_match[/^([\x{7537}\x{5973}]{1})$/u]',
         'IdCard'   => 'regex_match[/^([1-9]\d{5}(18|19|20|(3\d))\d{2}((0[1-9])|(1[0-2]))(([0-2][1-9])|10|20|30|31)\d{3}[0-9Xx]){0,1}$/]',
