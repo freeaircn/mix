@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-11 14:30:13
+ * @LastEditTime: 2022-05-10 22:23:51
  */
 
 namespace App\Models\Admin;
@@ -13,9 +13,9 @@ use CodeIgniter\Model;
 
 class RoleMenuModel extends Model
 {
-    protected $DBGroup = 'mix';
+    protected $DBGroup;
+    protected $table;
 
-    protected $table         = 'app_role_menu';
     protected $allowedFields = ['role_id', 'menu_id'];
 
     protected $returnType     = 'array';
@@ -23,10 +23,18 @@ class RoleMenuModel extends Model
 
     protected $useTimestamps = false;
 
-    public function getMenuByRole($role_id = null)
+    public function __construct()
+    {
+        $config        = config('MyGlobalConfig');
+        $this->DBGroup = $config->dbName;
+        $this->table   = $config->dbPrefix . 'role_menu';
+        parent::__construct();
+    }
+
+    public function getMenuIdByRoleId(string $role_id = null)
     {
         if (!is_numeric($role_id)) {
-            return false;
+            return [];
         }
 
         $res = $this->select('menu_id')
@@ -37,9 +45,9 @@ class RoleMenuModel extends Model
         return $res;
     }
 
-    public function getByRoleIdsForAuth(array $roleIds = null)
+    public function getMenuIdByRoleIds(array $roleIds = null)
     {
-        if (!is_array($roleIds) || empty($roleIds)) {
+        if (empty($roleIds)) {
             return [];
         }
 
@@ -57,23 +65,26 @@ class RoleMenuModel extends Model
         return array_unique($res);
     }
 
-    public function saveRoleMenu($role_id = null, $menus = [])
+    public function saveRoleMenuRecordsByRoleId(array $menus = null, string $role_id = null)
     {
         if (!is_numeric($role_id)) {
             return false;
         }
 
-        $this->transStart();
-        $this->where('role_id', $role_id)->delete();
+        $data = [];
         foreach ($menus as $v) {
             if (is_numeric($v)) {
-                $data = [
+                $data[] = [
                     'role_id' => $role_id,
                     'menu_id' => $v,
                 ];
-                $this->insert($data);
-                unset($data);
             }
+        }
+
+        $this->transStart();
+        $this->where('role_id', $role_id)->delete();
+        if (!empty($data)) {
+            $this->insertBatch($data);
         }
         $this->transComplete();
 

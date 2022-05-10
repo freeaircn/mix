@@ -39,17 +39,17 @@ class RecordModel extends Model
         return is_numeric($result) ? true : false;
     }
 
-    public function getById($columnName = [], $id = 0)
+    public function getById($fields = [], $id = 0)
     {
         if (!is_numeric($id)) {
             return false;
         }
 
         $selectSql = '';
-        if (empty($columnName)) {
+        if (empty($fields)) {
             $selectSql = 'id, station_id, generator_id, event, event_at, creator, description';
         } else {
-            foreach ($columnName as $key) {
+            foreach ($fields as $key) {
                 $selectSql = $selectSql . $key . ', ';
             }
         }
@@ -62,14 +62,14 @@ class RecordModel extends Model
         return isset($result[0]) ? $result[0] : [];
     }
 
-    public function getByStationDateGen(array $columnName = [], array $query = [])
+    public function getByStationDateGen(array $fields = [], array $query = [])
     {
-        if (empty($columnName) || empty($query)) {
+        if (empty($fields) || empty($query)) {
             return [];
         }
 
         $selectSql = '';
-        foreach ($columnName as $key) {
+        foreach ($fields as $key) {
             $selectSql = $selectSql . $key . ', ';
         }
         $builder = $this->select($selectSql);
@@ -84,14 +84,14 @@ class RecordModel extends Model
         return $result;
     }
 
-    public function getByStationGenYearStartStop($columnName = [], $query = [])
+    public function getByStationGenYearStartStop($fields = [], $query = [])
     {
-        if (empty($columnName)) {
+        if (empty($fields)) {
             return false;
         }
 
         $selectSql = '';
-        foreach ($columnName as $key) {
+        foreach ($fields as $key) {
             $selectSql = $selectSql . $key . ', ';
         }
         $builder = $this->select($selectSql);
@@ -126,14 +126,14 @@ class RecordModel extends Model
         return $this->delete($id);
     }
 
-    public function getLastDateByStation(array $columnName = [], string $station_id = null, $limit = 1)
+    public function getLastDateByStation(array $fields = [], string $station_id = null, $limit = 1)
     {
-        if (empty($columnName)) {
+        if (empty($fields)) {
             return [];
         }
 
         $selectSql = '';
-        foreach ($columnName as $key) {
+        foreach ($fields as $key) {
             $selectSql = $selectSql . $key . ', ';
         }
         $builder = $this->select($selectSql);
@@ -150,13 +150,13 @@ class RecordModel extends Model
         }
     }
 
-    public function getByStationGIdDateRange($columnName = [], $query = [])
+    public function getByStationGIdDateRange($fields = [], $query = [])
     {
         $selectSql = '';
-        if (empty($columnName)) {
+        if (empty($fields)) {
             $selectSql = 'id, station_id, generator_id, event, event_at, creator, description';
         } else {
-            foreach ($columnName as $key) {
+            foreach ($fields as $key) {
                 $selectSql = $selectSql . $key . ', ';
             }
         }
@@ -214,17 +214,17 @@ class RecordModel extends Model
         }
     }
 
-    public function getLastByStationGIdEvents(array $columnName = [], array $query = [], int $limit = 1)
+    public function getLastByStationGIdEvents(array $fields = [], array $query = [], int $limit = 1)
     {
         if (empty($query)) {
             return [];
         }
 
         $selectSql = '';
-        if (empty($columnName)) {
+        if (empty($fields)) {
             $selectSql = 'id, station_id, generator_id, event, event_at, creator, description';
         } else {
-            foreach ($columnName as $key) {
+            foreach ($fields as $key) {
                 $selectSql = $selectSql . $key . ', ';
             }
         }
@@ -244,17 +244,17 @@ class RecordModel extends Model
         }
     }
 
-    public function getPrevByStationGIdEventsTimeStamp($columnName = [], $query = [], $limit = 1)
+    public function getPrevByStationGIdEventsTimeStamp($fields = [], $query = [], $limit = 1)
     {
         if (empty($query)) {
             return false;
         }
 
         $selectSql = '';
-        if (empty($columnName)) {
+        if (empty($fields)) {
             $selectSql = 'id, station_id, generator_id, event, event_at, creator, description';
         } else {
-            foreach ($columnName as $key) {
+            foreach ($fields as $key) {
                 $selectSql = $selectSql . $key . ', ';
             }
         }
@@ -275,17 +275,17 @@ class RecordModel extends Model
         }
     }
 
-    public function getNextByStationGIdEventsTimeStamp($columnName = [], $query = [], $limit = 1)
+    public function getNextByStationGIdEventsTimeStamp($fields = [], $query = [], $limit = 1)
     {
         if (empty($query)) {
             return false;
         }
 
         $selectSql = '';
-        if (empty($columnName)) {
+        if (empty($fields)) {
             $selectSql = 'id, station_id, generator_id, event, event_at, creator, description';
         } else {
-            foreach ($columnName as $key) {
+            foreach ($fields as $key) {
                 $selectSql = $selectSql . $key . ', ';
             }
         }

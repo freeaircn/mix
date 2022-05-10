@@ -4,18 +4,18 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-26 20:05:04
+ * @LastEditTime: 2022-05-10 21:13:50
  */
 
-namespace App\Models\Admin;
+namespace App\Models\Common;
 
 use CodeIgniter\Model;
 
 class TitleModel extends Model
 {
-    protected $DBGroup = 'mix';
+    protected $DBGroup;
+    protected $table;
 
-    protected $table         = 'app_title';
     protected $primaryKey    = 'id';
     protected $allowedFields = ['name', 'status', 'description'];
 
@@ -29,18 +29,26 @@ class TitleModel extends Model
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
 
-    public function getTitle($columnName = [])
+    public function __construct()
     {
-        $selectSQL = '';
-        if (empty($columnName)) {
-            $selectSQL = 'id, name, status, description, updated_at';
+        $config        = config('MyGlobalConfig');
+        $this->DBGroup = $config->dbName;
+        $this->table   = $config->dbPrefix . 'title';
+        parent::__construct();
+    }
+
+    public function getTitleAllRecords(array $fields = null)
+    {
+        $selectSql = '';
+        if (empty($fields)) {
+            $selectSql = 'id, name, status, description, updated_at';
         } else {
-            foreach ($columnName as $key) {
-                $selectSQL = $selectSQL . $key . ', ';
+            foreach ($fields as $key) {
+                $selectSql = $selectSql . $key . ', ';
             }
         }
 
-        $res = $this->select($selectSQL)
+        $res = $this->select($selectSql)
             ->orderBy('id', 'ASC')
             ->findAll();
 

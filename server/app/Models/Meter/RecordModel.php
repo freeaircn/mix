@@ -44,14 +44,14 @@ class RecordModel extends Model
         return $total > 0 ? true : false;
     }
 
-    public function getByStationDateTime($columnName = [], $query)
+    public function getByStationDateTime($fields = [], $query)
     {
-        if (empty($columnName)) {
+        if (empty($fields)) {
             return false;
         }
 
         $selectSql = '';
-        foreach ($columnName as $key) {
+        foreach ($fields as $key) {
             $selectSql = $selectSql . $key . ', ';
         }
         $builder = $this->select($selectSql);
@@ -139,14 +139,14 @@ class RecordModel extends Model
         }
     }
 
-    // public function sumByStationDateTimeMeterIds($columnName = [], $query = [])
+    // public function sumByStationDateTimeMeterIds($fields = [], $query = [])
     // {
-    //     if (empty($columnName)) {
+    //     if (empty($fields)) {
     //         return false;
     //     }
 
     //     $selectSql = '';
-    //     foreach ($columnName as $key) {
+    //     foreach ($fields as $key) {
     //         $selectSql = $selectSql . 'SUM(`' . $key . '`) AS sum_' . $key . ', ';
     //     }
     //     $builder = $this->select($selectSql);
@@ -161,14 +161,14 @@ class RecordModel extends Model
     //     return isset($result[0]) ? $result[0] : [];
     // }
 
-    public function getByStationDatesTimeMeters($columnName = [], $query = [])
+    public function getByStationDatesTimeMeters($fields = [], $query = [])
     {
-        if (empty($columnName)) {
+        if (empty($fields)) {
             return false;
         }
 
         $selectSql = '';
-        foreach ($columnName as $key) {
+        foreach ($fields as $key) {
             $selectSql = $selectSql . $key . ', ';
         }
         $builder = $this->select($selectSql);
@@ -183,14 +183,14 @@ class RecordModel extends Model
         return $result;
     }
 
-    public function getByStationDatesTimeMeter($columnName = [], $query = [])
+    public function getByStationDatesTimeMeter($fields = [], $query = [])
     {
-        if (empty($columnName)) {
+        if (empty($fields)) {
             return false;
         }
 
         $selectSql = '';
-        foreach ($columnName as $key) {
+        foreach ($fields as $key) {
             $selectSql = $selectSql . $key . ', ';
         }
         $builder = $this->select($selectSql);
@@ -205,14 +205,14 @@ class RecordModel extends Model
         return $result;
     }
 
-    public function getByStationDateRangeTimeMeters($columnName = [], $query = [])
+    public function getByStationDateRangeTimeMeters($fields = [], $query = [])
     {
-        if (empty($columnName)) {
+        if (empty($fields)) {
             return false;
         }
 
         $selectSql = '';
-        foreach ($columnName as $key) {
+        foreach ($fields as $key) {
             $selectSql = $selectSql . $key . ', ';
         }
         $builder = $this->select($selectSql);
@@ -227,14 +227,14 @@ class RecordModel extends Model
         return $result;
     }
 
-    public function getLastDateByStationTime($columnName = [], $query = [], $limit = 1)
+    public function getLastDateByStationTime($fields = [], $query = [], $limit = 1)
     {
-        if (empty($columnName)) {
+        if (empty($fields)) {
             return false;
         }
 
         $selectSql = '';
-        foreach ($columnName as $key) {
+        foreach ($fields as $key) {
             $selectSql = $selectSql . $key . ', ';
         }
         $builder = $this->select($selectSql);
@@ -251,14 +251,14 @@ class RecordModel extends Model
         }
     }
 
-    public function getLastDateByStationTimeMeters($columnName = [], $query = [], $limit = 1)
+    public function getLastDateByStationTimeMeters($fields = [], $query = [], $limit = 1)
     {
-        if (empty($columnName)) {
+        if (empty($fields)) {
             return false;
         }
 
         $selectSql = '';
-        foreach ($columnName as $key) {
+        foreach ($fields as $key) {
             $selectSql = $selectSql . $key . ', ';
         }
         $builder = $this->select($selectSql);
@@ -278,14 +278,14 @@ class RecordModel extends Model
     }
 
     // 2021-12-13
-    public function getLastDateByStation($columnName = [], $query = [], $limit = 1)
+    public function getLastDateByStation($fields = [], $query = [], $limit = 1)
     {
-        if (empty($columnName)) {
+        if (empty($fields)) {
             return false;
         }
 
         $selectSql = '';
-        foreach ($columnName as $key) {
+        foreach ($fields as $key) {
             $selectSql = $selectSql . $key . ', ';
         }
         $builder = $this->select($selectSql);
@@ -302,14 +302,14 @@ class RecordModel extends Model
         }
     }
 
-    public function getByStationDateRangeTime(array $columnName = [], array $query = [], int $limit = 1)
+    public function getByStationDateRangeTime(array $fields = [], array $query = [], int $limit = 1)
     {
-        if (empty($columnName)) {
+        if (empty($fields)) {
             return [];
         }
 
         $selectSql = '';
-        foreach ($columnName as $key) {
+        foreach ($fields as $key) {
             $selectSql = $selectSql . $key . ', ';
         }
         $builder = $this->select($selectSql);
@@ -341,17 +341,17 @@ class RecordModel extends Model
         return $this->where($query)->delete();
     }
 
-    public function getForRecordList(array $columnName = [], array $query = [])
+    public function getForRecordList(array $fields = [], array $query = [])
     {
         if (empty($query)) {
             return ['total' => 0, 'data' => []];
         }
 
         $selectSql = '';
-        if (empty($columnName)) {
+        if (empty($fields)) {
             $selectSql = 'id, log_date, log_time, creator';
         } else {
-            foreach ($columnName as $key) {
+            foreach ($fields as $key) {
                 $selectSql = $selectSql . $key . ', ';
             }
         }

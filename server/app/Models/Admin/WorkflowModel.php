@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-27 23:36:29
+ * @LastEditTime: 2022-05-10 22:47:58
  */
 
 namespace App\Models\Admin;
@@ -13,9 +13,9 @@ use CodeIgniter\Model;
 
 class WorkflowModel extends Model
 {
-    protected $DBGroup = 'mix';
+    protected $DBGroup;
+    protected $table;
 
-    protected $table         = 'app_workflow';
     protected $primaryKey    = 'id';
     protected $allowedFields = ['type', 'pid', 'name', 'workflow', 'method'];
 
@@ -29,9 +29,17 @@ class WorkflowModel extends Model
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
 
-    public function getByIds(array $Ids = null)
+    public function __construct()
     {
-        if (!is_array($Ids) || empty($Ids)) {
+        $config        = config('MyGlobalConfig');
+        $this->DBGroup = $config->dbName;
+        $this->table   = $config->dbPrefix . 'workflow';
+        parent::__construct();
+    }
+
+    public function getWorkflowRecordsByIds(array $Ids = null)
+    {
+        if (empty($Ids)) {
             return [];
         }
 
@@ -51,18 +59,18 @@ class WorkflowModel extends Model
         return $res;
     }
 
-    public function getWorkflow(array $columnName = [])
+    public function getWorkflowAllRecords(array $fields = null)
     {
-        if (empty($columnName)) {
-            return [];
+        $selectSql = '';
+        if (empty($fields)) {
+            $selectSql = 'id, type, pid, name, workflow, method, updated_at';
+        } else {
+            foreach ($fields as $key) {
+                $selectSql = $selectSql . $key . ', ';
+            }
         }
 
-        $selectSQL = '';
-        foreach ($columnName as $name) {
-            $selectSQL = $selectSQL . $name . ', ';
-        }
-
-        $builder = $this->select($selectSQL)->orderBy('id', 'ASC');
+        $builder = $this->select($selectSql)->orderBy('id', 'ASC');
         $data    = $builder->findAll();
 
         return $data;

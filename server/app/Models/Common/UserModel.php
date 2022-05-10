@@ -4,18 +4,18 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-01 10:00:33
+ * @LastEditTime: 2022-05-10 20:18:03
  */
 
-namespace App\Models\Admin;
+namespace App\Models\Common;
 
 use CodeIgniter\Model;
 
 class UserModel extends Model
 {
-    protected $DBGroup = 'mix';
+    protected $DBGroup;
+    protected $table;
 
-    protected $table         = 'app_user';
     protected $primaryKey    = 'id';
     protected $allowedFields = ['workID', 'username', 'sex', 'IdCard', 'phone', 'email', 'status', 'password', 'forceChgPwd', 'avatar', 'dept_ids', 'job', 'title', 'politic', 'last_login', 'ip_address'];
 
@@ -29,17 +29,191 @@ class UserModel extends Model
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
 
-    public function getUserById($id = '0')
+    public function __construct()
     {
-        if (!is_numeric($id)) {
-            return false;
+        $config        = config('MyGlobalConfig');
+        $this->DBGroup = $config->dbName;
+        $this->table   = $config->dbPrefix . 'user';
+        parent::__construct();
+    }
+
+    public function getUserAllRecords(array $fields = null)
+    {
+        if (empty($fields)) {
+            return [];
         }
 
-        $res = $this->select('id, workID, username, sex, IdCard, phone, email, status, dept_ids, job, title, politic')
-            ->where('id', $id)
+        $selectSql = '';
+        foreach ($fields as $name) {
+            $selectSql = $selectSql . $name . ', ';
+        }
+        $builder = $this->select($selectSql);
+
+        $db = $builder->findAll();
+
+        return $db;
+    }
+
+    public function getUserRecordById(array $fields = null, string $id = null)
+    {
+        if (empty($id)) {
+            return [];
+        }
+
+        if (floor($id) != $id) {
+            return [];
+        }
+
+        $selectSql = '';
+        if (empty($fields)) {
+            $selectSql = 'id, workID, username, sex, IdCard, phone, email, status, avatar, dept_ids, job, title, politic, updated_at';
+        } else {
+            foreach ($fields as $key) {
+                $selectSql = $selectSql . $key . ', ';
+            }
+        }
+
+        $builder = $this->select($selectSql);
+        $builder->where('id', $id);
+        $db = $builder->findAll();
+
+        return isset($db[0]) ? $db[0] : [];
+    }
+
+    public function getUserRecordsByIds(array $fields = null, array $ids = null)
+    {
+        if (empty($ids)) {
+            return [];
+        }
+
+        $selectSql = '';
+        if (empty($fields)) {
+            $selectSql = 'id, workID, username, sex, IdCard, phone, email, status, avatar, dept_ids, job, title, politic, updated_at';
+        } else {
+            foreach ($fields as $key) {
+                $selectSql = $selectSql . $key . ', ';
+            }
+        }
+
+        $builder = $this->select($selectSql);
+        $builder->whereIn('id', $ids);
+        $db = $builder->findAll();
+
+        return $db;
+    }
+
+    public function getUserRecordByPhone(array $fields = null, string $phone = null)
+    {
+        if (empty($phone)) {
+            return [];
+        }
+
+        if (floor($phone) != $phone) {
+            return [];
+        }
+
+        $selectSql = '';
+        if (empty($fields)) {
+            $selectSql = 'id, workID, username, sex, IdCard, phone, email, status, avatar, dept_ids, job, title, politic, updated_at';
+        } else {
+            foreach ($fields as $key) {
+                $selectSql = $selectSql . $key . ', ';
+            }
+        }
+
+        $builder = $this->select($selectSql);
+        $builder->where('phone', $phone);
+        $db = $builder->findAll();
+
+        return isset($db[0]) ? $db[0] : [];
+    }
+
+    public function getUserRecordByUsername(array $fields = null, string $username = null)
+    {
+        if (empty($username)) {
+            return [];
+        }
+
+        $selectSql = '';
+        if (empty($fields)) {
+            $selectSql = 'id, workID, username, sex, IdCard, phone, email, status, avatar, dept_ids, job, title, politic, updated_at';
+        } else {
+            foreach ($fields as $key) {
+                $selectSql = $selectSql . $key . ', ';
+            }
+        }
+
+        $builder = $this->select($selectSql);
+        $builder->where('username', $username);
+        $db = $builder->findAll();
+
+        return isset($db[0]) ? $db[0] : [];
+    }
+
+    // public function getUserByStation($fields = [], $station = '')
+    // public function getUserRecordsByStation($fields = [], $station = '')
+    // {
+    //     if (empty($fields) || empty($station)) {
+    //         return [];
+    //     }
+
+    //     $selectSql = '';
+    //     foreach ($fields as $name) {
+    //         $selectSql = $selectSql . $name . ', ';
+    //     }
+    //     $builder = $this->select($selectSql);
+
+    //     $builder->like('dept_ids', $station);
+    //     $db = $builder->findAll();
+
+    //     return $db;
+    // }
+
+    public function getUserPwdByUid(string $uid = null)
+    {
+        if (empty($uid)) {
+            return '';
+        }
+
+        if (floor($uid) != $uid) {
+            return '';
+        }
+
+        $db = $this->select('password')
+            ->where('id', $uid)
             ->findAll();
 
-        return $res;
+        return isset($db[0]) ? $db[0]['password'] : '';
+    }
+
+    public function getUserPwdByPhone(string $phone = null)
+    {
+        if (empty($phone)) {
+            return '';
+        }
+
+        if (floor($phone) != $phone) {
+            return '';
+        }
+
+        $db = $this->select('password')
+            ->where('phone', $phone)
+            ->findAll();
+
+        return isset($db[0]) ? $db[0]['password'] : '';
+    }
+
+    public function getUserPwdByEmail(string $email = null)
+    {
+        if (empty($email)) {
+            return '';
+        }
+
+        $db = $this->select('password')
+            ->where('email', $email)
+            ->findAll();
+
+        return isset($db[0]) ? $db[0]['password'] : '';
     }
 
     public function getUserByQueryParam($dept = [], $job = [], $title = [], $politic = [], $queryParam = [])
@@ -119,63 +293,44 @@ class UserModel extends Model
         return ['total' => $total, 'result' => $res];
     }
 
-    public function getUserPassword(array $whereCondition = [])
+    public function getUserEmailByPhone(string $phone = null)
     {
-        if (empty($whereCondition)) {
+        if (empty($phone)) {
             return '';
         }
 
-        $res = $this->select('password')
-            ->where($whereCondition)
-            ->findAll();
-
-        // return $res[0]['password'];
-
-        if (isset($res[0]) && isset($res[0]['password'])) {
-            return $res[0]['password'];
-        } else {
-            return '';
-        }
-    }
-
-    public function getUseEmailByPhone(string $phone = '')
-    {
-        if (!is_numeric($phone)) {
+        if (floor($phone) != $phone) {
             return '';
         }
 
-        $res = $this->select('email')
+        $db = $this->select('email')
             ->where('phone', $phone)
             ->findAll();
 
-        if (isset($res[0]) && isset($res[0]['email'])) {
-            return $res[0]['email'];
-        } else {
-            return '';
-        }
+        return isset($db[0]) ? $db[0]['email'] : '';
     }
 
-    public function getUserAvatarById($id = null)
+    public function getUserAvatarByUid(string $uid = null)
     {
-        if (!is_numeric($id)) {
-            return false;
+        if (empty($uid)) {
+            return 0;
         }
 
-        $res = $this->select('avatar')
-            ->where('id', $id)
+        if (floor($uid) != $uid) {
+            return 0;
+        }
+
+        $db = $this->select('avatar')
+            ->where('id', $uid)
             ->findAll();
 
-        if (isset($res[0]) && isset($res[0]['avatar'])) {
-            return $res[0]['avatar'];
-        } else {
-            return false;
-        }
+        return isset($db[0]) ? $db[0]['avatar'] : 0;
     }
 
-    public function newUser($data = [])
+    public function createSingleUserRecord(array $data = null)
     {
         if (empty($data)) {
-            return true;
+            return false;
         }
 
         $user       = [];
@@ -214,10 +369,10 @@ class UserModel extends Model
         }
     }
 
-    public function updateUser($data = [])
+    public function updateSingleUserRecord(array $data = [])
     {
         if (empty($data)) {
-            return true;
+            return false;
         }
 
         $user       = [];
@@ -252,9 +407,13 @@ class UserModel extends Model
         return $result;
     }
 
-    public function updateLastLoginAndIP($id = null, $ip_address = null)
+    public function updateLastLoginAndIpByUid(string $ip_address = null, string $id = null)
     {
-        if (!is_numeric($id) || $id <= 0 || !is_string($ip_address) || empty($ip_address)) {
+        if (empty($id) || empty($ip_address)) {
+            return false;
+        }
+
+        if (floor($id) != $id) {
             return false;
         }
 
@@ -266,9 +425,13 @@ class UserModel extends Model
         return $this->update($id, $data);
     }
 
-    public function updatePasswordByPhone(string $phone = null, string $password = null)
+    public function updateUserPwdByPhone(string $password = null, string $phone = null)
     {
-        if (!is_numeric($phone) || empty($password)) {
+        if (empty($phone) || empty($password)) {
+            return false;
+        }
+
+        if (floor($phone) != $phone) {
             return false;
         }
 
@@ -276,19 +439,11 @@ class UserModel extends Model
         helper('my_auth');
         $hashPassword = my_hash_password($password);
         if ($hashPassword === false) {
-            log_message('error', '{file}:{line} --> update password hash failed' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4));
             return false;
         }
 
-        // 修改密码
-        $data = [
-            'password' => $hashPassword,
-        ];
-        if ($this->where('phone', $phone)->set($data)->update()) {
-            return true;
-        } else {
-            log_message('error', '{file}:{line} --> update password db update failed' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4));
-            return false;
-        }
+        $data = ['password' => $hashPassword];
+
+        return $this->where('phone', $phone)->set($data)->update();
     }
 }

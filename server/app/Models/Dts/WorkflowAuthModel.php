@@ -29,14 +29,14 @@ class WorkflowAuthModel extends Model
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
 
-    public function get($columnName = [], $query = [])
+    public function get($fields = [], $query = [])
     {
-        if (empty($columnName)) {
+        if (empty($fields)) {
             return false;
         }
 
         $selectSql = '';
-        foreach ($columnName as $name) {
+        foreach ($fields as $name) {
             $selectSql = $selectSql . $name . ', ';
         }
         $builder = $this->select($selectSql);
@@ -47,14 +47,14 @@ class WorkflowAuthModel extends Model
         return $db;
     }
 
-    public function getByAlias($columnName = [], $query = [])
+    public function getByAlias($fields = [], $query = [])
     {
-        if (empty($columnName)) {
+        if (empty($fields)) {
             return false;
         }
 
         $selectSql = '';
-        foreach ($columnName as $name) {
+        foreach ($fields as $name) {
             $selectSql = $selectSql . $name . ', ';
         }
         $builder = $this->select($selectSql);

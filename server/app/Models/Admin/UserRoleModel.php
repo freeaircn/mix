@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-08 12:50:14
+ * @LastEditTime: 2022-05-10 22:43:03
  */
 
 namespace App\Models\Admin;
@@ -13,23 +13,24 @@ use CodeIgniter\Model;
 
 class UserRoleModel extends Model
 {
-    protected $DBGroup = 'mix';
+    protected $DBGroup;
+    protected $table;
 
-    protected $table = 'app_user_role';
-    // protected $primaryKey    = 'id';
     protected $allowedFields = ['user_id', 'role_id'];
-
-    // protected $useAutoIncrement = true;
 
     protected $returnType     = 'array';
     protected $useSoftDeletes = false;
+    protected $useTimestamps  = false;
 
-    protected $useTimestamps = false;
-    // protected $createdField  = 'created_at';
-    // protected $updatedField  = 'updated_at';
-    // protected $deletedField  = 'deleted_at';
+    public function __construct()
+    {
+        $config        = config('MyGlobalConfig');
+        $this->DBGroup = $config->dbName;
+        $this->table   = $config->dbPrefix . 'user_role';
+        parent::__construct();
+    }
 
-    public function getUserRole($uid = null)
+    public function getRoleIdByUid(string $uid = null)
     {
         if (!is_numeric($uid)) {
             return [];
@@ -48,36 +49,43 @@ class UserRoleModel extends Model
         return $res;
     }
 
-    public function newUserRole($uid = null, $role = [])
+    public function createUserRoleRecordsByUid(array $role = null, string $uid = null)
     {
         if (!(is_numeric($uid))) {
             return false;
         }
 
-        $this->where('user_id', $uid)->delete();
-
-        $num = count($role);
-        $cnt = 0;
+        $data = [];
         foreach ($role as $v) {
-            $data = [
-                'user_id' => $uid,
-                'role_id' => $v,
-            ];
-            $this->insert($data);
-            $cnt++;
+            if (is_numeric($v)) {
+                $data[] = [
+                    'user_id' => $uid,
+                    'role_id' => $v,
+                ];
+            }
         }
 
-        return ($cnt === $num) ? true : false;
+        $this->transStart();
+        $this->where('user_id', $uid)->delete();
+        if (!empty($data)) {
+            $this->insertBatch($data);
+        }
+        $this->transComplete();
+
+        if ($this->transStatus() === false) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
-    public function delUserRole($uid = null)
+    public function delUserRoleRecordByUid(string $uid = null)
     {
         if (!(is_numeric($uid))) {
             return true;
         }
 
-        $res = $this->where('user_id', $uid)->delete();
-        return $res;
+        return $this->where('user_id', $uid)->delete();
     }
 
 }

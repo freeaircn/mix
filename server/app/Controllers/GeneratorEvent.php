@@ -4,12 +4,12 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-01 16:27:15
+ * @LastEditTime: 2022-05-10 15:52:37
  */
 
 namespace App\Controllers;
 
-use App\Models\Dts\DeptModel;
+use App\Models\Common\DeptModel;
 use App\Models\Generator\Event\RecordModel;
 use CodeIgniter\API\ResponseTrait;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -338,9 +338,9 @@ class GeneratorEvent extends BaseController
             return $res;
         }
 
-        $model      = new DeptModel();
-        $columnName = ['id', 'name'];
-        $station    = $model->getByIds($columnName, $allowReadDeptId);
+        $model   = new DeptModel();
+        $fields  = ['id', 'name'];
+        $station = $model->getDeptRecordsByIds($fields, $allowReadDeptId);
 
         $res['http_status'] = 200;
         $res['data']        = ['station' => $station];
@@ -404,9 +404,9 @@ class GeneratorEvent extends BaseController
             'G3_start' => 0,
         ];
 
-        $model      = new RecordModel();
-        $columnName = ['event', 'event_at'];
-        $query      = [
+        $model  = new RecordModel();
+        $fields = ['event', 'event_at'];
+        $query  = [
             'station_id'   => $station_id,
             'generator_id' => 0,
             'year'         => $year,
@@ -416,7 +416,7 @@ class GeneratorEvent extends BaseController
         for ($i = 1; $i <= $this->genTotalNumber; $i++) {
             $query['generator_id'] = $i;
 
-            $db = $model->getByStationGenYearStartStop($columnName, $query); // 按日期排序
+            $db = $model->getByStationGenYearStartStop($fields, $query); // 按日期排序
             if (!empty($db)) {
                 $cnt = count($db);
                 for ($j = 0; $j < $months; $j++) {
@@ -557,8 +557,8 @@ class GeneratorEvent extends BaseController
 
         // 预处理-查询日期
         if (empty($params['date'])) {
-            $columnName = ['event_at'];
-            $db         = $model->getLastDateByStation($columnName, $station_id);
+            $fields = ['event_at'];
+            $db     = $model->getLastDateByStation($fields, $station_id);
             if (!isset($db['event_at'])) {
                 $res['http_status'] = 200;
                 $res['data']        = ['total' => 0, 'date' => $date, 'data' => []];
@@ -582,8 +582,8 @@ class GeneratorEvent extends BaseController
         $query['start'] = my_first_day_of_month($date);
         $query['end']   = my_last_day_of_month($date);
 
-        $columnName = ['id', 'station_id', 'generator_id', 'event', 'cause', 'event_at', 'creator', 'description'];
-        $db         = $model->getByStationGIdDateRange($columnName, $query);
+        $fields = ['id', 'station_id', 'generator_id', 'event', 'cause', 'event_at', 'creator', 'description'];
+        $db     = $model->getByStationGIdDateRange($fields, $query);
 
         $res['http_status'] = 200;
         $res['data']        = ['total' => $db['total'], 'date' => date('Y-m-d', strtotime($date)), 'data' => $db['result']];
@@ -615,8 +615,8 @@ class GeneratorEvent extends BaseController
         $spreadsheet = new Spreadsheet();
         $sheetTitle  = ['序号', '机组', '事件', '时间', '记录人', '说明'];
 
-        $columnName = ['event', 'event_at', 'creator', 'description'];
-        $query      = [
+        $fields = ['event', 'event_at', 'creator', 'description'];
+        $query  = [
             'station_id'   => $station_id,
             'year'         => substr($date, 0, 4),
             'generator_id' => 0,
@@ -626,7 +626,7 @@ class GeneratorEvent extends BaseController
         for ($GID = 1; $GID <= $this->genTotalNumber; $GID++) {
             $query['generator_id'] = $GID;
 
-            $db  = $model->getByStationDateGen($columnName, $query);
+            $db  = $model->getByStationDateGen($fields, $query);
             $cnt = count($db);
             if ($cnt > 0) {
                 $sheet  = $spreadsheet->createSheet($GID - 1)->setTitle($GID . 'G');

@@ -57,14 +57,14 @@ class DtsAttachmentModel extends Model
         return $result;
     }
 
-    public function getByDtsId(array $columnName = [], string $dts_id = null)
+    public function getByDtsId(array $fields = [], string $dts_id = null)
     {
-        if (empty($columnName) || empty($dts_id)) {
+        if (empty($fields) || empty($dts_id)) {
             return [];
         }
 
         $selectSql = '';
-        foreach ($columnName as $key) {
+        foreach ($fields as $key) {
             $selectSql = $selectSql . $key . ', ';
         }
         $builder = $this->select($selectSql);
@@ -91,14 +91,14 @@ class DtsAttachmentModel extends Model
         }
     }
 
-    public function getById(array $columnName = [], string $id = null)
+    public function getById(array $fields = [], string $id = null)
     {
-        if (empty($columnName) || empty($id)) {
+        if (empty($fields) || empty($id)) {
             return [];
         }
 
         $selectSql = '';
-        foreach ($columnName as $key) {
+        foreach ($fields as $key) {
             $selectSql = $selectSql . $key . ', ';
         }
         $builder = $this->select($selectSql);

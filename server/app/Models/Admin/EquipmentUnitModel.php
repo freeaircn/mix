@@ -29,14 +29,14 @@ class EquipmentUnitModel extends Model
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
 
-    public function get($columnName = [], $query = [])
+    public function get($fields = [], $query = [])
     {
-        if (empty($columnName)) {
+        if (empty($fields)) {
             return false;
         }
 
         $selectSql = '';
-        foreach ($columnName as $key) {
+        foreach ($fields as $key) {
             $selectSql = $selectSql . $key . ', ';
         }
         $builder = $this->select($selectSql);

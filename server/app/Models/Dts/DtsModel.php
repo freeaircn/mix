@@ -37,14 +37,14 @@ class DtsModel extends Model
         parent::__construct();
     }
 
-    public function getLastOneByCreateDate(array $columnName = null, array $query = null)
+    public function getLastOneByCreateDate(array $fields = null, array $query = null)
     {
-        if (empty($columnName) || empty($query)) {
+        if (empty($fields) || empty($query)) {
             return false;
         }
 
         $selectSql = '';
-        foreach ($columnName as $key) {
+        foreach ($fields as $key) {
             $selectSql = $selectSql . $key . ', ';
         }
         $builder = $this->select($selectSql);
@@ -69,14 +69,14 @@ class DtsModel extends Model
         return $result;
     }
 
-    public function getByLimitOffset(array $columnName = null, array $query = null)
+    public function getByLimitOffset(array $fields = null, array $query = null)
     {
-        if (empty($columnName) || empty($query)) {
+        if (empty($fields) || empty($query)) {
             return ['total' => 0, 'data' => []];
         }
 
         $selectSql = '';
-        foreach ($columnName as $key) {
+        foreach ($fields as $key) {
             $selectSql = $selectSql . $key . ', ';
         }
         $builder = $this->select($selectSql);
@@ -111,14 +111,14 @@ class DtsModel extends Model
         }
     }
 
-    public function getByDtsId(array $columnName = null, string $dts_id = null)
+    public function getByDtsId(array $fields = null, string $dts_id = null)
     {
-        if (empty($columnName) || empty($dts_id)) {
+        if (empty($fields) || empty($dts_id)) {
             return [];
         }
 
         $selectSql = '';
-        foreach ($columnName as $key) {
+        foreach ($fields as $key) {
             $selectSql = $selectSql . $key . ', ';
         }
         $builder = $this->select($selectSql);

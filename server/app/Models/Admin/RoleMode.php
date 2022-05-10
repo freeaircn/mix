@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-09-26 20:04:59
+ * @LastEditTime: 2022-05-10 22:25:37
  */
 
 namespace App\Models\Admin;
@@ -13,9 +13,9 @@ use CodeIgniter\Model;
 
 class RoleMode extends Model
 {
-    protected $DBGroup = 'mix';
+    protected $DBGroup;
+    protected $table;
 
-    protected $table         = 'app_role';
     protected $primaryKey    = 'id';
     protected $allowedFields = ['name', 'alias', 'status', 'description'];
 
@@ -29,18 +29,26 @@ class RoleMode extends Model
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
 
-    public function getRole($columnName = [])
+    public function __construct()
     {
-        $selectSQL = '';
-        if (empty($columnName)) {
-            $selectSQL = 'id, name, alias, status, description, updated_at';
+        $config        = config('MyGlobalConfig');
+        $this->DBGroup = $config->dbName;
+        $this->table   = $config->dbPrefix . 'role';
+        parent::__construct();
+    }
+
+    public function getRoleAllRecords(array $fields = null)
+    {
+        $selectSql = '';
+        if (empty($fields)) {
+            $selectSql = 'id, name, alias, status, description, updated_at';
         } else {
-            foreach ($columnName as $key) {
-                $selectSQL = $selectSQL . $key . ', ';
+            foreach ($fields as $key) {
+                $selectSql = $selectSql . $key . ', ';
             }
         }
 
-        $res = $this->select($selectSQL)
+        $res = $this->select($selectSql)
             ->orderBy('id', 'ASC')
             ->findAll();
 

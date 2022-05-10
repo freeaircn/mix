@@ -4,19 +4,18 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-29 15:24:29
+ * @LastEditTime: 2022-05-10 20:18:37
  */
 
 namespace App\Controllers;
 
 use App\Libraries\MyIdMaker;
 use App\Libraries\Workflow\Dts\WfDts;
-use App\Libraries\Workflow\Ticket;
-use App\Models\Dts\DeptModel;
+use App\Models\Common\DeptModel;
+use App\Models\Common\UserModel;
 use App\Models\Dts\DeviceModel;
 use App\Models\Dts\DtsAttachmentModel;
 use App\Models\Dts\DtsModel;
-use App\Models\Dts\UserModel;
 use CodeIgniter\API\ResponseTrait;
 use CodeIgniter\Files\Exceptions\FileException;
 
@@ -128,7 +127,7 @@ class Dts extends BaseController
         }
 
         if ($dts_id === '0') {
-            $temp = session('dtsAttachment');
+            $temp = $this->session->get('dtsAttachment');
             $time = time();
             $data = [
                 'id'      => $time,
@@ -150,8 +149,8 @@ class Dts extends BaseController
             $ext        = explode('.', $orgName);
             $attachment = [
                 'dts_id'   => $dts_id,
-                'user_id'  => session('id'),
-                'username' => session('username'),
+                'user_id'  => $this->session->get('id'),
+                'username' => $this->session->get('username'),
                 'org_name' => $orgName,
                 'new_name' => $newName,
                 'size'     => $size,
@@ -189,7 +188,7 @@ class Dts extends BaseController
         $dts_id = $client['dts_id'];
 
         if ($dts_id === '0') {
-            $temp = session('dtsAttachment');
+            $temp = $this->session->get('dtsAttachment');
             if (empty($temp)) {
                 return $this->respond(['res' => 'empty']);
             }
@@ -218,10 +217,10 @@ class Dts extends BaseController
         }
 
         if ($dts_id !== '0') {
-            $columnName = ['dts_id', 'new_name'];
+            $fields = ['dts_id', 'new_name'];
 
             $model = new DtsAttachmentModel();
-            $db    = $model->getById($columnName, $id);
+            $db    = $model->getById($fields, $id);
             if (empty($db)) {
                 return $this->respond(['res' => 'done']);
             }
@@ -255,9 +254,9 @@ class Dts extends BaseController
         $id     = $params['id'];
         $dts_id = $params['dts_id'];
 
-        $columnName = ['dts_id', 'org_name', 'new_name', 'size'];
-        $model      = new DtsAttachmentModel();
-        $db         = $model->getById($columnName, $id);
+        $fields = ['dts_id', 'org_name', 'new_name', 'size'];
+        $model  = new DtsAttachmentModel();
+        $db     = $model->getById($fields, $id);
         if (empty($db)) {
             return $this->failNotFound('附件不存在');
         }
@@ -266,13 +265,13 @@ class Dts extends BaseController
             return $this->failNotFound('附件不存在');
         }
 
-        $columnName = ['station_id'];
-        $model      = new DtsModel();
-        $db2        = $model->getByDtsId($columnName, $dts_id);
+        $fields = ['station_id'];
+        $model  = new DtsModel();
+        $db2    = $model->getByDtsId($fields, $dts_id);
         if (empty($db2)) {
             return $this->failNotFound('附件不存在');
         }
-        $allowReadDeptId = session('allowReadDeptId');
+        $allowReadDeptId = $this->session->get('allowReadDeptId');
         if (!in_array($db2['station_id'], $allowReadDeptId)) {
             return $this->failUnauthorized('用户没有权限');
         }
@@ -304,12 +303,12 @@ class Dts extends BaseController
 
         $client = $this->request->getJSON(true);
 
-        $allowWriteDeptId = session('allowWriteDeptId');
+        $allowWriteDeptId = $this->session->get('allowWriteDeptId');
         if (!in_array($client['station_id'], $allowWriteDeptId)) {
             return $this->failUnauthorized('用户没有权限');
         }
         //
-        $uid   = session('id');
+        $uid   = $this->session->get('id');
         $draft = [
             'station_id'  => $client['station_id'],
             'type'        => $client['type'],
@@ -342,7 +341,7 @@ class Dts extends BaseController
 
         // 附件
         $files        = $client['files'];
-        $files_stored = session('dtsAttachment');
+        $files_stored = $this->session->get('dtsAttachment');
         $temp         = [];
         if (!empty($files) && !empty($files_stored)) {
             foreach ($files as $c) {
@@ -359,8 +358,8 @@ class Dts extends BaseController
                 $ext           = explode('.', $t['orgName']);
                 $attachments[] = [
                     'dts_id'   => $dts_id,
-                    'user_id'  => session('id'),
-                    'username' => session('username'),
+                    'user_id'  => $this->session->get('id'),
+                    'username' => $this->session->get('username'),
                     'org_name' => $t['orgName'],
                     'new_name' => $t['newName'],
                     'size'     => $t['size'],
@@ -395,16 +394,16 @@ class Dts extends BaseController
         }
         $client = $this->request->getJSON(true);
 
-        $columnName = ['station_id', 'place_at'];
-        $dts_id     = $client['dts_id'];
+        $fields = ['station_id', 'place_at'];
+        $dts_id = $client['dts_id'];
 
         $model = new DtsModel();
-        $db    = $model->getByDtsId($columnName, $dts_id);
+        $db    = $model->getByDtsId($fields, $dts_id);
         if (empty($db)) {
             return $this->respond(['info' => 'empty']);
         }
 
-        $allowWriteDeptId = session('allowWriteDeptId');
+        $allowWriteDeptId = $this->session->get('allowWriteDeptId');
         if (!in_array($db['station_id'], $allowWriteDeptId)) {
             return $this->failUnauthorized('用户没有权限');
         }
@@ -416,9 +415,9 @@ class Dts extends BaseController
         }
 
         // 附件
-        $columnName = ['new_name'];
-        $model      = new DtsAttachmentModel();
-        $files      = $model->getByDtsId($columnName, $dts_id);
+        $fields = ['new_name'];
+        $model  = new DtsAttachmentModel();
+        $files  = $model->getByDtsId($fields, $dts_id);
         if (!empty($files)) {
             $config = config('MyGlobalConfig');
             $path   = WRITEPATH . $config->dtsAttachmentPath;
@@ -466,14 +465,14 @@ class Dts extends BaseController
                 return $this->respond(['msg' => '空白的新进展']);
             }
 
-            $model      = new DtsModel();
-            $columnName = ['id', 'dts_id', 'station_id', 'progress', 'place_at'];
-            $db         = $model->getByDtsId($columnName, $dts_id);
+            $model  = new DtsModel();
+            $fields = ['id', 'dts_id', 'station_id', 'progress', 'place_at'];
+            $db     = $model->getByDtsId($fields, $dts_id);
             if (empty($db)) {
                 return $this->fail('请求数据无效');
             }
 
-            $allowWriteDeptId = session('allowWriteDeptId');
+            $allowWriteDeptId = $this->session->get('allowWriteDeptId');
             if (!in_array($db['station_id'], $allowWriteDeptId)) {
                 return $this->failUnauthorized('用户没有权限');
             }
@@ -497,14 +496,14 @@ class Dts extends BaseController
         if ($resource === 'score') {
             $dts_id = $client['dts_id'];
 
-            $model      = new DtsModel();
-            $columnName = ['id', 'dts_id', 'station_id', 'place_at'];
-            $db         = $model->getByDtsId($columnName, $dts_id);
+            $model  = new DtsModel();
+            $fields = ['id', 'dts_id', 'station_id', 'place_at'];
+            $db     = $model->getByDtsId($fields, $dts_id);
             if (empty($db)) {
                 return $this->fail('请求数据无效');
             }
 
-            $allowWriteDeptId = session('allowWriteDeptId');
+            $allowWriteDeptId = $this->session->get('allowWriteDeptId');
             if (!in_array($db['station_id'], $allowWriteDeptId)) {
                 return $this->failUnauthorized('用户没有权限');
             }
@@ -530,9 +529,9 @@ class Dts extends BaseController
                 return $this->fail('解决意见不能空白');
             }
 
-            $model      = new DtsModel();
-            $columnName = ['id', 'dts_id', 'station_id', 'progress', 'place_at'];
-            $db         = $model->getByDtsId($columnName, $dts_id);
+            $model  = new DtsModel();
+            $fields = ['id', 'dts_id', 'station_id', 'progress', 'place_at'];
+            $db     = $model->getByDtsId($fields, $dts_id);
             if (empty($db)) {
                 return $this->fail('请求数据无效');
             }
@@ -542,8 +541,8 @@ class Dts extends BaseController
                 return $this->fail('流程不允许转到 - 解决');
             }
 
-            $allowWriteDeptId = session('allowWriteDeptId');
-            $allowWorkflow    = session('allowWorkflow');
+            $allowWriteDeptId = $this->session->get('allowWriteDeptId');
+            $allowWorkflow    = $this->session->get('allowWorkflow');
             if (!in_array($db['station_id'], $allowWriteDeptId) || !in_array('dts_resolve', $allowWorkflow)) {
                 return $this->failUnauthorized('用户没有权限');
             }
@@ -572,9 +571,9 @@ class Dts extends BaseController
                 return $this->fail('重新处理意见不能空白');
             }
 
-            $model      = new DtsModel();
-            $columnName = ['id', 'dts_id', 'station_id', 'progress', 'place_at'];
-            $db         = $model->getByDtsId($columnName, $dts_id);
+            $model  = new DtsModel();
+            $fields = ['id', 'dts_id', 'station_id', 'progress', 'place_at'];
+            $db     = $model->getByDtsId($fields, $dts_id);
             if (empty($db)) {
                 return $this->fail('请求数据无效');
             }
@@ -584,8 +583,8 @@ class Dts extends BaseController
                 return $this->fail('流程不允许转到 - 处理中');
             }
 
-            $allowWriteDeptId = session('allowWriteDeptId');
-            $allowWorkflow    = session('allowWorkflow');
+            $allowWriteDeptId = $this->session->get('allowWriteDeptId');
+            $allowWorkflow    = $this->session->get('allowWorkflow');
             if (!in_array($db['station_id'], $allowWriteDeptId) || !in_array('dts_back_work', $allowWorkflow)) {
                 return $this->failUnauthorized('用户没有权限');
             }
@@ -614,9 +613,9 @@ class Dts extends BaseController
                 return $this->fail('关闭审核意见不能空白');
             }
 
-            $model      = new DtsModel();
-            $columnName = ['id', 'dts_id', 'station_id', 'progress', 'place_at'];
-            $db         = $model->getByDtsId($columnName, $dts_id);
+            $model  = new DtsModel();
+            $fields = ['id', 'dts_id', 'station_id', 'progress', 'place_at'];
+            $db     = $model->getByDtsId($fields, $dts_id);
             if (empty($db)) {
                 return $this->fail('请求数据无效');
             }
@@ -626,8 +625,8 @@ class Dts extends BaseController
                 return $this->fail('流程不允许转到 - 关闭');
             }
 
-            $allowWriteDeptId = session('allowWriteDeptId');
-            $allowWorkflow    = session('allowWorkflow');
+            $allowWriteDeptId = $this->session->get('allowWriteDeptId');
+            $allowWorkflow    = $this->session->get('allowWorkflow');
             if (!in_array($db['station_id'], $allowWriteDeptId) || !in_array('dts_close', $allowWorkflow)) {
                 return $this->failUnauthorized('用户没有权限');
             }
@@ -651,74 +650,19 @@ class Dts extends BaseController
 
     }
 
-    public function postTicketToReview()
-    {
-        // 检查请求数据
-        if (!$this->validate('DtsToReviewPost')) {
-            $res['error'] = $this->validator->getErrors();
-
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '请求数据无效';
-            return $this->respond($res);
-        }
-
-        $client    = $this->request->getJSON(true);
-        $ticket_id = $client['ticket_id'];
-
-        $model = new TicketModel();
-
-        $columnName = ['id', 'place_at'];
-        $query      = ['ticket_id' => $ticket_id];
-        $db         = $model->getByTicketId($columnName, $query);
-
-        if (empty($db)) {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '问题单不存在';
-            return $this->respond($res);
-        }
-
-        $ticket = new Ticket($db['place_at']);
-        $wf     = new WorkflowCore();
-
-        $wf->bindTicket($ticket);
-        if ($wf->toReview() === false) {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '提交失败，稍后再试';
-            return $this->respond($res);
-        }
-
-        // $db['place_at'] = $ticket->getCurrentPlace();
-        $data = [
-            'id'       => $db['id'],
-            'place_at' => $ticket->getCurrentPlace(),
-            'reviewer' => $client['reviewer'],
-        ];
-        $result = $model->myUpdate($data);
-
-        if ($result) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '提交审核成功';
-        } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '提交失败，稍后再试';
-        }
-
-        return $this->respond($res);
-    }
-
     // Part-2
     protected function _reqSearchParams()
     {
-        $allowReadDeptId = session('allowReadDeptId');
+        $allowReadDeptId = $this->session->get('allowReadDeptId');
         if (empty($allowReadDeptId)) {
             $res['http_status'] = 200;
             $res['data']        = ['station' => [], 'workflow' => []];
             return $res;
         }
 
-        $model      = new DeptModel();
-        $columnName = ['id', 'name'];
-        $station    = $model->getByIds($columnName, $allowReadDeptId);
+        $model   = new DeptModel();
+        $fields  = ['id', 'name'];
+        $station = $model->getDeptRecordsByIds($fields, $allowReadDeptId);
 
         $wf       = new WfDts();
         $workflow = $wf->getPlaceMetaOfName();
@@ -741,7 +685,7 @@ class Dts extends BaseController
 
         $param = $this->request->getGet();
 
-        $allowReadDeptId = session('allowReadDeptId');
+        $allowReadDeptId = $this->session->get('allowReadDeptId');
         if (empty($allowReadDeptId)) {
             $res['http_status'] = 200;
             $res['data']        = ['total' => 0, 'data' => []];
@@ -778,12 +722,12 @@ class Dts extends BaseController
 
         if ($param['creator'] !== '') {
             if (preg_match('/^([\x{4e00}-\x{9fa5}]{1,6})$/u', $param['creator'])) {
-                $model      = new UserModel();
-                $columnName = ['id'];
-                $db         = $model->getByUsername($columnName, $param['creator']);
+                $model  = new UserModel();
+                $fields = ['id'];
+                $db     = $model->getUserRecordByUsername($fields, $param['creator']);
 
-                if (count($db) === 1) {
-                    $query['creator_id'] = $db[0]['id'];
+                if (!empty($db)) {
+                    $query['creator_id'] = $db['id'];
                 } else {
                     $res['http_status'] = 200;
                     $res['data']        = ['total' => 0, 'data' => []];
@@ -811,10 +755,10 @@ class Dts extends BaseController
         $query['status'] = 'publish';
         $query['limit']  = $param['limit'];
         $query['offset'] = $param['offset'];
-        $columnName      = ['id', 'dts_id', 'station_id', 'type', 'title', 'level', 'place_at', 'created_at', 'updated_at', 'creator_id'];
+        $fields          = ['id', 'dts_id', 'station_id', 'type', 'title', 'level', 'place_at', 'created_at', 'updated_at', 'creator_id'];
 
         $model = new DtsModel();
-        $db    = $model->getByLimitOffset($columnName, $query);
+        $db    = $model->getByLimitOffset($fields, $query);
 
         if ($db['total'] === 0) {
             $res['http_status'] = 200;
@@ -833,14 +777,14 @@ class Dts extends BaseController
 
     protected function _reqNewForm()
     {
-        $allowWriteDeptId = session('allowWriteDeptId');
+        $allowWriteDeptId = $this->session->get('allowWriteDeptId');
         if (empty($allowWriteDeptId)) {
             $res['http_status'] = 401;
             $res['msg']         = '用户没有权限';
             return $res;
         }
 
-        $station_id = session('allowDefaultDeptId');
+        $station_id = $this->session->get('allowDefaultDeptId');
         if (!in_array($station_id, $allowWriteDeptId)) {
             $res['http_status'] = 401;
             $res['msg']         = '用户没有权限';
@@ -855,8 +799,8 @@ class Dts extends BaseController
         }
 
         $model       = new DeptModel();
-        $columnName  = ['id', 'name'];
-        $station     = $model->getByIds($columnName, $allowWriteDeptId);
+        $fields      = ['id', 'name'];
+        $station     = $model->getDeptRecordsByIds($fields, $allowWriteDeptId);
         $description = $this->progressTemplates['new_form'];
 
         $res['http_status'] = 200;
@@ -881,7 +825,7 @@ class Dts extends BaseController
         $params     = $this->request->getGet();
         $station_id = $params['station_id'];
 
-        $allowWriteDeptId = session('allowWriteDeptId');
+        $allowWriteDeptId = $this->session->get('allowWriteDeptId');
         if (!in_array($station_id, $allowWriteDeptId)) {
             $res['http_status'] = 401;
             $res['msg']         = '用户没有权限';
@@ -914,16 +858,16 @@ class Dts extends BaseController
         $params = $this->request->getGet();
         $dts_id = $params['dts_id'];
 
-        $columnName = ['dts_id', 'type', 'title', 'level', 'station_id', 'place_at', 'device', 'description', 'progress', 'created_at', 'updated_at', 'creator_id', 'reviewer_id', 'score', 'score_desc', 'scored_by'];
-        $model      = new DtsModel();
-        $db         = $model->getByDtsId($columnName, $dts_id);
+        $fields = ['dts_id', 'type', 'title', 'level', 'station_id', 'place_at', 'device', 'description', 'progress', 'created_at', 'updated_at', 'creator_id', 'reviewer_id', 'score', 'score_desc', 'scored_by'];
+        $model  = new DtsModel();
+        $db     = $model->getByDtsId($fields, $dts_id);
         if (empty($db)) {
             $res['http_status'] = 404;
             $res['msg']         = '没有找到请求的数据';
             return $res;
         }
 
-        $allowReadDeptId = session('allowReadDeptId');
+        $allowReadDeptId = $this->session->get('allowReadDeptId');
         if (!in_array($db['station_id'], $allowReadDeptId)) {
             $res['http_status'] = 401;
             $res['msg']         = '用户没有权限';
@@ -969,17 +913,17 @@ class Dts extends BaseController
         }
         $list = [];
 
-        $model      = new DeviceModel();
-        $columnName = ['id', 'pid', 'name'];
-        $query      = ['id >' => 1];
-        $list       = $model->get($columnName, $query);
+        $model  = new DeviceModel();
+        $fields = ['id', 'pid', 'name'];
+        $query  = ['id >' => 1];
+        $list   = $model->get($fields, $query);
 
         return $list;
     }
 
     protected function _getContentHeadTpl()
     {
-        return date('Y-m-d H:i', time()) . ' ' . session('username') . "\n";
+        return date('Y-m-d H:i', time()) . ' ' . $this->session->get('username') . "\n";
     }
 
     protected function _getUserNameAndWorkflowName(array $array = null)
@@ -988,9 +932,9 @@ class Dts extends BaseController
             return [];
         }
 
-        $model      = new UserModel();
-        $columnName = ['id', 'username', 'status'];
-        $users      = $model->getUsers($columnName);
+        $model  = new UserModel();
+        $fields = ['id', 'username', 'status'];
+        $users  = $model->getUserAllRecords($fields);
 
         $wf = new WfDts();
 
@@ -1018,9 +962,9 @@ class Dts extends BaseController
             return [];
         }
 
-        $model      = new DeptModel();
-        $columnName = ['id', 'name', 'status'];
-        $dept       = $model->getDept($columnName);
+        $model  = new DeptModel();
+        $fields = ['id', 'name', 'status'];
+        $dept   = $model->getDeptAllRecords($fields);
 
         $cnt = count($array);
         for ($i = 0; $i < $cnt; $i++) {
@@ -1040,9 +984,9 @@ class Dts extends BaseController
             return '';
         }
 
-        $model      = new DeptModel();
-        $columnName = ['id', 'name', 'status'];
-        $dept       = $model->getDept($columnName);
+        $model  = new DeptModel();
+        $fields = ['id', 'name', 'status'];
+        $dept   = $model->getDeptAllRecords($fields);
 
         $name = '';
         foreach ($dept as $d) {
@@ -1067,9 +1011,9 @@ class Dts extends BaseController
             $result[$key] = '';
         }
 
-        $model      = new UserModel();
-        $columnName = ['id', 'username', 'status'];
-        $users      = $model->getByIds($columnName, $ids);
+        $model  = new UserModel();
+        $fields = ['id', 'username', 'status'];
+        $users  = $model->getUserRecordsByIds($fields, $ids);
 
         if (empty($users)) {
             return $result;
@@ -1094,10 +1038,10 @@ class Dts extends BaseController
         $array = explode("+", trim($keys, '+'));
         $res   = '';
         if (!empty($array)) {
-            $model      = new DeviceModel();
-            $columnName = ['id', 'name'];
-            $query      = ['ids' => $array];
-            $devices    = $model->getByIds($columnName, $query);
+            $model   = new DeviceModel();
+            $fields  = ['id', 'name'];
+            $query   = ['ids' => $array];
+            $devices = $model->getByIds($fields, $query);
 
             if (!empty($devices)) {
                 $text = '';
@@ -1193,7 +1137,7 @@ class Dts extends BaseController
         $result['showRmvAttachmentIcon'] = isset($ops['showRmvAttachmentIcon']) ? $ops['showRmvAttachmentIcon'] : false;
 
         if ($this->session->has('allowWorkflow')) {
-            $allowWorkflow        = session('allowWorkflow');
+            $allowWorkflow        = $this->session->get('allowWorkflow');
             $result['allowScore'] = in_array('dts_score', $allowWorkflow) ? true : false;
 
             if ($wf->canResolve()) {
@@ -1218,9 +1162,9 @@ class Dts extends BaseController
             return [];
         }
 
-        $columnName = ['id', 'org_name'];
-        $model      = new DtsAttachmentModel();
-        $files      = $model->getByDtsId($columnName, $dts_id);
+        $fields = ['id', 'org_name'];
+        $model  = new DtsAttachmentModel();
+        $files  = $model->getByDtsId($fields, $dts_id);
 
         $attachments = [];
         foreach ($files as $f) {

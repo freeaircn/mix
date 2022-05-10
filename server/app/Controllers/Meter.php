@@ -4,12 +4,12 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-01 17:31:17
+ * @LastEditTime: 2022-05-10 15:52:42
  */
 
 namespace App\Controllers;
 
-use App\Models\Admin\DeptModel;
+use App\Models\Common\DeptModel;
 use App\Models\Meter\PlanKWhModel;
 use App\Models\Meter\RecordModel;
 use CodeIgniter\API\ResponseTrait;
@@ -406,9 +406,9 @@ class Meter extends BaseController
 
         // 预处理-查询日期
         if (empty($params['date'])) {
-            $query2     = ['station_id' => $query['station_id']];
-            $columnName = ['log_date'];
-            $db         = $model->getLastDateByStation($columnName, $query2);
+            $query2 = ['station_id' => $query['station_id']];
+            $fields = ['log_date'];
+            $db     = $model->getLastDateByStation($fields, $query2);
             if (!isset($db['log_date'])) {
                 $res['http_status'] = 200;
                 $res['data']        = ['total' => 0, 'date' => $date, 'data' => []];
@@ -433,8 +433,8 @@ class Meter extends BaseController
         $query['start'] = my_first_day_of_month($date);
         $query['end']   = my_last_day_of_month($date);
 
-        $columnName = ['id', 'station_id', 'log_date', 'log_time', 'creator'];
-        $db         = $model->getForRecordList($columnName, $query);
+        $fields = ['id', 'station_id', 'log_date', 'log_time', 'creator'];
+        $db     = $model->getForRecordList($fields, $query);
 
         $res['http_status'] = 200;
         $res['data']        = ['date' => date('Y-m-d', strtotime($date)), 'total' => $db['total'], 'data' => $db['data']];
@@ -467,9 +467,9 @@ class Meter extends BaseController
             'log_time'   => $params['log_time'],
         ];
 
-        $model      = new RecordModel();
-        $columnName = ['meter_id', 'fak', 'bak', 'frk', 'brk', 'peak', 'valley'];
-        $db         = $model->getByStationDateTime($columnName, $query);
+        $model  = new RecordModel();
+        $fields = ['meter_id', 'fak', 'bak', 'frk', 'brk', 'peak', 'valley'];
+        $db     = $model->getByStationDateTime($fields, $query);
 
         // 指定日期+时间的记录不存在
         if (empty($db)) {
@@ -577,7 +577,7 @@ class Meter extends BaseController
 
             //
             $model       = new DeptModel();
-            $db          = $model->getById([], $station_id);
+            $db          = $model->getDeptRecordById([], $station_id);
             $stationName = isset($db['name']) ? $db['name'] : '电厂';
 
             // 简报
@@ -665,9 +665,9 @@ class Meter extends BaseController
         $query['start_at'] = my_first_day_of_year($date);
         $query['end_at']   = my_last_day_of_year($date);
 
-        $model      = new RecordModel();
-        $columnName = ['log_date'];
-        $db         = $model->getByStationDateRangeTime($columnName, $query);
+        $model  = new RecordModel();
+        $fields = ['log_date'];
+        $db     = $model->getByStationDateRangeTime($fields, $query);
         if (!isset($db['log_date'])) {
             $res['http_status'] = 200;
             return $res;
@@ -794,8 +794,8 @@ class Meter extends BaseController
             'log_time'   => $log_time,
             'meter_id'   => $meter_ids,
         ];
-        $columnName = ['log_date', 'meter_id', 'fak'];
-        $db3        = $model->getLastDateByStationTimeMeters($columnName, $query, count($meter_ids));
+        $fields = ['log_date', 'meter_id', 'fak'];
+        $db3    = $model->getLastDateByStationTimeMeters($fields, $query, count($meter_ids));
 
         $log_date = $db3[0]['log_date'];
 
@@ -907,8 +907,8 @@ class Meter extends BaseController
             'log_time'   => $log_time,
             'meter_id'   => $meter_id,
         ];
-        $columnName = ['log_date, fak'];
-        $db         = $model->getByStationDatesTimeMeter($columnName, $query2);
+        $fields = ['log_date, fak'];
+        $db     = $model->getByStationDatesTimeMeter($fields, $query2);
         if (empty($db)) {
             return ['yearData' => $yearData, 'monthData' => $monthData];
         }
@@ -1080,10 +1080,10 @@ class Meter extends BaseController
             'first_meter_id' => $this->mainMeterId,
             'last_meter_id'  => $this->lastGenMeterId,
         ];
-        $columnName = ['log_date', 'meter_id', 'fak'];
+        $fields = ['log_date', 'meter_id', 'fak'];
 
         $model = new RecordModel();
-        $db    = $model->getByStationDateRangeTimeMeters($columnName, $query2);
+        $db    = $model->getByStationDateRangeTimeMeters($fields, $query2);
         if (empty($db)) {
             return $res;
         }
@@ -1169,10 +1169,10 @@ class Meter extends BaseController
             'log_time'   => $log_time,
             'meter_id'   => $meter_ids,
         ];
-        $columnName = ['log_date', 'meter_id', 'fak', 'bak'];
+        $fields = ['log_date', 'meter_id', 'fak', 'bak'];
 
         $model = new RecordModel();
-        $db    = $model->getByStationDatesTimeMeters($columnName, $query2);
+        $db    = $model->getByStationDatesTimeMeters($fields, $query2);
         if (empty($db)) {
             return $res;
         }
@@ -1262,10 +1262,10 @@ class Meter extends BaseController
             'log_time'   => $log_time,
             'meter_id'   => $meter_ids,
         ];
-        $columnName = ['log_date', 'meter_id', 'fak'];
+        $fields = ['log_date', 'meter_id', 'fak'];
 
         $model = new RecordModel();
-        $db    = $model->getByStationDatesTimeMeters($columnName, $query2);
+        $db    = $model->getByStationDatesTimeMeters($fields, $query2);
         if (empty($db)) {
             return $res;
         }
@@ -1359,14 +1359,14 @@ class Meter extends BaseController
         // 查询给定日期：表读数，峰谷电量
         $model = new RecordModel();
 
-        $columnName = ['meter_id', 'log_date', 'fak', 'frk', 'brk', 'peak', 'valley'];
-        $query2     = [
+        $fields = ['meter_id', 'log_date', 'fak', 'frk', 'brk', 'peak', 'valley'];
+        $query2 = [
             'station_id' => $station_id,
             'log_date'   => $dates,
             'log_time'   => $log_time,
             'meter_id'   => $meter_ids,
         ];
-        $db = $model->getByStationDatesTimeMeters($columnName, $query2);
+        $db = $model->getByStationDatesTimeMeters($fields, $query2);
         if (empty($db)) {
             return $res;
         }
@@ -1495,14 +1495,14 @@ class Meter extends BaseController
         // 查询给定日期：表读数，正向有功
         $model = new RecordModel();
 
-        $columnName = ['log_date', 'fak'];
-        $query2     = [
+        $fields = ['log_date', 'fak'];
+        $query2 = [
             'station_id' => $station_id,
             'log_date'   => $dates,
             'log_time'   => $log_time,
             'meter_id'   => $meter_ids,
         ];
-        $db = $model->getByStationDatesTimeMeters($columnName, $query2);
+        $db = $model->getByStationDatesTimeMeters($fields, $query2);
         if (empty($db)) {
             return $res;
         }

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-09 10:13:28
+ * @LastEditTime: 2022-05-10 21:21:59
  */
 
 namespace App\Models\Admin;
@@ -13,9 +13,9 @@ use CodeIgniter\Model;
 
 class ApiModel extends Model
 {
-    protected $DBGroup = 'mix';
+    protected $DBGroup;
+    protected $table;
 
-    protected $table         = 'app_api';
     protected $primaryKey    = 'id';
     protected $allowedFields = ['type', 'pid', 'title', 'api', 'method'];
 
@@ -29,13 +29,30 @@ class ApiModel extends Model
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
 
-    public function getByIds(array $Ids = null)
+    public function __construct()
     {
-        if (!is_array($Ids) || empty($Ids)) {
+        $config        = config('MyGlobalConfig');
+        $this->DBGroup = $config->dbName;
+        $this->table   = $config->dbPrefix . 'api';
+        parent::__construct();
+    }
+
+    public function getApiRecordsByIds(array $fields = null, array $Ids = null)
+    {
+        if (empty($Ids)) {
             return [];
         }
 
-        $db = $this->select('api, method')
+        $selectSql = '';
+        if (empty($fields)) {
+            $selectSql = 'id, type, pid, title, api, method, updated_at';
+        } else {
+            foreach ($fields as $key) {
+                $selectSql = $selectSql . $key . ', ';
+            }
+        }
+
+        $db = $this->select($selectSql)
             ->where('type', '2')
             ->whereIn('id', $Ids)
             ->orderBy('id', 'ASC')
@@ -51,14 +68,18 @@ class ApiModel extends Model
         return $res;
     }
 
-    public function getApis($columnName = [])
+    public function getApiAllRecords(array $fields = null)
     {
-        $selectSQL = '';
-        foreach ($columnName as $name) {
-            $selectSQL = $selectSQL . $name . ', ';
+        $selectSql = '';
+        if (empty($fields)) {
+            $selectSql = 'id, type, pid, title, api, method, updated_at';
+        } else {
+            foreach ($fields as $key) {
+                $selectSql = $selectSql . $key . ', ';
+            }
         }
 
-        $builder = $this->select($selectSQL)->orderBy('id', 'ASC');
+        $builder = $this->select($selectSql)->orderBy('id', 'ASC');
         $data    = $builder->findAll();
 
         return $data;

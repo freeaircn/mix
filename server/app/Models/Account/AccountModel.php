@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-01 10:02:14
+ * @LastEditTime: 2022-05-08 10:19:33
  */
 
 namespace App\Models\Account;
@@ -34,7 +34,7 @@ class AccountModel extends Model
     //     helper('my_auth');
     // }
 
-    public function updateUserInfo($data = [])
+    public function updateUserSetting(array $data = null)
     {
         if (empty($data)) {
             return true;

@@ -4,18 +4,18 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-11-01 20:35:58
+ * @LastEditTime: 2022-05-10 21:10:34
  */
 
-namespace App\Models\Account;
+namespace App\Models\Common;
 
 use CodeIgniter\Model;
 
 class PoliticModel extends Model
 {
-    protected $DBGroup = 'mix';
+    protected $DBGroup;
+    protected $table;
 
-    protected $table         = 'app_politic';
     protected $primaryKey    = 'id';
     protected $allowedFields = ['name', 'status', 'description'];
 
@@ -29,21 +29,29 @@ class PoliticModel extends Model
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
 
-    public function getPolitic($columnName = [])
+    public function __construct()
     {
-        $selectSQL = '';
-        if (empty($columnName)) {
-            $selectSQL = 'id, name, status, description, updated_at';
+        $config        = config('MyGlobalConfig');
+        $this->DBGroup = $config->dbName;
+        $this->table   = $config->dbPrefix . 'politic';
+        parent::__construct();
+    }
+
+    public function getPoliticAllRecords(array $fields = null)
+    {
+        $selectSql = '';
+        if (empty($fields)) {
+            $selectSql = 'id, name, status, description, updated_at';
         } else {
-            foreach ($columnName as $key) {
-                $selectSQL = $selectSQL . $key . ', ';
+            foreach ($fields as $key) {
+                $selectSql = $selectSql . $key . ', ';
             }
         }
 
-        $res = $this->select($selectSQL)
+        $db = $this->select($selectSql)
             ->orderBy('id', 'ASC')
             ->findAll();
 
-        return $res;
+        return $db;
     }
 }

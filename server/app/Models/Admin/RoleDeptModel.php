@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-14 09:54:36
+ * @LastEditTime: 2022-05-10 22:15:07
  */
 
 namespace App\Models\Admin;
@@ -13,9 +13,9 @@ use CodeIgniter\Model;
 
 class RoleDeptModel extends Model
 {
-    protected $DBGroup = 'mix';
+    protected $DBGroup;
+    protected $table;
 
-    protected $table         = 'app_role_dept';
     protected $allowedFields = ['role_id', 'dept_id', 'data_writable', 'is_default'];
 
     protected $returnType     = 'array';
@@ -23,13 +23,30 @@ class RoleDeptModel extends Model
 
     protected $useTimestamps = false;
 
-    public function getByRoleId(string $role_id = null)
+    public function __construct()
+    {
+        $config        = config('MyGlobalConfig');
+        $this->DBGroup = $config->dbName;
+        $this->table   = $config->dbPrefix . 'role_dept';
+        parent::__construct();
+    }
+
+    public function getDeptIdByRoleId(array $fields = null, string $role_id = null)
     {
         if (!is_numeric($role_id)) {
             return [];
         }
 
-        $res = $this->select('dept_id')
+        $selectSql = '';
+        if (empty($fields)) {
+            $selectSql = 'role_id, dept_id, data_writable, is_default';
+        } else {
+            foreach ($fields as $key) {
+                $selectSql = $selectSql . $key . ', ';
+            }
+        }
+
+        $res = $this->select($selectSql)
             ->where('role_id', $role_id)
             ->orderBy('dept_id', 'ASC')
             ->findAll();
@@ -37,23 +54,9 @@ class RoleDeptModel extends Model
         return $res;
     }
 
-    public function getByRoleId2(string $role_id = null)
+    public function getDeptRecordsByRoleIds(array $roleIds = null)
     {
-        if (!is_numeric($role_id)) {
-            return [];
-        }
-
-        $res = $this->select('role_id, dept_id, data_writable, is_default')
-            ->where('role_id', $role_id)
-            ->orderBy('dept_id', 'ASC')
-            ->findAll();
-
-        return $res;
-    }
-
-    public function getByRoleIdsForAuth(array $roleIds = null)
-    {
-        if (!is_array($roleIds) || empty($roleIds)) {
+        if (empty($roleIds)) {
             return [];
         }
 
@@ -72,53 +75,28 @@ class RoleDeptModel extends Model
         // return array_unique($res);
     }
 
-    public function saveRoleDept($role_id = null, $dept = [])
-    {
-        if (!is_numeric($role_id)) {
-            return false;
-        }
-
-        $this->transStart();
-        $this->where('role_id', $role_id)->delete();
-        foreach ($dept as $v) {
-            if (is_numeric($v)) {
-                $data = [
-                    'role_id' => $role_id,
-                    'dept_id' => $v,
-                ];
-                $this->insert($data);
-                unset($data);
-            }
-        }
-        $this->transComplete();
-
-        if ($this->transStatus() === false) {
-            return false;
-        } else {
-            return true;
-        }
-    }
-
     public function updateRoleDept(string $role_id = null, array $delete = [], array $add = [])
     {
         if (!is_numeric($role_id)) {
             return false;
         }
 
+        $data = [];
+        foreach ($add as $v) {
+            if (is_numeric($v)) {
+                $data[] = [
+                    'role_id' => $role_id,
+                    'dept_id' => $v,
+                ];
+            }
+        }
+
         $this->transStart();
         foreach ($delete as $d) {
             $this->where('role_id', $role_id)->where('dept_id', $d)->delete();
         }
-
-        foreach ($add as $v) {
-            if (is_numeric($v)) {
-                $data = [
-                    'role_id' => $role_id,
-                    'dept_id' => $v,
-                ];
-                $this->insert($data);
-                unset($data);
-            }
+        if (!empty($data)) {
+            $this->insertBatch($data);
         }
         $this->transComplete();
 
@@ -131,19 +109,38 @@ class RoleDeptModel extends Model
 
     public function setRoleDept(string $role_id = null, string $dept_id = null, array $data = [])
     {
-        if (!is_numeric($role_id) || !is_numeric($role_id) || empty($data)) {
+        if (!is_numeric($role_id) || !is_numeric($dept_id) || empty($data)) {
             return false;
         }
 
-        $this->transStart();
-        $this->where('role_id', $role_id)->where('dept_id', $dept_id)->set($data)->update();
-        $this->transComplete();
-
-        if ($this->transStatus() === false) {
-            return false;
-        } else {
-            return true;
-        }
+        return $this->where('role_id', $role_id)->where('dept_id', $dept_id)->set($data)->update();
     }
+
+    // public function saveRoleDept($role_id = null, $dept = [])
+    // {
+    //     if (!is_numeric($role_id)) {
+    //         return false;
+    //     }
+
+    //     $this->transStart();
+    //     $this->where('role_id', $role_id)->delete();
+    //     foreach ($dept as $v) {
+    //         if (is_numeric($v)) {
+    //             $data = [
+    //                 'role_id' => $role_id,
+    //                 'dept_id' => $v,
+    //             ];
+    //             $this->insert($data);
+    //             unset($data);
+    //         }
+    //     }
+    //     $this->transComplete();
+
+    //     if ($this->transStatus() === false) {
+    //         return false;
+    //     } else {
+    //         return true;
+    //     }
+    // }
 
 }

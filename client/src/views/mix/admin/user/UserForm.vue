@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-24 19:10:38
+ * @LastEditTime: 2022-05-10 16:09:37
 -->
 <template>
   <!-- hidden PageHeaderWrapper title demo -->
@@ -205,7 +205,7 @@ export default {
             this.roleOptions.splice(0)
             this.roleOptions = res[4].data.slice(0)
             //
-            const user = res[5].data[0]
+            const user = res[5].data
             //
             const role = res[6].data.slice(0)
             // 合并数据

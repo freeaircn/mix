@@ -32,14 +32,14 @@ class DtsMetaModel extends Model
         parent::__construct();
     }
 
-    public function getLastOneByCreateDate($columnName = [], $query = [])
+    public function getLastOneByCreateDate($fields = [], $query = [])
     {
-        if (empty($columnName) || empty($query)) {
+        if (empty($fields) || empty($query)) {
             return false;
         }
 
         $selectSql = '';
-        foreach ($columnName as $key) {
+        foreach ($fields as $key) {
             $selectSql = $selectSql . $key . ', ';
         }
         $builder = $this->select($selectSql);
@@ -62,11 +62,11 @@ class DtsMetaModel extends Model
 
         // 单号
         // $time       = time();
-        // $columnName = ['dts_id'];
+        // $fields = ['dts_id'];
         // $query      = ['created_at' => date('Y-m-d', $time)];
 
         $this->transStart();
-        // $db = $this->getLastOneByCreateDate($columnName, $query);
+        // $db = $this->getLastOneByCreateDate($fields, $query);
         // if (empty($db)) {
         //     $draft['dts_id'] = date('ymd', $time) . substr('00000001', -$ticketIdTailLength);
         // } else {
@@ -83,14 +83,14 @@ class DtsMetaModel extends Model
         }
     }
 
-    public function getByLimitOffset($columnName = [], $query = [])
+    public function getByLimitOffset($fields = [], $query = [])
     {
-        if (empty($columnName) || empty($query)) {
+        if (empty($fields) || empty($query)) {
             return ['total' => 0, 'data' => []];
         }
 
         $selectSql = '';
-        foreach ($columnName as $key) {
+        foreach ($fields as $key) {
             $selectSql = $selectSql . $key . ', ';
         }
         $builder = $this->select($selectSql);
@@ -125,14 +125,14 @@ class DtsMetaModel extends Model
         }
     }
 
-    public function getByDtsId($columnName = [], $query = [])
+    public function getByDtsId($fields = [], $query = [])
     {
-        if (empty($columnName) || empty($query)) {
+        if (empty($fields) || empty($query)) {
             return [];
         }
 
         $selectSql = '';
-        foreach ($columnName as $key) {
+        foreach ($fields as $key) {
             $selectSql = $selectSql . $key . ', ';
         }
         $builder = $this->select($selectSql);
@@ -155,8 +155,8 @@ class DtsMetaModel extends Model
 
         $this->transStart();
 
-        $columnName = ['id', 'progress'];
-        $db         = $this->getByDtsId($columnName, ['dts_id' => $dts_id]);
+        $fields = ['id', 'progress'];
+        $db     = $this->getByDtsId($fields, ['dts_id' => $dts_id]);
         if (empty($db)) {
             return false;
         }

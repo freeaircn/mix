@@ -4,18 +4,18 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-01 10:42:28
+ * @LastEditTime: 2022-05-10 20:34:05
  */
 
-namespace App\Models\Admin;
+namespace App\Models\Common;
 
 use CodeIgniter\Model;
 
 class AvatarModel extends Model
 {
-    protected $DBGroup = 'mix';
+    protected $DBGroup;
+    protected $table;
 
-    protected $table         = 'app_user_avatar';
     protected $primaryKey    = 'id';
     protected $allowedFields = ['name', 'path', 'size'];
 
@@ -29,20 +29,32 @@ class AvatarModel extends Model
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
 
-    public function getAvatarPathAndNameById($id = null)
+    public function __construct()
     {
-        if (!is_numeric($id)) {
+        $config        = config('MyGlobalConfig');
+        $this->DBGroup = $config->dbName;
+        $this->table   = $config->dbPrefix . 'user_avatar';
+        parent::__construct();
+    }
+
+    public function getAvatarPathAndNameById(string $id = null)
+    {
+        if (empty($id)) {
             return [];
         }
 
-        $res = $this->select('name, path')
+        if (floor($id) != $id) {
+            return [];
+        }
+
+        $db = $this->select('name, path')
             ->where('id', $id)
             ->findAll();
 
-        return isset($res[0]) ? $res[0] : [];
+        return isset($db[0]) ? $db[0] : [];
     }
 
-    public function newDefaultAvatarBySex(string $sex = '')
+    public function newDefaultAvatarBySex(string $sex = null)
     {
         if (empty($sex)) {
             return false;
@@ -54,18 +66,20 @@ class AvatarModel extends Model
                 'path' => $config->defaultAvatarPath,
                 'name' => $config->defaultAvatarMale,
             ];
-        } else {
+        } else if ($sex == '女') {
             $data = [
                 'path' => $config->defaultAvatarPath,
                 'name' => $config->defaultAvatarFemale,
             ];
+        } else {
+            return false;
         }
 
         return $this->insert($data);
 
     }
 
-    public function updateAvatarById($id = null, string $path = '', string $name = '')
+    public function updateAvatarById(string $path = null, string $name = null, string $id = null)
     {
         if (!is_numeric($id) || empty($path) || empty($name)) {
             return false;
@@ -79,7 +93,7 @@ class AvatarModel extends Model
         return $this->update($id, $data);
     }
 
-    public function deleteAvatarById($id = null)
+    public function deleteAvatarById(string $id = null)
     {
         if (!is_numeric($id)) {
             return false;

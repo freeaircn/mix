@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-12 11:25:47
+ * @LastEditTime: 2022-05-10 22:33:54
  */
 
 namespace App\Models\Admin;
@@ -13,9 +13,9 @@ use CodeIgniter\Model;
 
 class RoleWorkflowModel extends Model
 {
-    protected $DBGroup = 'mix';
+    protected $DBGroup;
+    protected $table;
 
-    protected $table         = 'app_role_workflow';
     protected $allowedFields = ['role_id', 'wf_id'];
 
     protected $returnType     = 'array';
@@ -23,7 +23,15 @@ class RoleWorkflowModel extends Model
 
     protected $useTimestamps = false;
 
-    public function getByRoleId(string $role_id = null)
+    public function __construct()
+    {
+        $config        = config('MyGlobalConfig');
+        $this->DBGroup = $config->dbName;
+        $this->table   = $config->dbPrefix . 'role_workflow';
+        parent::__construct();
+    }
+
+    public function getWfIdByRoleId(string $role_id = null)
     {
         if (!is_numeric($role_id)) {
             return [];
@@ -37,9 +45,9 @@ class RoleWorkflowModel extends Model
         return $res;
     }
 
-    public function getByRoleIdsForAuth(array $roleIds = null)
+    public function getWfIdByRoleIds(array $roleIds = null)
     {
-        if (!is_array($roleIds) || empty($roleIds)) {
+        if (empty($roleIds)) {
             return [];
         }
 
@@ -57,23 +65,26 @@ class RoleWorkflowModel extends Model
         return array_unique($res);
     }
 
-    public function saveRoleWorkflow(string $role_id = null, array $wf = [])
+    public function saveRoleWorkflowRecordsByRoleId(array $wf = null, string $role_id = null)
     {
         if (!is_numeric($role_id)) {
             return false;
         }
 
-        $this->transStart();
-        $this->where('role_id', $role_id)->delete();
+        $data = [];
         foreach ($wf as $v) {
             if (is_numeric($v)) {
-                $data = [
+                $data[] = [
                     'role_id' => $role_id,
                     'wf_id'   => $v,
                 ];
-                $this->insert($data);
-                unset($data);
             }
+        }
+
+        $this->transStart();
+        $this->where('role_id', $role_id)->delete();
+        if (!empty($data)) {
+            $this->insertBatch($data);
         }
         $this->transComplete();
 

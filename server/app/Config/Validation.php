@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-01 17:16:24
+ * @LastEditTime: 2022-05-09 14:25:16
  */
 
 namespace Config;
@@ -26,7 +26,7 @@ class Validation
      */
     public $AuthLogin = [
         'phone'    => 'required|regex_match[/^[1][3,4,5,7,8][0-9]{9}$/]',
-        'password' => 'required|alpha_numeric',
+        'password' => 'required',
     ];
 
     public $AuthSMS = [
@@ -36,10 +36,10 @@ class Validation
     public $AuthResetPassword = [
         'phone'    => 'required|regex_match[/^[1][3,4,5,7,8][0-9]{9}$/]',
         'code'     => 'required|regex_match[^[1-9]\d{4}$]',
-        'password' => 'required|alpha_numeric',
+        'password' => 'required',
     ];
 
-    // /u 表示按unicode(utf-8)匹配（主要针对多字节比如汉字）
+    // /u 表示按unicode(utf-8)匹配（多字节比如汉字）
     // 女 Unicode编码16进制 5973
     // 男 Unicode编码16进制 7537
     public $AccountUpdateBasicSetting = [

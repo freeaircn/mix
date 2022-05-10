@@ -29,14 +29,14 @@ class EquipmentUnitModel extends Model
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
 
-    public function get($columnName = [], $query = [])
+    public function get($fields = [], $query = [])
     {
-        if (empty($columnName)) {
+        if (empty($fields)) {
             return false;
         }
 
         $selectSql = '';
-        foreach ($columnName as $key) {
+        foreach ($fields as $key) {
             $selectSql = $selectSql . $key . ', ';
         }
         $builder = $this->select($selectSql);
@@ -48,14 +48,14 @@ class EquipmentUnitModel extends Model
         return $res;
     }
 
-    public function getByIds($columnName = [], $query = [])
+    public function getByIds($fields = [], $query = [])
     {
-        if (empty($columnName) || empty($query)) {
+        if (empty($fields) || empty($query)) {
             return [];
         }
 
         $selectSql = '';
-        foreach ($columnName as $key) {
+        foreach ($fields as $key) {
             $selectSql = $selectSql . $key . ', ';
         }
         $builder = $this->select($selectSql);

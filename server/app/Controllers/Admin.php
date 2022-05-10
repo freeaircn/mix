@@ -4,27 +4,27 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-12 21:56:28
+ * @LastEditTime: 2022-05-10 22:43:51
  */
 
 namespace App\Controllers;
 
 use App\Models\Admin\ApiModel;
-use App\Models\Admin\AvatarModel;
-use App\Models\Admin\DeptModel;
 use App\Models\Admin\EquipmentUnitModel;
-use App\Models\Admin\JobModel;
-use App\Models\Admin\MenuModel;
-use App\Models\Admin\PoliticModel;
 use App\Models\Admin\RoleApiModel;
 use App\Models\Admin\RoleDeptModel;
 use App\Models\Admin\RoleMenuModel;
 use App\Models\Admin\RoleMode;
 use App\Models\Admin\RoleWorkflowModel;
-use App\Models\Admin\TitleModel;
-use App\Models\Admin\UserModel;
 use App\Models\Admin\UserRoleModel;
 use App\Models\Admin\WorkflowModel;
+use App\Models\Common\AvatarModel;
+use App\Models\Common\DeptModel;
+use App\Models\Common\JobModel;
+use App\Models\Common\MenuModel;
+use App\Models\Common\PoliticModel;
+use App\Models\Common\TitleModel;
+use App\Models\Common\UserModel;
 use CodeIgniter\API\ResponseTrait;
 
 class Admin extends BaseController
@@ -35,11 +35,9 @@ class Admin extends BaseController
     public function getRole()
     {
         $model  = new RoleMode();
-        $result = $model->getRole();
+        $result = $model->getRoleAllRecords();
 
-        $res['code'] = EXIT_SUCCESS;
         $res['data'] = ['data' => $result];
-
         return $this->respond($res);
     }
 
@@ -51,15 +49,12 @@ class Admin extends BaseController
         $result = $model->insert($client);
 
         if (is_numeric($result)) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '完成添加！';
+            $res['msg']  = '已添加';
             $res['data'] = ['id' => $result];
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '添加失败，稍后再试！';
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
-
-        return $this->respond($res);
     }
 
     public function updateRole()
@@ -70,14 +65,11 @@ class Admin extends BaseController
         $result = $model->save($client);
 
         if ($result) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '完成修改！';
+            $res['msg'] = '已修改';
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '修改失败，稍后再试！';
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
-
-        return $this->respond($res);
     }
 
     public function delRole()
@@ -88,14 +80,11 @@ class Admin extends BaseController
         $result = $model->delete($client['id']);
 
         if ($result === true) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '完成删除！';
+            $res['msg'] = '已删除';
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '删除失败，稍后再试！';
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
-
-        return $this->respond($res);
     }
 
     // 菜单
@@ -105,16 +94,14 @@ class Admin extends BaseController
 
         $model = new MenuModel();
         if (isset($params['any']) && $params['any'] === 'any') {
-            $columnName = ['id', 'pid', 'title'];
+            $fields = ['id', 'pid', 'title'];
         } else {
-            $columnName = ['id', 'pid', 'title', 'path', 'redirect', 'name', 'component', 'hidden', 'hideChildrenInMenu', 'meta_hidden', 'icon', 'keepAlive', 'hiddenHeaderContent', 'permission', 'target', 'updated_at'];
+            $fields = ['id', 'pid', 'title', 'path', 'redirect', 'name', 'component', 'hidden', 'hideChildrenInMenu', 'meta_hidden', 'icon', 'keepAlive', 'hiddenHeaderContent', 'permission', 'target', 'updated_at'];
 
         }
-        $result = $model->getMenus($columnName);
+        $result = $model->getMenuAllRecords($fields);
 
-        $res['code'] = EXIT_SUCCESS;
         $res['data'] = ['data' => $result];
-
         return $this->respond($res);
     }
 
@@ -126,15 +113,12 @@ class Admin extends BaseController
         $result = $model->insert($client);
 
         if (is_numeric($result)) {
-            $res['code'] = EXIT_SUCCESS;
             $res['msg']  = '已添加';
             $res['data'] = ['id' => $result];
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '添加失败，稍后再试';
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
-
-        return $this->respond($res);
     }
 
     public function updateMenu()
@@ -145,14 +129,11 @@ class Admin extends BaseController
         $result = $model->save($client);
 
         if ($result) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '已修改';
+            $res['msg'] = '已修改';
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '修改失败，稍后再试';
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
-
-        return $this->respond($res);
     }
 
     public function delMenu()
@@ -163,26 +144,21 @@ class Admin extends BaseController
         $result = $model->delete($client['id']);
 
         if ($result === true) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '已删除';
+            $res['msg'] = '已删除';
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '删除失败，稍后再试';
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
-
-        return $this->respond($res);
     }
 
     // API
     public function getApi()
     {
-        $model      = new ApiModel();
-        $columnName = ['id', 'type', 'pid', 'title', 'api', 'method', 'updated_at'];
-        $result     = $model->getApis($columnName);
+        $model  = new ApiModel();
+        $fields = ['id', 'type', 'pid', 'title', 'api', 'method', 'updated_at'];
+        $result = $model->getApiAllRecords($fields);
 
-        $res['code'] = EXIT_SUCCESS;
         $res['data'] = ['data' => $result];
-
         return $this->respond($res);
     }
 
@@ -194,15 +170,12 @@ class Admin extends BaseController
         $result = $model->insert($client);
 
         if (is_numeric($result)) {
-            $res['code'] = EXIT_SUCCESS;
             $res['msg']  = '已添加';
             $res['data'] = ['id' => $result];
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '添加失败，稍后再试';
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
-
-        return $this->respond($res);
     }
 
     public function updateApi()
@@ -213,14 +186,11 @@ class Admin extends BaseController
         $result = $model->save($client);
 
         if ($result) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '已修改';
+            $res['msg'] = '已修改';
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '修改失败，稍后再试';
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
-
-        return $this->respond($res);
     }
 
     public function delApi()
@@ -231,26 +201,21 @@ class Admin extends BaseController
         $result = $model->delete($client['id']);
 
         if ($result === true) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '已删除';
+            $res['msg'] = '已删除';
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '删除失败，稍后再试';
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
-
-        return $this->respond($res);
     }
 
     // Workflow
     public function getWorkflow()
     {
-        $model      = new WorkflowModel();
-        $columnName = ['id', 'type', 'pid', 'name', 'workflow', 'method', 'updated_at'];
-        $result     = $model->getWorkflow($columnName);
+        $model  = new WorkflowModel();
+        $fields = ['id', 'type', 'pid', 'name', 'workflow', 'method', 'updated_at'];
+        $result = $model->getWorkflowAllRecords($fields);
 
-        $res['code'] = EXIT_SUCCESS;
         $res['data'] = ['data' => $result];
-
         return $this->respond($res);
     }
 
@@ -262,15 +227,12 @@ class Admin extends BaseController
         $result = $model->insert($client);
 
         if (is_numeric($result)) {
-            $res['code'] = EXIT_SUCCESS;
             $res['msg']  = '已添加';
             $res['data'] = ['id' => $result];
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '添加失败，稍后再试';
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
-
-        return $this->respond($res);
     }
 
     public function updateWorkflow()
@@ -281,14 +243,11 @@ class Admin extends BaseController
         $result = $model->save($client);
 
         if ($result) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '已修改';
+            $res['msg'] = '已修改';
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '修改失败，稍后再试';
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
-
-        return $this->respond($res);
     }
 
     public function delWorkflow()
@@ -299,14 +258,12 @@ class Admin extends BaseController
         $result = $model->delete($client['id']);
 
         if ($result === true) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '已删除';
+            $res['msg'] = '已删除';
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '删除失败，稍后再试';
+            return $this->failServerError('服务器处理发生错误，稍候再试');
+            $res['msg'] = '删除失败，稍后再试';
         }
-
-        return $this->respond($res);
     }
 
     // 角色-权限
@@ -317,11 +274,9 @@ class Admin extends BaseController
         $role_id = $client['role_id'];
 
         $model  = new RoleMenuModel();
-        $result = $model->getMenuByRole($role_id);
+        $result = $model->getMenuIdByRoleId($role_id);
 
-        $res['code'] = EXIT_SUCCESS;
         $res['data'] = ['data' => $result];
-
         return $this->respond($res);
     }
 
@@ -333,17 +288,14 @@ class Admin extends BaseController
         $menus   = $client['menus'];
 
         $model  = new RoleMenuModel();
-        $result = $model->saveRoleMenu($role_id, $menus);
+        $result = $model->saveRoleMenuRecordsByRoleId($menus, $role_id);
 
         if ($result === true) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '权限已更新';
+            $res['msg'] = '权限已更新';
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '权限配置失败，稍后再试';
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
-
-        return $this->respond($res);
     }
 
     public function getRoleApi()
@@ -353,11 +305,9 @@ class Admin extends BaseController
         $role_id = $client['role_id'];
 
         $model  = new RoleApiModel();
-        $result = $model->getByRoleId($role_id);
+        $result = $model->getApiIdByRoleId($role_id);
 
-        $res['code'] = EXIT_SUCCESS;
         $res['data'] = ['data' => $result];
-
         return $this->respond($res);
     }
 
@@ -369,17 +319,14 @@ class Admin extends BaseController
         $api     = $client['api'];
 
         $model  = new RoleApiModel();
-        $result = $model->saveRoleApi($role_id, $api);
+        $result = $model->saveRoleApiRecordsByRoleId($api, $role_id);
 
         if ($result === true) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '权限已更新';
+            $res['msg'] = '权限已更新';
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '权限配置失败，稍后再试';
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
-
-        return $this->respond($res);
     }
 
     public function getRoleDept()
@@ -391,20 +338,22 @@ class Admin extends BaseController
         $result = [];
         if (!isset($client['method'])) {
             $model  = new RoleDeptModel();
-            $result = $model->getByRoleId($role_id);
+            $fields = ['dept_id'];
+            $result = $model->getDeptIdByRoleId($fields, $role_id);
         }
 
         if (isset($client['method']) && $client['method'] === 'set') {
-            $model  = new RoleDeptModel();
-            $result = $model->getByRoleId2($role_id);
-            $deptId = [];
+            $model   = new RoleDeptModel();
+            $fields  = ['role_id', 'dept_id', 'data_writable', 'is_default'];
+            $result  = $model->getDeptIdByRoleId($fields, $role_id);
+            $deptIds = [];
             foreach ($result as $r) {
-                $deptId[] = $r['dept_id'];
+                $deptIds[] = $r['dept_id'];
             }
 
-            $model      = new DeptModel();
-            $columnName = ['id', 'name'];
-            $dept       = $model->getByIds($columnName, $deptId);
+            $model  = new DeptModel();
+            $fields = ['id', 'name'];
+            $dept   = $model->getDeptRecordsByIds($fields, $deptIds);
 
             foreach ($result as $key => $r) {
                 foreach ($dept as $d) {
@@ -415,9 +364,7 @@ class Admin extends BaseController
             }
         }
 
-        $res['code'] = EXIT_SUCCESS;
         $res['data'] = ['data' => $result];
-
         return $this->respond($res);
     }
 
@@ -429,9 +376,10 @@ class Admin extends BaseController
             $role_id = $client['role_id'];
             $new     = $client['dept'];
             //
-            $model = new RoleDeptModel();
-            $db    = $model->getByRoleId($role_id);
-            $old   = [];
+            $model  = new RoleDeptModel();
+            $fields = ['dept_id'];
+            $db     = $model->getDeptIdByRoleId($fields, $role_id);
+            $old    = [];
             foreach ($db as $value) {
                 $old[] = $value['dept_id'];
             }
@@ -479,14 +427,11 @@ class Admin extends BaseController
         }
 
         if ($result === true) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '权限已更新';
+            $res['msg'] = '权限已更新';
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '权限配置失败，稍后再试';
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
-
-        return $this->respond($res);
     }
 
     public function getRoleWorkflow()
@@ -496,11 +441,9 @@ class Admin extends BaseController
         $role_id = $client['role_id'];
 
         $model  = new RoleWorkflowModel();
-        $result = $model->getByRoleId($role_id);
+        $result = $model->getWfIdByRoleId($role_id);
 
-        $res['code'] = EXIT_SUCCESS;
         $res['data'] = ['data' => $result];
-
         return $this->respond($res);
     }
 
@@ -512,17 +455,14 @@ class Admin extends BaseController
         $workflow = $client['workflow'];
 
         $model  = new RoleWorkflowModel();
-        $result = $model->saveRoleWorkflow($role_id, $workflow);
+        $result = $model->saveRoleWorkflowRecordsByRoleId($workflow, $role_id);
 
         if ($result === true) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '权限已更新';
+            $res['msg'] = '权限已更新';
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '权限配置失败，稍后再试';
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
-
-        return $this->respond($res);
     }
 
     // 部门
@@ -530,17 +470,15 @@ class Admin extends BaseController
     {
         $queryParam = $this->request->getGet();
 
-        if (isset($queryParam['columnName'])) {
-            $model       = new DeptModel();
-            $result      = $model->getDept($queryParam['columnName']);
-            $res['data'] = ['data' => $result];
-        } else {
-            $model       = new DeptModel();
-            $result      = $model->getDept();
-            $res['data'] = ['data' => $result];
-        }
-
-        $res['code'] = EXIT_SUCCESS;
+        // if (isset($queryParam['columnName'])) {
+        //     $model       = new DeptModel();
+        //     $result      = $model->getDeptAllRecords($queryParam['columnName']);
+        //     $res['data'] = ['data' => $result];
+        // } else {
+        $model       = new DeptModel();
+        $result      = $model->getDeptAllRecords();
+        $res['data'] = ['data' => $result];
+        // }
 
         return $this->respond($res);
     }
@@ -553,15 +491,12 @@ class Admin extends BaseController
         $result = $model->insert($client);
 
         if (is_numeric($result)) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '完成添加！';
+            $res['msg']  = '已添加';
             $res['data'] = ['id' => $result];
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '添加失败，稍后再试！';
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
-
-        return $this->respond($res);
     }
 
     public function updateDept()
@@ -572,14 +507,11 @@ class Admin extends BaseController
         $result = $model->save($client);
 
         if ($result) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '完成修改！';
+            $res['msg'] = '已修改';
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '修改失败，稍后再试！';
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
-
-        return $this->respond($res);
     }
 
     public function delDept()
@@ -590,25 +522,20 @@ class Admin extends BaseController
         $result = $model->delete($client['id']);
 
         if ($result === true) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '完成删除！';
+            $res['msg'] = '已删除';
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '删除失败，稍后再试！';
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
-
-        return $this->respond($res);
     }
 
     // 岗位
     public function getJob()
     {
         $model  = new JobModel();
-        $result = $model->getJob();
+        $result = $model->getJobAllRecords();
 
-        $res['code'] = EXIT_SUCCESS;
         $res['data'] = ['data' => $result];
-
         return $this->respond($res);
     }
 
@@ -620,15 +547,12 @@ class Admin extends BaseController
         $result = $model->insert($client);
 
         if (is_numeric($result)) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '完成添加！';
+            $res['msg']  = '已添加';
             $res['data'] = ['id' => $result];
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '添加失败，稍后再试！';
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
-
-        return $this->respond($res);
     }
 
     public function updateJob()
@@ -639,14 +563,11 @@ class Admin extends BaseController
         $result = $model->save($client);
 
         if ($result) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '完成修改！';
+            $res['msg'] = '已修改';
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '修改失败，稍后再试！';
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
-
-        return $this->respond($res);
     }
 
     public function delJob()
@@ -657,25 +578,20 @@ class Admin extends BaseController
         $result = $model->delete($client['id']);
 
         if ($result === true) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '完成删除！';
+            $res['msg'] = '已删除';
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '删除失败，稍后再试！';
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
-
-        return $this->respond($res);
     }
 
     // 职称
     public function getTitle()
     {
         $model  = new TitleModel();
-        $result = $model->getTitle();
+        $result = $model->getTitleAllRecords();
 
-        $res['code'] = EXIT_SUCCESS;
         $res['data'] = ['data' => $result];
-
         return $this->respond($res);
     }
 
@@ -687,15 +603,12 @@ class Admin extends BaseController
         $result = $model->insert($client);
 
         if (is_numeric($result)) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '完成添加！';
+            $res['msg']  = '已添加';
             $res['data'] = ['id' => $result];
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '添加失败，稍后再试！';
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
-
-        return $this->respond($res);
     }
 
     public function updateTitle()
@@ -706,14 +619,11 @@ class Admin extends BaseController
         $result = $model->save($client);
 
         if ($result) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '完成修改！';
+            $res['msg'] = '已修改';
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '修改失败，稍后再试！';
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
-
-        return $this->respond($res);
     }
 
     public function delTitle()
@@ -724,25 +634,20 @@ class Admin extends BaseController
         $result = $model->delete($client['id']);
 
         if ($result === true) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '完成删除！';
+            $res['msg'] = '已删除';
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '删除失败，稍后再试！';
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
-
-        return $this->respond($res);
     }
 
     // 政治面貌
     public function getPolitic()
     {
         $model  = new PoliticModel();
-        $result = $model->getPolitic();
+        $result = $model->getPoliticAllRecords();
 
-        $res['code'] = EXIT_SUCCESS;
         $res['data'] = ['data' => $result];
-
         return $this->respond($res);
     }
 
@@ -754,15 +659,12 @@ class Admin extends BaseController
         $result = $model->insert($client);
 
         if (is_numeric($result)) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '完成添加！';
+            $res['msg']  = '已添加';
             $res['data'] = ['id' => $result];
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '添加失败，稍后再试！';
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
-
-        return $this->respond($res);
     }
 
     public function updatePolitic()
@@ -773,14 +675,11 @@ class Admin extends BaseController
         $result = $model->save($client);
 
         if ($result) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '完成修改！';
+            $res['msg'] = '已修改';
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '修改失败，稍后再试！';
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
-
-        return $this->respond($res);
     }
 
     public function delPolitic()
@@ -791,39 +690,36 @@ class Admin extends BaseController
         $result = $model->delete($client['id']);
 
         if ($result === true) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '完成删除！';
+            $res['msg'] = '已删除';
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '删除失败，稍后再试！';
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
-
-        return $this->respond($res);
     }
 
     // 用户
     public function getUser()
     {
-        $queryParam = $this->request->getGet();
+        $params = $this->request->getGet();
 
         // 1 由uid查询单个用户信息
-        if (isset($queryParam['uid'])) {
+        if (isset($params['uid'])) {
+            $fields = ['id', 'workID', 'username', 'sex', 'IdCard', 'phone', 'email', 'status', 'dept_ids', 'job', 'title', 'politic'];
             $model  = new UserModel();
-            $result = $model->getUserById($queryParam['uid']);
+            $db     = $model->getUserRecordById($fields, $params['uid']);
 
-            $result[0]['department'] = explode("+", trim($result[0]['dept_ids'], '+'));
-            unset($result[0]['dept_ids']);
+            if (isset($db['dept_ids'])) {
+                $db['department'] = explode("+", trim($db['dept_ids'], '+'));
+                unset($db['dept_ids']);
+            }
 
-            $res['code'] = EXIT_SUCCESS;
-            $res['data'] = ['data' => $result];
-
+            $res['data'] = ['data' => $db];
             return $this->respond($res);
         }
 
         // 2 组合多条件查询：用户名、状态、部门
-        $result = $this->getUserList($queryParam);
+        $result = $this->getUserList($params);
 
-        $res['code'] = EXIT_SUCCESS;
         $res['data'] = ['total' => $result['total'], 'data' => $result['result']];
 
         return $this->respond($res);
@@ -847,41 +743,33 @@ class Admin extends BaseController
         // 默认头像
         $avatarModel = new AvatarModel();
         $avatarId    = $avatarModel->newDefaultAvatarBySex($user['sex']);
-        if (!is_numeric($avatarId)) {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '添加失败，稍后再试！';
-            $res['err']  = 'avatar';
-            return $this->respond($res);
+        if ($avatarId === false) {
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
         $user['avatar'] = $avatarId;
 
         // 写入user数据表
         $model = new UserModel();
-        $uid   = $model->newUser($user);
+        $uid   = $model->createSingleUser($user);
 
         // 写入role数据表
         if (is_numeric($uid)) {
             $model2 = new UserRoleModel();
-            $result = $model2->newUserRole($uid, $role);
+            $result = $model2->createSingleUserRecord($uid, $role);
         } else {
             // 头像 db表，回退
             $avatarModel->deleteAvatarById($avatarId);
 
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '添加失败，稍后再试！';
-            return $this->respond($res);
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
 
         if ($result) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '完成添加！';
+            $res['msg']  = '已添加';
             $res['data'] = ['id' => $uid];
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '添加失败，稍后再试！';
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
-
-        return $this->respond($res);
     }
 
     public function updateUser()
@@ -899,28 +787,21 @@ class Admin extends BaseController
             }
         }
 
-        $model = new UserModel();
-        $uid   = $model->updateUser($user);
-
-        if ($uid) {
-            $model2 = new UserRoleModel();
-            $result = $model2->newUserRole($user['id'], $role);
-        } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '修改失败，稍后再试！';
-            return $this->respond($res);
+        $model  = new UserModel();
+        $result = $model->updateSingleUserRecord($user);
+        if ($result === false) {
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
+
+        $model2 = new UserRoleModel();
+        $result = $model2->createUserRoleRecordsByUid($role, $user['id']);
 
         if ($result) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '完成修改！';
-            $res['data'] = ['id' => $uid];
+            $res['msg'] = '已修改';
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '修改失败，稍后再试！';
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
-
-        return $this->respond($res);
     }
 
     public function delUser()
@@ -934,39 +815,38 @@ class Admin extends BaseController
             $result3 = false;
             // 删除user-role表
             $model1  = new UserRoleModel();
-            $result1 = $model1->delUserRole($id);
+            $result1 = $model1->delUserRoleRecordByUid($id);
 
             // 删除user表
             if ($result1 === true) {
                 $model2   = new UserModel();
-                $avatarId = $model2->getUserAvatarById($id);
+                $avatarId = $model2->getUserAvatarByUid($id);
                 $result2  = $model2->delete($id);
             }
 
             // 删除头像
-            if ($result2 === true && $avatarId !== false) {
+            if ($result2 === true && $avatarId !== 0) {
                 $model3 = new AvatarModel();
                 $avatar = $model3->getAvatarPathAndNameById($avatarId);
                 // 删除文件
-                if (strpos($avatar['path'], 'default') === false) {
-                    $absolutePath = WRITEPATH . '../public/avatar/user/';
-                    unlink($absolutePath . $avatar['name']);
+                if (!empty($avatar)) {
+                    if (strpos($avatar['path'], 'default') === false) {
+                        $absolutePath = WRITEPATH . '../public/avatar/user/';
+                        unlink($absolutePath . $avatar['name']);
+                    }
+                    $result3 = $model3->deleteAvatarById($avatarId);
                 }
-                $result3 = $model3->deleteAvatarById($avatarId);
             }
 
             if ($result1 === true && $result2 === true) {
-                $res['code'] = EXIT_SUCCESS;
-                $res['msg']  = '完成删除！';
+                $res['msg'] = '已删除';
+                return $this->respond($res);
             } else {
-                $res['code'] = EXIT_ERROR;
-                $res['msg']  = '删除失败，稍后再试！';
+                return $this->failServerError('服务器处理发生错误，稍候再试');
             }
         } else {
-            $res['code'] = EXIT_SUCCESS;
+            return $this->respond([]);
         }
-
-        return $this->respond($res);
     }
 
     // 用户-角色
@@ -976,16 +856,9 @@ class Admin extends BaseController
         $uid = isset($tmp['uid']) ? $tmp['uid'] : '0';
 
         $model  = new UserRoleModel();
-        $result = $model->getUserRole($uid);
+        $result = $model->getRoleIdByUid($uid);
 
-        if ($result) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['data'] = ['data' => $result];
-        } else {
-            $res['code'] = EXIT_SUCCESS;
-            $res['data'] = ['data' => []];
-        }
-
+        $res['data'] = ['data' => $result];
         return $this->respond($res);
     }
 
@@ -996,7 +869,7 @@ class Admin extends BaseController
 
         $model = new EquipmentUnitModel();
 
-        $columnName = ['id', 'pid', 'name', 'description', 'updated_at'];
+        $fields = ['id', 'pid', 'name', 'description', 'updated_at'];
 
         if (isset($params['select'])) {
             $query = [
@@ -1008,17 +881,14 @@ class Admin extends BaseController
             ];
         }
 
-        $result = $model->get($columnName, $query);
+        $result = $model->get($fields, $query);
 
         if (empty($result)) {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '请稍后查询';
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         } else {
-            $res['code'] = EXIT_SUCCESS;
             $res['data'] = $result;
+            return $this->respond($res);
         }
-
-        return $this->respond($res);
     }
 
     public function newEquipmentUnit()
@@ -1029,14 +899,11 @@ class Admin extends BaseController
         $result = $model->insert($client);
 
         if (is_numeric($result)) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '新建成功';
+            $res['msg'] = '新建成功';
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '新建失败，稍后再试';
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
-
-        return $this->respond($res);
     }
 
     public function updateEquipmentUnit()
@@ -1047,14 +914,11 @@ class Admin extends BaseController
         $result = $model->save($client);
 
         if ($result) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '修改成功';
+            $res['msg'] = '已修改';
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '修改失败，稍后再试';
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
-
-        return $this->respond($res);
     }
 
     public function deleteEquipmentUnit()
@@ -1065,30 +929,27 @@ class Admin extends BaseController
         $result = $model->delete($client['id']);
 
         if ($result === true) {
-            $res['code'] = EXIT_SUCCESS;
-            $res['msg']  = '已删除';
+            $res['msg'] = '已删除';
+            return $this->respond($res);
         } else {
-            $res['code'] = EXIT_ERROR;
-            $res['msg']  = '删除失败，稍后再试';
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
-
-        return $this->respond($res);
     }
 
-    // 内部方法
+    // Part - 2
     protected function getUserList($queryParam = [])
     {
         $deptModel = new DeptModel();
-        $dept      = $deptModel->getDept(['id', 'name']);
+        $dept      = $deptModel->getDeptAllRecords(['id', 'name']);
 
         $jobModel = new JobModel();
-        $job      = $jobModel->getJob(['id', 'name']);
+        $job      = $jobModel->getJobAllRecords(['id', 'name']);
 
         $titleModel = new titleModel();
-        $title      = $titleModel->getTitle(['id', 'name']);
+        $title      = $titleModel->getTitleAllRecords(['id', 'name']);
 
         $politicModel = new politicModel();
-        $politic      = $politicModel->getPolitic(['id', 'name']);
+        $politic      = $politicModel->getPoliticAllRecords(['id', 'name']);
 
         $model  = new UserModel();
         $result = $model->getUserByQueryParam($dept, $job, $title, $politic, $queryParam);
