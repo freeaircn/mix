@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-10 15:52:42
+ * @LastEditTime: 2022-05-11 11:01:07
  */
 
 namespace App\Controllers;
@@ -356,7 +356,7 @@ class Meter extends BaseController
 
         // 与库中的数据比较
         $model = new PlanKWhModel();
-        $db    = $model->getByStationYearMonth($query);
+        $db    = $model->getKwhPlanRecordsByStationYearMonth($client['station_id'], $client['year'], $client['month']);
         if ($id !== $db[0]['id']) {
             $res['info']  = 'conflict with DB';
             $res['error'] = '请求数据无效';
@@ -364,7 +364,7 @@ class Meter extends BaseController
         }
 
         // 修改
-        $result = $model->doSave($data);
+        $result = $model->updateKwhPlanRecord($data);
         if ($result) {
             $res['msg'] = '完成修改';
             return $this->respond($res);
@@ -528,11 +528,8 @@ class Meter extends BaseController
         $log_time = $params['log_time'];
 
         // 查询年计划、月成交量
-        $query = [
-            'station_id' => $station_id,
-            'year'       => date('Y', strtotime($log_date)),
-        ];
-        $planAndDeal = $this->_getPlanAndDealForStatisticChart($query);
+        // $year        = date('Y', strtotime($log_date));
+        $planAndDeal = $this->_getPlanAndDealForStatisticChart($station_id, date('Y', strtotime($log_date)));
 
         $query = [
             'station_id' => $station_id,
@@ -623,11 +620,9 @@ class Meter extends BaseController
             return $res;
         }
 
-        $query['station_id'] = $station_id;
-        $query['year']       = substr($date, 0, 4);
-
+        $year  = substr($date, 0, 4);
         $model = new PlanKWhModel();
-        $db    = $model->getByStationYear($query);
+        $db    = $model->getKwhPlanRecordsByStationYear($station_id, $year);
 
         $res['http_status'] = 200;
         $res['data']        = ['data' => $db];
@@ -676,11 +671,8 @@ class Meter extends BaseController
         $log_date = $db['log_date'];
 
         // 查询计划、成交
-        $query = [
-            'station_id' => $station_id,
-            'year'       => date('Y', strtotime($log_date)),
-        ];
-        $planAndDeal = $this->_getPlanAndDealForStatisticChart($query);
+        // $year        = date('Y', strtotime($log_date));
+        $planAndDeal = $this->_getPlanAndDealForStatisticChart($station_id, date('Y', strtotime($log_date)));
 
         $query = [
             'station_id' => $station_id,
@@ -983,7 +975,7 @@ class Meter extends BaseController
 
     }
 
-    protected function _getPlanAndDealForStatisticChart($query)
+    protected function _getPlanAndDealForStatisticChart(string $station_id = null, string $year = null)
     {
         // 初值
         $month = [];
@@ -1009,7 +1001,7 @@ class Meter extends BaseController
 
         //
         $model = new PlanKWhModel();
-        $db    = $model->getByStationYear($query);
+        $db    = $model->getKwhPlanRecordsByStationYear($station_id, $year);
 
         if (empty($db)) {
             return [

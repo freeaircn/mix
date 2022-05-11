@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-01 15:39:35
+ * @LastEditTime: 2022-05-11 10:05:52
  */
 
 namespace App\Models\Meter;
@@ -13,9 +13,9 @@ use CodeIgniter\Model;
 
 class RecordModel extends Model
 {
-    protected $DBGroup = 'mix';
+    protected $DBGroup;
+    protected $table;
 
-    protected $table         = 'app_meter';
     protected $primaryKey    = 'id';
     protected $allowedFields = ['station_id', 'meter_id', 'log_date', 'log_time', 'fak', 'bak', 'frk', 'brk', 'peak', 'valley', 'creator'];
 
@@ -28,6 +28,14 @@ class RecordModel extends Model
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
+
+    public function __construct()
+    {
+        $config        = config('MyGlobalConfig');
+        $this->DBGroup = $config->dbName;
+        $this->table   = $config->dbPrefix . 'meter';
+        parent::__construct();
+    }
 
     public function hasSameLogByStationAndDateTime($station_id, $log_date = '', $log_time = '')
     {

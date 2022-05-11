@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-08 10:19:33
+ * @LastEditTime: 2022-05-11 10:00:39
  */
 
 namespace App\Models\Account;
@@ -13,9 +13,9 @@ use CodeIgniter\Model;
 
 class AccountModel extends Model
 {
-    protected $DBGroup = 'mix';
+    protected $DBGroup;
+    protected $table;
 
-    protected $table         = 'app_user';
     protected $primaryKey    = 'id';
     protected $allowedFields = ['workID', 'username', 'sex', 'IdCard', 'phone', 'email', 'status', 'password', 'forceChgPwd', 'avatar', 'dept_ids', 'job', 'title', 'politic', 'last_login', 'ip_address'];
 
@@ -29,10 +29,13 @@ class AccountModel extends Model
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
 
-    // public function __construct()
-    // {
-    //     helper('my_auth');
-    // }
+    public function __construct()
+    {
+        $config        = config('MyGlobalConfig');
+        $this->DBGroup = $config->dbName;
+        $this->table   = $config->dbPrefix . 'user';
+        parent::__construct();
+    }
 
     public function updateUserSetting(array $data = null)
     {

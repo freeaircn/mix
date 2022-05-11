@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-01 09:25:13
+ * @LastEditTime: 2022-05-11 10:06:11
  */
 
 namespace App\Models;
@@ -13,9 +13,9 @@ use CodeIgniter\Model;
 
 class SmsCodeModel extends Model
 {
-    protected $DBGroup = 'mix';
+    protected $DBGroup;
+    protected $table;
 
-    protected $table         = 'app_sms_code';
     protected $primaryKey    = 'id';
     protected $allowedFields = ['phone', 'code'];
 
@@ -28,6 +28,14 @@ class SmsCodeModel extends Model
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
+
+    public function __construct()
+    {
+        $config        = config('MyGlobalConfig');
+        $this->DBGroup = $config->dbName;
+        $this->table   = $config->dbPrefix . 'sms_code';
+        parent::__construct();
+    }
 
     public function newSmsCodeByPhone(string $phone = null)
     {

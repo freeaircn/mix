@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-30 01:08:22
+ * @LastEditTime: 2022-05-11 10:04:52
  */
 
 namespace App\Models\Generator\Event;
@@ -13,9 +13,9 @@ use CodeIgniter\Model;
 
 class RecordModel extends Model
 {
-    protected $DBGroup = 'mix';
+    protected $DBGroup;
+    protected $table;
 
-    protected $table         = 'app_generator_event_log';
     protected $primaryKey    = 'id';
     protected $allowedFields = ['station_id', 'generator_id', 'event', 'cause', 'event_at', 'creator', 'description'];
 
@@ -28,6 +28,14 @@ class RecordModel extends Model
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
+
+    public function __construct()
+    {
+        $config        = config('MyGlobalConfig');
+        $this->DBGroup = $config->dbName;
+        $this->table   = $config->dbPrefix . 'generator_event_log';
+        parent::__construct();
+    }
 
     public function insertRecord(array $event)
     {

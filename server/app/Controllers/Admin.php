@@ -4,13 +4,12 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-10 22:43:51
+ * @LastEditTime: 2022-05-11 09:54:24
  */
 
 namespace App\Controllers;
 
 use App\Models\Admin\ApiModel;
-use App\Models\Admin\EquipmentUnitModel;
 use App\Models\Admin\RoleApiModel;
 use App\Models\Admin\RoleDeptModel;
 use App\Models\Admin\RoleMenuModel;
@@ -20,6 +19,7 @@ use App\Models\Admin\UserRoleModel;
 use App\Models\Admin\WorkflowModel;
 use App\Models\Common\AvatarModel;
 use App\Models\Common\DeptModel;
+use App\Models\Common\DeviceModel;
 use App\Models\Common\JobModel;
 use App\Models\Common\MenuModel;
 use App\Models\Common\PoliticModel;
@@ -867,35 +867,23 @@ class Admin extends BaseController
     {
         $params = $this->request->getGet();
 
-        $model = new EquipmentUnitModel();
-
         $fields = ['id', 'pid', 'name', 'description', 'updated_at'];
-
+        $model  = new DeviceModel();
         if (isset($params['select'])) {
-            $query = [
-                'id >' => 0,
-            ];
+            $result = $model->getDeviceAllRecords($fields);
         } else {
-            $query = [
-                'id >' => 1,
-            ];
+            $result = $model->getDeviceRecordsExcludeFirst($fields);
         }
 
-        $result = $model->get($fields, $query);
-
-        if (empty($result)) {
-            return $this->failServerError('服务器处理发生错误，稍候再试');
-        } else {
-            $res['data'] = $result;
-            return $this->respond($res);
-        }
+        $res['data'] = $result;
+        return $this->respond($res);
     }
 
     public function newEquipmentUnit()
     {
         $client = $this->request->getJSON(true);
 
-        $model  = new EquipmentUnitModel();
+        $model  = new DeviceModel();
         $result = $model->insert($client);
 
         if (is_numeric($result)) {
@@ -910,7 +898,7 @@ class Admin extends BaseController
     {
         $client = $this->request->getJSON(true);
 
-        $model  = new EquipmentUnitModel();
+        $model  = new DeviceModel();
         $result = $model->save($client);
 
         if ($result) {
@@ -925,7 +913,7 @@ class Admin extends BaseController
     {
         $client = $this->request->getJSON(true);
 
-        $model  = new EquipmentUnitModel();
+        $model  = new DeviceModel();
         $result = $model->delete($client['id']);
 
         if ($result === true) {

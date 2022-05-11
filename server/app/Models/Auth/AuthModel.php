@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-01 10:43:13
+ * @LastEditTime: 2022-05-11 10:02:22
  */
 
 namespace App\Models\Auth;
@@ -13,9 +13,9 @@ use CodeIgniter\Model;
 
 class AuthModel extends Model
 {
-    protected $DBGroup = 'mix';
+    protected $DBGroup;
+    protected $table;
 
-    protected $table         = 'app_login_attempts';
     protected $primaryKey    = 'id';
     protected $allowedFields = ['ip_address', 'identity', 'time'];
 
@@ -28,6 +28,14 @@ class AuthModel extends Model
     // protected $createdField  = 'created_at';
     // protected $updatedField  = 'updated_at';
     // protected $deletedField  = 'deleted_at';
+
+    public function __construct()
+    {
+        $config        = config('MyGlobalConfig');
+        $this->DBGroup = $config->dbName;
+        $this->table   = $config->dbPrefix . 'login_attempts';
+        parent::__construct();
+    }
 
     public function isMaxLoginAttemptsExceeded(string $phone = null, string $ip_address = null)
     {

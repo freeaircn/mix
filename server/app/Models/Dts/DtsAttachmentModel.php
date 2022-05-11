@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-29 08:59:24
+ * @LastEditTime: 2022-05-11 10:40:28
  */
 
 namespace App\Models\Dts;
@@ -37,47 +37,56 @@ class DtsAttachmentModel extends Model
         parent::__construct();
     }
 
-    public function insertMultiRecords(array $attachments = null)
+    public function createDtsAttachmentMultiRecords(array $attachments = null)
     {
         if (empty($attachments)) {
             return true;
         }
 
-        $result = $this->insertBatch($attachments);
-        return $result;
+        return $this->insertBatch($attachments);
     }
 
-    public function insertSingleRecord(array $attachment = null)
+    public function createDtsAttachmentSingleRecord(array $attachment = null)
     {
         if (empty($attachment)) {
-            return false;
+            return true;
         }
 
-        $result = $this->insert($attachment);
-        return $result;
+        return $this->insert($attachment);
     }
 
-    public function getByDtsId(array $fields = [], string $dts_id = null)
+    public function getDtsAttachmentRecordsByDtsId(array $fields = null, string $dts_id = null)
     {
-        if (empty($fields) || empty($dts_id)) {
+        if (empty($dts_id)) {
+            return [];
+        }
+
+        if (!is_numeric($dts_id)) {
             return [];
         }
 
         $selectSql = '';
-        foreach ($fields as $key) {
-            $selectSql = $selectSql . $key . ', ';
+        if (empty($fields)) {
+            $selectSql = 'id, dts_id, user_id, username, org_name, new_name, file_ext, size, path, info, updated_at';
+        } else {
+            foreach ($fields as $name) {
+                $selectSql = $selectSql . $name . ', ';
+            }
         }
+
         $builder = $this->select($selectSql);
-
         $builder->where('dts_id', $dts_id);
-
         $db = $builder->findAll();
 
         return $db;
     }
 
-    public function delByDtsId(string $dts_id = null)
+    public function delDtsAttachmentRecordsByDtsId(string $dts_id = null)
     {
+        if (empty($dts_id)) {
+            return true;
+        }
+
         if (!is_numeric($dts_id)) {
             return true;
         }
@@ -91,27 +100,37 @@ class DtsAttachmentModel extends Model
         }
     }
 
-    public function getById(array $fields = [], string $id = null)
+    public function getDtsAttachmentRecordById(array $fields = null, string $id = null)
     {
-        if (empty($fields) || empty($id)) {
+        if (empty($id)) {
+            return [];
+        }
+
+        if (!is_numeric($id)) {
             return [];
         }
 
         $selectSql = '';
-        foreach ($fields as $key) {
-            $selectSql = $selectSql . $key . ', ';
+        if (empty($fields)) {
+            $selectSql = 'id, dts_id, user_id, username, org_name, new_name, file_ext, size, path, info, updated_at';
+        } else {
+            foreach ($fields as $name) {
+                $selectSql = $selectSql . $name . ', ';
+            }
         }
         $builder = $this->select($selectSql);
-
         $builder->where('id', $id);
-
         $db = $builder->findAll();
 
         return isset($db[0]) ? $db[0] : [];
     }
 
-    public function delById(string $id = null)
+    public function delDtsAttachmentRecordById(string $id = null)
     {
+        if (empty($id)) {
+            return false;
+        }
+
         if (!is_numeric($id)) {
             return false;
         }

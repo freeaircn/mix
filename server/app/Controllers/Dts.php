@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-10 20:18:37
+ * @LastEditTime: 2022-05-11 10:41:37
  */
 
 namespace App\Controllers;
@@ -12,8 +12,8 @@ namespace App\Controllers;
 use App\Libraries\MyIdMaker;
 use App\Libraries\Workflow\Dts\WfDts;
 use App\Models\Common\DeptModel;
+use App\Models\Common\DeviceModel;
 use App\Models\Common\UserModel;
-use App\Models\Dts\DeviceModel;
 use App\Models\Dts\DtsAttachmentModel;
 use App\Models\Dts\DtsModel;
 use CodeIgniter\API\ResponseTrait;
@@ -78,7 +78,13 @@ class Dts extends BaseController
         }
 
         if ($result['http_status'] === 200) {
-            $response['data'] = $result['data'];
+            $response = [];
+            if (isset($result['data'])) {
+                $response['data'] = $result['data'];
+            }
+            if (isset($result['msg'])) {
+                $response['msg'] = $result['msg'];
+            }
             return $this->respond($response);
         }
 
@@ -157,7 +163,7 @@ class Dts extends BaseController
                 'file_ext' => end($ext),
             ];
             $model = new DtsAttachmentModel();
-            $id    = $model->insertSingleRecord($attachment);
+            $id    = $model->createDtsAttachmentSingleRecord($attachment);
             if ($id === false) {
                 // 删除移动后的文件
                 $config = config('MyGlobalConfig');
@@ -211,23 +217,21 @@ class Dts extends BaseController
                 $this->session->set('dtsAttachment', $new);
             }
 
-            return $this->respond([
-                'res' => 'done',
-            ]);
+            return $this->respond(['res' => 'done']);
         }
 
         if ($dts_id !== '0') {
             $fields = ['dts_id', 'new_name'];
 
             $model = new DtsAttachmentModel();
-            $db    = $model->getById($fields, $id);
+            $db    = $model->getDtsAttachmentRecordById($fields, $id);
             if (empty($db)) {
                 return $this->respond(['res' => 'done']);
             }
             if ($db['dts_id'] !== $dts_id) {
-                return $this->failServerError('请求错误，刷新后再试');
+                return $this->failServerError('请求错误，刷新页面后再试');
             }
-            $result = $model->delById($id);
+            $result = $model->delDtsAttachmentRecordById($id);
             if (!$result) {
                 return $this->failServerError('服务器处理发生错误，稍候再试');
             }
@@ -256,7 +260,7 @@ class Dts extends BaseController
 
         $fields = ['dts_id', 'org_name', 'new_name', 'size'];
         $model  = new DtsAttachmentModel();
-        $db     = $model->getById($fields, $id);
+        $db     = $model->getDtsAttachmentRecordById($fields, $id);
         if (empty($db)) {
             return $this->failNotFound('附件不存在');
         }
@@ -267,7 +271,7 @@ class Dts extends BaseController
 
         $fields = ['station_id'];
         $model  = new DtsModel();
-        $db2    = $model->getByDtsId($fields, $dts_id);
+        $db2    = $model->getDtsRecordByDtsId($fields, $dts_id);
         if (empty($db2)) {
             return $this->failNotFound('附件不存在');
         }
@@ -334,7 +338,7 @@ class Dts extends BaseController
         $draft['dts_id'] = $dts_id;
 
         $model  = new DtsModel();
-        $result = $model->insertSingleRecord($draft);
+        $result = $model->createSingleDtsRecord($draft);
         if ($result === false) {
             return $this->failServerError('服务器处理发生错误，稍候再试');
         }
@@ -367,11 +371,11 @@ class Dts extends BaseController
                 ];
             }
             $model  = new DtsAttachmentModel();
-            $result = $model->insertMultiRecords($attachments);
+            $result = $model->createDtsAttachmentMultiRecords($attachments);
             if ($result === false) {
                 // 回退上一步操作
                 $model  = new DtsModel();
-                $result = $model->delByDtsId($dts_id);
+                $result = $model->delDtsRecordByDtsId($dts_id);
                 return $this->failServerError('服务器处理发生错误，稍候再试');
             }
         }
@@ -380,9 +384,8 @@ class Dts extends BaseController
             $this->session->remove('dtsAttachment');
         }
 
-        return $this->respond([
-            'msg' => '创建问题单',
-        ]);
+        $res['msg'] = '已创建';
+        return $this->respond($res);
     }
 
     public function deleteOne()
@@ -398,7 +401,7 @@ class Dts extends BaseController
         $dts_id = $client['dts_id'];
 
         $model = new DtsModel();
-        $db    = $model->getByDtsId($fields, $dts_id);
+        $db    = $model->getDtsRecordByDtsId($fields, $dts_id);
         if (empty($db)) {
             return $this->respond(['info' => 'empty']);
         }
@@ -417,7 +420,7 @@ class Dts extends BaseController
         // 附件
         $fields = ['new_name'];
         $model  = new DtsAttachmentModel();
-        $files  = $model->getByDtsId($fields, $dts_id);
+        $files  = $model->getDtsAttachmentRecordsByDtsId($fields, $dts_id);
         if (!empty($files)) {
             $config = config('MyGlobalConfig');
             $path   = WRITEPATH . $config->dtsAttachmentPath;
@@ -427,19 +430,18 @@ class Dts extends BaseController
                     unlink($file);
                 }
             }
-            $result = $model->delByDtsId($dts_id);
+            $result = $model->delDtsAttachmentRecordsByDtsId($dts_id);
         }
 
         //
         $model  = new DtsModel();
-        $result = $model->delByDtsId($dts_id);
+        $result = $model->delDtsRecordByDtsId($dts_id);
         if (!$result) {
             return $this->failServerError('服务器处理发生错误，稍候再试');
         }
 
-        return $this->respond([
-            'msg' => '删除问题单',
-        ]);
+        $res['msg'] = '已删除';
+        return $this->respond($res);
     }
 
     public function updateEntry()
@@ -467,7 +469,7 @@ class Dts extends BaseController
 
             $model  = new DtsModel();
             $fields = ['id', 'dts_id', 'station_id', 'progress', 'place_at'];
-            $db     = $model->getByDtsId($fields, $dts_id);
+            $db     = $model->getDtsRecordByDtsId($fields, $dts_id);
             if (empty($db)) {
                 return $this->fail('请求数据无效');
             }
@@ -485,7 +487,7 @@ class Dts extends BaseController
                 $data['place_at'] = $wf->getTicket()->getCurrentPlace();
             }
 
-            $result = $model->updateById($data, $db['id']);
+            $result = $model->updateDtsRecordById($data, $db['id']);
             if ($result === false) {
                 return $this->failServerError('服务器处理发生错误，稍候再试');
             } else {
@@ -498,7 +500,7 @@ class Dts extends BaseController
 
             $model  = new DtsModel();
             $fields = ['id', 'dts_id', 'station_id', 'place_at'];
-            $db     = $model->getByDtsId($fields, $dts_id);
+            $db     = $model->getDtsRecordByDtsId($fields, $dts_id);
             if (empty($db)) {
                 return $this->fail('请求数据无效');
             }
@@ -514,7 +516,7 @@ class Dts extends BaseController
                 'scored_by'  => $this->_getContentHeadTpl(),
             ];
 
-            $result = $model->updateById($data, $db['id']);
+            $result = $model->updateDtsRecordById($data, $db['id']);
             if ($result === false) {
                 return $this->failServerError('服务器处理发生错误，稍候再试');
             } else {
@@ -531,7 +533,7 @@ class Dts extends BaseController
 
             $model  = new DtsModel();
             $fields = ['id', 'dts_id', 'station_id', 'progress', 'place_at'];
-            $db     = $model->getByDtsId($fields, $dts_id);
+            $db     = $model->getDtsRecordByDtsId($fields, $dts_id);
             if (empty($db)) {
                 return $this->fail('请求数据无效');
             }
@@ -556,7 +558,7 @@ class Dts extends BaseController
             }
             $data['place_at'] = $wf->getTicket()->getCurrentPlace();
 
-            $result = $model->updateById($data, $db['id']);
+            $result = $model->updateDtsRecordById($data, $db['id']);
             if ($result === false) {
                 return $this->failServerError('服务器处理发生错误，稍候再试');
             } else {
@@ -573,7 +575,7 @@ class Dts extends BaseController
 
             $model  = new DtsModel();
             $fields = ['id', 'dts_id', 'station_id', 'progress', 'place_at'];
-            $db     = $model->getByDtsId($fields, $dts_id);
+            $db     = $model->getDtsRecordByDtsId($fields, $dts_id);
             if (empty($db)) {
                 return $this->fail('请求数据无效');
             }
@@ -598,7 +600,7 @@ class Dts extends BaseController
             }
             $data['place_at'] = $wf->getTicket()->getCurrentPlace();
 
-            $result = $model->updateById($data, $db['id']);
+            $result = $model->updateDtsRecordById($data, $db['id']);
             if ($result === false) {
                 return $this->failServerError('服务器处理发生错误，稍候再试');
             } else {
@@ -615,7 +617,7 @@ class Dts extends BaseController
 
             $model  = new DtsModel();
             $fields = ['id', 'dts_id', 'station_id', 'progress', 'place_at'];
-            $db     = $model->getByDtsId($fields, $dts_id);
+            $db     = $model->getDtsRecordByDtsId($fields, $dts_id);
             if (empty($db)) {
                 return $this->fail('请求数据无效');
             }
@@ -640,7 +642,7 @@ class Dts extends BaseController
             }
             $data['place_at'] = $wf->getTicket()->getCurrentPlace();
 
-            $result = $model->updateById($data, $db['id']);
+            $result = $model->updateDtsRecordById($data, $db['id']);
             if ($result === false) {
                 return $this->failServerError('服务器处理发生错误，稍候再试');
             } else {
@@ -758,7 +760,7 @@ class Dts extends BaseController
         $fields          = ['id', 'dts_id', 'station_id', 'type', 'title', 'level', 'place_at', 'created_at', 'updated_at', 'creator_id'];
 
         $model = new DtsModel();
-        $db    = $model->getByLimitOffset($fields, $query);
+        $db    = $model->getDtsRecordsByMultiConditions($fields, $query);
 
         if ($db['total'] === 0) {
             $res['http_status'] = 200;
@@ -860,7 +862,7 @@ class Dts extends BaseController
 
         $fields = ['dts_id', 'type', 'title', 'level', 'station_id', 'place_at', 'device', 'description', 'progress', 'created_at', 'updated_at', 'creator_id', 'reviewer_id', 'score', 'score_desc', 'scored_by'];
         $model  = new DtsModel();
-        $db     = $model->getByDtsId($fields, $dts_id);
+        $db     = $model->getDtsRecordByDtsId($fields, $dts_id);
         if (empty($db)) {
             $res['http_status'] = 404;
             $res['msg']         = '没有找到请求的数据';
@@ -915,8 +917,7 @@ class Dts extends BaseController
 
         $model  = new DeviceModel();
         $fields = ['id', 'pid', 'name'];
-        $query  = ['id >' => 1];
-        $list   = $model->get($fields, $query);
+        $list   = $model->getDeviceRecordsExcludeFirst($fields);
 
         return $list;
     }
@@ -1035,17 +1036,16 @@ class Dts extends BaseController
             return '';
         }
 
-        $array = explode("+", trim($keys, '+'));
-        $res   = '';
-        if (!empty($array)) {
+        $ids = explode("+", trim($keys, '+'));
+        $res = '';
+        if (!empty($ids)) {
             $model   = new DeviceModel();
             $fields  = ['id', 'name'];
-            $query   = ['ids' => $array];
-            $devices = $model->getByIds($fields, $query);
+            $devices = $model->getDeviceRecordsByIds($fields, $ids);
 
             if (!empty($devices)) {
                 $text = '';
-                foreach ($array as $value) {
+                foreach ($ids as $value) {
                     foreach ($devices as $device) {
                         if ($value === $device['id']) {
                             $text = $text . $device['name'] . ' / ';
@@ -1164,7 +1164,7 @@ class Dts extends BaseController
 
         $fields = ['id', 'org_name'];
         $model  = new DtsAttachmentModel();
-        $files  = $model->getByDtsId($fields, $dts_id);
+        $files  = $model->getDtsAttachmentRecordsByDtsId($fields, $dts_id);
 
         $attachments = [];
         foreach ($files as $f) {

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2021-11-08 16:26:20
+ * @LastEditTime: 2022-05-11 11:00:59
  */
 
 namespace App\Models\Meter;
@@ -13,9 +13,9 @@ use CodeIgniter\Model;
 
 class PlanKWhModel extends Model
 {
-    protected $DBGroup = 'mix';
+    protected $DBGroup;
+    protected $table;
 
-    protected $table         = 'app_kwh_planning';
     protected $primaryKey    = 'id';
     protected $allowedFields = ['station_id', 'year', 'month', 'planning', 'deal', 'creator'];
 
@@ -29,37 +29,47 @@ class PlanKWhModel extends Model
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
 
-    public function getByStationYear($query)
+    public function __construct()
     {
-        if (empty($query)) {
-            return false;
+        $config        = config('MyGlobalConfig');
+        $this->DBGroup = $config->dbName;
+        $this->table   = $config->dbPrefix . 'kwh_planning';
+        parent::__construct();
+    }
+
+    public function getKwhPlanRecordsByStationYear(string $station_id = null, string $year = null)
+    {
+        if (empty($station_id) || empty($year)) {
+            return [];
         }
 
         $selectSql = 'id, month, planning, deal, creator';
         $builder   = $this->select($selectSql);
 
-        $builder->where($query);
+        $builder->where('station_id', $station_id);
+        $builder->where('year', $year);
         $res = $builder->findAll();
 
         return $res;
     }
 
-    public function getByStationYearMonth($query)
+    public function getKwhPlanRecordsByStationYearMonth(string $station_id = null, string $year = null, string $month = null)
     {
-        if (empty($query)) {
-            return false;
+        if (empty($station_id) || empty($year) || empty($month)) {
+            return [];
         }
 
         $selectSql = 'id, month, planning, deal, creator';
         $builder   = $this->select($selectSql);
-
-        $builder->where($query);
+        $builder->where('station_id', $station_id);
+        $builder->where('year', $year);
+        $builder->where('month', $month);
         $res = $builder->findAll();
 
         return $res;
     }
 
-    public function doSave(array $data)
+    public function updateKwhPlanRecord(array $data = null)
     {
         if (empty($data)) {
             return false;
