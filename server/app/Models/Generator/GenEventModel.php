@@ -4,14 +4,14 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-11 10:04:52
+ * @LastEditTime: 2022-05-11 14:12:51
  */
 
-namespace App\Models\Generator\Event;
+namespace App\Models\Generator;
 
 use CodeIgniter\Model;
 
-class RecordModel extends Model
+class GenEventModel extends Model
 {
     protected $DBGroup;
     protected $table;
@@ -37,20 +37,44 @@ class RecordModel extends Model
         parent::__construct();
     }
 
-    public function insertRecord(array $event)
+    public function createGenEventSingleRecord(array $event = null)
     {
         if (empty($event)) {
             return false;
         }
 
-        $result = $this->insert($event);
-        return is_numeric($result) ? true : false;
+        return $this->insert($event);
     }
 
-    public function getById($fields = [], $id = 0)
+    public function getGenEventRecordById(array $fields = null, string $id = null)
     {
+        if (empty($id)) {
+            return [];
+        }
+
         if (!is_numeric($id)) {
-            return false;
+            return [];
+        }
+
+        $selectSql = '';
+        if (empty($fields)) {
+            $selectSql = 'id, station_id, generator_id, event, event_at, creator, description';
+        } else {
+            foreach ($fields as $key) {
+                $selectSql = $selectSql . $key . ', ';
+            }
+        }
+        $builder = $this->select($selectSql);
+        $builder->where('id', $id);
+        $result = $builder->findAll();
+
+        return isset($result[0]) ? $result[0] : [];
+    }
+
+    public function getGenEventRecordsByStationGenDate(array $fields = null, string $station_id = null, string $gen_id = null, string $year = null)
+    {
+        if (empty($station_id) || empty($gen_id) || empty($year)) {
+            return [];
         }
 
         $selectSql = '';
@@ -63,52 +87,36 @@ class RecordModel extends Model
         }
         $builder = $this->select($selectSql);
 
-        $builder->where('id', $id);
+        $builder->where('station_id', $station_id);
+        $builder->where('generator_id', $gen_id);
+        $builder->where('Year(event_at)', $year);
+        $builder->orderBy('event_at', 'ASC');
 
         $result = $builder->findAll();
 
-        return isset($result[0]) ? $result[0] : [];
+        return $result;
     }
 
-    public function getByStationDateGen(array $fields = [], array $query = [])
+    public function getGenEventRecordsByStationGenYearStartStop(array $fields = null, string $station_id = null, string $gen_id = null, string $year = null, array $events = null)
     {
-        if (empty($fields) || empty($query)) {
+        if (empty($station_id) || empty($gen_id) || empty($year) || empty($events)) {
             return [];
         }
 
         $selectSql = '';
-        foreach ($fields as $key) {
-            $selectSql = $selectSql . $key . ', ';
-        }
-        $builder = $this->select($selectSql);
-
-        $builder->where('station_id', $query['station_id']);
-        $builder->where('generator_id', $query['generator_id']);
-        $builder->where('Year(event_at)', $query['year']);
-        $builder->orderBy('event_at', 'ASC');
-
-        $result = $builder->findAll();
-
-        return $result;
-    }
-
-    public function getByStationGenYearStartStop($fields = [], $query = [])
-    {
         if (empty($fields)) {
-            return false;
-        }
-
-        $selectSql = '';
-        foreach ($fields as $key) {
-            $selectSql = $selectSql . $key . ', ';
+            $selectSql = 'id, station_id, generator_id, event, event_at, creator, description';
+        } else {
+            foreach ($fields as $key) {
+                $selectSql = $selectSql . $key . ', ';
+            }
         }
         $builder = $this->select($selectSql);
 
-        $builder->where('station_id', $query['station_id']);
-        $builder->where('generator_id', $query['generator_id']);
-        $builder->where('Year(event_at)', $query['year']);
-        $builder->whereIn('event', $query['event']);
-        // $builder->where('Month(event_at)', $query['month']);
+        $builder->where('station_id', $station_id);
+        $builder->where('generator_id', $gen_id);
+        $builder->where('Year(event_at)', $year);
+        $builder->whereIn('event', $events);
         $builder->orderBy('event_at', 'ASC');
 
         $result = $builder->findAll();
@@ -116,7 +124,7 @@ class RecordModel extends Model
         return $result;
     }
 
-    public function saveRecord(array $event)
+    public function updateGenEventRecord(array $event = null)
     {
         if (empty($event)) {
             return false;
@@ -125,8 +133,12 @@ class RecordModel extends Model
         return $this->save($event);
     }
 
-    public function delById($id)
+    public function delGenEventRecordById(string $id = null)
     {
+        if (empty($id)) {
+            return false;
+        }
+
         if (!is_numeric($id)) {
             return false;
         }
@@ -134,18 +146,21 @@ class RecordModel extends Model
         return $this->delete($id);
     }
 
-    public function getLastDateByStation(array $fields = [], string $station_id = null, $limit = 1)
+    public function getGenEventLatestRecordByStation(array $fields = null, string $station_id = null, $limit = 1)
     {
-        if (empty($fields)) {
+        if (empty($station_id)) {
             return [];
         }
 
         $selectSql = '';
-        foreach ($fields as $key) {
-            $selectSql = $selectSql . $key . ', ';
+        if (empty($fields)) {
+            $selectSql = 'id, station_id, generator_id, event, event_at, creator, description';
+        } else {
+            foreach ($fields as $key) {
+                $selectSql = $selectSql . $key . ', ';
+            }
         }
         $builder = $this->select($selectSql);
-
         $builder->where('station_id', $station_id);
 
         $res = $builder->orderBy('event_at', 'DESC')
@@ -158,8 +173,12 @@ class RecordModel extends Model
         }
     }
 
-    public function getByStationGIdDateRange($fields = [], $query = [])
+    public function getGenEventRecordsByMultiConditions(array $fields = null, array $conditions = null)
     {
+        if (empty($conditions)) {
+            return ['total' => 0, 'result' => []];
+        }
+
         $selectSql = '';
         if (empty($fields)) {
             $selectSql = 'id, station_id, generator_id, event, event_at, creator, description';
@@ -178,39 +197,47 @@ class RecordModel extends Model
         //         . " AND generator_id = " . $query['generator_id']
         //         . " AND Date(event_at) BETWEEN " . "'" . $query['start'] . "'" . " AND " . "'" . $query['end'] . "'";
         // }
-        $whereSql = "station_id = " . $query['station_id'];
-        if ($query['generator_id'] !== '0') {
-            $whereSql = $whereSql . " AND generator_id = " . $query['generator_id'];
+        $whereSql = "station_id = " . $conditions['station_id'];
+        if ($conditions['generator_id'] !== '0') {
+            $whereSql = $whereSql . " AND generator_id = " . $conditions['generator_id'];
         }
-        if ($query['event'] !== '0') {
-            $whereSql = $whereSql . " AND event = " . $query['event'];
+        if ($conditions['event'] !== '0') {
+            $whereSql = $whereSql . " AND event = " . $conditions['event'];
         }
-        if ($query['description'] !== '0') {
+        if ($conditions['description'] !== '0') {
             $whereSql = $whereSql . " AND description != " . "'无'";
         }
-        $whereSql = $whereSql . " AND Date(event_at) BETWEEN " . "'" . $query['start'] . "'" . " AND " . "'" . $query['end'] . "'";
+        $whereSql = $whereSql . " AND Date(event_at) BETWEEN " . "'" . $conditions['start'] . "'" . " AND " . "'" . $conditions['end'] . "'";
 
         $builder->where($whereSql);
 
         $total = $builder->countAllResults(false);
 
         $builder->orderBy('event_at', 'DESC');
-        $result = $builder->findAll($query['limit'], ($query['offset'] - 1) * $query['limit']);
+        $result = $builder->findAll($conditions['limit'], ($conditions['offset'] - 1) * $conditions['limit']);
 
         return ['total' => $total, 'result' => $result];
     }
 
-    public function getLastRecordByStationGId($station_id = 0, $generator_id = 0, $limit = 1)
+    public function getGenEventLatestRecordByStationGenEvents(array $fields = null, string $station_id = null, string $gen_id = null, array $events = null, int $limit = 1)
     {
-        if (!is_numeric($station_id) || !is_numeric($generator_id)) {
+        if (empty($station_id) || empty($gen_id) || empty($events)) {
             return [];
         }
 
-        $selectSql = 'id, station_id, generator_id, event, event_at, creator, description';
-        $builder   = $this->select($selectSql);
+        $selectSql = '';
+        if (empty($fields)) {
+            $selectSql = 'id, station_id, generator_id, event, event_at, creator, description';
+        } else {
+            foreach ($fields as $key) {
+                $selectSql = $selectSql . $key . ', ';
+            }
+        }
+        $builder = $this->select($selectSql);
 
         $builder->where('station_id', $station_id);
-        $builder->where('generator_id', $generator_id);
+        $builder->where('generator_id', $gen_id);
+        $builder->whereIn('event', $events);
 
         $res = $builder->orderBy('event_at', 'DESC')
             ->findAll($limit);
@@ -222,9 +249,9 @@ class RecordModel extends Model
         }
     }
 
-    public function getLastByStationGIdEvents(array $fields = [], array $query = [], int $limit = 1)
+    public function getGenEventPrevByStationGenEvents(array $fields = null, string $station_id = null, string $gen_id = null, array $events = null, string $event_at = null, int $limit = 1)
     {
-        if (empty($query)) {
+        if (empty($station_id) || empty($gen_id) || empty($events) || empty($event_at)) {
             return [];
         }
 
@@ -238,9 +265,10 @@ class RecordModel extends Model
         }
         $builder = $this->select($selectSql);
 
-        $builder->where('station_id', $query['station_id']);
-        $builder->where('generator_id', $query['generator_id']);
-        $builder->whereIn('event', $query['events']);
+        $builder->where('station_id', $station_id);
+        $builder->where('generator_id', $gen_id);
+        $builder->whereIn('event', $events);
+        $builder->where("unix_timestamp(event_at) < unix_timestamp('" . $event_at . "')");
 
         $res = $builder->orderBy('event_at', 'DESC')
             ->findAll($limit);
@@ -252,10 +280,10 @@ class RecordModel extends Model
         }
     }
 
-    public function getPrevByStationGIdEventsTimeStamp($fields = [], $query = [], $limit = 1)
+    public function getGenEventNextByStationGenEvents(array $fields = null, string $station_id = null, string $gen_id = null, array $events = null, string $event_at = null, int $limit = 1)
     {
-        if (empty($query)) {
-            return false;
+        if (empty($station_id) || empty($gen_id) || empty($events) || empty($event_at)) {
+            return [];
         }
 
         $selectSql = '';
@@ -268,10 +296,10 @@ class RecordModel extends Model
         }
         $builder = $this->select($selectSql);
 
-        $builder->where('station_id', $query['station_id']);
-        $builder->where('generator_id', $query['generator_id']);
-        $builder->whereIn('event', $query['events']);
-        $builder->where("unix_timestamp(event_at) < unix_timestamp('" . $query['event_at'] . "')");
+        $builder->where('station_id', $station_id);
+        $builder->where('generator_id', $gen_id);
+        $builder->whereIn('event', $events);
+        $builder->where("unix_timestamp(event_at) > unix_timestamp('" . $event_at . "')");
 
         $res = $builder->orderBy('event_at', 'DESC')
             ->findAll($limit);
@@ -283,34 +311,25 @@ class RecordModel extends Model
         }
     }
 
-    public function getNextByStationGIdEventsTimeStamp($fields = [], $query = [], $limit = 1)
-    {
-        if (empty($query)) {
-            return false;
-        }
+    // public function getLastRecordByStationGId($station_id = 0, $generator_id = 0, $limit = 1)
+    // {
+    //     if (!is_numeric($station_id) || !is_numeric($generator_id)) {
+    //         return [];
+    //     }
 
-        $selectSql = '';
-        if (empty($fields)) {
-            $selectSql = 'id, station_id, generator_id, event, event_at, creator, description';
-        } else {
-            foreach ($fields as $key) {
-                $selectSql = $selectSql . $key . ', ';
-            }
-        }
-        $builder = $this->select($selectSql);
+    //     $selectSql = 'id, station_id, generator_id, event, event_at, creator, description';
+    //     $builder   = $this->select($selectSql);
 
-        $builder->where('station_id', $query['station_id']);
-        $builder->where('generator_id', $query['generator_id']);
-        $builder->whereIn('event', $query['events']);
-        $builder->where("unix_timestamp(event_at) > unix_timestamp('" . $query['event_at'] . "')");
+    //     $builder->where('station_id', $station_id);
+    //     $builder->where('generator_id', $generator_id);
 
-        $res = $builder->orderBy('event_at', 'DESC')
-            ->findAll($limit);
+    //     $res = $builder->orderBy('event_at', 'DESC')
+    //         ->findAll($limit);
 
-        if ($limit === 1) {
-            return isset($res[0]) ? $res[0] : [];
-        } else {
-            return $res;
-        }
-    }
+    //     if ($limit === 1) {
+    //         return isset($res[0]) ? $res[0] : [];
+    //     } else {
+    //         return $res;
+    //     }
+    // }
 }

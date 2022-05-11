@@ -4,14 +4,14 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-11 11:01:07
+ * @LastEditTime: 2022-05-11 14:59:58
  */
 
 namespace App\Controllers;
 
 use App\Models\Common\DeptModel;
+use App\Models\Meter\MeterModel;
 use App\Models\Meter\PlanKWhModel;
-use App\Models\Meter\RecordModel;
 use CodeIgniter\API\ResponseTrait;
 
 class Meter extends BaseController
@@ -181,25 +181,23 @@ class Meter extends BaseController
         $log_date = $client['log_date'];
         $log_time = $client['log_time'];
 
-        $model = new RecordModel();
+        $model = new MeterModel();
 
         // 是否已存在该日期/时间的记录
-        $hasLogs = $model->hasSameLogByStationAndDateTime($station_id, $log_date, $log_time);
+        $hasLogs = $model->hasSameRecordByStationAndDateTime($station_id, $log_date, $log_time);
         if ($hasLogs) {
             $res['error'] = '输入的日期已存在记录';
             return $this->fail($res);
         }
 
-        //
-        $result = $model->batchInsert($meters, $others);
-
-        if ($result) {
-            $res['msg'] = '已保存';
-            return $this->respond($res);
-        } else {
+        $result = $model->createMeterMultiRecords($meters, $others);
+        if ($result === false) {
             $res['error'] = '服务器处理发生错误，稍候再试';
             return $this->fail($res);
         }
+
+        $res['msg'] = '已保存';
+        return $this->respond($res);
     }
 
     public function updateRecord()
@@ -254,16 +252,16 @@ class Meter extends BaseController
             'log_time'   => $client['log_time'],
         ];
 
-        $model  = new RecordModel();
-        $result = $model->batchUpdate($meters, $others, $where);
+        $model  = new MeterModel();
+        $result = $model->updateMeterMultiRecords($meters, $others, $where);
 
-        if ($result) {
-            $res['msg'] = '完成修改';
-            return $this->respond($res);
-        } else {
+        if ($result === false) {
             $res['error'] = '服务器处理发生错误，稍候再试';
             return $this->fail($res);
         }
+
+        $res['msg'] = '已修改';
+        return $this->respond($res);
     }
 
     public function delRecord()
@@ -288,15 +286,16 @@ class Meter extends BaseController
         }
 
         // 根据id查找记录
-        $model = new RecordModel();
-        $db    = $model->getById($id);
-        if (!isset($db[0])) {
+        $model = new MeterModel();
+        $db    = $model->getMeterRecordById($id);
+        if (empty($db)) {
             $res['info']  = 'invalid id';
             $res['error'] = '请求数据无效';
             return $this->fail($res);
         }
+
         // 对比
-        if ($db[0]['station_id'] !== $station_id || $db[0]['log_date'] !== $log_date || $db[0]['log_time'] !== $log_time || $db[0]['meter_id'] !== '1') {
+        if ($db['station_id'] !== $station_id || $db['log_date'] !== $log_date || $db['log_time'] !== $log_time || $db['meter_id'] !== '1') {
             $res['info']  = 'invalid record';
             $res['error'] = '请求数据无效';
             return $this->fail($res);
@@ -308,15 +307,15 @@ class Meter extends BaseController
             'log_date'   => $log_date,
             'log_time'   => $log_time,
         ];
-        $result = $model->deleteByStationDateTime($query);
+        $result = $model->delMeterRecordsByStationDateTime($query);
 
-        if ($result === true) {
-            $res['msg'] = '完成删除';
-            return $this->respond($res);
-        } else {
+        if ($result === false) {
             $res['error'] = '服务器处理发生错误，稍候再试';
             return $this->fail($res);
         }
+
+        $res['msg'] = '已删除';
+        return $this->respond($res);
     }
 
     public function updatePlanAndDealRecord()
@@ -365,13 +364,13 @@ class Meter extends BaseController
 
         // 修改
         $result = $model->updateKwhPlanRecord($data);
-        if ($result) {
-            $res['msg'] = '完成修改';
-            return $this->respond($res);
-        } else {
+        if ($result === false) {
             $res['error'] = '服务器处理发生错误，稍候再试';
             return $this->fail($res);
         }
+
+        $res['msg'] = '已修改';
+        return $this->respond($res);
     }
 
     // Part-2
@@ -402,13 +401,13 @@ class Meter extends BaseController
         ];
         $date = date('Y-m-d', time());
 
-        $model = new RecordModel();
+        $model = new MeterModel();
 
         // 预处理-查询日期
         if (empty($params['date'])) {
             $query2 = ['station_id' => $query['station_id']];
             $fields = ['log_date'];
-            $db     = $model->getLastDateByStation($fields, $query2);
+            $db     = $model->getMeterLatestRecordsByStation($fields, $query2);
             if (!isset($db['log_date'])) {
                 $res['http_status'] = 200;
                 $res['data']        = ['total' => 0, 'date' => $date, 'data' => []];
@@ -434,7 +433,7 @@ class Meter extends BaseController
         $query['end']   = my_last_day_of_month($date);
 
         $fields = ['id', 'station_id', 'log_date', 'log_time', 'creator'];
-        $db     = $model->getForRecordList($fields, $query);
+        $db     = $model->getMeterRecordsForListView($fields, $query);
 
         $res['http_status'] = 200;
         $res['data']        = ['date' => date('Y-m-d', strtotime($date)), 'total' => $db['total'], 'data' => $db['data']];
@@ -461,15 +460,9 @@ class Meter extends BaseController
             return $res;
         }
 
-        $query = [
-            'station_id' => $params['station_id'],
-            'log_date'   => $params['log_date'],
-            'log_time'   => $params['log_time'],
-        ];
-
-        $model  = new RecordModel();
+        $model  = new MeterModel();
         $fields = ['meter_id', 'fak', 'bak', 'frk', 'brk', 'peak', 'valley'];
-        $db     = $model->getByStationDateTime($fields, $query);
+        $db     = $model->getMeterRecordsByStationDateTime($fields, $params['station_id'], $params['log_date'], $params['log_time']);
 
         // 指定日期+时间的记录不存在
         if (empty($db)) {
@@ -660,9 +653,9 @@ class Meter extends BaseController
         $query['start_at'] = my_first_day_of_year($date);
         $query['end_at']   = my_last_day_of_year($date);
 
-        $model  = new RecordModel();
+        $model  = new MeterModel();
         $fields = ['log_date'];
-        $db     = $model->getByStationDateRangeTime($fields, $query);
+        $db     = $model->getMeterRecordsByStationDateRangeTime($fields, $query);
         if (!isset($db['log_date'])) {
             $res['http_status'] = 200;
             return $res;
@@ -780,14 +773,14 @@ class Meter extends BaseController
             $meter_ids[] = $i;
         }
 
-        $model = new RecordModel();
+        $model = new MeterModel();
         $query = [
             'station_id' => $station_id,
             'log_time'   => $log_time,
             'meter_id'   => $meter_ids,
         ];
         $fields = ['log_date', 'meter_id', 'fak'];
-        $db3    = $model->getLastDateByStationTimeMeters($fields, $query, count($meter_ids));
+        $db3    = $model->getMeterLatestRecordsByStationTimeMeters($fields, $query, count($meter_ids));
 
         $log_date = $db3[0]['log_date'];
 
@@ -891,7 +884,7 @@ class Meter extends BaseController
         }
 
         // 查询
-        $model = new RecordModel();
+        $model = new MeterModel();
 
         $query2 = [
             'station_id' => $station_id,
@@ -900,7 +893,7 @@ class Meter extends BaseController
             'meter_id'   => $meter_id,
         ];
         $fields = ['log_date, fak'];
-        $db     = $model->getByStationDatesTimeMeter($fields, $query2);
+        $db     = $model->getMeterRecordsByStationDatesTimeMeter($fields, $query2);
         if (empty($db)) {
             return ['yearData' => $yearData, 'monthData' => $monthData];
         }
@@ -1074,8 +1067,8 @@ class Meter extends BaseController
         ];
         $fields = ['log_date', 'meter_id', 'fak'];
 
-        $model = new RecordModel();
-        $db    = $model->getByStationDateRangeTimeMeters($fields, $query2);
+        $model = new MeterModel();
+        $db    = $model->getMeterRecordsByStationDateRangeTimeMeters($fields, $query2);
         if (empty($db)) {
             return $res;
         }
@@ -1163,8 +1156,8 @@ class Meter extends BaseController
         ];
         $fields = ['log_date', 'meter_id', 'fak', 'bak'];
 
-        $model = new RecordModel();
-        $db    = $model->getByStationDatesTimeMeters($fields, $query2);
+        $model = new MeterModel();
+        $db    = $model->getMeterRecordsByStationDatesTimeMeters($fields, $query2);
         if (empty($db)) {
             return $res;
         }
@@ -1256,8 +1249,8 @@ class Meter extends BaseController
         ];
         $fields = ['log_date', 'meter_id', 'fak'];
 
-        $model = new RecordModel();
-        $db    = $model->getByStationDatesTimeMeters($fields, $query2);
+        $model = new MeterModel();
+        $db    = $model->getMeterRecordsByStationDatesTimeMeters($fields, $query2);
         if (empty($db)) {
             return $res;
         }
@@ -1349,7 +1342,7 @@ class Meter extends BaseController
         }
 
         // 查询给定日期：表读数，峰谷电量
-        $model = new RecordModel();
+        $model = new MeterModel();
 
         $fields = ['meter_id', 'log_date', 'fak', 'frk', 'brk', 'peak', 'valley'];
         $query2 = [
@@ -1358,7 +1351,7 @@ class Meter extends BaseController
             'log_time'   => $log_time,
             'meter_id'   => $meter_ids,
         ];
-        $db = $model->getByStationDatesTimeMeters($fields, $query2);
+        $db = $model->getMeterRecordsByStationDatesTimeMeters($fields, $query2);
         if (empty($db)) {
             return $res;
         }
@@ -1485,7 +1478,7 @@ class Meter extends BaseController
         }
 
         // 查询给定日期：表读数，正向有功
-        $model = new RecordModel();
+        $model = new MeterModel();
 
         $fields = ['log_date', 'fak'];
         $query2 = [
@@ -1494,7 +1487,7 @@ class Meter extends BaseController
             'log_time'   => $log_time,
             'meter_id'   => $meter_ids,
         ];
-        $db = $model->getByStationDatesTimeMeters($fields, $query2);
+        $db = $model->getMeterRecordsByStationDatesTimeMeters($fields, $query2);
         if (empty($db)) {
             return $res;
         }

@@ -4,13 +4,13 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-10 15:52:37
+ * @LastEditTime: 2022-05-11 14:15:18
  */
 
 namespace App\Controllers;
 
 use App\Models\Common\DeptModel;
-use App\Models\Generator\Event\RecordModel;
+use App\Models\Generator\GenEventModel;
 use CodeIgniter\API\ResponseTrait;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
@@ -123,42 +123,40 @@ class GeneratorEvent extends BaseController
             return $this->failUnauthorized('用户没有权限');
         }
 
-        $model = new RecordModel();
+        $model = new GenEventModel();
 
         // 预处理: start stop事件
         if ($event == $this->eventStop || $event == $this->eventStart) {
             // 查找时间最近一条
-            $query = [
-                'station_id'   => $newEvent['station_id'],
-                'generator_id' => $newEvent['generator_id'],
-                'events'       => [$this->eventStop, $this->eventStart],
-            ];
+            $events = [$this->eventStop, $this->eventStart];
+            //     'station_id'   => $newEvent['station_id'],
+            //     'generator_id' => $newEvent['generator_id'],
+            //     'events'       => [$this->eventStop, $this->eventStart],
+            // ];
         }
         if ($event == $this->eventMaintenanceStart || $event == $this->eventMaintenanceStop) {
             // 查找时间最近一条
-            $query = [
-                'station_id'   => $newEvent['station_id'],
-                'generator_id' => $newEvent['generator_id'],
-                'events'       => [$this->eventMaintenanceStart, $this->eventMaintenanceStop],
-            ];
+            $events = [$this->eventMaintenanceStart, $this->eventMaintenanceStop];
+            //     'station_id'   => $newEvent['station_id'],
+            //     'generator_id' => $newEvent['generator_id'],
+            //     'events'       => [$this->eventMaintenanceStart, $this->eventMaintenanceStop],
+            // ];
         }
-        $lastEvent = $model->getLastByStationGIdEvents([], $query);
+        $lastEvent = $model->getGenEventLatestRecordByStationGenEvents([], $newEvent['station_id'], $newEvent['generator_id'], $events);
         $msg       = $this->_validateNewEvent($lastEvent, $newEvent);
         if ($msg !== true) {
             $res['error'] = $msg;
             return $this->fail($res);
         }
 
-        // 添加
-        $db = $model->insertRecord($newEvent);
-
-        if ($db) {
-            $res['msg'] = '已保存';
-            return $this->respond($res);
-        } else {
+        $result = $model->createGenEventSingleRecord($newEvent);
+        if ($result === false) {
             $res['error'] = '服务器处理发生错误，稍候再试';
             return $this->fail($res);
         }
+
+        $res['msg'] = '已保存';
+        return $this->respond($res);
     }
 
     public function delRecord()
@@ -180,28 +178,26 @@ class GeneratorEvent extends BaseController
             return $this->failUnauthorized('用户没有权限');
         }
 
-        $model = new RecordModel();
-        // 查找时间最近
-        // $db = $model->getLastRecordByStationGId($client['station_id'], $client['generator_id']);
+        $model = new GenEventModel();
 
         // 预处理: start stop事件
         if ($event == $this->eventStop || $event == $this->eventStart) {
             // 查找时间最近一条
-            $query = [
-                'station_id'   => $station_id,
-                'generator_id' => $generator_id,
-                'events'       => [$this->eventStop, $this->eventStart],
-            ];
+            $events = [$this->eventStop, $this->eventStart];
+            //     'station_id'   => $station_id,
+            //     'generator_id' => $generator_id,
+            //     'events'       => [$this->eventStop, $this->eventStart],
+            // ];
         }
         if ($event == $this->eventMaintenanceStart || $event == $this->eventMaintenanceStop) {
             // 查找时间最近一条
-            $query = [
-                'station_id'   => $station_id,
-                'generator_id' => $generator_id,
-                'events'       => [$this->eventMaintenanceStart, $this->eventMaintenanceStop],
-            ];
+            $events = [$this->eventMaintenanceStart, $this->eventMaintenanceStop];
+            //     'station_id'   => $station_id,
+            //     'generator_id' => $generator_id,
+            //     'events'       => [$this->eventMaintenanceStart, $this->eventMaintenanceStop],
+            // ];
         }
-        $db = $model->getLastByStationGIdEvents([], $query);
+        $db = $model->getGenEventLatestRecordByStationGenEvents([], $station_id, $generator_id, $events);
         if (empty($db)) {
             $res['error'] = '请求数据无效';
             return $this->fail($res);
@@ -218,15 +214,14 @@ class GeneratorEvent extends BaseController
             return $this->fail($res);
         }
 
-        $result = $model->delById($id);
-
-        if ($result === true) {
-            $res['msg'] = '完成删除';
-            return $this->respond($res);
-        } else {
+        $result = $model->delGenEventRecordById($id);
+        if ($result === false) {
             $res['error'] = '服务器处理发生错误，稍候再试';
             return $this->fail($res);
         }
+
+        $res['msg'] = '已删除';
+        return $this->respond($res);
     }
 
     public function updateRecord()
@@ -258,13 +253,14 @@ class GeneratorEvent extends BaseController
             return $this->failUnauthorized('用户没有权限');
         }
 
-        $model = new RecordModel();
-        $db    = $model->getById([], $id);
+        $model = new GenEventModel();
+        $db    = $model->getGenEventRecordById([], $id);
         if (empty($db)) {
             $res['info']  = 'invalid id';
             $res['error'] = '请求数据无效';
             return $this->fail($res);
         }
+
         if ($db['event'] != $event) {
             $res['info']  = 'invalid event';
             $res['error'] = '请求数据无效';
@@ -274,24 +270,24 @@ class GeneratorEvent extends BaseController
         // 预处理: start stop事件
         if ($event == $this->eventStop || $event == $this->eventStart) {
             // 查找时间最近一条
-            $query = [
-                'station_id'   => $station_id,
-                'generator_id' => $generator_id,
-                'events'       => [$this->eventStop, $this->eventStart],
-                'event_at'     => $db['event_at'],
-            ];
+            $events = [$this->eventStop, $this->eventStart];
+            //     'station_id'   => $station_id,
+            //     'generator_id' => $generator_id,
+            //     'events'       => [$this->eventStop, $this->eventStart],
+            //     'event_at'     => $db['event_at'],
+            // ];
         }
         if ($event == $this->eventMaintenanceStart || $event == $this->eventMaintenanceStop) {
             // 查找时间最近一条
-            $query = [
-                'station_id'   => $station_id,
-                'generator_id' => $generator_id,
-                'events'       => [$this->eventMaintenanceStart, $this->eventMaintenanceStop],
-                'event_at'     => $db['event_at'],
-            ];
+            $events = [$this->eventMaintenanceStart, $this->eventMaintenanceStop];
+            //     'station_id'   => $station_id,
+            //     'generator_id' => $generator_id,
+            //     'events'       => [$this->eventMaintenanceStart, $this->eventMaintenanceStop],
+            //     'event_at'     => $db['event_at'],
+            // ];
         }
-        $prev = $model->getPrevByStationGIdEventsTimeStamp([], $query);
-        $next = $model->getNextByStationGIdEventsTimeStamp([], $query);
+        $prev = $model->getGenEventPrevByStationGenEvents([], $station_id, $generator_id, $events, $db['event_at']);
+        $next = $model->getGenEventNextByStationGenEvents([], $station_id, $generator_id, $events, $db['event_at']);
 
         // if (empty($prev) && empty($next)) {
 
@@ -318,14 +314,14 @@ class GeneratorEvent extends BaseController
             }
         }
 
-        $result = $model->saveRecord($newEvent);
-        if ($result) {
-            $res['msg'] = '完成修改';
-            return $this->respond($res);
-        } else {
+        $result = $model->updateGenEventRecord($newEvent);
+        if ($result === false) {
             $res['error'] = '服务器处理发生错误，稍候再试';
             return $this->fail($res);
         }
+
+        $res['msg'] = '已修改';
+        return $this->respond($res);
     }
 
     // Part-2
@@ -404,19 +400,14 @@ class GeneratorEvent extends BaseController
             'G3_start' => 0,
         ];
 
-        $model  = new RecordModel();
+        $model  = new GenEventModel();
         $fields = ['event', 'event_at'];
-        $query  = [
-            'station_id'   => $station_id,
-            'generator_id' => 0,
-            'year'         => $year,
-            'event'        => [$this->eventStart, $this->eventStop],
-        ];
-        $month = 0;
+        $events = [$this->eventStart, $this->eventStop];
+        $month  = 0;
         for ($i = 1; $i <= $this->genTotalNumber; $i++) {
             $query['generator_id'] = $i;
 
-            $db = $model->getByStationGenYearStartStop($fields, $query); // 按日期排序
+            $db = $model->getGenEventRecordsByStationGenYearStartStop($fields, $station_id, $i, $year, $events); // 按日期排序
             if (!empty($db)) {
                 $cnt = count($db);
                 for ($j = 0; $j < $months; $j++) {
@@ -553,12 +544,12 @@ class GeneratorEvent extends BaseController
         ];
         $date = date('Y-m-d', time());
 
-        $model = new RecordModel();
+        $model = new GenEventModel();
 
         // 预处理-查询日期
         if (empty($params['date'])) {
             $fields = ['event_at'];
-            $db     = $model->getLastDateByStation($fields, $station_id);
+            $db     = $model->getGenEventLatestRecordByStation($fields, $station_id);
             if (!isset($db['event_at'])) {
                 $res['http_status'] = 200;
                 $res['data']        = ['total' => 0, 'date' => $date, 'data' => []];
@@ -583,7 +574,7 @@ class GeneratorEvent extends BaseController
         $query['end']   = my_last_day_of_month($date);
 
         $fields = ['id', 'station_id', 'generator_id', 'event', 'cause', 'event_at', 'creator', 'description'];
-        $db     = $model->getByStationGIdDateRange($fields, $query);
+        $db     = $model->getGenEventRecordsByMultiConditions($fields, $query);
 
         $res['http_status'] = 200;
         $res['data']        = ['total' => $db['total'], 'date' => date('Y-m-d', strtotime($date)), 'data' => $db['result']];
@@ -615,18 +606,18 @@ class GeneratorEvent extends BaseController
         $spreadsheet = new Spreadsheet();
         $sheetTitle  = ['序号', '机组', '事件', '时间', '记录人', '说明'];
 
+        // $query  = [
+        //     'station_id'   => $station_id,
+        //     'year'         => substr($date, 0, 4),
+        //     'generator_id' => 0,
+        // ];
         $fields = ['event', 'event_at', 'creator', 'description'];
-        $query  = [
-            'station_id'   => $station_id,
-            'year'         => substr($date, 0, 4),
-            'generator_id' => 0,
-        ];
-        $model = new RecordModel();
+        $model  = new GenEventModel();
 
         for ($GID = 1; $GID <= $this->genTotalNumber; $GID++) {
-            $query['generator_id'] = $GID;
+            // $query['generator_id'] = $GID;
 
-            $db  = $model->getByStationDateGen($fields, $query);
+            $db  = $model->getGenEventRecordsByStationGenDate($fields, $station_id, $GID, substr($date, 0, 4));
             $cnt = count($db);
             if ($cnt > 0) {
                 $sheet  = $spreadsheet->createSheet($GID - 1)->setTitle($GID . 'G');

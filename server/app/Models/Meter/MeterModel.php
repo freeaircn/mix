@@ -4,14 +4,14 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-11 10:05:52
+ * @LastEditTime: 2022-05-11 14:59:03
  */
 
 namespace App\Models\Meter;
 
 use CodeIgniter\Model;
 
-class RecordModel extends Model
+class MeterModel extends Model
 {
     protected $DBGroup;
     protected $table;
@@ -37,9 +37,9 @@ class RecordModel extends Model
         parent::__construct();
     }
 
-    public function hasSameLogByStationAndDateTime($station_id, $log_date = '', $log_time = '')
+    public function hasSameRecordByStationAndDateTime(string $station_id = null, string $log_date = null, string $log_time = null)
     {
-        if (!is_numeric($station_id) || $log_date === '' || $log_time === '') {
+        if (!is_numeric($station_id) || empty($log_date) || empty($log_time)) {
             return true;
         }
 
@@ -52,58 +52,67 @@ class RecordModel extends Model
         return $total > 0 ? true : false;
     }
 
-    public function getByStationDateTime($fields = [], $query)
+    public function getMeterRecordsByStationDateTime(array $fields = null, string $station_id, string $date = null, string $time = null)
     {
-        if (empty($fields)) {
-            return false;
+        if (!is_numeric($station_id) || empty($date) || empty($time)) {
+            return [];
         }
 
         $selectSql = '';
-        foreach ($fields as $key) {
-            $selectSql = $selectSql . $key . ', ';
+        if (empty($fields)) {
+            $selectSql = 'id, station_id, meter_id, log_date, log_time, fak, bak, frk, brk, peak, valley, creator, updated_at';
+        } else {
+            foreach ($fields as $name) {
+                $selectSql = $selectSql . $name . ', ';
+            }
         }
         $builder = $this->select($selectSql);
 
-        $builder->where('station_id', $query['station_id']);
-        $builder->where('log_date', $query['log_date']);
-        $builder->where('log_time', $query['log_time']);
+        $builder->where('station_id', $station_id);
+        $builder->where('log_date', $date);
+        $builder->where('log_time', $time);
 
         $result = $builder->findAll();
 
         return $result;
     }
 
-    public function getById($id)
+    public function getMeterRecordById(string $id = null)
     {
-        if (!is_numeric($id) || $id < 0) {
-            return false;
+        if (!is_numeric($id)) {
+            return [];
         }
 
         $selectSql = 'id, station_id, meter_id, log_date, log_time, fak, bak, frk, brk, peak, valley, creator';
         $builder   = $this->select($selectSql);
 
         $builder->where('id', $id);
-        $res = $builder->findAll();
+        $result = $builder->findAll();
 
-        return $res;
+        return isset($result[0]) ? $result[0] : [];
     }
 
-    public function batchInsert(array $meters, array $others)
+    public function createMeterMultiRecords(array $meters = null, array $others = null)
     {
         if (empty($meters) || empty($others)) {
             return false;
         }
 
-        $this->transStart();
-        for ($i = 0; $i < count($meters); $i++) {
-            $db_data = $others;
-
-            $db_data['meter_id'] = $i + 1;
+        $data = [];
+        $cnt  = count($meters);
+        for ($i = 0; $i < $cnt; $i++) {
+            $temp             = $others;
+            $temp['meter_id'] = $i + 1;
             foreach ($meters[$i] as $key => $value) {
-                $db_data[$key] = $value;
+                $temp[$key] = $value;
             }
-            $result = $this->insert($db_data);
-            unset($db_data);
+            $data[] = $temp;
+            unset($temp);
+        }
+
+        $this->transStart();
+        if (!empty($data)) {
+            $this->insertBatch($data);
         }
         $this->transComplete();
 
@@ -114,7 +123,7 @@ class RecordModel extends Model
         }
     }
 
-    public function batchUpdate(array $meters, array $others, array $where)
+    public function updateMeterMultiRecords(array $meters = null, array $others = null, array $where = null)
     {
         if (empty($meters) || empty($others) || empty($where)) {
             return false;
@@ -147,37 +156,19 @@ class RecordModel extends Model
         }
     }
 
-    // public function sumByStationDateTimeMeterIds($fields = [], $query = [])
-    // {
-    //     if (empty($fields)) {
-    //         return false;
-    //     }
-
-    //     $selectSql = '';
-    //     foreach ($fields as $key) {
-    //         $selectSql = $selectSql . 'SUM(`' . $key . '`) AS sum_' . $key . ', ';
-    //     }
-    //     $builder = $this->select($selectSql);
-
-    //     $whereSql = "station_id = " . $query['station_id']
-    //         . " AND log_date = " . "'" . $query['log_date'] . "'"
-    //         . " AND log_time = " . "'" . $query['log_time'] . "'"
-    //         . " AND meter_id BETWEEN " . $query['first_meter_id'] . " AND " . $query['last_meter_id'];
-    //     $builder->where($whereSql);
-
-    //     $result = $builder->findAll();
-    //     return isset($result[0]) ? $result[0] : [];
-    // }
-
-    public function getByStationDatesTimeMeters($fields = [], $query = [])
+    public function getMeterRecordsByStationDatesTimeMeters(array $fields = null, array $query = null)
     {
-        if (empty($fields)) {
-            return false;
+        if (empty($query)) {
+            return [];
         }
 
         $selectSql = '';
-        foreach ($fields as $key) {
-            $selectSql = $selectSql . $key . ', ';
+        if (empty($fields)) {
+            $selectSql = 'id, station_id, meter_id, log_date, log_time, fak, bak, frk, brk, peak, valley, creator, updated_at';
+        } else {
+            foreach ($fields as $name) {
+                $selectSql = $selectSql . $name . ', ';
+            }
         }
         $builder = $this->select($selectSql);
 
@@ -191,15 +182,19 @@ class RecordModel extends Model
         return $result;
     }
 
-    public function getByStationDatesTimeMeter($fields = [], $query = [])
+    public function getMeterRecordsByStationDatesTimeMeter(array $fields = null, array $query = null)
     {
-        if (empty($fields)) {
-            return false;
+        if (empty($query)) {
+            return [];
         }
 
         $selectSql = '';
-        foreach ($fields as $key) {
-            $selectSql = $selectSql . $key . ', ';
+        if (empty($fields)) {
+            $selectSql = 'id, station_id, meter_id, log_date, log_time, fak, bak, frk, brk, peak, valley, creator, updated_at';
+        } else {
+            foreach ($fields as $name) {
+                $selectSql = $selectSql . $name . ', ';
+            }
         }
         $builder = $this->select($selectSql);
 
@@ -213,15 +208,19 @@ class RecordModel extends Model
         return $result;
     }
 
-    public function getByStationDateRangeTimeMeters($fields = [], $query = [])
+    public function getMeterRecordsByStationDateRangeTimeMeters(array $fields = null, array $query = null)
     {
-        if (empty($fields)) {
-            return false;
+        if (empty($query)) {
+            return [];
         }
 
         $selectSql = '';
-        foreach ($fields as $key) {
-            $selectSql = $selectSql . $key . ', ';
+        if (empty($fields)) {
+            $selectSql = 'id, station_id, meter_id, log_date, log_time, fak, bak, frk, brk, peak, valley, creator, updated_at';
+        } else {
+            foreach ($fields as $name) {
+                $selectSql = $selectSql . $name . ', ';
+            }
         }
         $builder = $this->select($selectSql);
 
@@ -235,39 +234,19 @@ class RecordModel extends Model
         return $result;
     }
 
-    public function getLastDateByStationTime($fields = [], $query = [], $limit = 1)
+    public function getMeterLatestRecordsByStationTimeMeters(array $fields = null, array $query = null, $limit = 1)
     {
-        if (empty($fields)) {
-            return false;
+        if (empty($query)) {
+            return [];
         }
 
         $selectSql = '';
-        foreach ($fields as $key) {
-            $selectSql = $selectSql . $key . ', ';
-        }
-        $builder = $this->select($selectSql);
-
-        $builder->where($query);
-
-        $res = $builder->orderBy('log_date', 'DESC')
-            ->findAll($limit);
-
-        if ($limit === 1) {
-            return isset($res[0]) ? $res[0] : [];
+        if (empty($fields)) {
+            $selectSql = 'id, station_id, meter_id, log_date, log_time, fak, bak, frk, brk, peak, valley, creator, updated_at';
         } else {
-            return $res;
-        }
-    }
-
-    public function getLastDateByStationTimeMeters($fields = [], $query = [], $limit = 1)
-    {
-        if (empty($fields)) {
-            return false;
-        }
-
-        $selectSql = '';
-        foreach ($fields as $key) {
-            $selectSql = $selectSql . $key . ', ';
+            foreach ($fields as $name) {
+                $selectSql = $selectSql . $name . ', ';
+            }
         }
         $builder = $this->select($selectSql);
 
@@ -285,16 +264,19 @@ class RecordModel extends Model
         }
     }
 
-    // 2021-12-13
-    public function getLastDateByStation($fields = [], $query = [], $limit = 1)
+    public function getMeterLatestRecordsByStation(array $fields = null, array $query = null, $limit = 1)
     {
-        if (empty($fields)) {
-            return false;
+        if (empty($query)) {
+            return [];
         }
 
         $selectSql = '';
-        foreach ($fields as $key) {
-            $selectSql = $selectSql . $key . ', ';
+        if (empty($fields)) {
+            $selectSql = 'id, station_id, meter_id, log_date, log_time, fak, bak, frk, brk, peak, valley, creator, updated_at';
+        } else {
+            foreach ($fields as $name) {
+                $selectSql = $selectSql . $name . ', ';
+            }
         }
         $builder = $this->select($selectSql);
 
@@ -310,15 +292,19 @@ class RecordModel extends Model
         }
     }
 
-    public function getByStationDateRangeTime(array $fields = [], array $query = [], int $limit = 1)
+    public function getMeterRecordsByStationDateRangeTime(array $fields = null, array $query = null, $limit = 1)
     {
-        if (empty($fields)) {
+        if (empty($query)) {
             return [];
         }
 
         $selectSql = '';
-        foreach ($fields as $key) {
-            $selectSql = $selectSql . $key . ', ';
+        if (empty($fields)) {
+            $selectSql = 'id, station_id, meter_id, log_date, log_time, fak, bak, frk, brk, peak, valley, creator, updated_at';
+        } else {
+            foreach ($fields as $name) {
+                $selectSql = $selectSql . $name . ', ';
+            }
         }
         $builder = $this->select($selectSql);
 
@@ -340,7 +326,7 @@ class RecordModel extends Model
         }
     }
 
-    public function deleteByStationDateTime($query)
+    public function delMeterRecordsByStationDateTime(array $query = null)
     {
         if (empty($query)) {
             return false;
@@ -349,7 +335,7 @@ class RecordModel extends Model
         return $this->where($query)->delete();
     }
 
-    public function getForRecordList(array $fields = [], array $query = [])
+    public function getMeterRecordsForListView(array $fields = null, array $query = null)
     {
         if (empty($query)) {
             return ['total' => 0, 'data' => []];
@@ -377,4 +363,32 @@ class RecordModel extends Model
 
         return ['total' => $total, 'data' => $db];
     }
+
+    // public function getLastDateByStationTime(array $fields = null, array $query = null, int $limit = 1)
+    // {
+    //     if (empty($query)) {
+    //         return [];
+    //     }
+
+    //     $selectSql = '';
+    //     if (empty($fields)) {
+    //         $selectSql = 'id, station_id, meter_id, log_date, log_time, fak, bak, frk, brk, peak, valley, creator, updated_at';
+    //     } else {
+    //         foreach ($fields as $name) {
+    //             $selectSql = $selectSql . $name . ', ';
+    //         }
+    //     }
+    //     $builder = $this->select($selectSql);
+
+    //     $builder->where($query);
+
+    //     $res = $builder->orderBy('log_date', 'DESC')
+    //         ->findAll($limit);
+
+    //     if ($limit === 1) {
+    //         return isset($res[0]) ? $res[0] : [];
+    //     } else {
+    //         return $res;
+    //     }
+    // }
 }
