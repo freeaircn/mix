@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-07-06 21:44:27
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-29 15:43:17
+ * @LastEditTime: 2022-05-11 20:09:57
  */
 
 namespace Config;
@@ -68,6 +68,7 @@ class MyGlobalConfig extends BaseConfig
     public $dtsProgressTemplates = [
         'new_form'        => "【现象】\n\n【时间】\n\n【影响】\n\n【已采取措施】\n\n",
         'update_progress' => "【当前进展】\n\n【下一步计划】\n\n",
+        'to_suspend'      => "【挂起意见】\n\n",
         'to_resolve'      => "【现象】\n\n【影响】\n\n【根因】\n\n【恢复方法】\n\n",
         'to_close'        => "【关闭审核意见】\n\n",
         'back_work'       => "【重新处理意见】\n\n",

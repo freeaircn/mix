@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2019-12-29 14:06:12
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-29 15:29:15
+ * @LastEditTime: 2022-05-11 20:32:09
  */
 
 namespace App\Libraries\Workflow\Dts;
@@ -24,6 +24,17 @@ class WfDts extends Core
         parent::__construct($config);
     }
 
+    public function getStartPlace()
+    {
+        $temp = $this->placesMetadata;
+
+        foreach ($temp as $key => $value) {
+            if ($value['line'] === 'main') {
+                return $key;
+            }
+        }
+    }
+
     public function getPlaceLine(): array
     {
         $temp = $this->placesMetadata;
@@ -34,6 +45,23 @@ class WfDts extends Core
                 'name'  => $value['name'],
                 'alias' => $key,
             ];
+        }
+
+        return $res;
+    }
+
+    public function getPlaceMainLine(): array
+    {
+        $temp = $this->placesMetadata;
+        $res  = [];
+
+        foreach ($temp as $key => $value) {
+            if ($value['line'] === 'main') {
+                $res[] = [
+                    'name'  => $value['name'],
+                    'alias' => $key,
+                ];
+            }
         }
 
         return $res;
@@ -79,6 +107,35 @@ class WfDts extends Core
         try {
             if ($this->workflow->can($this->ticket, 'to_working')) {
                 $this->workflow->apply($this->ticket, 'to_working');
+                return true;
+            } else {
+                return false;
+            }
+        } catch (LogicException $exception) {
+            // print($exception);
+            return false;
+        }
+    }
+
+    public function canSuspend()
+    {
+        try {
+            if ($this->workflow->can($this->ticket, 'to_suspend')) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (LogicException $exception) {
+            // print($exception);
+            return false;
+        }
+    }
+
+    public function toSuspend()
+    {
+        try {
+            if ($this->workflow->can($this->ticket, 'to_suspend')) {
+                $this->workflow->apply($this->ticket, 'to_suspend');
                 return true;
             } else {
                 return false;

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-11 10:41:37
+ * @LastEditTime: 2022-05-11 21:01:57
  */
 
 namespace App\Controllers;
@@ -324,7 +324,7 @@ class Dts extends BaseController
         ];
 
         $wf                = new WfDts();
-        $draft['place_at'] = $wf->getFirstPlace();
+        $draft['place_at'] = $wf->getStartPlace();
 
         $draft['status'] = 'publish';
         // dts_id
@@ -397,7 +397,7 @@ class Dts extends BaseController
         }
         $client = $this->request->getJSON(true);
 
-        $fields = ['station_id', 'place_at'];
+        $fields = ['station_id', 'place_at', 'created_at', 'updated_at'];
         $dts_id = $client['dts_id'];
 
         $model = new DtsModel();
@@ -411,16 +411,14 @@ class Dts extends BaseController
             return $this->failUnauthorized('用户没有权限');
         }
 
-        $wf         = new WfDts();
-        $firstPlace = $wf->getFirstPlace();
-        if ($db['place_at'] !== $firstPlace) {
-            return $this->failUnauthorized('用户没有权限，请联系管理员删除');
+        if ($db['created_at'] != $db['updated_at']) {
+            return $this->failUnauthorized('不能执行删除操作，请联系管理员删除');
         }
 
         // 附件
         $fields = ['new_name'];
-        $model  = new DtsAttachmentModel();
-        $files  = $model->getDtsAttachmentRecordsByDtsId($fields, $dts_id);
+        $model2 = new DtsAttachmentModel();
+        $files  = $model2->getDtsAttachmentRecordsByDtsId($fields, $dts_id);
         if (!empty($files)) {
             $config = config('MyGlobalConfig');
             $path   = WRITEPATH . $config->dtsAttachmentPath;
@@ -430,11 +428,9 @@ class Dts extends BaseController
                     unlink($file);
                 }
             }
-            $result = $model->delDtsAttachmentRecordsByDtsId($dts_id);
+            $result = $model2->delDtsAttachmentRecordsByDtsId($dts_id);
         }
 
-        //
-        $model  = new DtsModel();
         $result = $model->delDtsRecordByDtsId($dts_id);
         if (!$result) {
             return $this->failServerError('服务器处理发生错误，稍候再试');
@@ -455,7 +451,7 @@ class Dts extends BaseController
         $client   = $this->request->getJSON(true);
         $resource = $client['resource'];
 
-        $resources = ['progress', 'score', 'to_resolve', 'back_work', 'to_close'];
+        $resources = ['progress', 'to_suspend', 'score', 'to_resolve', 'to_close', 'back_work'];
         if (!in_array($resource, $resources)) {
             return $this->fail('请求数据无效');
         }
@@ -482,10 +478,10 @@ class Dts extends BaseController
             $text = $this->_getContentHeadTpl() . $progress . "\n" . $db['progress'];
             $data = ['progress' => $text];
 
-            $wf = new WfDts($db['place_at']);
-            if ($wf->toWorking()) {
-                $data['place_at'] = $wf->getTicket()->getCurrentPlace();
-            }
+            // $wf = new WfDts($db['place_at']);
+            // if ($wf->toWorking()) {
+            //     $data['place_at'] = $wf->getTicket()->getCurrentPlace();
+            // }
 
             $result = $model->updateDtsRecordById($data, $db['id']);
             if ($result === false) {
@@ -493,6 +489,40 @@ class Dts extends BaseController
             } else {
                 return $this->respond(['msg' => '已更新进展']);
             }
+        }
+
+        if ($resource === 'to_suspend') {
+            $dts_id   = $client['dts_id'];
+            $progress = $client['progress'];
+
+            $model  = new DtsModel();
+            $fields = ['id', 'dts_id', 'station_id', 'progress', 'place_at'];
+            $db     = $model->getDtsRecordByDtsId($fields, $dts_id);
+            if (empty($db)) {
+                return $this->fail('请求数据无效');
+            }
+
+            $allowWriteDeptId = $this->session->get('allowWriteDeptId');
+            if (!in_array($db['station_id'], $allowWriteDeptId)) {
+                return $this->failUnauthorized('用户没有权限');
+            }
+
+            $wf = new WfDts($db['place_at']);
+            if (!$wf->toSuspend()) {
+                return $this->fail('不能切换问题单状态');
+            }
+
+            $text             = $this->_getContentHeadTpl() . $progress . "\n" . $db['progress'];
+            $data             = ['progress' => $text];
+            $data['place_at'] = $wf->getTicket()->getCurrentPlace();
+
+            $result = $model->updateDtsRecordById($data, $db['id']);
+            if ($result === false) {
+                return $this->failServerError('服务器处理发生错误，稍候再试');
+            }
+
+            $res['msg'] = '已挂起';
+            return $this->respond($res);
         }
 
         if ($resource === 'score') {
@@ -519,9 +549,10 @@ class Dts extends BaseController
             $result = $model->updateDtsRecordById($data, $db['id']);
             if ($result === false) {
                 return $this->failServerError('服务器处理发生错误，稍候再试');
-            } else {
-                return $this->respond(['msg' => '已评分']);
             }
+
+            $res['msg'] = '已评分';
+            return $this->respond($res);
         }
 
         if ($resource === 'to_resolve') {
@@ -538,74 +569,28 @@ class Dts extends BaseController
                 return $this->fail('请求数据无效');
             }
 
-            $wf = new WfDts($db['place_at']);
-            if (!$wf->canResolve()) {
-                return $this->fail('流程不允许转到 - 解决');
-            }
-
             $allowWriteDeptId = $this->session->get('allowWriteDeptId');
             $allowWorkflow    = $this->session->get('allowWorkflow');
             if (!in_array($db['station_id'], $allowWriteDeptId) || !in_array('dts_resolve', $allowWorkflow)) {
                 return $this->failUnauthorized('用户没有权限');
             }
 
-            $text = $this->_getContentHeadTpl() . $progress . "\n" . $db['progress'];
-            $data = ['progress' => $text];
-
             $wf = new WfDts($db['place_at']);
             if (!$wf->toResolve()) {
-                return $this->failServerError('服务器处理发生错误，稍候再试');
+                return $this->fail('不能切换问题单状态');
             }
+
+            $text             = $this->_getContentHeadTpl() . $progress . "\n" . $db['progress'];
+            $data             = ['progress' => $text];
             $data['place_at'] = $wf->getTicket()->getCurrentPlace();
 
             $result = $model->updateDtsRecordById($data, $db['id']);
             if ($result === false) {
                 return $this->failServerError('服务器处理发生错误，稍候再试');
-            } else {
-                return $this->respond(['msg' => '已提交解决']);
-            }
-        }
-
-        if ($resource === 'back_work') {
-            $dts_id   = $client['dts_id'];
-            $progress = $client['progress'];
-            if (empty($progress)) {
-                return $this->fail('重新处理意见不能空白');
             }
 
-            $model  = new DtsModel();
-            $fields = ['id', 'dts_id', 'station_id', 'progress', 'place_at'];
-            $db     = $model->getDtsRecordByDtsId($fields, $dts_id);
-            if (empty($db)) {
-                return $this->fail('请求数据无效');
-            }
-
-            $wf = new WfDts($db['place_at']);
-            if (!$wf->canBackWorking()) {
-                return $this->fail('流程不允许转到 - 处理中');
-            }
-
-            $allowWriteDeptId = $this->session->get('allowWriteDeptId');
-            $allowWorkflow    = $this->session->get('allowWorkflow');
-            if (!in_array($db['station_id'], $allowWriteDeptId) || !in_array('dts_back_work', $allowWorkflow)) {
-                return $this->failUnauthorized('用户没有权限');
-            }
-
-            $text = $this->_getContentHeadTpl() . $progress . "\n" . $db['progress'];
-            $data = ['progress' => $text];
-
-            $wf = new WfDts($db['place_at']);
-            if (!$wf->toBackWorking()) {
-                return $this->failServerError('服务器处理发生错误，稍候再试');
-            }
-            $data['place_at'] = $wf->getTicket()->getCurrentPlace();
-
-            $result = $model->updateDtsRecordById($data, $db['id']);
-            if ($result === false) {
-                return $this->failServerError('服务器处理发生错误，稍候再试');
-            } else {
-                return $this->respond(['msg' => '已提交重新处理']);
-            }
+            $res['msg'] = '已提交解决';
+            return $this->respond($res);
         }
 
         if ($resource === 'to_close') {
@@ -622,32 +607,66 @@ class Dts extends BaseController
                 return $this->fail('请求数据无效');
             }
 
-            $wf = new WfDts($db['place_at']);
-            if (!$wf->canClose()) {
-                return $this->fail('流程不允许转到 - 关闭');
-            }
-
             $allowWriteDeptId = $this->session->get('allowWriteDeptId');
             $allowWorkflow    = $this->session->get('allowWorkflow');
             if (!in_array($db['station_id'], $allowWriteDeptId) || !in_array('dts_close', $allowWorkflow)) {
                 return $this->failUnauthorized('用户没有权限');
             }
 
-            $text = $this->_getContentHeadTpl() . $progress . "\n" . $db['progress'];
-            $data = ['progress' => $text];
-
             $wf = new WfDts($db['place_at']);
             if (!$wf->toClose()) {
-                return $this->failServerError('服务器处理发生错误，稍候再试');
+                return $this->fail('不能切换问题单状态');
             }
+
+            $text             = $this->_getContentHeadTpl() . $progress . "\n" . $db['progress'];
+            $data             = ['progress' => $text];
             $data['place_at'] = $wf->getTicket()->getCurrentPlace();
 
             $result = $model->updateDtsRecordById($data, $db['id']);
             if ($result === false) {
                 return $this->failServerError('服务器处理发生错误，稍候再试');
-            } else {
-                return $this->respond(['msg' => '已提交关闭']);
             }
+
+            $res['msg'] = '已提交关闭';
+            return $this->respond($res);
+        }
+
+        if ($resource === 'back_work') {
+            $dts_id   = $client['dts_id'];
+            $progress = $client['progress'];
+            if (empty($progress)) {
+                return $this->fail('重新处理意见不能空白');
+            }
+
+            $model  = new DtsModel();
+            $fields = ['id', 'dts_id', 'station_id', 'progress', 'place_at'];
+            $db     = $model->getDtsRecordByDtsId($fields, $dts_id);
+            if (empty($db)) {
+                return $this->fail('请求数据无效');
+            }
+
+            $allowWriteDeptId = $this->session->get('allowWriteDeptId');
+            $allowWorkflow    = $this->session->get('allowWorkflow');
+            if (!in_array($db['station_id'], $allowWriteDeptId) || !in_array('dts_back_work', $allowWorkflow)) {
+                return $this->failUnauthorized('用户没有权限');
+            }
+
+            $wf = new WfDts($db['place_at']);
+            if (!$wf->toBackWorking()) {
+                return $this->fail('不能切换问题单状态');
+            }
+
+            $text             = $this->_getContentHeadTpl() . $progress . "\n" . $db['progress'];
+            $data             = ['progress' => $text];
+            $data['place_at'] = $wf->getTicket()->getCurrentPlace();
+
+            $result = $model->updateDtsRecordById($data, $db['id']);
+            if ($result === false) {
+                return $this->failServerError('服务器处理发生错误，稍候再试');
+            }
+
+            $res['msg'] = '已提交重新处理';
+            return $this->respond($res);
         }
 
     }
@@ -1074,8 +1093,13 @@ class Dts extends BaseController
             'step'    => [],
         ];
 
-        $wf    = new WfDts();
-        $metas = $wf->getPlaceLine();
+        $wf = new WfDts();
+        if ($place !== 'suspend') {
+            $metas = $wf->getPlaceMainLine();
+        } else {
+            $metas = $wf->getPlaceLine();
+        }
+
         if (empty($metas)) {
             return $steps;
         }
@@ -1089,19 +1113,19 @@ class Dts extends BaseController
 
         $i = 0;
         foreach ($metas as $meta) {
-            if ($i === 0) {
-                $temp[$meta['alias']] = [
-                    'title'       => $meta['name'],
-                    'icon'        => false,
-                    'description' => [$creator, $created_at],
-                ];
-            } else {
-                $temp[$meta['alias']] = [
-                    'title'       => $meta['name'],
-                    'icon'        => false,
-                    'description' => [],
-                ];
-            }
+            // if ($i === 0) {
+            //     $temp[$meta['alias']] = [
+            //         'title'       => $meta['name'],
+            //         'icon'        => false,
+            //         'description' => [$creator, $created_at],
+            //     ];
+            // } else {
+            $temp[$meta['alias']] = [
+                'title'       => $meta['name'],
+                'icon'        => false,
+                'description' => [],
+            ];
+            // }
             if ($meta['alias'] === $place) {
                 $steps['current']             = $i;
                 $temp[$meta['alias']]['icon'] = true;
@@ -1123,6 +1147,7 @@ class Dts extends BaseController
     {
         $result = [
             'allowUpdateProgress'   => false,
+            'allowSuspend'          => false,
             'allowScore'            => false,
             'allowResolve'          => false,
             'allowClose'            => false,
@@ -1130,10 +1155,23 @@ class Dts extends BaseController
             'showRmvAttachmentIcon' => false,
         ];
 
+        if ($place_at === 'suspend') {
+            return [
+                'allowUpdateProgress'   => false,
+                'allowSuspend'          => false,
+                'allowScore'            => false,
+                'allowResolve'          => false,
+                'allowClose'            => false,
+                'allowBackWork'         => true,
+                'showRmvAttachmentIcon' => false,
+            ];
+        }
+
         $wf  = new WfDts($place_at);
         $ops = $wf->getPlaceAllowOp();
 
         $result['allowUpdateProgress']   = isset($ops['updateProgress']) ? $ops['updateProgress'] : false;
+        $result['allowSuspend']          = isset($ops['suspend']) ? $ops['suspend'] : false;
         $result['showRmvAttachmentIcon'] = isset($ops['showRmvAttachmentIcon']) ? $ops['showRmvAttachmentIcon'] : false;
 
         if ($this->session->has('allowWorkflow')) {

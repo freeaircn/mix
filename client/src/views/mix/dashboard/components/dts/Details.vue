@@ -79,14 +79,17 @@
     <a-card :bordered="false" title="操作" :loading="loading" :body-style="{marginBottom: '8px'}">
       <router-link slot="extra" to="/dashboard/dts/list">返回</router-link>
       <a-button v-if="operation.allowUpdateProgress" type="primary" @click="reqUpdateProgress" style="margin-right: 16px">更新进展</a-button>
+      <a-button v-if="operation.allowSuspend" type="default" @click="reqToSuspend" style="margin-right: 16px">挂起</a-button>
       <a-button v-if="operation.allowResolve" type="primary" @click="reqToResolve" style="margin-right: 16px">提交解决</a-button>
       <a-button v-if="operation.allowClose" type="primary" @click="reqToClose" style="margin-right: 16px">提交关闭</a-button>
       <a-button v-if="operation.allowBackWork" type="primary" @click="reqBackWork" style="margin-right: 16px">重新处理</a-button>
       <a-button v-if="operation.allowScore" type="default" @click="reqUpdateScore" style="margin-right: 16px">提交评分</a-button>
-      <router-link to="/dashboard/dts/list"><a-button type="default" style="margin-right: 16px">返回</a-button></router-link>
+      <router-link to="/dashboard/dts/list"><a-button type="default" style="margin-right: 16px">退出</a-button></router-link>
     </a-card>
 
     <my-form :visible.sync="visibleNewProgressDiag" title="新进展" :record="newProgress" @confirm="handleUpdateProgress">
+    </my-form>
+    <my-form :visible.sync="visibleSuspendDiag" title="挂起" :record="suspendProgress" @confirm="handleToSuspend">
     </my-form>
     <my-form :visible.sync="visibleResolveDiag" title="解决" :record="resolveProgress" @confirm="handleToResolve">
     </my-form>
@@ -141,6 +144,7 @@ export default {
       //
       operation: {
         allowUpdateProgress: false,
+        allowSuspend: false,
         allowScore: false,
         allowResolve: false,
         allowClose: false,
@@ -149,6 +153,8 @@ export default {
       },
       visibleNewProgressDiag: false,
       newProgress: { text: '' },
+      visibleSuspendDiag: false,
+      suspendProgress: { text: '' },
       visibleResolveDiag: false,
       resolveProgress: { text: '' },
       visibleBackWorkDiag: false,
@@ -387,6 +393,25 @@ export default {
         .catch((err) => {
           if (err.response) {
           }
+        })
+    },
+
+    reqToSuspend () {
+      this.suspendProgress.text = this.progressTemplates.to_suspend
+      this.visibleSuspendDiag = true
+    },
+
+    handleToSuspend (record) {
+      const data = {
+        resource: 'to_suspend',
+        dts_id: this.dts_id,
+        progress: record.text
+      }
+      updateDts(data)
+        .then(() => {
+          this.onQueryDetails()
+        })
+        .catch(() => {
         })
     },
 

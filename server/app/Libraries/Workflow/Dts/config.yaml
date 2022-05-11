@@ -5,19 +5,21 @@ workflows:
         metadata:
             title: 'DTS 工作流'
         places:
-            create:
+            suspend:
                 metadata:
-                    name: '新建'
-                    line: 'main'
+                    name: '挂起'
+                    line: 'branch'
                     allow:
-                        updateProgress: true
-                        showRmvAttachmentIcon: true
+                        updateProgress: false
+                        suspend: false
+                        showRmvAttachmentIcon: false
             working:
                 metadata:
                     name: '处理中'
                     line: 'main'
                     allow:
                         updateProgress: true
+                        suspend: true
                         showRmvAttachmentIcon: true
             resolve:
                 metadata:
@@ -25,6 +27,7 @@ workflows:
                     line: 'main'
                     allow:
                         updateProgress: false
+                        suspend: false
                         showRmvAttachmentIcon: true
             close:
                 metadata:
@@ -32,20 +35,18 @@ workflows:
                     line: 'main'
                     allow:
                         updateProgress: false
+                        suspend: false
                         showRmvAttachmentIcon: false
         transitions:
             to_working:
-                from: [create, resolve, close]
+                from: [resolve, close, suspend]
                 to:   working
-                metadata:
-                    role: 'WF_ALL'
             to_resolve:
                 from: working
                 to:   resolve
-                metadata:
-                    role: 'WF_ALL'
             to_close:
                 from: resolve
                 to:   close
-                metadata:
-                    role: 'WF_ALL'
+            to_suspend:
+                from: working
+                to:   suspend
