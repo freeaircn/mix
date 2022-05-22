@@ -1,9 +1,5 @@
 <template>
   <page-header-wrapper :title="false">
-    <a-card title="概览" :bordered="false" :body-style="{marginBottom: '8px'}">
-      未完成
-    </a-card>
-
     <a-card :bordered="false" title="" :body-style="{marginBottom: '8px'}">
 
       <div class="table-page-search-wrapper">

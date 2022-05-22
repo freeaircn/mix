@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-30 20:13:01
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-22 16:43:21
+ * @LastEditTime: 2022-05-22 16:48:52
 -->
 <template>
   <a-modal
@@ -23,11 +23,18 @@
       :label-col="labelCol"
       :wrapper-col="wrapperCol"
     >
-      <a-form-model-item label="分数" prop="score">
-        <a-input-number v-model="record.score" :min="-100" :max="100"></a-input-number>
+      <a-form-model-item label="说明" prop="text">
+        <a-textarea v-model="record.text" :rows="6" />
       </a-form-model-item>
-      <a-form-model-item label="评分说明" prop="score_desc">
-        <a-textarea v-model="record.score_desc" :rows="6" />
+      <a-form-model-item label="原因分类" prop="cause_id">
+        <a-select v-model="record.cause_id" placeholder="请选择" >
+          <a-select-option v-for="d in causes" :key="d.id" :value="d.id">
+            {{ d.name }}
+          </a-select-option>
+        </a-select>
+      </a-form-model-item>
+      <a-form-model-item label="原因分析" prop="cause_analysis">
+        <a-textarea v-model="record.cause_analysis" :rows="6" />
       </a-form-model-item>
     </a-form-model>
   </a-modal>
@@ -46,6 +53,10 @@ export default {
       type: String,
       default: ''
     },
+    causes: {
+      type: Array,
+      default: () => []
+    },
     record: {
       type: Object,
       default: null
@@ -61,8 +72,9 @@ export default {
         lg: { span: 18 }, sm: { span: 18 }
       },
       rules: {
-        score: [{ required: true, message: '请输入', trigger: ['change'] }],
-        score_desc: [{ required: true, message: '请输入', trigger: ['change'] }]
+        text: [{ required: true, message: '请输入', trigger: ['change'] }],
+        cause_id: [{ required: true, message: '请选择', trigger: ['change'] }],
+        cause_analysis: [{ required: true, message: '请输入', trigger: ['change'] }]
       }
     }
   },

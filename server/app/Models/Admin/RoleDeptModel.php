@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-10 22:15:07
+ * @LastEditTime: 2022-05-22 17:40:52
  */
 
 namespace App\Models\Admin;
@@ -25,7 +25,7 @@ class RoleDeptModel extends Model
 
     public function __construct()
     {
-        $config        = config('MyGlobalConfig');
+        $config        = config('Config\\MyConfig\\MyDB');
         $this->DBGroup = $config->dbName;
         $this->table   = $config->dbPrefix . 'role_dept';
         parent::__construct();

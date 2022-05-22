@@ -1,8 +1,6 @@
 <template>
   <page-header-wrapper :title="false">
     <a-card :bordered="false" title="进度" :loading="loading" :body-style="{marginBottom: '8px', marginRight: '100px'}">
-      <router-link slot="extra" to="/dashboard/dts/list">返回</router-link>
-
       <a-steps size="small" :current="steps.current">
         <a-step v-for="(item, j) in steps.step" :key="j" :title="item.title" >
           <a-icon slot="icon" v-if="item.icon" type="loading" />
@@ -77,22 +75,27 @@
     </a-card>
 
     <a-card :bordered="false" title="操作" :loading="loading" :body-style="{marginBottom: '8px'}">
-      <router-link slot="extra" to="/dashboard/dts/list">返回</router-link>
+      <!-- <router-link slot="extra" to="/dashboard/dts/list">返回</router-link> -->
       <a-button v-if="operation.allowUpdateProgress" type="primary" @click="reqUpdateProgress" style="margin-right: 16px">更新进展</a-button>
-      <a-button v-if="operation.allowSuspend" type="default" @click="reqToSuspend" style="margin-right: 16px">挂起</a-button>
-      <a-button v-if="operation.allowResolve" type="primary" @click="reqToResolve" style="margin-right: 16px">提交解决</a-button>
-      <a-button v-if="operation.allowClose" type="primary" @click="reqToClose" style="margin-right: 16px">提交关闭</a-button>
-      <a-button v-if="operation.allowBackWork" type="primary" @click="reqBackWork" style="margin-right: 16px">重新处理</a-button>
-      <a-button v-if="operation.allowScore" type="default" @click="reqUpdateScore" style="margin-right: 16px">提交评分</a-button>
-      <router-link to="/dashboard/dts/list"><a-button type="default" style="margin-right: 16px">退出</a-button></router-link>
+      <a-button v-if="operation.allowResolve" type="primary" @click="reqToResolve" style="margin-top: 8px; margin-right: 16px">提交解决</a-button>
+      <a-button v-if="operation.allowClose" type="primary" @click="reqToClose" style="margin-top: 8px; margin-right: 16px">提交关闭</a-button>
+      <a-button v-if="operation.allowBackWork" type="primary" @click="reqBackWork" style="margin-top: 8px; margin-right: 16px">重新处理</a-button>
+      <a-button v-if="operation.allowSuspend" type="default" @click="reqToSuspend" style="margin-top: 8px; margin-right: 16px">挂起</a-button>
+      <a-button v-if="operation.allowCancel" type="default" @click="reqToCancel" style="margin-top: 8px; margin-right: 16px">取消</a-button>
+      <a-button v-if="operation.allowScore" type="default" @click="reqUpdateScore" style="margin-top: 8px; margin-right: 16px">提交评分</a-button>
+      <div style="margin-top: 8px">
+        <router-link to="/dashboard/dts/list"><a-button type="default" style="margin-right: 16px">退出</a-button></router-link>
+      </div>
     </a-card>
 
     <my-form :visible.sync="visibleNewProgressDiag" title="新进展" :record="newProgress" @confirm="handleUpdateProgress">
     </my-form>
     <my-form :visible.sync="visibleSuspendDiag" title="挂起" :record="suspendProgress" @confirm="handleToSuspend">
     </my-form>
-    <my-form :visible.sync="visibleResolveDiag" title="解决" :record="resolveProgress" @confirm="handleToResolve">
+    <my-form :visible.sync="visibleCancelDiag" title="取消" :record="cancelProgress" @confirm="handleToCancel">
     </my-form>
+    <resolve-form :visible.sync="visibleResolveDiag" title="解决" :causes="causes" :record="resolveProgress" @confirm="handleToResolve">
+    </resolve-form>
     <my-form :visible.sync="visibleBackWorkDiag" title="重新处理" :record="backWorkProgress" @confirm="handleBackWork">
     </my-form>
     <my-form :visible.sync="visibleCloseDiag" title="关闭" :record="closeProgress" @confirm="handleToClose">
@@ -108,6 +111,7 @@
 import myConfig from '@/config/myConfig'
 import MyForm from './Form'
 import ScoreForm from './ScoreForm'
+import ResolveForm from './ResolveForm'
 import { mapGetters } from 'vuex'
 import { baseMixin } from '@/store/app-mixin'
 import { queryDts, delAttachment, downloadAttachment, updateDts } from '@/api/mix/dts'
@@ -116,7 +120,8 @@ export default {
   name: 'DtsTicketDetails',
   components: {
     MyForm,
-    ScoreForm
+    ScoreForm,
+    ResolveForm
   },
   mixins: [baseMixin],
   data () {
@@ -141,10 +146,12 @@ export default {
         progress: ''
       },
       progressTemplates: {},
+      causes: [],
       //
       operation: {
         allowUpdateProgress: false,
         allowSuspend: false,
+        allowCancel: false,
         allowScore: false,
         allowResolve: false,
         allowClose: false,
@@ -155,6 +162,8 @@ export default {
       newProgress: { text: '' },
       visibleSuspendDiag: false,
       suspendProgress: { text: '' },
+      visibleCancelDiag: false,
+      cancelProgress: { text: '' },
       visibleResolveDiag: false,
       resolveProgress: { text: '' },
       visibleBackWorkDiag: false,
@@ -203,6 +212,7 @@ export default {
           Object.assign(this.details, data.details)
           this.steps = data.steps
           this.progressTemplates = data.progressTemplates
+          this.causes = data.causes
           this.operation = { ...data.operation }
           this.fileList = data.attachments
           this.fileNumber = data.attachments.length
@@ -404,6 +414,25 @@ export default {
     handleToSuspend (record) {
       const data = {
         resource: 'to_suspend',
+        dts_id: this.dts_id,
+        progress: record.text
+      }
+      updateDts(data)
+        .then(() => {
+          this.onQueryDetails()
+        })
+        .catch(() => {
+        })
+    },
+
+    reqToCancel () {
+      this.cancelProgress.text = this.progressTemplates.to_cancel
+      this.visibleCancelDiag = true
+    },
+
+    handleToCancel (record) {
+      const data = {
+        resource: 'to_cancel',
         dts_id: this.dts_id,
         progress: record.text
       }

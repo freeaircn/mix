@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-11 14:59:03
+ * @LastEditTime: 2022-05-22 17:44:07
  */
 
 namespace App\Models\Meter;
@@ -31,7 +31,7 @@ class MeterModel extends Model
 
     public function __construct()
     {
-        $config        = config('MyGlobalConfig');
+        $config        = config('Config\\MyConfig\\MyDB');
         $this->DBGroup = $config->dbName;
         $this->table   = $config->dbPrefix . 'meter';
         parent::__construct();

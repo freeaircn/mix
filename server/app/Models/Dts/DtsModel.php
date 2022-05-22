@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-11 11:02:21
+ * @LastEditTime: 2022-05-22 17:43:53
  */
 
 namespace App\Models\Dts;
@@ -31,7 +31,7 @@ class DtsModel extends Model
 
     public function __construct()
     {
-        $config        = config('MyGlobalConfig');
+        $config        = config('Config\\MyConfig\\MyDB');
         $this->DBGroup = $config->dbName;
         $this->table   = $config->dbPrefix . 'dts';
         parent::__construct();

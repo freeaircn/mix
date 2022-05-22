@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-10 22:33:54
+ * @LastEditTime: 2022-05-22 17:41:18
  */
 
 namespace App\Models\Admin;
@@ -25,7 +25,7 @@ class RoleWorkflowModel extends Model
 
     public function __construct()
     {
-        $config        = config('MyGlobalConfig');
+        $config        = config('Config\\MyConfig\\MyDB');
         $this->DBGroup = $config->dbName;
         $this->table   = $config->dbPrefix . 'role_workflow';
         parent::__construct();

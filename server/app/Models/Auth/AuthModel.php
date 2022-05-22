@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-11 10:02:22
+ * @LastEditTime: 2022-05-22 18:19:56
  */
 
 namespace App\Models\Auth;
@@ -31,7 +31,7 @@ class AuthModel extends Model
 
     public function __construct()
     {
-        $config        = config('MyGlobalConfig');
+        $config        = config('Config\\MyConfig\\MyDB');
         $this->DBGroup = $config->dbName;
         $this->table   = $config->dbPrefix . 'login_attempts';
         parent::__construct();
@@ -43,7 +43,7 @@ class AuthModel extends Model
             return true;
         }
 
-        $config      = config('MyGlobalConfig');
+        $config      = config('Config\\MyConfig\\Auth');
         $maxAttempts = $config->maxAttempts;
         $lockoutTime = $config->lockoutTime;
 

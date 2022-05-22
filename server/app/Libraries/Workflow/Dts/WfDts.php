@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2019-12-29 14:06:12
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-11 20:32:09
+ * @LastEditTime: 2022-05-22 17:25:24
  */
 
 namespace App\Libraries\Workflow\Dts;
@@ -20,7 +20,7 @@ class WfDts extends Core
             $ticket = new Ticket($place);
             $this->bindTicket($ticket);
         }
-        $config = rtrim(APPPATH, '\\/ ') . DIRECTORY_SEPARATOR . config('MyGlobalConfig')->wfDtsConfigFile;
+        $config = rtrim(APPPATH, '\\/ ') . DIRECTORY_SEPARATOR . config('Config\\MyConfig\\Dts')->wfDtsConfigFile;
         parent::__construct($config);
     }
 
@@ -29,22 +29,44 @@ class WfDts extends Core
         $temp = $this->placesMetadata;
 
         foreach ($temp as $key => $value) {
-            if ($value['line'] === 'main') {
+            // if ($value['line'] === 'main') {
+            if (in_array($line, $value['line'])) {
                 return $key;
             }
         }
     }
 
-    public function getPlaceLine(): array
+    // public function getPlaceLine(): array
+    // {
+    //     $temp = $this->placesMetadata;
+    //     $res  = [];
+
+    //     foreach ($temp as $key => $value) {
+    //         $res[] = [
+    //             'name'  => $value['name'],
+    //             'alias' => $key,
+    //         ];
+    //     }
+
+    //     return $res;
+    // }
+
+    public function getPlaceLine(string $line = null): array
     {
+        if (empty($line)) {
+            return [];
+        }
+
         $temp = $this->placesMetadata;
         $res  = [];
 
         foreach ($temp as $key => $value) {
-            $res[] = [
-                'name'  => $value['name'],
-                'alias' => $key,
-            ];
+            if (in_array($line, $value['line'])) {
+                $res[] = [
+                    'name'  => $value['name'],
+                    'alias' => $key,
+                ];
+            }
         }
 
         return $res;
@@ -136,6 +158,35 @@ class WfDts extends Core
         try {
             if ($this->workflow->can($this->ticket, 'to_suspend')) {
                 $this->workflow->apply($this->ticket, 'to_suspend');
+                return true;
+            } else {
+                return false;
+            }
+        } catch (LogicException $exception) {
+            // print($exception);
+            return false;
+        }
+    }
+
+    public function canCancel()
+    {
+        try {
+            if ($this->workflow->can($this->ticket, 'to_cancel')) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (LogicException $exception) {
+            // print($exception);
+            return false;
+        }
+    }
+
+    public function toCancel()
+    {
+        try {
+            if ($this->workflow->can($this->ticket, 'to_cancel')) {
+                $this->workflow->apply($this->ticket, 'to_cancel');
                 return true;
             } else {
                 return false;

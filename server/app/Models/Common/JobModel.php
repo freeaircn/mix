@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-10 20:39:04
+ * @LastEditTime: 2022-05-22 17:43:01
  */
 
 namespace App\Models\Common;
@@ -31,7 +31,7 @@ class JobModel extends Model
 
     public function __construct()
     {
-        $config        = config('MyGlobalConfig');
+        $config        = config('Config\\MyConfig\\MyDB');
         $this->DBGroup = $config->dbName;
         $this->table   = $config->dbPrefix . 'job';
         parent::__construct();

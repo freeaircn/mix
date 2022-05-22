@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-11 21:01:57
+ * @LastEditTime: 2022-05-22 17:34:27
  */
 
 namespace App\Controllers;
@@ -23,16 +23,11 @@ class Dts extends BaseController
 {
     use ResponseTrait;
 
-    // 模板
-    protected $progressTemplates;
-    //
-    protected $keyValuePairs;
+    protected $selfConfig;
 
     public function __construct()
     {
-        $config                  = config('MyGlobalConfig');
-        $this->progressTemplates = $config->dtsProgressTemplates;
-        $this->keyValuePairs     = $config->dtsKeyValuePairs;
+        $this->selfConfig = config('Config\\MyConfig\\Dts');
     }
 
     public function queryEntry()
@@ -106,24 +101,23 @@ class Dts extends BaseController
             return $this->failServerError('附件上传失败');
         }
 
-        $config = config('MyGlobalConfig');
-        if (!$file->getSize() > $config->dtsAttachmentSize) {
-            return $this->fail($config->dtsAttachmentExceedSizeMsg);
+        if (!$file->getSize() > $this->selfConfig->attachmentSize) {
+            return $this->fail($this->selfConfig->attachmentExceedSizeMsg);
         }
         if (!$file->getSize() === 0) {
             return $this->fail('上传空文件');
         }
 
         $fileType = $file->getMimeType();
-        if (!in_array($fileType, $config->dtsAttachmentFileTypes)) {
-            return $this->fail($config->dtsAttachmentInvalidTypeMsg);
+        if (!in_array($fileType, $this->selfConfig->attachmentFileTypes)) {
+            return $this->fail($this->selfConfig->attachmentInvalidTypeMsg);
         }
 
         $orgName = $file->getName();
         $size    = $file->getSize();
         $newName = $file->getRandomName();
         // 移动文件
-        $path = WRITEPATH . $config->dtsAttachmentPath;
+        $path = WRITEPATH . $this->selfConfig->attachmentPath;
         if (!$file->hasMoved()) {
             try {
                 $file->move($path, $newName, true);
@@ -166,9 +160,8 @@ class Dts extends BaseController
             $id    = $model->createDtsAttachmentSingleRecord($attachment);
             if ($id === false) {
                 // 删除移动后的文件
-                $config = config('MyGlobalConfig');
-                $path   = WRITEPATH . $config->dtsAttachmentPath;
-                $file   = rtrim($path, '\\/ ') . DIRECTORY_SEPARATOR . $newName;
+                $path = WRITEPATH . $this->selfConfig->attachmentPath;
+                $file = rtrim($path, '\\/ ') . DIRECTORY_SEPARATOR . $newName;
                 if (file_exists($file)) {
                     unlink($file);
                 }
@@ -199,9 +192,8 @@ class Dts extends BaseController
                 return $this->respond(['res' => 'empty']);
             }
 
-            $config = config('MyGlobalConfig');
-            $path   = WRITEPATH . $config->dtsAttachmentPath;
-            $new    = [];
+            $path = WRITEPATH . $this->selfConfig->attachmentPath;
+            $new  = [];
             foreach ($temp as $v) {
                 if ($id == $v['id']) {
                     $file = rtrim($path, '\\/ ') . DIRECTORY_SEPARATOR . $v['newName'];
@@ -235,9 +227,8 @@ class Dts extends BaseController
             if (!$result) {
                 return $this->failServerError('服务器处理发生错误，稍候再试');
             }
-            $config = config('MyGlobalConfig');
-            $path   = WRITEPATH . $config->dtsAttachmentPath;
-            $file   = rtrim($path, '\\/ ') . DIRECTORY_SEPARATOR . $db['new_name'];
+            $path = WRITEPATH . $this->selfConfig->attachmentPath;
+            $file = rtrim($path, '\\/ ') . DIRECTORY_SEPARATOR . $db['new_name'];
             if (file_exists($file)) {
                 unlink($file);
             }
@@ -280,9 +271,8 @@ class Dts extends BaseController
             return $this->failUnauthorized('用户没有权限');
         }
 
-        $config = config('MyGlobalConfig');
-        $path   = WRITEPATH . $config->dtsAttachmentPath;
-        $file   = rtrim($path, '\\/ ') . DIRECTORY_SEPARATOR . $db['new_name'];
+        $path = WRITEPATH . $this->selfConfig->attachmentPath;
+        $file = rtrim($path, '\\/ ') . DIRECTORY_SEPARATOR . $db['new_name'];
         if (!file_exists($file)) {
             return $this->failNotFound('附件不存在');
         }
@@ -420,8 +410,7 @@ class Dts extends BaseController
         $model2 = new DtsAttachmentModel();
         $files  = $model2->getDtsAttachmentRecordsByDtsId($fields, $dts_id);
         if (!empty($files)) {
-            $config = config('MyGlobalConfig');
-            $path   = WRITEPATH . $config->dtsAttachmentPath;
+            $path = WRITEPATH . $this->selfConfig->attachmentPath;
             foreach ($files as $v) {
                 $file = rtrim($path, '\\/ ') . DIRECTORY_SEPARATOR . $v['new_name'];
                 if (file_exists($file)) {
@@ -451,7 +440,7 @@ class Dts extends BaseController
         $client   = $this->request->getJSON(true);
         $resource = $client['resource'];
 
-        $resources = ['progress', 'to_suspend', 'score', 'to_resolve', 'to_close', 'back_work'];
+        $resources = ['progress', 'to_suspend', 'to_cancel', 'score', 'to_resolve', 'to_close', 'back_work'];
         if (!in_array($resource, $resources)) {
             return $this->fail('请求数据无效');
         }
@@ -522,6 +511,40 @@ class Dts extends BaseController
             }
 
             $res['msg'] = '已挂起';
+            return $this->respond($res);
+        }
+
+        if ($resource === 'to_cancel') {
+            $dts_id   = $client['dts_id'];
+            $progress = $client['progress'];
+
+            $model  = new DtsModel();
+            $fields = ['id', 'dts_id', 'station_id', 'progress', 'place_at'];
+            $db     = $model->getDtsRecordByDtsId($fields, $dts_id);
+            if (empty($db)) {
+                return $this->fail('请求数据无效');
+            }
+
+            $allowWriteDeptId = $this->session->get('allowWriteDeptId');
+            if (!in_array($db['station_id'], $allowWriteDeptId)) {
+                return $this->failUnauthorized('用户没有权限');
+            }
+
+            $wf = new WfDts($db['place_at']);
+            if (!$wf->toCancel()) {
+                return $this->fail('不能切换问题单状态');
+            }
+
+            $text             = $this->_getContentHeadTpl() . $progress . "\n" . $db['progress'];
+            $data             = ['progress' => $text];
+            $data['place_at'] = $wf->getTicket()->getCurrentPlace();
+
+            $result = $model->updateDtsRecordById($data, $db['id']);
+            if ($result === false) {
+                return $this->failServerError('服务器处理发生错误，稍候再试');
+            }
+
+            $res['msg'] = '已取消';
             return $this->respond($res);
         }
 
@@ -822,7 +845,7 @@ class Dts extends BaseController
         $model       = new DeptModel();
         $fields      = ['id', 'name'];
         $station     = $model->getDeptRecordsByIds($fields, $allowWriteDeptId);
-        $description = $this->progressTemplates['new_form'];
+        $description = $this->selfConfig->progressTemplates['new_form'];
 
         $res['http_status'] = 200;
         $res['data']        = [
@@ -897,8 +920,8 @@ class Dts extends BaseController
         $details = $db;
 
         // id -> name
-        $details['type']  = $this->keyValuePairs['type'][$db['type']];
-        $details['level'] = $this->keyValuePairs['level'][$db['level']];
+        $details['type']  = $this->selfConfig->keyValuePairs['type'][$db['type']];
+        $details['level'] = $this->selfConfig->keyValuePairs['level'][$db['level']];
 
         $users_id = [
             'creator'  => $db['creator_id'],
@@ -919,7 +942,8 @@ class Dts extends BaseController
         $res['data']        = [
             'details'           => $details,
             'steps'             => $steps,
-            'progressTemplates' => $this->progressTemplates,
+            'progressTemplates' => $this->selfConfig->progressTemplates,
+            'causes'            => $this->selfConfig->causes,
             'operation'         => $operation,
             'attachments'       => $attachments,
         ];
@@ -1094,11 +1118,26 @@ class Dts extends BaseController
         ];
 
         $wf = new WfDts();
-        if ($place !== 'suspend') {
-            $metas = $wf->getPlaceMainLine();
-        } else {
-            $metas = $wf->getPlaceLine();
+
+        $metas = [];
+        switch ($place) {
+            case 'suspend':
+                $metas = $wf->getPlaceLine('suspend');
+                break;
+            case 'cancel':
+                $metas = $wf->getPlaceLine('cancel');
+                break;
+            default:
+                $metas = $wf->getPlaceLine('main');
+                break;
         }
+
+        // if ($place !== 'suspend') {
+        //     // $metas = $wf->getPlaceMainLine();
+        //     $metas = $wf->getPlaceLine('main');
+        // } else {
+        //     $metas = $wf->getPlaceLine('suspend');
+        // }
 
         if (empty($metas)) {
             return $steps;
@@ -1148,6 +1187,7 @@ class Dts extends BaseController
         $result = [
             'allowUpdateProgress'   => false,
             'allowSuspend'          => false,
+            'allowCancel'           => false,
             'allowScore'            => false,
             'allowResolve'          => false,
             'allowClose'            => false,
@@ -1159,10 +1199,24 @@ class Dts extends BaseController
             return [
                 'allowUpdateProgress'   => false,
                 'allowSuspend'          => false,
+                'allowCancel'           => false,
                 'allowScore'            => false,
                 'allowResolve'          => false,
                 'allowClose'            => false,
                 'allowBackWork'         => true,
+                'showRmvAttachmentIcon' => false,
+            ];
+        }
+
+        if ($place_at === 'cancel') {
+            return [
+                'allowUpdateProgress'   => false,
+                'allowSuspend'          => false,
+                'allowCancel'           => false,
+                'allowScore'            => false,
+                'allowResolve'          => false,
+                'allowClose'            => false,
+                'allowBackWork'         => false,
                 'showRmvAttachmentIcon' => false,
             ];
         }
@@ -1172,6 +1226,7 @@ class Dts extends BaseController
 
         $result['allowUpdateProgress']   = isset($ops['updateProgress']) ? $ops['updateProgress'] : false;
         $result['allowSuspend']          = isset($ops['suspend']) ? $ops['suspend'] : false;
+        $result['allowCancel']           = isset($ops['cancel']) ? $ops['cancel'] : false;
         $result['showRmvAttachmentIcon'] = isset($ops['showRmvAttachmentIcon']) ? $ops['showRmvAttachmentIcon'] : false;
 
         if ($this->session->has('allowWorkflow')) {

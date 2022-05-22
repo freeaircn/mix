@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-10 20:34:05
+ * @LastEditTime: 2022-05-22 17:42:10
  */
 
 namespace App\Models\Common;
@@ -31,7 +31,7 @@ class AvatarModel extends Model
 
     public function __construct()
     {
-        $config        = config('MyGlobalConfig');
+        $config        = config('Config\\MyConfig\\MyDB');
         $this->DBGroup = $config->dbName;
         $this->table   = $config->dbPrefix . 'user_avatar';
         parent::__construct();
@@ -60,7 +60,7 @@ class AvatarModel extends Model
             return false;
         }
 
-        $config = config('MyGlobalConfig');
+        $config = config('Config\\MyConfig\\Account');
         if ($sex == '男') {
             $data = [
                 'path' => $config->defaultAvatarPath,

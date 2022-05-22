@@ -8,34 +8,47 @@ workflows:
             suspend:
                 metadata:
                     name: '挂起'
-                    line: 'branch'
+                    line: ['suspend']
                     allow:
                         updateProgress: false
                         suspend: false
+                        cancel: false
                         showRmvAttachmentIcon: false
             working:
                 metadata:
                     name: '处理中'
-                    line: 'main'
+                    line: ['main', 'suspend', 'cancel']
                     allow:
                         updateProgress: true
                         suspend: true
+                        cancel: true
                         showRmvAttachmentIcon: true
             resolve:
                 metadata:
                     name: '解决'
-                    line: 'main'
+                    line: ['main', 'suspend']
                     allow:
                         updateProgress: false
                         suspend: false
+                        cancel: false
                         showRmvAttachmentIcon: true
             close:
                 metadata:
                     name: '关闭'
-                    line: 'main'
+                    line: ['main', 'suspend']
                     allow:
                         updateProgress: false
                         suspend: false
+                        cancel: false
+                        showRmvAttachmentIcon: false
+            cancel:
+                metadata:
+                    name: '取消'
+                    line: ['cancel']
+                    allow:
+                        updateProgress: false
+                        suspend: false
+                        cancel: false
                         showRmvAttachmentIcon: false
         transitions:
             to_working:
@@ -50,3 +63,6 @@ workflows:
             to_suspend:
                 from: working
                 to:   suspend
+            to_cancel:
+                from: working
+                to:   cancel

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-10 15:51:43
+ * @LastEditTime: 2022-05-22 17:42:38
  */
 
 namespace App\Models\Common;
@@ -31,7 +31,7 @@ class DeptModel extends Model
 
     public function __construct()
     {
-        $config        = config('MyGlobalConfig');
+        $config        = config('Config\\MyConfig\\MyDB');
         $this->DBGroup = $config->dbName;
         $this->table   = $config->dbPrefix . 'dept';
         parent::__construct();
