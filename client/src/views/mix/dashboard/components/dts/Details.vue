@@ -36,9 +36,13 @@
         <a-descriptions-item label="创建">{{ details.creator }}</a-descriptions-item>
         <a-descriptions-item label="审核" v-if="details.reviewer.length !== 0">{{ details.reviewer }}</a-descriptions-item>
       </a-descriptions>
+      <a-descriptions v-if="details.cause_name != ''" title="" :column="{ xxl: 4, xl: 3, lg: 3, md: 3, sm: 2, xs: 1 }">
+        <a-descriptions-item label="原因">{{ details.cause_name }}</a-descriptions-item>
+        <a-descriptions-item label="原因分析">{{ details.cause_analysis }}</a-descriptions-item>
+      </a-descriptions>
       <a-descriptions v-if="details.score != '0'" title="" :column="{ xxl: 4, xl: 3, lg: 3, md: 3, sm: 2, xs: 1 }">
         <a-descriptions-item label="评分">{{ details.score }}</a-descriptions-item>
-        <a-descriptions-item label="评分组">{{ details.scored_by }}</a-descriptions-item>
+        <a-descriptions-item label="评分人">{{ details.scored_by }}</a-descriptions-item>
         <a-descriptions-item label="评分说明">{{ details.score_desc }}</a-descriptions-item>
       </a-descriptions>
 
@@ -94,7 +98,7 @@
     </my-form>
     <my-form :visible.sync="visibleCancelDiag" title="取消" :record="cancelProgress" @confirm="handleToCancel">
     </my-form>
-    <resolve-form :visible.sync="visibleResolveDiag" title="解决" :causes="causes" :record="resolveProgress" @confirm="handleToResolve">
+    <resolve-form :visible.sync="visibleResolveDiag" title="解决" :causes="causes" :record="resolveInfo" @confirm="handleToResolve">
     </resolve-form>
     <my-form :visible.sync="visibleBackWorkDiag" title="重新处理" :record="backWorkProgress" @confirm="handleBackWork">
     </my-form>
@@ -143,7 +147,13 @@ export default {
         created_at: '',
         updated_at: '',
         description: '',
-        progress: ''
+        progress: '',
+        score: '',
+        score_desc: '',
+        scored_by: '',
+        cause: '',
+        cause_name: '',
+        cause_analysis: ''
       },
       progressTemplates: {},
       causes: [],
@@ -164,8 +174,14 @@ export default {
       suspendProgress: { text: '' },
       visibleCancelDiag: false,
       cancelProgress: { text: '' },
+      //
       visibleResolveDiag: false,
-      resolveProgress: { text: '' },
+      resolveInfo: {
+        text: '',
+        cause: '',
+        cause_analysis: ''
+      },
+      //
       visibleBackWorkDiag: false,
       backWorkProgress: { text: '' },
       visibleCloseDiag: false,
@@ -212,13 +228,21 @@ export default {
           Object.assign(this.details, data.details)
           this.steps = data.steps
           this.progressTemplates = data.progressTemplates
-          this.causes = data.causes
           this.operation = { ...data.operation }
           this.fileList = data.attachments
           this.fileNumber = data.attachments.length
+          //
+          this.causes = data.causes
+          this.causes.forEach((item) => {
+            if (item.id === this.details.cause) {
+              this.details.cause_name = item.name
+            }
+          })
+          //
           this.loading = false
         })
         .catch(() => {
+          this.details.cause_name = ''
           this.loading = false
         })
     },
@@ -356,9 +380,7 @@ export default {
           // window.scroll(0, 0)
           this.onQueryDetails()
         })
-        .catch((err) => {
-          if (err.response) {
-          }
+        .catch(() => {
         })
     },
 
@@ -386,7 +408,9 @@ export default {
     },
 
     reqToResolve () {
-      this.resolveProgress.text = this.progressTemplates.to_resolve
+      this.resolveInfo.text = this.progressTemplates.to_resolve
+      this.resolveInfo.cause = this.details.cause
+      this.resolveInfo.cause_analysis = this.details.cause_analysis
       this.visibleResolveDiag = true
     },
 
@@ -394,7 +418,9 @@ export default {
       const data = {
         resource: 'to_resolve',
         dts_id: this.dts_id,
-        progress: record.text
+        progress: record.text,
+        cause: record.cause,
+        cause_analysis: record.cause_analysis
       }
       updateDts(data)
         .then(() => {

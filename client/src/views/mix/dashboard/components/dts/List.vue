@@ -97,6 +97,8 @@
           <template>
             <a @click="onQueryDetails(record)">详情</a>
             <a-divider type="vertical" />
+            <a @click="onEdit(record)">编辑</a>
+            <a-divider type="vertical" />
             <a @click="handleDel(record)">删除</a>
           </template>
         </span>
@@ -293,6 +295,13 @@ export default {
       if (record.dts_id) {
         const id = record.dts_id
         this.$router.push({ path: `/dashboard/dts/details/${id}` })
+      }
+    },
+
+    onEdit (record) {
+      if (record.dts_id) {
+        const id = record.dts_id
+        this.$router.push({ path: `/dashboard/dts/edit/${id}` })
       }
     },
 

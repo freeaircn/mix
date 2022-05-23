@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-29 00:12:50
+ * @LastEditTime: 2022-05-23 20:52:46
 -->
 <template>
   <page-header-wrapper :title="false">
@@ -83,7 +83,7 @@
 import myConfig from '@/config/myConfig'
 import { mapGetters } from 'vuex'
 import { queryDts, delAttachment, createDts } from '@/api/mix/dts'
-import { listToTree } from '@/utils/util'
+import { listToTree, arraySplitToStr } from '@/utils/util'
 
 export default {
   name: 'DtsBlankForm',
@@ -246,13 +246,8 @@ export default {
       })
       this.$refs.form.validate(valid => {
         if (valid) {
-          let temp = '+'
-          this.device.forEach(element => {
-            temp = temp + element + '+'
-          })
-          //
           const data = { ...this.record }
-          data.device = temp
+          data.device = arraySplitToStr(this.device)
           data.files = files
 
           createDts(data)

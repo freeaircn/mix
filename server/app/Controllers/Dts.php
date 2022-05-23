@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-22 17:34:27
+ * @LastEditTime: 2022-05-23 21:07:04
  */
 
 namespace App\Controllers;
@@ -47,6 +47,9 @@ class Dts extends BaseController
                 break;
             case 'details':
                 $result = $this->_reqDetails();
+                break;
+            case 'pre_edit':
+                $result = $this->_preEdit();
                 break;
             case 'new_form':
                 $result = $this->_reqNewForm();
@@ -314,7 +317,7 @@ class Dts extends BaseController
         ];
 
         $wf                = new WfDts();
-        $draft['place_at'] = $wf->getStartPlace();
+        $draft['place_at'] = $wf->getStartPlace('main');
 
         $draft['status'] = 'publish';
         // dts_id
@@ -402,7 +405,10 @@ class Dts extends BaseController
         }
 
         if ($db['created_at'] != $db['updated_at']) {
-            return $this->failUnauthorized('不能执行删除操作，请联系管理员删除');
+            $isAdmin = $this->session->get('isAdmin');
+            if ($isAdmin === false) {
+                return $this->failUnauthorized('不能执行删除操作，请联系管理员删除');
+            }
         }
 
         // 附件
@@ -440,7 +446,7 @@ class Dts extends BaseController
         $client   = $this->request->getJSON(true);
         $resource = $client['resource'];
 
-        $resources = ['progress', 'to_suspend', 'to_cancel', 'score', 'to_resolve', 'to_close', 'back_work'];
+        $resources = ['progress', 'to_suspend', 'to_cancel', 'score', 'to_resolve', 'to_close', 'back_work', 'req_edit'];
         if (!in_array($resource, $resources)) {
             return $this->fail('请求数据无效');
         }
@@ -478,6 +484,39 @@ class Dts extends BaseController
             } else {
                 return $this->respond(['msg' => '已更新进展']);
             }
+        }
+
+        if ($resource === 'req_edit') {
+            $dts_id     = $client['dts_id'];
+            $station_id = $client['station_id'];
+
+            $data = [
+                'type'        => $client['type'],
+                'level'       => $client['level'],
+                'title'       => $client['title'],
+                'device'      => $client['device'],
+                'description' => $client['description'],
+                'progress'    => $client['progress'],
+            ];
+
+            $model  = new DtsModel();
+            $fields = ['id', 'dts_id', 'station_id'];
+            $db     = $model->getDtsRecordByDtsId($fields, $dts_id);
+            if (empty($db) || $station_id !== $db['station_id']) {
+                return $this->fail('请求数据无效');
+            }
+
+            $allowWriteDeptId = $this->session->get('allowWriteDeptId');
+            if (!in_array($db['station_id'], $allowWriteDeptId)) {
+                return $this->failUnauthorized('用户没有权限');
+            }
+
+            $result = $model->updateDtsRecordById($data, $db['id']);
+            if ($result === false) {
+                return $this->failServerError('服务器处理发生错误，稍候再试');
+            }
+
+            return $this->respond(['msg' => '已保存']);
         }
 
         if ($resource === 'to_suspend') {
@@ -579,8 +618,10 @@ class Dts extends BaseController
         }
 
         if ($resource === 'to_resolve') {
-            $dts_id   = $client['dts_id'];
-            $progress = $client['progress'];
+            $dts_id         = $client['dts_id'];
+            $progress       = $client['progress'];
+            $cause          = $client['cause'];
+            $cause_analysis = $client['cause_analysis'];
             if (empty($progress)) {
                 return $this->fail('解决意见不能空白');
             }
@@ -603,8 +644,12 @@ class Dts extends BaseController
                 return $this->fail('不能切换问题单状态');
             }
 
-            $text             = $this->_getContentHeadTpl() . $progress . "\n" . $db['progress'];
-            $data             = ['progress' => $text];
+            $text = $this->_getContentHeadTpl() . $progress . "\n" . $db['progress'];
+            $data = [
+                'progress'       => $text,
+                'cause'          => $cause,
+                'cause_analysis' => $cause_analysis,
+            ];
             $data['place_at'] = $wf->getTicket()->getCurrentPlace();
 
             $result = $model->updateDtsRecordById($data, $db['id']);
@@ -902,7 +947,7 @@ class Dts extends BaseController
         $params = $this->request->getGet();
         $dts_id = $params['dts_id'];
 
-        $fields = ['dts_id', 'type', 'title', 'level', 'station_id', 'place_at', 'device', 'description', 'progress', 'created_at', 'updated_at', 'creator_id', 'reviewer_id', 'score', 'score_desc', 'scored_by'];
+        $fields = ['dts_id', 'type', 'title', 'level', 'station_id', 'place_at', 'device', 'description', 'progress', 'created_at', 'updated_at', 'creator_id', 'reviewer_id', 'score', 'score_desc', 'scored_by', 'cause', 'cause_analysis'];
         $model  = new DtsModel();
         $db     = $model->getDtsRecordByDtsId($fields, $dts_id);
         if (empty($db)) {
@@ -946,6 +991,53 @@ class Dts extends BaseController
             'causes'            => $this->selfConfig->causes,
             'operation'         => $operation,
             'attachments'       => $attachments,
+        ];
+        return $res;
+    }
+
+    protected function _preEdit()
+    {
+        if (!$this->validate('DtsReqDetails')) {
+            $res['http_status'] = 400;
+            $res['msg']         = [
+                'error' => '请求数据无效',
+                'info'  => $this->validator->getErrors(),
+            ];
+            return $res;
+        }
+
+        $params = $this->request->getGet();
+        $dts_id = $params['dts_id'];
+
+        $fields = ['dts_id', 'type', 'title', 'level', 'station_id', 'device', 'description', 'progress'];
+        $model  = new DtsModel();
+        $db     = $model->getDtsRecordByDtsId($fields, $dts_id);
+        if (empty($db)) {
+            $res['http_status'] = 404;
+            $res['msg']         = '没有找到请求的数据';
+            return $res;
+        }
+
+        $allowReadDeptId = $this->session->get('allowReadDeptId');
+        if (!in_array($db['station_id'], $allowReadDeptId)) {
+            $res['http_status'] = 401;
+            $res['msg']         = '用户没有权限';
+            return $res;
+        }
+        $details = $db;
+
+        // id -> name
+        // $details['type']  = $this->selfConfig->keyValuePairs['type'][$db['type']];
+        // $details['level'] = $this->selfConfig->keyValuePairs['level'][$db['level']];
+
+        // $details['device']  = $this->_getDeviceFullName($db['device']);
+        $details['station'] = $this->_getDeptName2($db['station_id']);
+        $deviceList         = $this->_getDeviceList($db['station_id']);
+
+        $res['http_status'] = 200;
+        $res['data']        = [
+            'record'     => $details,
+            'deviceList' => $deviceList,
         ];
         return $res;
     }

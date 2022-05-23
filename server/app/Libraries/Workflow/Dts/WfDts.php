@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2019-12-29 14:06:12
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-22 17:25:24
+ * @LastEditTime: 2022-05-23 14:57:06
  */
 
 namespace App\Libraries\Workflow\Dts;
@@ -24,8 +24,12 @@ class WfDts extends Core
         parent::__construct($config);
     }
 
-    public function getStartPlace()
+    public function getStartPlace(string $line = null)
     {
+        if (empty($line)) {
+            return '';
+        }
+
         $temp = $this->placesMetadata;
 
         foreach ($temp as $key => $value) {

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-07-06 21:44:27
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-22 17:35:31
+ * @LastEditTime: 2022-05-22 22:24:54
  */
 
 namespace Config\MyConfig;
@@ -52,10 +52,11 @@ class Dts extends BaseConfig
         'back_work'       => "【重新处理原因】\n\n",
     ];
     public $causes = [
-        ['id' => '1', 'name' => '硬件老化'],
-        ['id' => '2', 'name' => '硬件质量'],
-        ['id' => '3', 'name' => '软件错误'],
-        ['id' => '4', 'name' => '人为原因'],
-        ['id' => '5', 'name' => '自然灾害'],
+        ['id' => '10', 'name' => '硬件老化'],
+        ['id' => '20', 'name' => '硬件质量'],
+        ['id' => '30', 'name' => '设置错误'],
+        ['id' => '40', 'name' => '软件错误'],
+        ['id' => '50', 'name' => '人为原因'],
+        ['id' => '00', 'name' => '自然灾害'],
     ];
 }

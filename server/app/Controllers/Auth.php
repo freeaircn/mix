@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-10 22:45:44
+ * @LastEditTime: 2022-05-22 23:05:06
  */
 
 namespace App\Controllers;
@@ -13,6 +13,7 @@ use App\Models\Admin\ApiModel;
 use App\Models\Admin\RoleApiModel;
 use App\Models\Admin\RoleDeptModel;
 use App\Models\Admin\RoleMenuModel;
+use App\Models\Admin\RoleMode;
 use App\Models\Admin\RoleWorkflowModel;
 use App\Models\Admin\UserRoleModel;
 use App\Models\Admin\WorkflowModel;
@@ -89,6 +90,7 @@ class Auth extends BaseController
         $allowReadDeptId    = [];
         $allowWriteDeptId   = [];
         $allowWorkflow      = [];
+        $isAdmin            = false;
         //
         $model   = new UserRoleModel();
         $roleIds = $model->getRoleIdByUid($user['id']);
@@ -143,6 +145,21 @@ class Auth extends BaseController
             $readDept = $model->getDeptRecordsByIds($fields, $allowReadDeptId);
         }
 
+        $model  = new RoleMode();
+        $fields = ['id', 'alias'];
+        $roles  = $model->getRoleAllRecords($fields);
+        foreach ($roles as $r) {
+            foreach ($roleIds as $i) {
+                if ($r['id'] === $i && $r['alias'] === 'admin_group') {
+                    $isAdmin = true;
+                    break;
+                }
+            }
+            if ($isAdmin) {
+                break;
+            }
+        }
+
         // session
         $sessionData                       = $user;
         $sessionData['allowApi']           = $allowApi;
@@ -152,6 +169,7 @@ class Auth extends BaseController
         $sessionData['allowWriteDeptId']   = $allowWriteDeptId;
         $sessionData['readDept']           = $readDept;
         $sessionData['allowWorkflow']      = $allowWorkflow;
+        $sessionData['isAdmin']            = $isAdmin;
 
         $this->session->set($sessionData);
 

@@ -225,3 +225,24 @@ export function deepMerge (/* obj1, obj2, obj3, ... */) {
   }
   return result
 }
+
+export function strSplitToArray (str, character = '+') {
+  if (str.length > 2) {
+    var temp = str.slice(1, str.length - 1)
+    return temp.split(character)
+  } else {
+    return []
+  }
+}
+
+export function arraySplitToStr (arr, character = '+') {
+  if (arr.length > 0) {
+    let temp = character
+    arr.forEach(element => {
+      temp = temp + element + character
+    })
+    return temp
+  } else {
+    return ''
+  }
+}

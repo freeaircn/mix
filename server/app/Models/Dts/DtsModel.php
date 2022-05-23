@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-22 17:43:53
+ * @LastEditTime: 2022-05-22 22:22:56
  */
 
 namespace App\Models\Dts;
@@ -17,7 +17,7 @@ class DtsModel extends Model
     protected $table;
 
     protected $primaryKey    = 'id';
-    protected $allowedFields = ['station_id', 'dts_id', 'status', 'type', 'title', 'level', 'device', 'description', 'progress', 'creator_id', 'reviewer_id', 'place_at', 'score', 'score_desc', 'scored_by', 'cause'];
+    protected $allowedFields = ['station_id', 'dts_id', 'status', 'type', 'title', 'level', 'device', 'description', 'progress', 'creator_id', 'reviewer_id', 'place_at', 'score', 'score_desc', 'scored_by', 'cause', 'cause_analysis'];
 
     protected $useAutoIncrement = true;
 
