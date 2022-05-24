@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-07-06 21:44:27
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-22 22:24:54
+ * @LastEditTime: 2022-05-24 16:24:54
  */
 
 namespace Config\MyConfig;
@@ -16,7 +16,7 @@ class Dts extends BaseConfig
     public $keyValuePairs = [
         'type'  => [
             1 => '隐患',
-            2 => '故障',
+            2 => '缺陷',
         ],
         'level' => [
             1 => '紧急',

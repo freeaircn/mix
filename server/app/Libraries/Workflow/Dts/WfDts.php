@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2019-12-29 14:06:12
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-23 14:57:06
+ * @LastEditTime: 2022-05-24 16:54:25
  */
 
 namespace App\Libraries\Workflow\Dts;
@@ -286,6 +286,20 @@ class WfDts extends Core
             // print($exception);
             return false;
         }
+    }
+
+    public function getPlaceName(string $place = null)
+    {
+        $temp = $this->placesMetadata;
+        $res  = '';
+
+        foreach ($temp as $key => $value) {
+            if ($key === $place) {
+                $res = $value['name'];
+            }
+        }
+
+        return $res;
     }
 
 }

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-22 22:22:56
+ * @LastEditTime: 2022-05-24 19:52:44
  */
 
 namespace App\Models\Dts;
@@ -148,5 +148,118 @@ class DtsModel extends Model
         } else {
             return true;
         }
+    }
+
+    public function getByStationAndGroupByType(string $station_id = null)
+    {
+
+        if (empty($station_id)) {
+            return [];
+        }
+
+        $selectSql = "type, COUNT(type) AS value";
+        $builder   = $this->select($selectSql, false);
+        $builder->where('station_id', $station_id);
+        $builder->whereIn('place_at', ['suspend', 'working']);
+        $builder->groupBy('type');
+
+        $result = $builder->findAll();
+
+        return $result;
+    }
+
+    public function getByStationDeviceAndGroupByPlace(string $station_id = null, string $device_id = null)
+    {
+
+        if (empty($station_id) || empty($device_id)) {
+            return [];
+        }
+
+        $selectSql = "place_at, COUNT(place_at) AS value";
+        $builder   = $this->select($selectSql, false);
+        $builder->where('station_id', $station_id);
+        $builder->whereIn('place_at', ['suspend', 'working']);
+        $builder->like('device', $device_id);
+        $builder->groupBy('place_at');
+
+        $result = $builder->findAll();
+
+        return $result;
+    }
+
+    public function getByStationYearGroupByCreateMonth(string $station_id = null, string $year = null)
+    {
+
+        if (empty($station_id) || empty($year)) {
+            return [];
+        }
+
+        $selectSql = "DATE_FORMAT(created_at, '%Y-%m') as date, COUNT(id) AS value";
+        $builder   = $this->select($selectSql, false);
+        $builder->where('station_id', $station_id);
+        $builder->where("DATE_FORMAT(created_at, '%Y') = " . $year);
+        $builder->whereIn('place_at', ['suspend', 'working']);
+        $builder->groupBy("DATE_FORMAT(created_at, '%Y-%m')");
+
+        $result = $builder->findAll();
+
+        return $result;
+    }
+
+    public function getByStationYearResolveGroupByUpdateMonth(string $station_id = null, string $year = null)
+    {
+
+        if (empty($station_id) || empty($year)) {
+            return [];
+        }
+
+        $selectSql = "DATE_FORMAT(updated_at, '%Y-%m') as date, COUNT(id) AS value";
+        $builder   = $this->select($selectSql, false);
+        $builder->where('station_id', $station_id);
+        $builder->where("DATE_FORMAT(updated_at, '%Y') = " . $year);
+        $builder->whereIn('place_at', ['resolve', 'close']);
+        $builder->groupBy("DATE_FORMAT(updated_at, '%Y-%m')");
+
+        $result = $builder->findAll();
+
+        return $result;
+    }
+
+    public function getByStationTypeGroupByLevel(string $station_id = null, string $type = null)
+    {
+
+        if (empty($station_id) || empty($type)) {
+            return [];
+        }
+
+        $selectSql = "level, COUNT(level) AS value";
+        $builder   = $this->select($selectSql, false);
+        $builder->where('station_id', $station_id);
+        $builder->where("type", $type);
+        $builder->whereIn('place_at', ['suspend', 'working']);
+        $builder->groupBy("level");
+
+        $result = $builder->findAll();
+
+        return $result;
+    }
+
+    public function getByStationTypeGroupByWfPlace(string $station_id = null, string $type = null)
+    {
+
+        if (empty($station_id) || empty($type)) {
+            return [];
+        }
+
+        $selectSql = "place_at, COUNT(place_at) AS value";
+        $builder   = $this->select($selectSql, false);
+        $builder->where('station_id', $station_id);
+        $builder->where("type", $type);
+        $builder->whereIn('place_at', ['suspend', 'working']);
+        $builder->groupBy("place_at");
+
+        $result = $builder->findAll();
+
+        return $result;
     }
 }

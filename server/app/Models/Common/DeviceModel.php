@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-22 17:42:53
+ * @LastEditTime: 2022-05-24 10:35:12
  */
 
 namespace App\Models\Common;
@@ -91,6 +91,29 @@ class DeviceModel extends Model
 
         $builder = $this->select($selectSql);
         $builder->whereIn('id', $ids);
+        $builder->orderBy('id', 'ASC');
+        $res = $builder->findAll();
+
+        return $res;
+    }
+
+    public function getDeviceRecordsByPid(array $fields = null, string $pid = null)
+    {
+        if (empty($pid)) {
+            return [];
+        }
+
+        $selectSql = '';
+        if (empty($fields)) {
+            $selectSql = 'id, pid, name, description, updated_at';
+        } else {
+            foreach ($fields as $name) {
+                $selectSql = $selectSql . $name . ', ';
+            }
+        }
+
+        $builder = $this->select($selectSql);
+        $builder->where('pid', $pid);
         $builder->orderBy('id', 'ASC');
         $res = $builder->findAll();
 

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-23 21:07:04
+ * @LastEditTime: 2022-05-24 20:48:13
  */
 
 namespace App\Controllers;
@@ -56,6 +56,9 @@ class Dts extends BaseController
                 break;
             case 'device_list':
                 $result = $this->_reqDeviceList();
+                break;
+            case 'statistic_chart':
+                $result = $this->_reqStatisticChartData();
                 break;
             default:
                 $res['error'] = '请求数据无效';
@@ -1026,11 +1029,6 @@ class Dts extends BaseController
         }
         $details = $db;
 
-        // id -> name
-        // $details['type']  = $this->selfConfig->keyValuePairs['type'][$db['type']];
-        // $details['level'] = $this->selfConfig->keyValuePairs['level'][$db['level']];
-
-        // $details['device']  = $this->_getDeviceFullName($db['device']);
         $details['station'] = $this->_getDeptName2($db['station_id']);
         $deviceList         = $this->_getDeviceList($db['station_id']);
 
@@ -1038,6 +1036,51 @@ class Dts extends BaseController
         $res['data']        = [
             'record'     => $details,
             'deviceList' => $deviceList,
+        ];
+        return $res;
+    }
+
+    protected function _reqStatisticChartData()
+    {
+        if (!$this->validate('DtsReqStatisticChartData')) {
+            $res['http_status'] = 400;
+            $res['msg']         = [
+                'error' => '请求数据无效',
+                'info'  => $this->validator->getErrors(),
+            ];
+            return $res;
+        }
+
+        $params     = $this->request->getGet();
+        $station_id = $params['station_id'];
+
+        $allowReadDeptId = $this->session->get('allowReadDeptId');
+        if (!in_array($station_id, $allowReadDeptId)) {
+            $res['http_status'] = 401;
+            $res['msg']         = '用户没有权限';
+            return $res;
+        }
+
+        $allTypes     = $this->_getTypeStatistic($station_id);
+        $distribution = $this->_getDistributionStatistic($station_id);
+        $createList   = $this->_getCreateStatistic($station_id);
+        $resolveList  = $this->_getResolveStatistic($station_id);
+        $defectLevel  = $this->_getDefectLevelStatistic($station_id);
+        $defectWf     = $this->_getDefectWfPlaceStatistic($station_id);
+        //
+        $hiddenDangerLevel = $this->_getHiddenDangerLevelStatistic($station_id);
+        $hiddenDangerWf    = $this->_getHiddenDangerWfPlaceStatistic($station_id);
+
+        $res['http_status'] = 200;
+        $res['data']        = [
+            'allTypes'          => $allTypes,
+            'distribution'      => $distribution,
+            'createList'        => $createList,
+            'resolveList'       => $resolveList,
+            'defectLevel'       => $defectLevel,
+            'hiddenDangerLevel' => $hiddenDangerLevel,
+            'defectWf'          => $defectWf,
+            'hiddenDangerWf'    => $hiddenDangerWf,
         ];
         return $res;
     }
@@ -1363,4 +1406,246 @@ class Dts extends BaseController
 
         return $attachments;
     }
+
+    protected function _getTypeStatistic(string $station_id = null)
+    {
+        $result = [
+            ['type' => '隐患', 'value' => 0],
+            ['type' => '缺陷', 'value' => 0],
+        ];
+
+        if (empty($station_id)) {
+            return $result;
+        }
+
+        $model = new DtsModel();
+        $data  = $model->getByStationAndGroupByType($station_id);
+        foreach ($data as $d) {
+            $label = $this->selfConfig->keyValuePairs['type'][$d['type']];
+            foreach ($result as $key => $r) {
+                if ($r['type'] === $label) {
+                    $result[$key]['value'] = intval($d['value']);
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    protected function _getDistributionStatistic(string $station_id = null)
+    {
+        $result = [];
+
+        $model      = new DeviceModel();
+        $fields     = ['id', 'name'];
+        $deviceUnit = $model->getDeviceRecordsByPid($fields, $station_id);
+        if (!empty($deviceUnit)) {
+            foreach ($deviceUnit as $d) {
+                $result[] = [
+                    'unit'     => $d['name'],
+                    'place_at' => '处理中',
+                    'value'    => 0,
+                ];
+            }
+            foreach ($deviceUnit as $d) {
+                $result[] = [
+                    'unit'     => $d['name'],
+                    'place_at' => '挂起',
+                    'value'    => 0,
+                ];
+            }
+        }
+
+        if (empty($station_id)) {
+            return $result;
+        }
+
+        $length = count($deviceUnit);
+        $wf     = new WfDts();
+
+        $model = new DtsModel();
+        foreach ($deviceUnit as $key => $d) {
+            $device_id = '+' . $d['id'] . '+';
+            $data      = $model->getByStationDeviceAndGroupByPlace($station_id, $device_id);
+            foreach ($data as $item) {
+                $name = $wf->getPlaceName($item['place_at']);
+                if ($name === $result[$key]['place_at']) {
+                    $result[$key]['value'] = intval($item['value']);
+                } else if ($name === $result[$key + $length]['place_at']) {
+                    $result[$key + $length]['value'] = intval($item['value']);
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    protected function _getCreateStatistic(string $station_id = null)
+    {
+        $result = [];
+
+        $year = date('Y', time());
+        for ($i = 1; $i < 13; $i++) {
+            if ($i < 10) {
+                $result[] = [
+                    'date'  => $year . '-0' . $i,
+                    'value' => 0.1,
+                ];
+            } else {
+                $result[] = [
+                    'date'  => $year . '-' . $i,
+                    'value' => 0.1,
+                ];
+            }
+
+        }
+
+        $model = new DtsModel();
+        $data  = $model->getByStationYearGroupByCreateMonth($station_id, $year);
+        foreach ($data as $d) {
+            foreach ($result as $key => $r) {
+                if ($r['date'] === $d['date']) {
+                    $result[$key]['value'] = intval($d['value']);
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    protected function _getResolveStatistic(string $station_id = null)
+    {
+        $result = [];
+
+        $year = date('Y', time());
+        for ($i = 1; $i < 13; $i++) {
+            if ($i < 10) {
+                $result[] = [
+                    'date'  => $year . '-0' . $i,
+                    'value' => 0.1,
+                ];
+            } else {
+                $result[] = [
+                    'date'  => $year . '-' . $i,
+                    'value' => 0.1,
+                ];
+            }
+
+        }
+
+        $model = new DtsModel();
+        $data  = $model->getByStationYearResolveGroupByUpdateMonth($station_id, $year);
+        foreach ($data as $d) {
+            foreach ($result as $key => $r) {
+                if ($r['date'] === $d['date']) {
+                    $result[$key]['value'] = intval($d['value']);
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    protected function _getDefectLevelStatistic(string $station_id = null)
+    {
+        $result = [];
+
+        $level = $this->selfConfig->keyValuePairs['level'];
+        foreach ($level as $l) {
+            $result[] = [
+                'level' => $l,
+                'value' => 0,
+            ];
+        }
+        $type = '2';
+
+        $model = new DtsModel();
+        $data  = $model->getByStationTypeGroupByLevel($station_id, $type);
+        foreach ($data as $d) {
+            $name = $this->selfConfig->keyValuePairs['level'][$d['level']];
+            foreach ($result as $key => $r) {
+                if ($r['level'] == $name) {
+                    $result[$key]['value'] = intval($d['value']);
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    protected function _getDefectWfPlaceStatistic(string $station_id = null)
+    {
+        $result = [
+            ['place_at' => '处理中', 'value' => 0],
+            ['place_at' => '挂起', 'value' => 0],
+        ];
+
+        $wf   = new WfDts();
+        $type = '2';
+
+        $model = new DtsModel();
+        $data  = $model->getByStationTypeGroupByWfPlace($station_id, $type);
+        foreach ($data as $d) {
+            $name = $wf->getPlaceName($d['place_at']);
+            foreach ($result as $key => $r) {
+                if ($r['place_at'] === $name) {
+                    $result[$key]['value'] = intval($d['value']);
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    protected function _getHiddenDangerLevelStatistic(string $station_id = null)
+    {
+        $result = [];
+
+        $level = $this->selfConfig->keyValuePairs['level'];
+        foreach ($level as $l) {
+            $result[] = [
+                'level' => $l,
+                'value' => 0,
+            ];
+        }
+        $type = '1';
+
+        $model = new DtsModel();
+        $data  = $model->getByStationTypeGroupByLevel($station_id, $type);
+        foreach ($data as $d) {
+            $name = $this->selfConfig->keyValuePairs['level'][$d['level']];
+            foreach ($result as $key => $r) {
+                if ($r['level'] == $name) {
+                    $result[$key]['value'] = intval($d['value']);
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    protected function _getHiddenDangerWfPlaceStatistic(string $station_id = null)
+    {
+        $result = [
+            ['place_at' => '处理中', 'value' => 0],
+            ['place_at' => '挂起', 'value' => 0],
+        ];
+
+        $wf   = new WfDts();
+        $type = '1';
+
+        $model = new DtsModel();
+        $data  = $model->getByStationTypeGroupByWfPlace($station_id, $type);
+        foreach ($data as $d) {
+            $name = $wf->getPlaceName($d['place_at']);
+            foreach ($result as $key => $r) {
+                if ($r['place_at'] === $name) {
+                    $result[$key]['value'] = intval($d['value']);
+                }
+            }
+        }
+
+        return $result;
+    }
+
 }

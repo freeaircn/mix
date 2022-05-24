@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-09 14:25:16
+ * @LastEditTime: 2022-05-24 10:22:49
  */
 
 namespace Config;
@@ -221,6 +221,10 @@ class Validation
 
     public $DtsReqDetails = [
         'dts_id' => 'required|regex_match[/^[1-9]\d{0,19}$/]',
+    ];
+
+    public $DtsReqStatisticChartData = [
+        'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
     ];
 
     public $DtsDeleteOne = [

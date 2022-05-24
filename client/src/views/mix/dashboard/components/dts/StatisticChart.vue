@@ -20,30 +20,41 @@
       </a-form-model>
     </a-card>
 
-    <a-row :gutter="[16, 16]" :style="{marginBottom: '0px'}">
+    <a-row :gutter="[8, 8]">
       <a-col :xl="12" :lg="12" :md="24" :sm="24" :xs="24" >
-        <!-- <chart-card title="新增 / 月" label="本月新增" :value="'3'" :loading="false"></chart-card> -->
-        <chart-card title="新增 / 月" label="本月新增" :value="'3'" :loading="false"></chart-card>
+        <info-chart-card title="新增" label="本月新增" :info="curMonthCreateNum" :loading="false">
+          <div id="create-trend-chart" :style="{height: '56px'}"></div>
+        </info-chart-card>
       </a-col>
-      <!-- <a-col :xl="8" :lg="8" :md="24" :sm="24" :xs="24" >
-        <chart-card title="解决 / 月" label="本月解决" :value="'3'" :loading="false"></chart-card>
-      </a-col> -->
+      <a-col :xl="12" :lg="12" :md="24" :sm="24" :xs="24" >
+        <info-chart-card title="解决" label="本月解决" :info="curMonthResolveNum" :loading="false">
+          <div id="resolve-trend-chart" :style="{height: '56px'}"></div>
+        </info-chart-card>
+      </a-col>
     </a-row>
 
-    <a-card :bordered="false" :body-style="{marginBottom: '8px'}">
-      <a-row :gutter="[24, 8]">
-        <a-col :xl="8" :lg="8" :md="8" :sm="24" :xs="24" >
-          <div id="top-chart" :style="{height: '320px'}"></div>
-        </a-col>
-        <a-col :xl="16" :lg="16" :md="16" :sm="24" :xs="24" >
+    <a-row :gutter="[8, 8]">
+      <a-col :xl="8" :lg="8" :md="8" :sm="24" :xs="24" >
+        <chart-card title="全部">
+          <div id="all-types-chart" :style="{height: '320px'}"></div>
+        </chart-card>
+      </a-col>
+      <a-col :xl="16" :lg="16" :md="16" :sm="24" :xs="24" >
+        <chart-card title="分布">
+          <a-tooltip :title="extraMsg" slot="action">
+            <a-icon type="info-circle-o" />
+          </a-tooltip>
           <div id="distribution-chart" :style="{height: '320px'}"></div>
-        </a-col>
-      </a-row>
-    </a-card>
+        </chart-card>
+      </a-col>
+    </a-row>
 
     <a-row :gutter="[8, 8]" :style="{marginBottom: '8px'}">
       <a-col :xl="12" :lg="12" :md="12" :sm="24" :xs="24" >
-        <a-card title="缺陷" :bordered="false" >
+        <a-card title="缺陷" :headStyle="{fontSize: '15px', color: '000000bf'}" :bordered="false" >
+          <a-tooltip :title="extraMsg" slot="extra">
+            <a-icon type="info-circle-o" />
+          </a-tooltip>
           <a-row :gutter="[8, 8]">
             <a-col :xl="12" :lg="12" :md="12" :sm="24" :xs="24" >
               <div id="defect-level-chart" :style="{height: '240px'}"></div>
@@ -55,7 +66,10 @@
         </a-card>
       </a-col>
       <a-col :xl="12" :lg="12" :md="12" :sm="24" :xs="24" >
-        <a-card title="隐患" :bordered="false" >
+        <a-card title="隐患" :headStyle="{fontSize: '15px', color: '000000bf'}" :bordered="false" >
+          <a-tooltip :title="extraMsg" slot="extra">
+            <a-icon type="info-circle-o" />
+          </a-tooltip>
           <a-row :gutter="[8, 8]">
             <a-col :xl="12" :lg="12" :md="12" :sm="24" :xs="24" >
               <div id="danger-level-chart" :style="{height: '240px'}"></div>
@@ -73,15 +87,18 @@
 
 <script>
 /* eslint-disable camelcase */
+import moment from 'moment'
 import { mapGetters } from 'vuex'
 import { Pie, Column } from '@antv/g2plot'
+import InfoChartCard from './modules/InfoChartCard'
 import ChartCard from './modules/ChartCard'
-// import { apiQueryEvent } from '@/api/mix/generator'
+import { queryDts } from '@/api/mix/dts'
 // const DataSet = require('@antv/data-set')
 
 export default {
   name: 'StatisticChart',
   components: {
+    InfoChartCard,
     ChartCard
   },
   props: {
@@ -97,62 +114,32 @@ export default {
       },
       isMounted: false,
       //
-      topChart: null,
-      dataDangerAndDefect: [
-        { type: '隐患', value: 2 },
-        { type: '缺陷', value: 25 }
-      ],
+      extraMsg: "'挂起' 表示影响较小的隐患或缺陷，暂不处理的状态",
+      //
+      curMonthCreateNum: 0,
+      curMonthResolveNum: 0,
+      //
+      createTrendChart: null,
+      createTrendChartData: [],
+      resolveTrendChart: null,
+      resolveTrendChartData: [],
+      //
+      allTypesChart: null,
+      allTypesChartData: [],
+      distributionChart: null,
+      distributionChartData: [],
       //
       defectLevelChart: null,
-      dataDefectLevel: [
-        { type: '紧急', value: 1 },
-        { type: '严重', value: 3 },
-        { type: '一般', value: 21 }
-      ],
+      defectLevelChartData: [],
       //
       defectWfChart: null,
-      dataDefectWf: [
-        { type: '处理中', value: 8 },
-        { type: '挂起', value: 17 }
-      ],
+      defectWfChartData: [],
       //
       dangerLevelChart: null,
-      dataDangerLevel: [
-        { type: '紧急', value: 1 },
-        { type: '严重', value: 1 },
-        { type: '一般', value: 0 }
-      ],
+      dangerLevelChartData: [],
       //
       dangerWfChart: null,
-      dataDangerWf: [
-        { type: '处理中', value: 2 },
-        { type: '挂起', value: 0 }
-      ],
-      //
-      distributionChart: null,
-      dataDistribution: [
-        { type: '1#机组', place_at: '处理中', value: 2 },
-        { type: '2#机组', place_at: '处理中', value: 2 },
-        { type: '3#机组', place_at: '处理中', value: 2 },
-        { type: '输电线路', place_at: '处理中', value: 2 },
-        { type: 'GIS', place_at: '处理中', value: 2 },
-        { type: '保护设备', place_at: '处理中', value: 6 },
-        { type: '电力监控设备', place_at: '处理中', value: 6 },
-        { type: '通信设备', place_at: '处理中', value: 7 },
-        { type: '公用系统', place_at: '处理中', value: 4 },
-        { type: '大坝', place_at: '处理中', value: 7 },
-
-        { type: '1#机组', place_at: '挂起', value: 0 },
-        { type: '2#机组', place_at: '挂起', value: 2 },
-        { type: '3#机组', place_at: '挂起', value: 2 },
-        { type: '输电线路', place_at: '挂起', value: 2 },
-        { type: 'GIS', place_at: '挂起', value: 2 },
-        { type: '保护设备', place_at: '挂起', value: 6 },
-        { type: '电力监控设备', place_at: '挂起', value: 6 },
-        { type: '通信设备', place_at: '挂起', value: 7 },
-        { type: '公用系统', place_at: '挂起', value: 0 },
-        { type: '大坝', place_at: '挂起', value: 7 }
-      ]
+      dangerWfChartData: []
     }
   },
   computed: {
@@ -162,12 +149,14 @@ export default {
   },
   mounted () {
     this.query.station_id = this.userInfo.allowDefaultDeptId
-    this.initTopChart()
+    this.initCreateTrendChart()
+    this.initResolveTrendChart()
+    this.initAllTypesChart()
+    this.initDistributionChart()
     this.initDefectLevelChart()
     this.initDefectWfChart()
     this.initDangerLevelChart()
     this.initDangerWfChart()
-    this.initDistributionChart()
     //
     this.isMounted = true
     //
@@ -175,39 +164,111 @@ export default {
   },
   methods: {
     onClickRecordIn () {
-      this.$router.push({ path: '/dashboard/generator_event/list' })
+      this.$router.push({ path: '/dashboard/dts/list' })
     },
 
     onClickSearch () {
-      // const params = { resource: 'statistic', station_id: this.query.station_id, date: this.query.date }
-      // apiQueryEvent(params)
-      //   .then(res => {
-      //     this.run_time = res.run_time
-      //     this.start_num = res.start_num
-      //     //
-      //     this.totalHours = res.total_run.total
-      //     this.g1TotalRunTime = res.total_run.G1_run
-      //     this.g2TotalRunTime = res.total_run.G2_run
-      //     this.g3TotalRunTime = res.total_run.G3_run
-      //     this.g1TotalStart = res.total_start.G1_start
-      //     this.g2TotalStart = res.total_start.G2_start
-      //     this.g3TotalStart = res.total_start.G3_start
-      //     if (this.isMounted) {
-      //       this.updateTopChart()
-      //       this.updateDefectLevelChart()
-      //       this.updateDefectWfChart()
-      //       this.updateDangerLevelChart()
-      //       this.updateDangerWfChart()
-      //     }
-      //   })
-      //   .catch(() => {
-      //   })
+      const params = { resource: 'statistic_chart', station_id: this.query.station_id }
+      queryDts(params)
+        .then(data => {
+          this.allTypesChartData = data.allTypes
+          this.createTrendChartData = data.createList
+          this.resolveTrendChartData = data.resolveList
+          this.distributionChartData = data.distribution
+          this.defectLevelChartData = data.defectLevel
+          this.defectWfChartData = data.defectWf
+          this.dangerLevelChartData = data.hiddenDangerLevel
+          this.dangerWfChartData = data.hiddenDangerWf
+          //
+          var curMonth = moment().format('YYYY-MM')
+          this.createTrendChartData.forEach((item) => {
+            if (item.date === curMonth) {
+              this.curMonthCreateNum = item.value
+            }
+          })
+          this.resolveTrendChartData.forEach((item) => {
+            if (item.date === curMonth) {
+              this.curMonthResolveNum = item.value
+            }
+          })
+          //
+          if (this.isMounted) {
+            this.updateCreateTrendChart()
+            this.updateResolveTrendChart()
+            this.updateAllTypesChart()
+            this.updateDistributionChart()
+            this.updateDefectLevelChart()
+            this.updateDefectWfChart()
+            this.updateDangerLevelChart()
+            this.updateDangerWfChart()
+          }
+        })
+        .catch(() => {
+        })
     },
 
-    initTopChart () {
-      this.topChart = new Pie('top-chart', {
+    initCreateTrendChart () {
+      this.createTrendChart = new Column('create-trend-chart', {
+        data: this.createTrendChartData,
+        xField: 'date',
+        yField: 'value',
+        maxColumnWidth: 64,
+        legend: false,
+        label: false,
+        xAxis: {
+          title: null,
+          label: null,
+          grid: null,
+          line: null
+        },
+        yAxis: {
+          title: null,
+          label: null,
+          grid: null,
+          line: null
+        }
+      })
+      this.createTrendChart.render()
+    },
+
+    updateCreateTrendChart () {
+      const chartData = this.createTrendChartData
+      this.createTrendChart.changeData(chartData)
+    },
+
+    initResolveTrendChart () {
+      this.resolveTrendChart = new Column('resolve-trend-chart', {
+        data: this.resolveTrendChartData,
+        xField: 'date',
+        yField: 'value',
+        maxColumnWidth: 64,
+        legend: false,
+        label: false,
+        xAxis: {
+          title: null,
+          label: null,
+          grid: null,
+          line: null
+        },
+        yAxis: {
+          title: null,
+          label: null,
+          grid: null,
+          line: null
+        }
+      })
+      this.resolveTrendChart.render()
+    },
+
+    updateResolveTrendChart () {
+      const chartData = this.resolveTrendChartData
+      this.resolveTrendChart.changeData(chartData)
+    },
+
+    initAllTypesChart () {
+      this.allTypesChart = new Pie('all-types-chart', {
         appendPadding: 10,
-        data: this.dataDangerAndDefect,
+        data: this.allTypesChartData,
         angleField: 'value',
         colorField: 'type',
         color: ({ type }) => {
@@ -226,19 +287,19 @@ export default {
         },
         interactions: [{ type: 'pie-legend-active' }, { type: 'element-active' }]
       })
-      this.topChart.render()
+      this.allTypesChart.render()
     },
 
-    updateTopChart () {
-      const chartData = this.dataDangerAndDefect
-      this.topChart.changeData(chartData)
+    updateAllTypesChart () {
+      const chartData = this.allTypesChartData
+      this.allTypesChart.changeData(chartData)
     },
 
     initDistributionChart () {
       this.distributionChart = new Column('distribution-chart', {
-        data: this.dataDistribution,
+        data: this.distributionChartData,
         isStack: true,
-        xField: 'type',
+        xField: 'unit',
         yField: 'value',
         seriesField: 'place_at',
         colorField: 'place_at', // 部分图表使用 seriesField
@@ -265,12 +326,12 @@ export default {
             { type: 'adjust-color' }
           ]
         },
-        xAxis: {
-          // title: null,
-          // label: null,
-          // grid: null,
-          // line: null
-        },
+        // xAxis: {
+        //   // title: null,
+        //   // label: null,
+        //   // grid: null,
+        //   // line: null
+        // },
         yAxis: {
           // title: null,
           // label: null
@@ -282,7 +343,7 @@ export default {
     },
 
     updateDistributionChart () {
-      const chartData = this.dataDangerWf
+      const chartData = this.distributionChartData
       this.distributionChart.changeData(chartData)
     },
 
@@ -290,18 +351,18 @@ export default {
     initDefectLevelChart () {
       this.defectLevelChart = new Pie('defect-level-chart', {
         appendPadding: 10,
-        data: this.dataDefectLevel,
+        data: this.defectLevelChartData,
         angleField: 'value',
         legend: { position: 'bottom' },
-        colorField: 'type',
-        color: ({ type }) => {
-          if (type === '紧急') {
+        colorField: 'level',
+        color: ({ level }) => {
+          if (level === '紧急') {
             return '#FF6B3B'
           }
-          if (type === '严重') {
+          if (level === '严重') {
             return '#F6BD16'
           }
-          if (type === '一般') {
+          if (level === '一般') {
             return '#5B8FF9'
           }
         },
@@ -316,22 +377,22 @@ export default {
     },
 
     updateDefectLevelChart () {
-      const chartData = this.dataDefectLevel
+      const chartData = this.defectLevelChartData
       this.defectLevelChart.changeData(chartData)
     },
 
     initDefectWfChart () {
       this.defectWfChart = new Pie('defect-wf-chart', {
         appendPadding: 10,
-        data: this.dataDefectWf,
+        data: this.defectWfChartData,
         angleField: 'value',
         legend: { position: 'bottom' },
-        colorField: 'type',
-        color: ({ type }) => {
-          if (type === '处理中') {
+        colorField: 'place_at',
+        color: ({ place_at }) => {
+          if (place_at === '处理中') {
             return '#61DDAA'
           }
-          if (type === '挂起') {
+          if (place_at === '挂起') {
             return '#65789B'
           }
         },
@@ -346,7 +407,7 @@ export default {
     },
 
     updateDefectWfChart () {
-      const chartData = this.dataDefectWf
+      const chartData = this.defectWfChartData
       this.defectWfChart.changeData(chartData)
     },
 
@@ -354,18 +415,18 @@ export default {
     initDangerLevelChart () {
       this.dangerLevelChart = new Pie('danger-level-chart', {
         appendPadding: 10,
-        data: this.dataDangerLevel,
+        data: this.dangerLevelChartData,
         angleField: 'value',
         legend: { position: 'bottom' },
-        colorField: 'type',
-        color: ({ type }) => {
-          if (type === '紧急') {
+        colorField: 'level',
+        color: ({ level }) => {
+          if (level === '紧急') {
             return '#FF6B3B'
           }
-          if (type === '严重') {
+          if (level === '严重') {
             return '#F6BD16'
           }
-          if (type === '一般') {
+          if (level === '一般') {
             return '#5B8FF9'
           }
         },
@@ -380,22 +441,22 @@ export default {
     },
 
     updateDangerLevelChart () {
-      const chartData = this.dataDangerLevel
+      const chartData = this.dangerLevelChartData
       this.dangerLevelChart.changeData(chartData)
     },
 
     initDangerWfChart () {
       this.dangerWfChart = new Pie('danger-wf-chart', {
         appendPadding: 10,
-        data: this.dataDangerWf,
+        data: this.dangerWfChartData,
         angleField: 'value',
         legend: { position: 'bottom' },
-        colorField: 'type',
-        color: ({ type }) => {
-          if (type === '处理中') {
+        colorField: 'place_at',
+        color: ({ place_at }) => {
+          if (place_at === '处理中') {
             return '#61DDAA'
           }
-          if (type === '挂起') {
+          if (place_at === '挂起') {
             return '#65789B'
           }
         },
@@ -410,7 +471,7 @@ export default {
     },
 
     updateDangerWfChart () {
-      const chartData = this.dataDangerWf
+      const chartData = this.dangerWfChartData
       this.dangerWfChart.changeData(chartData)
     }
 
