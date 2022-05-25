@@ -23,6 +23,11 @@
         <slot></slot>
       </div>
     </div>
+    <div class="chart-card-footer">
+      <div class="field">
+        <slot name="footer"></slot>
+      </div>
+    </div>
   </a-card>
 </template>
 
@@ -106,6 +111,23 @@ export default {
       font-size: 14px;
       // vertical-align: top;
       margin-right: 16px;
+    }
+  }
+
+  .chart-card-footer {
+    border-top: 1px solid #e8e8e8;
+    padding-top: 9px;
+    margin-top: 8px;
+
+    > * {
+      position: relative;
+    }
+
+    .field {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin: 0;
     }
   }
 </style>

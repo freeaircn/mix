@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-24 19:52:44
+ * @LastEditTime: 2022-05-25 17:03:07
  */
 
 namespace App\Models\Dts;
@@ -225,6 +225,24 @@ class DtsModel extends Model
         return $result;
     }
 
+    public function getByStationAndCreatedExceedDaysGroupByPlace(string $station_id = null, int $days = null)
+    {
+        if (empty($station_id) || empty($days)) {
+            return [];
+        }
+
+        $selectSql = "place_at, COUNT(place_at) AS value";
+        $builder   = $this->select($selectSql, false);
+        $builder->where('station_id', $station_id);
+        $builder->whereIn('place_at', ['suspend', 'working']);
+        $builder->where('DATE_SUB(CURDATE(), INTERVAL ' . $days . ' DAY) >= DATE(created_at)');
+        $builder->groupBy('place_at');
+
+        $result = $builder->findAll();
+
+        return $result;
+    }
+
     public function getByStationTypeGroupByLevel(string $station_id = null, string $type = null)
     {
 
@@ -257,6 +275,43 @@ class DtsModel extends Model
         $builder->where("type", $type);
         $builder->whereIn('place_at', ['suspend', 'working']);
         $builder->groupBy("place_at");
+
+        $result = $builder->findAll();
+
+        return $result;
+    }
+
+    public function getByStationGroupByCause(string $station_id = null)
+    {
+
+        if (empty($station_id)) {
+            return [];
+        }
+
+        $selectSql = "cause, COUNT(cause) AS value";
+        $builder   = $this->select($selectSql, false);
+        $builder->where('station_id', $station_id);
+        $builder->whereIn('place_at', ['resolve', 'close']);
+        $builder->groupBy("cause");
+
+        $result = $builder->findAll();
+
+        return $result;
+    }
+
+    public function getByStationYearGroupByCause(string $station_id = null, string $year = null)
+    {
+
+        if (empty($station_id) || empty($year)) {
+            return [];
+        }
+
+        $selectSql = "cause, COUNT(cause) AS value";
+        $builder   = $this->select($selectSql, false);
+        $builder->where('station_id', $station_id);
+        $builder->where("DATE_FORMAT(updated_at, '%Y') = " . $year);
+        $builder->whereIn('place_at', ['resolve', 'close']);
+        $builder->groupBy("cause");
 
         $result = $builder->findAll();
 

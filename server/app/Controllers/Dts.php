@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-24 20:48:13
+ * @LastEditTime: 2022-05-25 17:04:15
  */
 
 namespace App\Controllers;
@@ -1063,13 +1063,23 @@ class Dts extends BaseController
 
         $allTypes     = $this->_getTypeStatistic($station_id);
         $distribution = $this->_getDistributionStatistic($station_id);
-        $createList   = $this->_getCreateStatistic($station_id);
-        $resolveList  = $this->_getResolveStatistic($station_id);
-        $defectLevel  = $this->_getDefectLevelStatistic($station_id);
-        $defectWf     = $this->_getDefectWfPlaceStatistic($station_id);
+        //
+        $createList  = $this->_getCreateStatistic($station_id);
+        $resolveList = $this->_getResolveStatistic($station_id);
+        //
+        $total = 0;
+        foreach ($allTypes as $v) {
+            $total = $total + $v['value'];
+        }
+        $longTerm = $this->_getLongTermStatistic($station_id, $total);
+        //
+        $defectLevel = $this->_getDefectLevelStatistic($station_id);
+        $defectWf    = $this->_getDefectWfPlaceStatistic($station_id);
         //
         $hiddenDangerLevel = $this->_getHiddenDangerLevelStatistic($station_id);
         $hiddenDangerWf    = $this->_getHiddenDangerWfPlaceStatistic($station_id);
+        //
+        $cause = $this->_getCauseStatistic($station_id);
 
         $res['http_status'] = 200;
         $res['data']        = [
@@ -1077,10 +1087,12 @@ class Dts extends BaseController
             'distribution'      => $distribution,
             'createList'        => $createList,
             'resolveList'       => $resolveList,
+            'longTerm'          => $longTerm,
             'defectLevel'       => $defectLevel,
             'hiddenDangerLevel' => $hiddenDangerLevel,
             'defectWf'          => $defectWf,
             'hiddenDangerWf'    => $hiddenDangerWf,
+            'cause'             => $cause,
         ];
         return $res;
     }
@@ -1480,6 +1492,42 @@ class Dts extends BaseController
         return $result;
     }
 
+    protected function _getLongTermStatistic(string $station_id = null, int $total = null)
+    {
+        $chart = [
+            'title'    => '比率',
+            'ranges'   => [10, 70, 100],
+            'measures' => [0],
+            'target'   => 10,
+        ];
+
+        if (empty($station_id) || empty($total)) {
+            return [
+                'chart'       => [$chart],
+                'workingRate' => 0,
+            ];
+        }
+
+        $days = $this->selfConfig->longTermDays;
+
+        $model       = new DtsModel();
+        $data        = $model->getByStationAndCreatedExceedDaysGroupByPlace($station_id, $days);
+        $num         = 0;
+        $workingRate = 0;
+        foreach ($data as $d) {
+            $num = $num + intval($d['value']);
+            if ($d['place_at'] === 'working') {
+                $workingRate = intval(intval($d['value']) * 100 / $total);
+            }
+        }
+        $chart['measures'][0] = intval($num * 100 / $total);
+
+        return [
+            'chart'       => [$chart],
+            'workingRate' => $workingRate,
+        ];
+    }
+
     protected function _getCreateStatistic(string $station_id = null)
     {
         $result = [];
@@ -1641,6 +1689,57 @@ class Dts extends BaseController
             foreach ($result as $key => $r) {
                 if ($r['place_at'] === $name) {
                     $result[$key]['value'] = intval($d['value']);
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    protected function _getCauseStatistic(string $station_id = null)
+    {
+        $result = [];
+
+        $causes = $this->selfConfig->causes;
+        foreach ($causes as $d) {
+            $result[] = [
+                'cause' => $d['name'],
+                'type'  => '全部',
+                'value' => 0,
+            ];
+        }
+        foreach ($causes as $d) {
+            $result[] = [
+                'cause' => $d['name'],
+                'type'  => '今年',
+                'value' => 0,
+            ];
+        }
+
+        if (empty($station_id)) {
+            return $result;
+        }
+
+        $model = new DtsModel();
+        //
+        $data = $model->getByStationGroupByCause($station_id);
+        foreach ($causes as $key => $c) {
+            $cause_id = $c['id'];
+            foreach ($data as $d) {
+                if ($d['cause'] == $cause_id) {
+                    $result[$key]['value'] = intval($d['value']);
+                }
+            }
+        }
+        //
+        $length = count($causes);
+        $year   = date('Y', time());
+        $data   = $model->getByStationYearGroupByCause($station_id, $year);
+        foreach ($causes as $key => $c) {
+            $cause_id = $c['id'];
+            foreach ($data as $d) {
+                if ($d['cause'] == $cause_id) {
+                    $result[$key + $length]['value'] = intval($d['value']);
                 }
             }
         }
