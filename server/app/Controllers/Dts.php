@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-25 17:04:15
+ * @LastEditTime: 2022-05-25 23:32:12
  */
 
 namespace App\Controllers;
@@ -378,6 +378,41 @@ class Dts extends BaseController
 
         if ($this->session->has('dtsAttachment')) {
             $this->session->remove('dtsAttachment');
+        }
+
+        // 通知邮件
+        $notice = $client['notice'];
+        $title  = $client['title'];
+        if (!empty($notice)) {
+            $model  = new UserModel();
+            $fields = ['email'];
+            $result = $model->getUserRecordsByIds($fields, $notice);
+            if (!empty($result)) {
+                $emails = [];
+                foreach ($result as $r) {
+                    $emails[] = $r['email'];
+                }
+
+                $subject    = '【发自Mix】新问题单需要处理 DTS-' . $dts_id;
+                $emailParam = [
+                    'link'  => $this->selfConfig->dtsDetailsLink . $dts_id,
+                    'ID'    => 'DTS-' . $dts_id,
+                    'title' => $title,
+                ];
+                $emailMessage = view('dts/notice.php', $emailParam);
+
+                $emailAPI = \Config\Services::email();
+                $emailAPI->setFrom($emailAPI->SMTPUser);
+                $emailAPI->setTo($emails);
+                $emailAPI->setSubject($subject);
+                $emailAPI->setMessage($emailMessage);
+                if (!$emailAPI->send(false)) {
+                    $err = $emailAPI->printDebugger('subject');
+                    log_message('error', '{file}:{line} --> send mail failed ' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4) . '.  ' . $err);
+                    $res['msg'] = '已创建，但通知失败';
+                    return $this->respond($res);
+                }
+            }
         }
 
         $res['msg'] = '已创建';
@@ -890,16 +925,23 @@ class Dts extends BaseController
             return $res;
         }
 
-        $model       = new DeptModel();
-        $fields      = ['id', 'name'];
-        $station     = $model->getDeptRecordsByIds($fields, $allowWriteDeptId);
         $description = $this->selfConfig->progressTemplates['new_form'];
+
+        $model   = new DeptModel();
+        $fields  = ['id', 'name'];
+        $station = $model->getDeptRecordsByIds($fields, $allowWriteDeptId);
+
+        $dept    = '+' . $station_id . '+';
+        $model   = new UserModel();
+        $fields  = ['id', 'username'];
+        $workers = $model->getUserRecordByDept($fields, $dept);
 
         $res['http_status'] = 200;
         $res['data']        = [
             'description' => $description,
             'deviceList'  => $deviceList,
             'station'     => $station,
+            'workers'     => $workers,
         ];
         return $res;
     }

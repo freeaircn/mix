@@ -96,12 +96,16 @@
     </a-row>
 
     <a-card :loading="false" :bordered="false" :body-style="{padding: '0', marginTop: '8px', marginBottom: '8px'}">
-      <chart-card title="原因统计">
-        <a-tooltip title="已解决问题的原因统计" slot="action">
-          <a-icon type="info-circle-o" />
-        </a-tooltip>
-        <div id="cause-chart" :style="{height: '320px'}"></div>
-      </chart-card>
+      <a-row>
+        <a-col :xl="{ span: 20, offset: 2 }" :lg="{ span: 20, offset: 2 }" :md="24" :sm="24" :xs="24">
+          <chart-card title="原因统计">
+            <a-tooltip title="已解决问题的原因统计" slot="action">
+              <a-icon type="info-circle-o" />
+            </a-tooltip>
+            <div id="cause-chart" :style="{height: '320px'}"></div>
+          </chart-card>
+        </a-col>
+      </a-row>
     </a-card>
 
   </page-header-wrapper>
@@ -171,19 +175,6 @@ export default {
       //
       causeChart: null,
       causeChartData: []
-      //   { cause: '机械故障', type: '全部', value: 5 },
-      //   { cause: '电路故障', type: '全部', value: 3 },
-      //   { cause: '软件异常', type: '全部', value: 2 },
-      //   { cause: '老化失效', type: '全部', value: 10 },
-      //   { cause: '人为原因', type: '全部', value: 0 },
-      //   { cause: '不可抗力', type: '全部', value: 1 },
-      //   { cause: '机械故障', type: '今年', value: 2 },
-      //   { cause: '电路故障', type: '今年', value: 2 },
-      //   { cause: '软件异常', type: '今年', value: 2 },
-      //   { cause: '老化失效', type: '今年', value: 6 },
-      //   { cause: '人为原因', type: '今年', value: 0 },
-      //   { cause: '不可抗力', type: '今年', value: 0 }
-      // ]
     }
   },
   computed: {
@@ -418,12 +409,30 @@ export default {
             return '#B40F0F'
           }
         },
-        legend: { position: 'bottom' },
-        radius: 0.8,
-        label: {
-          type: 'outer',
-          content: '{name} {percentage}'
+        radius: 1,
+        innerRadius: 0.64,
+        meta: {
+          value: {
+            formatter: (v) => `${v}`
+          }
         },
+        label: {
+          type: 'inner',
+          offset: '-50%',
+          autoRotate: false,
+          style: { textAlign: 'center' },
+          formatter: ({ percent }) => `${(percent * 100).toFixed(0)}%`
+        },
+        statistic: {
+          title: {
+            content: '全部',
+            offsetY: -8
+          },
+          content: {
+            offsetY: -4
+          }
+        },
+        legend: { position: 'bottom' },
         interactions: [{ type: 'pie-legend-active' }, { type: 'element-active' }]
       })
       this.allTypesChart.render()

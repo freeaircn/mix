@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-22 17:43:24
+ * @LastEditTime: 2022-05-25 22:42:59
  */
 
 namespace App\Models\Common;
@@ -97,9 +97,9 @@ class UserModel extends Model
 
         $builder = $this->select($selectSql);
         $builder->whereIn('id', $ids);
-        $db = $builder->findAll();
+        $result = $builder->findAll();
 
-        return $db;
+        return $result;
     }
 
     public function getUserRecordByPhone(array $fields = null, string $phone = null)
@@ -148,6 +148,28 @@ class UserModel extends Model
         $db = $builder->findAll();
 
         return isset($db[0]) ? $db[0] : [];
+    }
+
+    public function getUserRecordByDept(array $fields = null, string $dept = null)
+    {
+        if (empty($dept)) {
+            return [];
+        }
+
+        $selectSql = '';
+        if (empty($fields)) {
+            $selectSql = 'id, workID, username, sex, IdCard, phone, email, status, avatar, dept_ids, job, title, politic, updated_at';
+        } else {
+            foreach ($fields as $key) {
+                $selectSql = $selectSql . $key . ', ';
+            }
+        }
+
+        $builder = $this->select($selectSql);
+        $builder->like('dept_ids', $dept);
+        $result = $builder->findAll();
+
+        return $result;
     }
 
     // public function getUserByStation($fields = [], $station = '')

@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-23 20:52:46
+ * @LastEditTime: 2022-05-25 22:47:24
 -->
 <template>
   <page-header-wrapper :title="false">
@@ -69,6 +69,14 @@
           </a-upload>
         </a-form-model-item>
 
+        <a-form-model-item label="通知" prop="notice">
+          <a-select mode="multiple" v-model="record.notice" placeholder="可多选" >
+            <a-select-option v-for="d in workerItems" :key="d.id" :value="d.id">
+              {{ d.username }}
+            </a-select-option>
+          </a-select>
+        </a-form-model-item>
+
         <a-form-model-item :wrapperCol="{ span: 24 }" style="text-align: center">
           <a-button type="primary" @click="onSubmit" :disabled="!ready" >提交</a-button>
           <!-- <router-link slot="extra" to="/dashboard/dts"><a-button>取消</a-button></router-link> -->
@@ -100,10 +108,12 @@ export default {
       stationItems: [],
       deviceItems: [],
       device: [],
+      workerItems: [],
       //
       record: {
         station_id: '',
-        description: ''
+        description: '',
+        notice: []
       },
       rules: {
         station_id: [{ required: true, message: '请选择', trigger: ['change'] }],
@@ -139,8 +149,10 @@ export default {
         .then((data) => {
             this.record.description = data.description
             this.stationItems = data.station
+            this.workerItems = data.workers
             listToTree(data.deviceList, this.deviceItems, this.userInfo.allowDefaultDeptId)
             this.record.station_id = this.userInfo.allowDefaultDeptId
+            //
             this.ready = true
           })
           .catch(() => {
@@ -238,6 +250,7 @@ export default {
     },
 
     onSubmit () {
+      console.log('record', this.record)
       const files = []
       this.fileList.forEach(element => {
         if (element.status === 'done') {

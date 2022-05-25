@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-07-06 21:44:27
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-25 16:23:10
+ * @LastEditTime: 2022-05-25 23:31:49
  */
 
 namespace Config\MyConfig;
@@ -61,4 +61,6 @@ class Dts extends BaseConfig
     ];
 
     public $longTermDays = 90;
+
+    public $dtsDetailsLink = "http://192.168.1.100/dashboard/dts/details/";
 }
