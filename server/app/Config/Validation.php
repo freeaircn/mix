@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-24 10:22:49
+ * @LastEditTime: 2022-05-27 17:32:41
  */
 
 namespace Config;
@@ -209,10 +209,17 @@ class Validation
         'level'      => 'required|regex_match[^[1-9]$]',
     ];
 
+    public $DtsReqNews = [
+        'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
+    ];
+
     public $DtsReqList = [
         'station_id' => 'required|regex_match[^\d{0,2}$]',
-        'type'       => 'required|regex_match[^[0-9]$]',
-        'level'      => 'required|regex_match[^[0-9]$]',
+        'type'       => 'required|regex_match[^\d{0,1}$]',
+        'level'      => 'required|regex_match[^\d{0,1}$]',
+        'device'     => 'required|regex_match[^\d{0,10}$]',
+        'cause'      => 'required|regex_match[^\d{0,2}$]',
+        'score'      => 'required|regex_match[^\d{0,1}$]',
         // 'dts_id'     => 'regex_match[/^[1-9]\d{0,19}$/]',
         // 'creator'    => 'regex_match[/^([\x{4e00}-\x{9fa5}]{1,6})$/u]',
         'limit'      => 'required|regex_match[^[1-9]\d{0,2}$]',

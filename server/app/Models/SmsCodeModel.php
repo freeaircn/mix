@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-22 17:39:39
+ * @LastEditTime: 2022-05-27 20:56:26
  */
 
 namespace App\Models;
@@ -82,23 +82,23 @@ class SmsCodeModel extends Model
             return false;
         }
 
-        $db = $query[0];
+        $result = $query[0];
         // 比对验证码
-        if ($code !== $db['code']) {
+        if ($code !== $result['code']) {
             return false;
         }
 
         // 超期
         helper('my_date');
-        if (my_is_timeout($db['updated_at'])) {
+        if (my_is_timeout($result['updated_at'])) {
             // 删除db记录
-            $this->delete($db['id']);
+            $this->delete($result['id']);
             return false;
         }
 
         // 最后，删除db记录，通过后，清除验证码。
         if ($del) {
-            $this->delete($db['id']);
+            $this->delete($result['id']);
         }
 
         return true;

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-22 17:40:37
+ * @LastEditTime: 2022-05-27 20:56:43
  */
 
 namespace App\Models\Admin;
@@ -52,14 +52,14 @@ class ApiModel extends Model
             }
         }
 
-        $db = $this->select($selectSql)
+        $result = $this->select($selectSql)
             ->where('type', '2')
             ->whereIn('id', $Ids)
             ->orderBy('id', 'ASC')
             ->findAll();
 
         $res = [];
-        foreach ($db as $v) {
+        foreach ($result as $v) {
             if (!empty($v['api']) && !empty($v['method'])) {
                 $res[] = $v['api'] . ':' . $v['method'];
             }

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-25 17:03:07
+ * @LastEditTime: 2022-05-27 20:56:32
  */
 
 namespace App\Models\Dts;
@@ -66,18 +66,46 @@ class DtsModel extends Model
         if (isset($conditions['type'])) {
             $builder->where('type', $conditions['type']);
         }
+        if (isset($conditions['place_at'])) {
+            $builder->whereIn('place_at', $conditions['place_at']);
+        }
         if (isset($conditions['level'])) {
             $builder->where('level', $conditions['level']);
         }
+        //
         if (isset($conditions['dts_id'])) {
             $builder->where('dts_id', $conditions['dts_id']);
+        }
+        if (isset($conditions['title'])) {
+            $builder->like('title', $conditions['title']);
+        }
+        if (isset($conditions['device'])) {
+            $builder->like('device', $conditions['device']);
         }
         if (isset($conditions['creator_id'])) {
             $builder->where('creator_id', $conditions['creator_id']);
         }
-        if (isset($conditions['place_at'])) {
-            $builder->where('place_at', $conditions['place_at']);
+        //
+        if (isset($conditions['cause'])) {
+            $builder->where('cause', $conditions['cause']);
         }
+        if (isset($conditions['score'])) {
+            if ($conditions['score'] === '1') {
+                $builder->where('score > 0');
+            }
+            if ($conditions['score'] === '2') {
+                $builder->where('score < 0');
+            }
+        }
+        if (isset($conditions['created_start']) && isset($conditions['created_end'])) {
+            $sql = "Date(created_at) BETWEEN " . "'" . $conditions['created_start'] . "'" . " AND " . "'" . $conditions['created_end'] . "'";
+            $builder->where($sql);
+        }
+        if (isset($conditions['updated_start']) && isset($conditions['updated_end'])) {
+            $sql = "Date(updated_at) BETWEEN " . "'" . $conditions['updated_start'] . "'" . " AND " . "'" . $conditions['updated_end'] . "'";
+            $builder->where($sql);
+        }
+        //
         $builder->where('status', $conditions['status']);
 
         $total = 0;
@@ -87,10 +115,35 @@ class DtsModel extends Model
             return ['total' => 0, 'data' => []];
         } else {
             $builder->orderBy('dts_id', 'ASC');
-            $db = $builder->findAll($conditions['limit'], ($conditions['offset'] - 1) * $conditions['limit']);
+            $result = $builder->findAll($conditions['limit'], ($conditions['offset'] - 1) * $conditions['limit']);
 
-            return ['total' => $total, 'data' => $db];
+            return ['total' => $total, 'data' => $result];
         }
+    }
+
+    public function getDtsRecordsByUpdateDate(array $fields = null, array $conditions = null)
+    {
+        if (empty($conditions)) {
+            return [];
+        }
+
+        $selectSql = '';
+        if (empty($fields)) {
+            $selectSql = 'id, station_id, dts_id, status, type, title, level, device, description, progress, creator_id, reviewer_id, place_at, score, score_desc, scored_by, cause, updated_at';
+        } else {
+            foreach ($fields as $name) {
+                $selectSql = $selectSql . $name . ', ';
+            }
+        }
+
+        $builder = $this->select($selectSql);
+        $builder->where('station_id', $conditions['station_id']);
+        $builder->where('status', $conditions['status']);
+
+        $builder->orderBy('updated_at', 'DESC');
+        $result = $builder->findAll($conditions['limit'], ($conditions['offset'] - 1) * $conditions['limit']);
+
+        return $result;
     }
 
     public function getDtsRecordByDtsId(array $fields = null, string $dts_id = null)
@@ -113,9 +166,9 @@ class DtsModel extends Model
         }
         $builder = $this->select($selectSql);
         $builder->where('dts_id', $dts_id);
-        $db = $builder->findAll();
+        $result = $builder->findAll();
 
-        return isset($db[0]) ? $db[0] : [];
+        return isset($result[0]) ? $result[0] : [];
     }
 
     public function updateDtsRecordById(array $data = null, string $id = null)

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-22 17:40:43
+ * @LastEditTime: 2022-05-27 20:58:14
  */
 
 namespace App\Models\Admin;
@@ -51,13 +51,13 @@ class RoleApiModel extends Model
             return [];
         }
 
-        $db = $this->select('api_id')
+        $result = $this->select('api_id')
             ->whereIn('role_id', $roleIds)
             ->orderBy('api_id', 'ASC')
             ->findAll();
 
         $res = [];
-        foreach ($db as $value) {
+        foreach ($result as $value) {
             $res[] = $value['api_id'];
         }
 

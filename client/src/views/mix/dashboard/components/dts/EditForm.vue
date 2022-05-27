@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-23 20:56:15
+ * @LastEditTime: 2022-05-27 14:56:53
 -->
 <template>
   <page-header-wrapper :title="false">
@@ -172,7 +172,8 @@ export default {
     },
 
     onCancel () {
-      this.$router.push({ path: `/dashboard/dts/list` })
+      // this.$router.push({ path: `/dashboard/dts/list` })
+      this.$router.back()
     }
   }
 }

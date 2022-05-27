@@ -83,12 +83,12 @@
       <a-button v-if="operation.allowUpdateProgress" type="primary" @click="reqUpdateProgress" style="margin-right: 16px">更新进展</a-button>
       <a-button v-if="operation.allowResolve" type="primary" @click="reqToResolve" style="margin-top: 8px; margin-right: 16px">提交解决</a-button>
       <a-button v-if="operation.allowClose" type="primary" @click="reqToClose" style="margin-top: 8px; margin-right: 16px">提交关闭</a-button>
-      <a-button v-if="operation.allowBackWork" type="primary" @click="reqBackWork" style="margin-top: 8px; margin-right: 16px">重新处理</a-button>
+      <a-button v-if="operation.allowBackWork" type="primary" @click="reqBackWork" style="margin-top: 8px; margin-right: 16px">返回处理</a-button>
       <a-button v-if="operation.allowSuspend" type="default" @click="reqToSuspend" style="margin-top: 8px; margin-right: 16px">挂起</a-button>
       <a-button v-if="operation.allowCancel" type="default" @click="reqToCancel" style="margin-top: 8px; margin-right: 16px">取消</a-button>
       <a-button v-if="operation.allowScore" type="default" @click="reqUpdateScore" style="margin-top: 8px; margin-right: 16px">提交评分</a-button>
       <div style="margin-top: 8px">
-        <router-link to="/dashboard/dts/list"><a-button type="default" style="margin-right: 16px">退出</a-button></router-link>
+        <a-button type="default" @click="handleExit" style="margin-right: 16px">退出</a-button>
       </div>
     </a-card>
 
@@ -100,7 +100,7 @@
     </my-form>
     <resolve-form :visible.sync="visibleResolveDiag" title="解决" :causes="causes" :record="resolveInfo" @confirm="handleToResolve">
     </resolve-form>
-    <my-form :visible.sync="visibleBackWorkDiag" title="重新处理" :record="backWorkProgress" @confirm="handleBackWork">
+    <my-form :visible.sync="visibleBackWorkDiag" title="返回处理" :record="backWorkProgress" @confirm="handleBackWork">
     </my-form>
     <my-form :visible.sync="visibleCloseDiag" title="关闭" :record="closeProgress" @confirm="handleToClose">
     </my-form>
@@ -510,6 +510,10 @@ export default {
           if (err.response) {
           }
         })
+    },
+
+    handleExit () {
+      this.$router.back()
     }
   }
 }

@@ -11,11 +11,14 @@
         </a-form-model-item>
 
         <a-form-model-item>
-          <a-button type="primary" @click="onClickSearch">查询</a-button>
+          <a-button type="primary" @click="onClickRefresh">刷新</a-button>
         </a-form-model-item>
 
         <a-form-model-item>
-          <a-button type="primary" @click="onClickRecordIn">录入</a-button>
+          <a-button type="default" @click="onClickRecordIn">新建</a-button>
+        </a-form-model-item>
+        <a-form-model-item>
+          <a-button type="default" @click="onClickSearch">检索</a-button>
         </a-form-model-item>
       </a-form-model>
     </a-card>
@@ -197,14 +200,18 @@ export default {
     //
     this.isMounted = true
     //
-    this.onClickSearch()
+    this.onClickRefresh()
   },
   methods: {
     onClickRecordIn () {
-      this.$router.push({ path: '/dashboard/dts/list' })
+      this.$router.push({ path: '/dashboard/dts/new' })
     },
 
     onClickSearch () {
+      this.$router.push({ path: '/dashboard/dts/list' })
+    },
+
+    onClickRefresh () {
       const params = { resource: 'statistic_chart', station_id: this.query.station_id }
       queryDts(params)
         .then(data => {
@@ -229,33 +236,17 @@ export default {
           var temp = 0
           this.createTrendChartData.forEach((item) => {
             if (item.date === curMonth) {
-              if (item.value < 1) {
-                this.curMonthCreateNum = 0
-              } else {
-                this.curMonthCreateNum = item.value
-              }
+              this.curMonthCreateNum = item.value
             }
-            if (item.value < 1) {
-              temp = temp + 0
-            } else {
-              temp = temp + item.value
-            }
+            temp = temp + item.value
           })
           this.totalCreateNum = temp
           temp = 0
           this.resolveTrendChartData.forEach((item) => {
             if (item.date === curMonth) {
-              if (item.value < 1) {
-                this.curMonthResolveNum = 0
-              } else {
-                this.curMonthResolveNum = item.value
-              }
+              this.curMonthResolveNum = item.value
             }
-            if (item.value < 1) {
-              temp = temp + 0
-            } else {
-              temp = temp + item.value
-            }
+            temp = temp + item.value
           })
           this.totalResolveNum = temp
           //
@@ -298,15 +289,15 @@ export default {
         },
         tooltip: {
           formatter: (tip) => {
-            if (tip.value === 0.1) {
-              return { name: '新增', value: 0 }
-            } else {
-              return { name: '新增', value: tip.value }
-            }
+            return { name: '新增', value: tip.value }
           }
         }
       })
       this.createTrendChart.render()
+
+      this.createTrendChart.on('element:click', (...args) => {
+        console.log(...args)
+      })
     },
 
     updateCreateTrendChart () {
@@ -336,15 +327,15 @@ export default {
         },
         tooltip: {
           formatter: (tip) => {
-            if (tip.value === 0.1) {
-              return { name: '解决', value: 0 }
-            } else {
-              return { name: '解决', value: tip.value }
-            }
+            return { name: '解决', value: tip.value }
           }
         }
       })
       this.resolveTrendChart.render()
+
+      this.resolveTrendChart.on('element:click', (...args) => {
+        console.log(...args)
+      })
     },
 
     updateResolveTrendChart () {
@@ -388,6 +379,10 @@ export default {
         }
       })
       this.longTermChart.render()
+
+      this.longTermChart.on('element:click', (...args) => {
+        console.log(...args)
+      })
     },
 
     updateLongTermChart () {
@@ -436,6 +431,10 @@ export default {
         interactions: [{ type: 'pie-legend-active' }, { type: 'element-active' }]
       })
       this.allTypesChart.render()
+
+      this.allTypesChart.on('element:click', (...args) => {
+        console.log(...args)
+      })
     },
 
     updateAllTypesChart () {
@@ -488,6 +487,10 @@ export default {
         }
       })
       this.distributionChart.render()
+
+      this.distributionChart.on('element:click', (...args) => {
+        console.log(...args)
+      })
     },
 
     updateDistributionChart () {
@@ -522,6 +525,10 @@ export default {
         interactions: [{ type: 'pie-legend-active' }, { type: 'element-active' }]
       })
       this.defectLevelChart.render()
+
+      this.defectLevelChart.on('element:click', (...args) => {
+        console.log(...args)
+      })
     },
 
     updateDefectLevelChart () {
@@ -552,6 +559,10 @@ export default {
         interactions: [{ type: 'pie-legend-active' }, { type: 'element-active' }]
       })
       this.defectWfChart.render()
+
+      this.defectWfChart.on('element:click', (...args) => {
+        console.log(...args)
+      })
     },
 
     updateDefectWfChart () {
@@ -586,6 +597,10 @@ export default {
         interactions: [{ type: 'pie-legend-active' }, { type: 'element-active' }]
       })
       this.dangerLevelChart.render()
+
+      this.dangerLevelChart.on('element:click', (...args) => {
+        console.log(...args)
+      })
     },
 
     updateDangerLevelChart () {
@@ -616,6 +631,10 @@ export default {
         interactions: [{ type: 'pie-legend-active' }, { type: 'element-active' }]
       })
       this.dangerWfChart.render()
+
+      this.dangerWfChart.on('element:click', (...args) => {
+        console.log(...args)
+      })
     },
 
     updateDangerWfChart () {
@@ -641,6 +660,10 @@ export default {
         interactions: [{ type: 'active-region', enable: false }]
       })
       this.causeChart.render()
+
+      this.causeChart.on('element:click', (...args) => {
+        console.log(...args)
+      })
     },
 
     updateCauseChart () {

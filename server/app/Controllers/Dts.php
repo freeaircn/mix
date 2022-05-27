@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-25 23:32:12
+ * @LastEditTime: 2022-05-27 23:59:38
  */
 
 namespace App\Controllers;
@@ -39,6 +39,9 @@ class Dts extends BaseController
         }
 
         switch ($resource) {
+            case 'news':
+                $result = $this->_reqNews();
+                break;
             case 'search_params':
                 $result = $this->_reqSearchParams();
                 break;
@@ -778,6 +781,62 @@ class Dts extends BaseController
     }
 
     // Part-2
+    protected function _reqNews()
+    {
+        if (!$this->validate('DtsReqNews')) {
+            $res['http_status'] = 400;
+            $res['msg']         = [
+                'error' => '请求数据无效',
+                'info'  => $this->validator->getErrors(),
+            ];
+            return $res;
+        }
+
+        $param = $this->request->getGet();
+
+        $allowReadDeptId = $this->session->get('allowReadDeptId');
+        if (!in_array($param['station_id'], $allowReadDeptId)) {
+            $res['http_status'] = 200;
+            $res['data']        = [];
+            return $res;
+        } else {
+            $query['station_id'] = [$param['station_id']];
+        }
+
+        $query['status'] = 'publish';
+        $query['limit']  = $this->selfConfig->newsItemNum;
+        $query['offset'] = 1;
+        $fields          = ['id', 'dts_id', 'station_id', 'type', 'title', 'creator_id', 'place_at', 'updated_at'];
+
+        $model  = new DtsModel();
+        $result = $model->getDtsRecordsByUpdateDate($fields, $query);
+
+        if (empty($result)) {
+            $res['http_status'] = 200;
+            $res['data']        = [];
+            return $res;
+        }
+
+        $data  = $this->_getUserNameAndWorkflowName($result);
+        $data  = $this->_getDeptName($data);
+        $data2 = [];
+        foreach ($data as $d) {
+            $temp = [];
+            foreach ($d as $key => $v) {
+                if ($key === 'title') {
+                    $temp['title_'] = $v;
+                } else {
+                    $temp[$key] = $v;
+                }
+            }
+            $data2[] = $temp;
+        }
+
+        $res['http_status'] = 200;
+        $res['data']        = $data2;
+        return $res;
+    }
+
     protected function _reqSearchParams()
     {
         $allowReadDeptId = $this->session->get('allowReadDeptId');
@@ -787,15 +846,55 @@ class Dts extends BaseController
             return $res;
         }
 
-        $model   = new DeptModel();
-        $fields  = ['id', 'name'];
-        $station = $model->getDeptRecordsByIds($fields, $allowReadDeptId);
+        $typeItems = [
+            ['id' => '0', 'name' => '全部'],
+        ];
+        $types = $this->selfConfig->typesMap;
+        foreach ($types as $key => $t) {
+            $typeItems[] = ['id' => strval($key), 'name' => $t];
+        }
 
-        $wf       = new WfDts();
-        $workflow = $wf->getPlaceMetaOfName();
+        $levelItems = [
+            ['id' => '0', 'name' => '全部'],
+        ];
+        $levels = $this->selfConfig->levelsMap;
+        foreach ($levels as $key => $t) {
+            $levelItems[] = ['id' => strval($key), 'name' => $t];
+        }
+
+        $causeItems = $this->selfConfig->causes;
+        array_unshift($causeItems, ['id' => '0', 'name' => '全部']);
+
+        $model        = new DeptModel();
+        $fields       = ['id', 'name'];
+        $stationItems = $model->getDeptRecordsByIds($fields, $allowReadDeptId);
+        array_unshift($stationItems, ['id' => '0', 'name' => '全部']);
+
+        $wf            = new WfDts();
+        $workflowItems = $wf->getPlaceMetaOfName();
+
+        $pid         = $this->session->get('allowDefaultDeptId');
+        $model       = new DeviceModel();
+        $fields      = ['id', 'name'];
+        $deviceItems = $model->getDeviceRecordsByPid($fields, $pid);
+        array_unshift($deviceItems, ['id' => '0', 'name' => '全部']);
+
+        $scoreItems = [
+            ['id' => '0', 'name' => '全部'],
+            ['id' => '1', 'name' => '大于0分'],
+            ['id' => '2', 'name' => '小于0分'],
+        ];
 
         $res['http_status'] = 200;
-        $res['data']        = ['station' => $station, 'workflow' => $workflow];
+        $res['data']        = [
+            'typeItems'     => $typeItems,
+            'levelItems'    => $levelItems,
+            'causeItems'    => $causeItems,
+            'stationItems'  => $stationItems,
+            'workflowItems' => $workflowItems,
+            'deviceItems'   => $deviceItems,
+            'scoreItems'    => $scoreItems,
+        ];
         return $res;
     }
 
@@ -819,6 +918,7 @@ class Dts extends BaseController
             return $res;
         }
 
+        // 1
         if ($param['station_id'] === '0') {
             $query['station_id'] = $allowReadDeptId;
         } else {
@@ -835,19 +935,43 @@ class Dts extends BaseController
             $query['type'] = $param['type'];
         }
 
+        if (isset($param['place_at']) && !empty($param['place_at'])) {
+            $wf       = new WfDts();
+            $workflow = $wf->getPlaceAlias();
+            foreach ($param['place_at'] as $p) {
+                if (!in_array($p, $workflow)) {
+                    $res['http_status'] = 400;
+                    $res['msg']         = [
+                        'error' => '请求数据无效',
+                        'info'  => 'invalid wf place_at',
+                    ];
+                    return $res;
+                }
+            }
+            //
+            $query['place_at'] = $param['place_at'];
+        }
+
         if ($param['level'] !== '0') {
             $query['level'] = $param['level'];
         }
 
-        if ($param['dts_id'] !== '') {
+        // 2
+        if (isset($param['dts_id']) && $param['dts_id'] !== '') {
             if (preg_match('/^[1-9]\d{0,19}$/', $param['dts_id'])) {
                 $query['dts_id'] = $param['dts_id'];
-            } else {
-                $query['dts_id'] = '0';
             }
         }
 
-        if ($param['creator'] !== '') {
+        if (isset($param['title']) && $param['title'] !== '') {
+            $query['title'] = $param['title'];
+        }
+
+        if ($param['device'] !== '0') {
+            $query['device'] = '+' . $param['device'] . '+';
+        }
+
+        if (isset($param['creator']) && $param['creator'] !== '') {
             if (preg_match('/^([\x{4e00}-\x{9fa5}]{1,6})$/u', $param['creator'])) {
                 $model  = new UserModel();
                 $fields = ['id'];
@@ -867,38 +991,52 @@ class Dts extends BaseController
             }
         }
 
-        if ($param['place_at'] !== 'all') {
-            $wf       = new WfDts();
-            $workflow = $wf->getPlaceAlias();
-            if (in_array($param['place_at'], $workflow)) {
-                $query['place_at'] = $param['place_at'];
-            } else {
-                $res['http_status'] = 200;
-                $res['data']        = ['total' => 0, 'data' => []];
-                return $res;
+        // 3
+        if ($param['cause'] !== '0') {
+            $query['cause'] = $param['cause'];
+        }
+        if ($param['score'] !== '0') {
+            $query['score'] = $param['score'];
+        }
+        if (isset($param['created_range'])) {
+            $temp = $param['created_range'];
+            if (count($temp) === 2 && !empty($temp[0]) && !empty($temp[1])) {
+                $query['created_start'] = $temp[0];
+                $query['created_end']   = $temp[1];
             }
         }
+        if (isset($param['updated_range'])) {
+            $temp = $param['updated_range'];
+            if (count($temp) === 2 && !empty($temp[0]) && !empty($temp[1])) {
+                $query['updated_start'] = $temp[0];
+                $query['updated_end']   = $temp[1];
+            }
+        }
+
+        // $res['http_status'] = 200;
+        // $res['data']        = ['total' => 0, 'data' => [], 'query' => $query];
+        // return $res;
 
         $query['status'] = 'publish';
         $query['limit']  = $param['limit'];
         $query['offset'] = $param['offset'];
         $fields          = ['id', 'dts_id', 'station_id', 'type', 'title', 'level', 'place_at', 'created_at', 'updated_at', 'creator_id'];
 
-        $model = new DtsModel();
-        $db    = $model->getDtsRecordsByMultiConditions($fields, $query);
+        $model  = new DtsModel();
+        $result = $model->getDtsRecordsByMultiConditions($fields, $query);
 
-        if ($db['total'] === 0) {
+        if ($result['total'] === 0) {
             $res['http_status'] = 200;
-            $res['data']        = $db;
+            $res['data']        = $result;
             return $res;
         }
 
         // id => name
-        $data = $this->_getUserNameAndWorkflowName($db['data']);
+        $data = $this->_getUserNameAndWorkflowName($result['data']);
         $data = $this->_getDeptName($data);
 
         $res['http_status'] = 200;
-        $res['data']        = ['total' => $db['total'], 'data' => $data];
+        $res['data']        = ['total' => $result['total'], 'data' => $data];
         return $res;
     }
 
@@ -1010,8 +1148,8 @@ class Dts extends BaseController
         $details = $db;
 
         // id -> name
-        $details['type']  = $this->selfConfig->keyValuePairs['type'][$db['type']];
-        $details['level'] = $this->selfConfig->keyValuePairs['level'][$db['level']];
+        $details['type']  = $this->selfConfig->typesMap[$db['type']];
+        $details['level'] = $this->selfConfig->levelsMap[$db['level']];
 
         $users_id = [
             'creator'  => $db['creator_id'],
@@ -1475,7 +1613,7 @@ class Dts extends BaseController
         $model = new DtsModel();
         $data  = $model->getByStationAndGroupByType($station_id);
         foreach ($data as $d) {
-            $label = $this->selfConfig->keyValuePairs['type'][$d['type']];
+            $label = $this->selfConfig->typesMap[$d['type']];
             foreach ($result as $key => $r) {
                 if ($r['type'] === $label) {
                     $result[$key]['value'] = intval($d['value']);
@@ -1559,7 +1697,7 @@ class Dts extends BaseController
         foreach ($data as $d) {
             $num = $num + intval($d['value']);
             if ($d['place_at'] === 'working') {
-                $workingRate = intval(intval($d['value']) * 100 / $total);
+                $workingRate = ceil(intval($d['value']) * 100 / $total);
             }
         }
         $chart['measures'][0] = intval($num * 100 / $total);
@@ -1579,12 +1717,12 @@ class Dts extends BaseController
             if ($i < 10) {
                 $result[] = [
                     'date'  => $year . '-0' . $i,
-                    'value' => 0.1,
+                    'value' => 0,
                 ];
             } else {
                 $result[] = [
                     'date'  => $year . '-' . $i,
-                    'value' => 0.1,
+                    'value' => 0,
                 ];
             }
 
@@ -1612,12 +1750,12 @@ class Dts extends BaseController
             if ($i < 10) {
                 $result[] = [
                     'date'  => $year . '-0' . $i,
-                    'value' => 0.1,
+                    'value' => 0,
                 ];
             } else {
                 $result[] = [
                     'date'  => $year . '-' . $i,
-                    'value' => 0.1,
+                    'value' => 0,
                 ];
             }
 
@@ -1640,7 +1778,7 @@ class Dts extends BaseController
     {
         $result = [];
 
-        $level = $this->selfConfig->keyValuePairs['level'];
+        $level = $this->selfConfig->levelsMap;
         foreach ($level as $l) {
             $result[] = [
                 'level' => $l,
@@ -1652,7 +1790,7 @@ class Dts extends BaseController
         $model = new DtsModel();
         $data  = $model->getByStationTypeGroupByLevel($station_id, $type);
         foreach ($data as $d) {
-            $name = $this->selfConfig->keyValuePairs['level'][$d['level']];
+            $name = $this->selfConfig->levelsMap[$d['level']];
             foreach ($result as $key => $r) {
                 if ($r['level'] == $name) {
                     $result[$key]['value'] = intval($d['value']);
@@ -1691,7 +1829,7 @@ class Dts extends BaseController
     {
         $result = [];
 
-        $level = $this->selfConfig->keyValuePairs['level'];
+        $level = $this->selfConfig->levelsMap;
         foreach ($level as $l) {
             $result[] = [
                 'level' => $l,
@@ -1703,7 +1841,7 @@ class Dts extends BaseController
         $model = new DtsModel();
         $data  = $model->getByStationTypeGroupByLevel($station_id, $type);
         foreach ($data as $d) {
-            $name = $this->selfConfig->keyValuePairs['level'][$d['level']];
+            $name = $this->selfConfig->levelsMap[$d['level']];
             foreach ($result as $key => $r) {
                 if ($r['level'] == $name) {
                     $result[$key]['value'] = intval($d['value']);

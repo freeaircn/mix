@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-07-06 21:44:27
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-25 23:31:49
+ * @LastEditTime: 2022-05-27 15:52:01
  */
 
 namespace Config\MyConfig;
@@ -13,17 +13,28 @@ use CodeIgniter\Config\BaseConfig;
 
 class Dts extends BaseConfig
 {
-    public $keyValuePairs = [
-        'type'  => [
-            1 => '隐患',
-            2 => '缺陷',
-        ],
-        'level' => [
-            1 => '紧急',
-            2 => '严重',
-            3 => '一般',
-        ],
+    // public $keyValuePairs = [
+    //     'type'  => [
+    //         1 => '隐患',
+    //         2 => '缺陷',
+    //     ],
+    //     'level' => [
+    //         1 => '紧急',
+    //         2 => '严重',
+    //         3 => '一般',
+    //     ],
+    // ];
+    public $typesMap = [
+        1 => '隐患',
+        2 => '缺陷',
     ];
+
+    public $levelsMap = [
+        1 => '紧急',
+        2 => '严重',
+        3 => '一般',
+    ];
+
     public $wfDtsConfigFile          = 'Libraries/Workflow/Dts/config.yaml';
     public $attachmentPath           = 'uploads/dts';
     public $attachmentSize           = 8388608; // 8*1024*1024
@@ -61,6 +72,7 @@ class Dts extends BaseConfig
     ];
 
     public $longTermDays = 90;
+    public $newsItemNum  = 8;
 
     public $dtsDetailsLink = "http://192.168.1.100/dashboard/dts/details/";
 }
