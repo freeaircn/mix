@@ -652,6 +652,11 @@ export default {
         legend: {
           position: 'bottom'
         },
+        label: {
+          // 可手动配置 label 数据标签位置
+          position: 'right', // 'left', 'middle', 'right'
+          offset: 8
+        },
         barBackground: {
           style: {
             fill: 'rgba(0,0,0,0.1)'

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-27 20:56:32
+ * @LastEditTime: 2022-05-28 09:19:01
  */
 
 namespace App\Models\Dts;
@@ -251,7 +251,7 @@ class DtsModel extends Model
         $builder   = $this->select($selectSql, false);
         $builder->where('station_id', $station_id);
         $builder->where("DATE_FORMAT(created_at, '%Y') = " . $year);
-        $builder->whereIn('place_at', ['suspend', 'working']);
+        // $builder->whereIn('place_at', ['suspend', 'working']);
         $builder->groupBy("DATE_FORMAT(created_at, '%Y-%m')");
 
         $result = $builder->findAll();

@@ -409,7 +409,9 @@ export default {
 
     reqToResolve () {
       this.resolveInfo.text = this.progressTemplates.to_resolve
-      this.resolveInfo.cause = this.details.cause
+      if (this.details.cause !== '0') {
+        this.resolveInfo.cause = this.details.cause
+      }
       this.resolveInfo.cause_analysis = this.details.cause_analysis
       this.visibleResolveDiag = true
     },

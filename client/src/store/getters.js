@@ -1,3 +1,10 @@
+/*
+ * @Description:
+ * @Author: freeair
+ * @Date: 2021-06-19 12:28:13
+ * @LastEditors: freeair
+ * @LastEditTime: 2022-05-28 23:36:23
+ */
 const getters = {
   isMobile: state => state.app.isMobile,
   lang: state => state.app.lang,
@@ -10,7 +17,8 @@ const getters = {
   roles: state => state.user.roles,
   userInfo: state => state.user.info,
   addRouters: state => state.permission.addRouters,
-  multiTab: state => state.app.multiTab
+  multiTab: state => state.app.multiTab,
+  dtsListSearchParam: state => state.pageCache.dtsListSearchParam
 }
 
 export default getters

@@ -1,8 +1,8 @@
 <template>
   <page-header-wrapper :title="false">
-    <a-card :bordered="false" :body-style="{marginBottom: '8px'}">
+    <!-- <a-card :bordered="false" :body-style="{marginBottom: '8px'}">
       <router-link to="/dashboard/dts/new" ><a-button type="primary" style="margin-right: 8px">新建</a-button></router-link>
-    </a-card>
+    </a-card> -->
     <a-card :bordered="false" title="" :body-style="{marginBottom: '8px'}">
 
       <div class="table-page-search-wrapper">
@@ -150,7 +150,8 @@
 </template>
 
 <script>
-// import moment from 'moment'
+import moment from 'moment'
+import store from '@/store'
 import { mapGetters } from 'vuex'
 import { baseMixin } from '@/store/app-mixin'
 import { queryDts, delDts } from '@/api/mix/dts'
@@ -258,11 +259,12 @@ export default {
       pagination: {
         current: 1,
         pageSize: 8,
-        total: 0
+        total: 0,
+        showTotal: (total) => { return '结果' + total }
       },
 
       loading: false,
-      listData: [ ]
+      listData: []
     }
   },
   filters: {
@@ -275,7 +277,7 @@ export default {
   },
   computed: {
     ...mapGetters([
-      'userInfo'
+      'userInfo', 'dtsListSearchParam'
     ])
   },
   beforeMount () {
@@ -283,7 +285,43 @@ export default {
   },
   mounted () {
     this.searchParams.station_id = this.userInfo.allowDefaultDeptId
-    this.sendSearchReq(this.searchParams)
+    if (this.dtsListSearchParam) {
+      this.advanced = this.dtsListSearchParam.advanced
+      this.pagination.current = this.dtsListSearchParam.pageId
+      this.searchParams = { ...this.dtsListSearchParam.params }
+      var temp = []
+      this.searchParams.created_range.forEach((item) => {
+        if (item !== '') {
+          temp.push(moment(item))
+        }
+      })
+      if (temp.length === 2) {
+        this.range_select1 = temp
+      }
+      temp = []
+      this.searchParams.updated_range.forEach((item) => {
+        if (item !== '') {
+          temp.push(moment(item))
+        }
+      })
+      if (temp.length === 2) {
+        this.range_select2 = temp
+      }
+      this.sendSearchReq(this.searchParams)
+    }
+    // this.sendSearchReq(this.searchParams)
+  },
+  beforeRouteLeave (to, from, next) {
+    if (to.name === 'DtsDetails') {
+      var temp1 = { advanced: this.advanced, pageId: this.pagination.current, params: this.searchParams }
+      store.dispatch('setDtsListSearchParam', temp1)
+    } else if (to.name === 'DtsEdit') {
+      var temp2 = { advanced: this.advanced, pageId: this.pagination.current, params: this.searchParams }
+      store.dispatch('setDtsListSearchParam', temp2)
+    } else {
+      store.dispatch('setDtsListSearchParam', null)
+    }
+    next()
   },
   methods: {
     toggleAdvanced () {

@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-27 14:55:47
+ * @LastEditTime: 2022-05-28 22:59:16
 -->
 <template>
   <page-header-wrapper :title="false">
@@ -265,7 +265,7 @@ export default {
 
           createDts(data)
             .then(() => {
-              this.$router.push({ path: `/dashboard/dts/list` })
+              this.$router.push({ path: `/dashboard/dts/news` })
             })
             .catch(() => {
               // this.ready = false
@@ -280,8 +280,8 @@ export default {
       if (this.fileList.length > 0) {
         this.$message.info('请删除上传的附件')
       } else {
-        // this.$router.push({ path: `/dashboard/dts/list` })
-        this.$router.back()
+        this.$router.push({ path: `/dashboard/dts/news` })
+        // this.$router.back()
       }
     }
   }
