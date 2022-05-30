@@ -288,7 +288,7 @@ export default {
     if (this.dtsListSearchParam) {
       this.advanced = this.dtsListSearchParam.advanced
       this.pagination.current = this.dtsListSearchParam.pageId
-      this.searchParams = { ...this.dtsListSearchParam.params }
+      this.searchParams = { ...this.searchParams, ...this.dtsListSearchParam.params }
       var temp = []
       this.searchParams.created_range.forEach((item) => {
         if (item !== '') {

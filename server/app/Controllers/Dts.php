@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-27 23:59:38
+ * @LastEditTime: 2022-05-30 21:09:11
  */
 
 namespace App\Controllers;
@@ -1241,6 +1241,7 @@ class Dts extends BaseController
             return $res;
         }
 
+        //
         $allTypes     = $this->_getTypeStatistic($station_id);
         $distribution = $this->_getDistributionStatistic($station_id);
         //
@@ -1601,10 +1602,11 @@ class Dts extends BaseController
 
     protected function _getTypeStatistic(string $station_id = null)
     {
-        $result = [
-            ['type' => '隐患', 'value' => 0],
-            ['type' => '缺陷', 'value' => 0],
-        ];
+        $result = [];
+        $types  = $this->selfConfig->typesMap;
+        foreach ($types as $key => $t) {
+            $result[] = ['id' => strval($key), 'type' => $t, 'value' => 0];
+        }
 
         if (empty($station_id)) {
             return $result;
@@ -1613,9 +1615,8 @@ class Dts extends BaseController
         $model = new DtsModel();
         $data  = $model->getByStationAndGroupByType($station_id);
         foreach ($data as $d) {
-            $label = $this->selfConfig->typesMap[$d['type']];
             foreach ($result as $key => $r) {
-                if ($r['type'] === $label) {
+                if ($r['id'] === $d['type']) {
                     $result[$key]['value'] = intval($d['value']);
                 }
             }
@@ -1627,6 +1628,9 @@ class Dts extends BaseController
     protected function _getDistributionStatistic(string $station_id = null)
     {
         $result = [];
+        if (empty($station_id)) {
+            return $result;
+        }
 
         $model      = new DeviceModel();
         $fields     = ['id', 'name'];
@@ -1634,6 +1638,7 @@ class Dts extends BaseController
         if (!empty($deviceUnit)) {
             foreach ($deviceUnit as $d) {
                 $result[] = [
+                    'id'       => $d['id'],
                     'unit'     => $d['name'],
                     'place_at' => '处理中',
                     'value'    => 0,
@@ -1641,15 +1646,12 @@ class Dts extends BaseController
             }
             foreach ($deviceUnit as $d) {
                 $result[] = [
+                    'id'       => $d['id'],
                     'unit'     => $d['name'],
                     'place_at' => '挂起',
                     'value'    => 0,
                 ];
             }
-        }
-
-        if (empty($station_id)) {
-            return $result;
         }
 
         $length = count($deviceUnit);
@@ -1779,8 +1781,9 @@ class Dts extends BaseController
         $result = [];
 
         $level = $this->selfConfig->levelsMap;
-        foreach ($level as $l) {
+        foreach ($level as $key => $l) {
             $result[] = [
+                'id'    => strval($key),
                 'level' => $l,
                 'value' => 0,
             ];
@@ -1790,9 +1793,8 @@ class Dts extends BaseController
         $model = new DtsModel();
         $data  = $model->getByStationTypeGroupByLevel($station_id, $type);
         foreach ($data as $d) {
-            $name = $this->selfConfig->levelsMap[$d['level']];
             foreach ($result as $key => $r) {
-                if ($r['level'] == $name) {
+                if ($r['id'] === $d['level']) {
                     $result[$key]['value'] = intval($d['value']);
                 }
             }
@@ -1804,19 +1806,16 @@ class Dts extends BaseController
     protected function _getDefectWfPlaceStatistic(string $station_id = null)
     {
         $result = [
-            ['place_at' => '处理中', 'value' => 0],
-            ['place_at' => '挂起', 'value' => 0],
+            ['id' => 'working', 'place_at' => '处理中', 'value' => 0],
+            ['id' => 'suspend', 'place_at' => '挂起', 'value' => 0],
         ];
 
-        $wf   = new WfDts();
-        $type = '2';
-
+        $type  = '2';
         $model = new DtsModel();
         $data  = $model->getByStationTypeGroupByWfPlace($station_id, $type);
         foreach ($data as $d) {
-            $name = $wf->getPlaceName($d['place_at']);
             foreach ($result as $key => $r) {
-                if ($r['place_at'] === $name) {
+                if ($r['id'] === $d['place_at']) {
                     $result[$key]['value'] = intval($d['value']);
                 }
             }
@@ -1830,8 +1829,9 @@ class Dts extends BaseController
         $result = [];
 
         $level = $this->selfConfig->levelsMap;
-        foreach ($level as $l) {
+        foreach ($level as $key => $l) {
             $result[] = [
+                'id'    => strval($key),
                 'level' => $l,
                 'value' => 0,
             ];
@@ -1841,9 +1841,8 @@ class Dts extends BaseController
         $model = new DtsModel();
         $data  = $model->getByStationTypeGroupByLevel($station_id, $type);
         foreach ($data as $d) {
-            $name = $this->selfConfig->levelsMap[$d['level']];
             foreach ($result as $key => $r) {
-                if ($r['level'] == $name) {
+                if ($r['id'] === $d['level']) {
                     $result[$key]['value'] = intval($d['value']);
                 }
             }
@@ -1855,19 +1854,16 @@ class Dts extends BaseController
     protected function _getHiddenDangerWfPlaceStatistic(string $station_id = null)
     {
         $result = [
-            ['place_at' => '处理中', 'value' => 0],
-            ['place_at' => '挂起', 'value' => 0],
+            ['id' => 'working', 'place_at' => '处理中', 'value' => 0],
+            ['id' => 'suspend', 'place_at' => '挂起', 'value' => 0],
         ];
 
-        $wf   = new WfDts();
-        $type = '1';
-
+        $type  = '1';
         $model = new DtsModel();
         $data  = $model->getByStationTypeGroupByWfPlace($station_id, $type);
         foreach ($data as $d) {
-            $name = $wf->getPlaceName($d['place_at']);
             foreach ($result as $key => $r) {
-                if ($r['place_at'] === $name) {
+                if ($r['id'] === $d['place_at']) {
                     $result[$key]['value'] = intval($d['value']);
                 }
             }
@@ -1883,6 +1879,7 @@ class Dts extends BaseController
         $causes = $this->selfConfig->causes;
         foreach ($causes as $d) {
             $result[] = [
+                'id'    => $d['id'],
                 'cause' => $d['name'],
                 'type'  => '全部',
                 'value' => 0,
@@ -1890,6 +1887,7 @@ class Dts extends BaseController
         }
         foreach ($causes as $d) {
             $result[] = [
+                'id'    => $d['id'],
                 'cause' => $d['name'],
                 'type'  => '今年',
                 'value' => 0,

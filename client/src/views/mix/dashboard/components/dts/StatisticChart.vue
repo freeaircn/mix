@@ -117,6 +117,7 @@
 <script>
 /* eslint-disable camelcase */
 import moment from 'moment'
+import store from '@/store'
 import { mapGetters } from 'vuex'
 import { Pie, Column, Bullet, Bar } from '@antv/g2plot'
 import InfoChartCard from './modules/InfoChartCard'
@@ -142,7 +143,7 @@ export default {
       },
       isMounted: false,
       //
-      extraMsg: "'挂起' 表示影响较小的隐患或缺陷，暂不处理的状态",
+      extraMsg: "'挂起' 表示：1. 不影响设备继续运行和控制的隐患或缺陷，推迟处理的状态；2. 短期不具备处理条件的隐患或缺陷，推迟处理的状态。",
       //
       curMonthCreateNum: 0,
       totalCreateNum: 0,
@@ -267,6 +268,21 @@ export default {
         })
     },
 
+    handlerClickChart (event) {
+      this.$confirm({
+        title: '需要跳转到检索页面吗？',
+        onOk: () => {
+          var cache = { advanced: true, pageId: 1, params: event }
+          store.dispatch('setDtsListSearchParam', cache)
+          this.$nextTick(() => {
+            this.$router.push({ path: `/dashboard/dts/list` })
+          })
+        },
+        onCancel () {
+        }
+      })
+    },
+
     initCreateTrendChart () {
       this.createTrendChart = new Column('create-trend-chart', {
         data: this.createTrendChartData,
@@ -295,8 +311,16 @@ export default {
       })
       this.createTrendChart.render()
 
-      this.createTrendChart.on('element:click', (...args) => {
-        console.log(...args)
+      this.createTrendChart.on('element:click', (evt) => {
+        const eventData = evt.data
+        if (eventData?.data && eventData.data.value > 0) {
+          var date = eventData.data.date
+          var searchParams = {
+            station_id: this.query.station_id,
+            created_range: [moment(date).startOf('month').format('YYYY-MM-DD'), moment(date).endOf('month').format('YYYY-MM-DD')]
+          }
+          this.handlerClickChart(searchParams)
+        }
       })
     },
 
@@ -333,8 +357,17 @@ export default {
       })
       this.resolveTrendChart.render()
 
-      this.resolveTrendChart.on('element:click', (...args) => {
-        console.log(...args)
+      this.resolveTrendChart.on('element:click', (evt) => {
+        const eventData = evt.data
+        if (eventData?.data && eventData.data.value > 0) {
+          var date = eventData.data.date
+          var searchParams = {
+            station_id: this.query.station_id,
+            place_at: ['resolve', 'close'],
+            updated_range: [moment(date).startOf('month').format('YYYY-MM-DD'), moment(date).endOf('month').format('YYYY-MM-DD')]
+          }
+          this.handlerClickChart(searchParams)
+        }
       })
     },
 
@@ -380,8 +413,18 @@ export default {
       })
       this.longTermChart.render()
 
-      this.longTermChart.on('element:click', (...args) => {
-        console.log(...args)
+      this.longTermChart.on('element:click', (evt) => {
+        const eventData = evt.data
+        if (eventData?.data && eventData.data?.measures) {
+          if (eventData.data.measures > 0) {
+           var searchParams = {
+              station_id: this.query.station_id,
+              place_at: ['suspend', 'working'],
+              created_range: ['2000-01-01', moment().add(-90, 'd').format('YYYY-MM-DD')]
+            }
+            this.handlerClickChart(searchParams)
+          }
+        }
       })
     },
 
@@ -432,8 +475,16 @@ export default {
       })
       this.allTypesChart.render()
 
-      this.allTypesChart.on('element:click', (...args) => {
-        console.log(...args)
+      this.allTypesChart.on('element:click', (evt) => {
+        const eventData = evt.data
+        if (eventData?.data && eventData.data.value > 0) {
+          var searchParams = {
+            station_id: this.query.station_id,
+            place_at: ['suspend', 'working'],
+            type: eventData.data.id
+          }
+          this.handlerClickChart(searchParams)
+        }
       })
     },
 
@@ -488,8 +539,16 @@ export default {
       })
       this.distributionChart.render()
 
-      this.distributionChart.on('element:click', (...args) => {
-        console.log(...args)
+      this.distributionChart.on('element:click', (evt) => {
+        const eventData = evt.data
+        if (eventData?.data && eventData.data.value > 0) {
+          var searchParams = {
+                station_id: this.query.station_id,
+                place_at: ['suspend', 'working'],
+                device: eventData.data.id
+              }
+          this.handlerClickChart(searchParams)
+        }
       })
     },
 
@@ -526,8 +585,17 @@ export default {
       })
       this.defectLevelChart.render()
 
-      this.defectLevelChart.on('element:click', (...args) => {
-        console.log(...args)
+      this.defectLevelChart.on('element:click', (evt) => {
+        const eventData = evt.data
+        if (eventData?.data && eventData.data.value > 0) {
+          var searchParams = {
+            station_id: this.query.station_id,
+            place_at: ['suspend', 'working'],
+            type: '2',
+            level: eventData.data.id
+          }
+          this.handlerClickChart(searchParams)
+        }
       })
     },
 
@@ -560,8 +628,16 @@ export default {
       })
       this.defectWfChart.render()
 
-      this.defectWfChart.on('element:click', (...args) => {
-        console.log(...args)
+      this.defectWfChart.on('element:click', (evt) => {
+        const eventData = evt.data
+        if (eventData?.data && eventData.data.value > 0) {
+          var searchParams = {
+            station_id: this.query.station_id,
+            place_at: [eventData.data.id],
+            type: '2'
+          }
+          this.handlerClickChart(searchParams)
+        }
       })
     },
 
@@ -598,8 +674,17 @@ export default {
       })
       this.dangerLevelChart.render()
 
-      this.dangerLevelChart.on('element:click', (...args) => {
-        console.log(...args)
+      this.dangerLevelChart.on('element:click', (evt) => {
+        const eventData = evt.data
+        if (eventData?.data && eventData.data.value > 0) {
+          var searchParams = {
+            station_id: this.query.station_id,
+            place_at: ['suspend', 'working'],
+            type: '1',
+            level: eventData.data.id
+          }
+          this.handlerClickChart(searchParams)
+        }
       })
     },
 
@@ -632,8 +717,16 @@ export default {
       })
       this.dangerWfChart.render()
 
-      this.dangerWfChart.on('element:click', (...args) => {
-        console.log(...args)
+      this.dangerWfChart.on('element:click', (evt) => {
+        const eventData = evt.data
+        if (eventData?.data && eventData.data.value > 0) {
+          var searchParams = {
+            station_id: this.query.station_id,
+            place_at: [eventData.data.id],
+            type: '1'
+          }
+          this.handlerClickChart(searchParams)
+        }
       })
     },
 
@@ -666,8 +759,19 @@ export default {
       })
       this.causeChart.render()
 
-      this.causeChart.on('element:click', (...args) => {
-        console.log(...args)
+      this.causeChart.on('element:click', (evt) => {
+        const eventData = evt.data
+        if (eventData?.data && eventData.data.value > 0) {
+          var searchParams = {
+            station_id: this.query.station_id,
+            place_at: ['resolve', 'close'],
+            cause: eventData.data.id
+          }
+          if (eventData.data.type !== '全部') {
+            searchParams.created_range = [moment().startOf('year').format('YYYY-MM-DD'), moment().format('YYYY-MM-DD')]
+          }
+          this.handlerClickChart(searchParams)
+        }
       })
     },
 
