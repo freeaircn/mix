@@ -46,28 +46,12 @@
                 </a-form-item>
               </a-col>
               <a-col :md="6" :sm="24">
-                <a-form-item label="单号">
-                  <a-input v-model="searchParams.dts_id" placeholder=""/>
-                </a-form-item>
-              </a-col>
-              <a-col :md="6" :sm="24">
-                <a-form-item label="标题">
-                  <a-input v-model="searchParams.title" placeholder=""/>
-                </a-form-item>
-              </a-col>
-              <a-col :md="6" :sm="24">
                 <a-form-item label="设备">
                   <a-select v-model="searchParams.device" placeholder="请选择">
                     <a-select-option v-for="d in deviceItems" :key="d.id" :value="d.id">
                       {{ d.name }}
                     </a-select-option>
                   </a-select>
-                </a-form-item>
-              </a-col>
-
-              <a-col :md="6" :sm="24">
-                <a-form-item label="创建人">
-                  <a-input v-model="searchParams.creator" placeholder=""/>
                 </a-form-item>
               </a-col>
               <a-col :md="6" :sm="24">
@@ -81,12 +65,33 @@
                 </a-form-item>
               </a-col>
               <a-col :md="6" :sm="24">
+                <a-form-item label="解决">
+                  <a-range-picker v-model="range_select3" @change="onResolvedRangeChange" />
+                </a-form-item>
+              </a-col>
+
+              <a-col :md="6" :sm="24">
                 <a-form-item label="原因">
                   <a-select v-model="searchParams.cause" placeholder="请选择">
                     <a-select-option v-for="d in causeItems" :key="d.id" :value="d.id">
                       {{ d.name }}
                     </a-select-option>
                   </a-select>
+                </a-form-item>
+              </a-col>
+              <a-col :md="6" :sm="24">
+                <a-form-item label="单号">
+                  <a-input v-model="searchParams.dts_id" placeholder=""/>
+                </a-form-item>
+              </a-col>
+              <a-col :md="6" :sm="24">
+                <a-form-item label="标题">
+                  <a-input v-model="searchParams.title" placeholder=""/>
+                </a-form-item>
+              </a-col>
+              <a-col :md="6" :sm="24">
+                <a-form-item label="创建人">
+                  <a-input v-model="searchParams.creator" placeholder=""/>
                 </a-form-item>
               </a-col>
               <a-col :md="6" :sm="24">
@@ -196,10 +201,12 @@ export default {
         score: '0',
         //
         created_range: ['', ''],
-        updated_range: ['', '']
+        updated_range: ['', ''],
+        resolved_range: ['', '']
       },
       range_select1: null,
       range_select2: null,
+      range_select3: null,
       //
       stationItems: [],
       workflowItems: [],
@@ -298,6 +305,7 @@ export default {
       if (temp.length === 2) {
         this.range_select1 = temp
       }
+      //
       temp = []
       this.searchParams.updated_range.forEach((item) => {
         if (item !== '') {
@@ -307,6 +315,17 @@ export default {
       if (temp.length === 2) {
         this.range_select2 = temp
       }
+      //
+      temp = []
+      this.searchParams.resolved_range.forEach((item) => {
+        if (item !== '') {
+          temp.push(moment(item))
+        }
+      })
+      if (temp.length === 2) {
+        this.range_select3 = temp
+      }
+      //
       this.sendSearchReq(this.searchParams)
     }
     // this.sendSearchReq(this.searchParams)
@@ -348,6 +367,7 @@ export default {
     resetSearchParams () {
       this.range_select1 = null
       this.range_select2 = null
+      this.range_select3 = null
       //
       this.searchParams.station_id = this.userInfo.allowDefaultDeptId
       this.searchParams.type = '0'
@@ -364,6 +384,7 @@ export default {
       this.searchParams.score = '0'
       this.searchParams.created_range = ['', '']
       this.searchParams.updated_range = ['', '']
+      this.searchParams.resolved_range = ['', '']
     },
 
     onCreatedRangeChange (date, dateString) {
@@ -372,6 +393,10 @@ export default {
 
     onUpdatedRangeChange (date, dateString) {
       this.searchParams.updated_range = dateString
+    },
+
+    onResolvedRangeChange (date, dateString) {
+      this.searchParams.resolved_range = dateString
     },
 
     sendSearchReq (searchParams) {

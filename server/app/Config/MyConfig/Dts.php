@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-07-06 21:44:27
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-27 15:52:01
+ * @LastEditTime: 2022-06-01 22:58:47
  */
 
 namespace Config\MyConfig;
@@ -58,7 +58,7 @@ class Dts extends BaseConfig
         'update_progress' => "【当前进展】\n\n【下一步计划】\n\n",
         'to_suspend'      => "【挂起原因】\n\n",
         'to_cancel'       => "【取消原因】\n\n",
-        'to_resolve'      => "【现象】\n\n【影响】\n\n",
+        'to_resolve'      => "【现象】\n\n【影响】\n\n【恢复方法】\n\n",
         'to_close'        => "【关闭审核意见】\n\n",
         'back_work'       => "【重新处理原因】\n\n",
     ];
@@ -75,4 +75,8 @@ class Dts extends BaseConfig
     public $newsItemNum  = 8;
 
     public $dtsDetailsLink = "http://192.168.1.100/dashboard/dts/details/";
+
+    public $cachePrefix = [
+        'statistic_chart' => ['prefix' => 'dts_statistic_chart'],
+    ];
 }

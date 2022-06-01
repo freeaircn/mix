@@ -364,7 +364,7 @@ export default {
           var searchParams = {
             station_id: this.query.station_id,
             place_at: ['resolve', 'close'],
-            updated_range: [moment(date).startOf('month').format('YYYY-MM-DD'), moment(date).endOf('month').format('YYYY-MM-DD')]
+            resolved_range: [moment(date).startOf('month').format('YYYY-MM-DD'), moment(date).endOf('month').format('YYYY-MM-DD')]
           }
           this.handlerClickChart(searchParams)
         }

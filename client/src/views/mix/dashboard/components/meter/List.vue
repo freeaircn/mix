@@ -81,10 +81,16 @@
           <a-button slot="extra" type="link" @click="handleCopyReportContent('daily2')">复制</a-button>
           <p>{{ reportContent.daily2 }}</p>
         </a-card>
-        <a-card size="small" title="一周">
-          <a-button slot="extra" type="link" @click="handleCopyReportContent('weekly')">复制</a-button>
-          <p>{{ reportContent.weekly }}</p>
-        </a-card>
+        <a @click="toggleAdvanced" style="margin-top: 8px; margin-bottom: 8px">
+          {{ moreReport ? '收起' : '展开' }}
+          <a-icon :type="moreReport ? 'up' : 'down'"/>
+        </a>
+        <template v-if="moreReport">
+          <a-card size="small" title="一周" style="margin-top: 8px">
+            <a-button slot="extra" type="link" @click="handleCopyReportContent('weekly')">复制</a-button>
+            <p style="color: #FF745A">{{ reportContent.weekly }}</p>
+          </a-card>
+        </template>
       </a-modal>
 
       <a-modal v-model="reportOf20ClockDiagVisible" title="简报" >
@@ -189,6 +195,7 @@ export default {
         daily2: '',
         weekly: ''
       },
+      moreReport: false,
 
       //
       reportOf20ClockDiagVisible: false,
@@ -212,6 +219,9 @@ export default {
     this.onClickSearch()
   },
   methods: {
+    toggleAdvanced () {
+      this.moreReport = !this.moreReport
+    },
 
     onClickNewRecord () {
       this.recordDiagVisible = true
@@ -315,6 +325,13 @@ export default {
           const type = res.type
           //
           if (type === '23') {
+            var weekDay = moment(record.log_date).format('E')
+            if (weekDay === '4') {
+              this.moreReport = true
+            } else {
+              this.moreReport = false
+            }
+            //
             this.reportDiagVisible = true
             this.reportContent.extra1 = data.extra1
             this.reportContent.extra2 = data.extra2
@@ -436,6 +453,29 @@ export default {
       const temp = new BigNumber(value).dividedBy(x)
 
       return temp.toFixed()
+    },
+
+    handleCopyReportContent (type) {
+      var copyData = ''
+      switch (type) {
+        case 'daily1':
+          copyData = this.reportContent.daily1
+          break
+        case 'daily2':
+          copyData = this.reportContent.daily2
+          break
+        case 'weekly':
+          copyData = this.reportContent.weekly
+          break
+
+        default:
+          return
+      }
+      this.$copyText(copyData).then(() => {
+          this.$message.success('复制成功')
+        }).catch(() => {
+          this.$message.success('复制失败')
+        })
     }
   }
 }

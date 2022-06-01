@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-28 09:19:01
+ * @LastEditTime: 2022-06-01 23:16:15
  */
 
 namespace App\Models\Dts;
@@ -17,7 +17,7 @@ class DtsModel extends Model
     protected $table;
 
     protected $primaryKey    = 'id';
-    protected $allowedFields = ['station_id', 'dts_id', 'status', 'type', 'title', 'level', 'device', 'description', 'progress', 'creator_id', 'reviewer_id', 'place_at', 'score', 'score_desc', 'scored_by', 'cause', 'cause_analysis'];
+    protected $allowedFields = ['station_id', 'dts_id', 'status', 'type', 'title', 'level', 'device', 'description', 'progress', 'creator_id', 'reviewer_id', 'place_at', 'score', 'score_desc', 'scored_by', 'cause', 'cause_analysis', 'resolved_at'];
 
     protected $useAutoIncrement = true;
 
@@ -103,6 +103,10 @@ class DtsModel extends Model
         }
         if (isset($conditions['updated_start']) && isset($conditions['updated_end'])) {
             $sql = "Date(updated_at) BETWEEN " . "'" . $conditions['updated_start'] . "'" . " AND " . "'" . $conditions['updated_end'] . "'";
+            $builder->where($sql);
+        }
+        if (isset($conditions['resolved_start']) && isset($conditions['resolved_end'])) {
+            $sql = "Date(resolved_at) BETWEEN " . "'" . $conditions['resolved_start'] . "'" . " AND " . "'" . $conditions['resolved_end'] . "'";
             $builder->where($sql);
         }
         //
@@ -259,19 +263,19 @@ class DtsModel extends Model
         return $result;
     }
 
-    public function getByStationYearResolveGroupByUpdateMonth(string $station_id = null, string $year = null)
+    public function getByStationYearResolveGroupByResolveMonth(string $station_id = null, string $year = null)
     {
 
         if (empty($station_id) || empty($year)) {
             return [];
         }
 
-        $selectSql = "DATE_FORMAT(updated_at, '%Y-%m') as date, COUNT(id) AS value";
+        $selectSql = "DATE_FORMAT(resolved_at, '%Y-%m') as date, COUNT(id) AS value";
         $builder   = $this->select($selectSql, false);
         $builder->where('station_id', $station_id);
-        $builder->where("DATE_FORMAT(updated_at, '%Y') = " . $year);
+        $builder->where("DATE_FORMAT(resolved_at, '%Y') = " . $year);
         $builder->whereIn('place_at', ['resolve', 'close']);
-        $builder->groupBy("DATE_FORMAT(updated_at, '%Y-%m')");
+        $builder->groupBy("DATE_FORMAT(resolved_at, '%Y-%m')");
 
         $result = $builder->findAll();
 

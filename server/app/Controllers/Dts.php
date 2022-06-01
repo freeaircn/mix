@@ -4,11 +4,12 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-30 21:09:11
+ * @LastEditTime: 2022-06-01 23:15:23
  */
 
 namespace App\Controllers;
 
+use App\Libraries\MyCache;
 use App\Libraries\MyIdMaker;
 use App\Libraries\Workflow\Dts\WfDts;
 use App\Models\Common\DeptModel;
@@ -418,6 +419,8 @@ class Dts extends BaseController
             }
         }
 
+        $this->_delCacheAfterUpdate($client['station_id']);
+
         $res['msg'] = '已创建';
         return $this->respond($res);
     }
@@ -472,6 +475,8 @@ class Dts extends BaseController
             return $this->failServerError('服务器处理发生错误，稍候再试');
         }
 
+        $this->_delCacheAfterUpdate($db['station_id']);
+
         $res['msg'] = '已删除';
         return $this->respond($res);
     }
@@ -522,9 +527,9 @@ class Dts extends BaseController
             $result = $model->updateDtsRecordById($data, $db['id']);
             if ($result === false) {
                 return $this->failServerError('服务器处理发生错误，稍候再试');
-            } else {
-                return $this->respond(['msg' => '已更新进展']);
             }
+
+            return $this->respond(['msg' => '已更新进展']);
         }
 
         if ($resource === 'req_edit') {
@@ -557,6 +562,7 @@ class Dts extends BaseController
                 return $this->failServerError('服务器处理发生错误，稍候再试');
             }
 
+            $this->_delCacheAfterUpdate($station_id);
             return $this->respond(['msg' => '已保存']);
         }
 
@@ -589,6 +595,8 @@ class Dts extends BaseController
             if ($result === false) {
                 return $this->failServerError('服务器处理发生错误，稍候再试');
             }
+
+            $this->_delCacheAfterUpdate($db['station_id']);
 
             $res['msg'] = '已挂起';
             return $this->respond($res);
@@ -623,6 +631,8 @@ class Dts extends BaseController
             if ($result === false) {
                 return $this->failServerError('服务器处理发生错误，稍候再试');
             }
+
+            $this->_delCacheAfterUpdate($db['station_id']);
 
             $res['msg'] = '已取消';
             return $this->respond($res);
@@ -691,12 +701,15 @@ class Dts extends BaseController
                 'cause'          => $cause,
                 'cause_analysis' => $cause_analysis,
             ];
-            $data['place_at'] = $wf->getTicket()->getCurrentPlace();
+            $data['place_at']    = $wf->getTicket()->getCurrentPlace();
+            $data['resolved_at'] = date("Y-m-d H:i:s");
 
             $result = $model->updateDtsRecordById($data, $db['id']);
             if ($result === false) {
                 return $this->failServerError('服务器处理发生错误，稍候再试');
             }
+
+            $this->_delCacheAfterUpdate($db['station_id']);
 
             $res['msg'] = '已提交解决';
             return $this->respond($res);
@@ -736,6 +749,8 @@ class Dts extends BaseController
                 return $this->failServerError('服务器处理发生错误，稍候再试');
             }
 
+            $this->_delCacheAfterUpdate($db['station_id']);
+
             $res['msg'] = '已提交关闭';
             return $this->respond($res);
         }
@@ -774,7 +789,9 @@ class Dts extends BaseController
                 return $this->failServerError('服务器处理发生错误，稍候再试');
             }
 
-            $res['msg'] = '已提交重新处理';
+            $this->_delCacheAfterUpdate($db['station_id']);
+
+            $res['msg'] = '继续处理';
             return $this->respond($res);
         }
 
@@ -1012,6 +1029,13 @@ class Dts extends BaseController
                 $query['updated_end']   = $temp[1];
             }
         }
+        if (isset($param['resolved_range'])) {
+            $temp = $param['resolved_range'];
+            if (count($temp) === 2 && !empty($temp[0]) && !empty($temp[1])) {
+                $query['resolved_start'] = $temp[0];
+                $query['resolved_end']   = $temp[1];
+            }
+        }
 
         // $res['http_status'] = 200;
         // $res['data']        = ['total' => 0, 'data' => [], 'query' => $query];
@@ -1234,6 +1258,15 @@ class Dts extends BaseController
         $params     = $this->request->getGet();
         $station_id = $params['station_id'];
 
+        $cache     = new MyCache($this->selfConfig->cachePrefix['statistic_chart']);
+        $key       = 'station_id=' . $station_id;
+        $cacheData = $cache->getCache($key);
+        if (!empty($cacheData)) {
+            $res['http_status'] = 200;
+            $res['data']        = $cacheData;
+            return $res;
+        }
+
         $allowReadDeptId = $this->session->get('allowReadDeptId');
         if (!in_array($station_id, $allowReadDeptId)) {
             $res['http_status'] = 401;
@@ -1262,8 +1295,7 @@ class Dts extends BaseController
         //
         $cause = $this->_getCauseStatistic($station_id);
 
-        $res['http_status'] = 200;
-        $res['data']        = [
+        $data = [
             'allTypes'          => $allTypes,
             'distribution'      => $distribution,
             'createList'        => $createList,
@@ -1275,6 +1307,11 @@ class Dts extends BaseController
             'hiddenDangerWf'    => $hiddenDangerWf,
             'cause'             => $cause,
         ];
+
+        $cache->setCache($key, $data);
+
+        $res['http_status'] = 200;
+        $res['data']        = $data;
         return $res;
     }
 
@@ -1764,7 +1801,7 @@ class Dts extends BaseController
         }
 
         $model = new DtsModel();
-        $data  = $model->getByStationYearResolveGroupByUpdateMonth($station_id, $year);
+        $data  = $model->getByStationYearResolveGroupByResolveMonth($station_id, $year);
         foreach ($data as $d) {
             foreach ($result as $key => $r) {
                 if ($r['date'] === $d['date']) {
@@ -1925,4 +1962,10 @@ class Dts extends BaseController
         return $result;
     }
 
+    protected function _delCacheAfterUpdate(string $station_id = '*')
+    {
+        $cache = new MyCache($this->selfConfig->cachePrefix['statistic_chart']);
+        $key   = 'station_id=' . $station_id;
+        $cache->delCache($key);
+    }
 }
