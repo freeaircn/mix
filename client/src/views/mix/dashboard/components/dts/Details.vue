@@ -65,7 +65,7 @@
         <a-upload
           :accept="acceptFileTypes"
           action="/api/dts/attachment"
-          :data="{dts_id: dts_id}"
+          :data="{dts_id: dts_id, station_id: details.station_id}"
           :before-upload="beforeUploadAttachment"
           :showUploadList="{ showDownloadIcon: true, showRemoveIcon: showRmvAttachmentIcon }"
           :fileList="fileList"

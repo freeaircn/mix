@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-28 22:59:16
+ * @LastEditTime: 2022-06-09 10:48:55
 -->
 <template>
   <page-header-wrapper :title="false">
@@ -59,7 +59,7 @@
           <a-upload
             :accept="acceptFileTypes"
             action="/api/dts/attachment"
-            :data="{dts_id: '0'}"
+            :data="{dts_id: '0', station_id: record.station_id}"
             :before-upload="beforeUploadAttachment"
             :showUploadList="{ showDownloadIcon: false, showRemoveIcon: true }"
             :remove="onClickDelAttachment"
@@ -250,7 +250,6 @@ export default {
     },
 
     onSubmit () {
-      console.log('record', this.record)
       const files = []
       this.fileList.forEach(element => {
         if (element.status === 'done') {
@@ -259,7 +258,8 @@ export default {
       })
       this.$refs.form.validate(valid => {
         if (valid) {
-          const data = { ...this.record }
+          var data = { ...this.record }
+          data.title = this.record.title.trim()
           data.device = arraySplitToStr(this.device)
           data.files = files
 

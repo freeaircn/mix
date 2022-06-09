@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-22 17:43:33
+ * @LastEditTime: 2022-06-09 13:43:06
  */
 
 namespace App\Models\Dts;
@@ -15,9 +15,10 @@ class DtsAttachmentModel extends Model
 {
     protected $DBGroup;
     protected $table;
+    protected $dbPrefix;
 
     protected $primaryKey    = 'id';
-    protected $allowedFields = ['dts_id', 'user_id', 'username', 'org_name', 'new_name', 'file_ext', 'size', 'path', 'info'];
+    protected $allowedFields = ['station_id', 'dts_id', 'user_id', 'username', 'org_name', 'new_name', 'file_ext', 'size', 'path', 'info'];
 
     protected $useAutoIncrement = true;
 
@@ -31,9 +32,10 @@ class DtsAttachmentModel extends Model
 
     public function __construct()
     {
-        $config        = config('Config\\MyConfig\\MyDB');
-        $this->DBGroup = $config->dbName;
-        $this->table   = $config->dbPrefix . 'dts_attachment';
+        $config         = config('Config\\MyConfig\\MyDB');
+        $this->DBGroup  = $config->dbName;
+        $this->table    = $config->dbPrefix . 'dts_attachment';
+        $this->dbPrefix = $config->dbPrefix;
         parent::__construct();
     }
 
@@ -142,5 +144,67 @@ class DtsAttachmentModel extends Model
         } else {
             return true;
         }
+    }
+
+    public function getDtsAttachmentsByMultiConditions(array $fields = null, array $conditions = null)
+    {
+        if (empty($conditions)) {
+            return ['total' => 0, 'data' => []];
+        }
+
+        // $selectSql = '';
+        // if (empty($fields)) {
+        //     $selectSql = 'id, station_id, dts_id, username, org_name, created_at';
+        // } else {
+        //     foreach ($fields as $name) {
+        //         $selectSql = $selectSql . $name . ', ';
+        //     }
+        // }
+
+        $builder_ = $this->whereIn('station_id', $conditions['station_id']);
+
+        if (isset($conditions['org_name'])) {
+            $builder_->like('org_name', $conditions['org_name']);
+        }
+
+        $total = 0;
+        $total = $builder_->countAllResults();
+
+        if ($total === 0) {
+            return ['total' => 0, 'data' => []];
+        }
+
+        //
+        $selectSql = '';
+        if (empty($fields)) {
+            $fields = ['id', 'station_id', 'dts_id', 'username', 'org_name', 'created_at'];
+        }
+        foreach ($fields as $name) {
+            $selectSql = $selectSql . $this->table . '.' . $name . ', ';
+        }
+
+        $dts  = $this->dbPrefix . 'dts';
+        $dept = $this->dbPrefix . 'dept';
+
+        $selectSql = $selectSql . sprintf("%s.title, ", $dts);
+        $selectSql = $selectSql . sprintf("%s.name AS station ", $dept);
+
+        $builder = $this->select($selectSql, false);
+        $builder->from([$dts, $dept]);
+        $builder->whereIn($this->table . '.station_id', $conditions['station_id']);
+
+        if (isset($conditions['org_name'])) {
+            $builder->like('org_name', $conditions['org_name']);
+        }
+
+        $whereSql = sprintf("%s.dts_id = %s.dts_id", $this->table, $dts);
+        $builder->where($whereSql);
+        $whereSql = sprintf("%s.station_id = %s.id", $this->table, $dept);
+        $builder->where($whereSql);
+
+        $builder->orderBy('dts_id', 'ASC');
+        $result = $builder->findAll($conditions['limit'], ($conditions['offset'] - 1) * $conditions['limit']);
+
+        return ['total' => $total, 'data' => $result];
     }
 }

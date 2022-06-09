@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-27 17:32:41
+ * @LastEditTime: 2022-06-09 10:51:42
  */
 
 namespace Config;
@@ -190,7 +190,8 @@ class Validation
     ];
 
     public $DtsUploadAttachment = [
-        'dts_id' => 'required|is_natural',
+        'dts_id'     => 'required|is_natural',
+        'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
     ];
 
     public $DtsDelAttachment = [
@@ -232,6 +233,12 @@ class Validation
 
     public $DtsReqStatisticChartData = [
         'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
+    ];
+
+    public $DtsReqAttachmentsList = [
+        'station_id' => 'required|regex_match[^\d{0,2}$]',
+        'limit'      => 'required|regex_match[^[1-9]\d{0,2}$]',
+        'offset'     => 'required|regex_match[^[1-9]\d{0,9}$]',
     ];
 
     public $DtsDeleteOne = [

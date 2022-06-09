@@ -4,12 +4,13 @@
  * @Author: freeair
  * @Date: 2022-05-31 22:19:15
  * @LastEditors: freeair
- * @LastEditTime: 2022-06-01 21:04:32
+ * @LastEditTime: 2022-06-08 10:42:19
  */
 
 namespace App\Libraries;
 
 use Redis;
+use RedisException;
 
 class MyCache
 {
@@ -34,7 +35,6 @@ class MyCache
         } catch (RedisException $e) {
             throw new RedisException('Redis connect failed');
         }
-
     }
 
     // private function key(array $arguments = [])
@@ -91,4 +91,15 @@ class MyCache
     {
         $this->config['prefix'] = $prefix;
     }
+
+    public function ping()
+    {
+        return $this->redis->ping();
+    }
+
+    public function getTimeout()
+    {
+        return $this->redis->getTimeout();
+    }
+
 }

@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-27 14:56:53
+ * @LastEditTime: 2022-06-06 22:08:46
 -->
 <template>
   <page-header-wrapper :title="false">
@@ -23,13 +23,6 @@
           <a-input v-model="record.station" readOnly></a-input>
         </a-form-model-item>
 
-        <!-- <a-form-model-item label="站点" prop="station_id">
-          <a-select v-model="record.station_id" placeholder="请选择" readOnly>
-            <a-select-option v-for="d in stationItems" :key="d.id" :value="d.id">
-              {{ d.name }}
-            </a-select-option>
-          </a-select>
-        </a-form-model-item> -->
         <a-form-model-item label="类别" prop="type">
           <a-radio-group name="radioGroup1" v-model="record.type">
             <a-radio value="1">隐患</a-radio>
@@ -59,6 +52,11 @@
           />
         </a-form-model-item>
 
+        <a-form-model-item label="创建日期" prop="created_at">
+          <!-- <a-input v-model="record.created_at"></a-input> -->
+          <a-date-picker v-model="created_date" showTime @change="onDatePickerChange" />
+        </a-form-model-item>
+
         <a-form-model-item label="描述" prop="description">
           <a-textarea v-model="record.description" :rows="10" />
         </a-form-model-item>
@@ -78,6 +76,7 @@
 </template>
 
 <script>
+import moment from 'moment'
 import { mapGetters } from 'vuex'
 import { queryDts, updateDts } from '@/api/mix/dts'
 import { listToTree, strSplitToArray, arraySplitToStr } from '@/utils/util'
@@ -97,6 +96,7 @@ export default {
       // stationItems: [],
       deviceItems: [],
       device: [],
+      created_date: null,
       //
       dts_id: '0',
       record: {
@@ -106,7 +106,8 @@ export default {
         type: '',
         level: '',
         description: '',
-        progress: ''
+        progress: '',
+        created_at: ''
       },
       rules: {
         // station_id: [{ required: true, message: '请选择', trigger: ['change'] }],
@@ -128,12 +129,17 @@ export default {
     this.onGetDetails()
   },
   methods: {
+    onDatePickerChange (date, dateString) {
+      this.record.created_at = dateString
+    },
+
     onGetDetails () {
       const params = { resource: 'pre_edit', dts_id: this.dts_id }
       queryDts(params)
         .then((data) => {
           Object.assign(this.record, data.record)
           //
+          this.created_date = moment(this.record.created_at)
           listToTree(data.deviceList, this.deviceItems, this.userInfo.allowDefaultDeptId)
           this.device = strSplitToArray(data.record.device)
           //
@@ -147,8 +153,10 @@ export default {
           this.record.level = ''
           this.record.description = ''
           this.record.progress = ''
+          this.record.created_at = ''
           this.device = []
           this.deviceItems.splice(0, this.deviceItems.length)
+          this.created_date = null
           this.ready = false
         })
     },

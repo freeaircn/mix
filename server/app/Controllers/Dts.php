@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-06-01 23:15:23
+ * @LastEditTime: 2022-06-09 13:37:00
  */
 
 namespace App\Controllers;
@@ -19,6 +19,7 @@ use App\Models\Dts\DtsAttachmentModel;
 use App\Models\Dts\DtsModel;
 use CodeIgniter\API\ResponseTrait;
 use CodeIgniter\Files\Exceptions\FileException;
+use RedisException;
 
 class Dts extends BaseController
 {
@@ -64,6 +65,9 @@ class Dts extends BaseController
             case 'statistic_chart':
                 $result = $this->_reqStatisticChartData();
                 break;
+            case 'attachments_list':
+                $result = $this->_reqAttachmentsList();
+                break;
             default:
                 $res['error'] = '请求数据无效';
                 return $this->fail($res);
@@ -104,8 +108,9 @@ class Dts extends BaseController
             return $this->fail($res);
         }
 
-        $dts_id = $this->request->getPost('dts_id');
-        $file   = $this->request->getFile('file');
+        $dts_id     = $this->request->getPost('dts_id');
+        $station_id = $this->request->getPost('station_id');
+        $file       = $this->request->getFile('file');
 
         if (!$file->isValid()) {
             return $this->failServerError('附件上传失败');
@@ -158,13 +163,14 @@ class Dts extends BaseController
         if ($dts_id !== '0') {
             $ext        = explode('.', $orgName);
             $attachment = [
-                'dts_id'   => $dts_id,
-                'user_id'  => $this->session->get('id'),
-                'username' => $this->session->get('username'),
-                'org_name' => $orgName,
-                'new_name' => $newName,
-                'size'     => $size,
-                'file_ext' => end($ext),
+                'station_id' => $station_id,
+                'dts_id'     => $dts_id,
+                'user_id'    => $this->session->get('id'),
+                'username'   => $this->session->get('username'),
+                'org_name'   => $orgName,
+                'new_name'   => $newName,
+                'size'       => $size,
+                'file_ext'   => end($ext),
             ];
             $model = new DtsAttachmentModel();
             $id    = $model->createDtsAttachmentSingleRecord($attachment);
@@ -361,13 +367,14 @@ class Dts extends BaseController
             foreach ($temp as $t) {
                 $ext           = explode('.', $t['orgName']);
                 $attachments[] = [
-                    'dts_id'   => $dts_id,
-                    'user_id'  => $this->session->get('id'),
-                    'username' => $this->session->get('username'),
-                    'org_name' => $t['orgName'],
-                    'new_name' => $t['newName'],
-                    'size'     => $t['size'],
-                    'file_ext' => end($ext),
+                    'station_id' => $client['station_id'],
+                    'dts_id'     => $dts_id,
+                    'user_id'    => $this->session->get('id'),
+                    'username'   => $this->session->get('username'),
+                    'org_name'   => $t['orgName'],
+                    'new_name'   => $t['newName'],
+                    'size'       => $t['size'],
+                    'file_ext'   => end($ext),
                 ];
             }
             $model  = new DtsAttachmentModel();
@@ -543,6 +550,7 @@ class Dts extends BaseController
                 'device'      => $client['device'],
                 'description' => $client['description'],
                 'progress'    => $client['progress'],
+                'created_at'  => $client['created_at'],
             ];
 
             $model  = new DtsModel();
@@ -1216,7 +1224,7 @@ class Dts extends BaseController
         $params = $this->request->getGet();
         $dts_id = $params['dts_id'];
 
-        $fields = ['dts_id', 'type', 'title', 'level', 'station_id', 'device', 'description', 'progress'];
+        $fields = ['dts_id', 'type', 'title', 'level', 'station_id', 'device', 'description', 'progress', 'created_at'];
         $model  = new DtsModel();
         $db     = $model->getDtsRecordByDtsId($fields, $dts_id);
         if (empty($db)) {
@@ -1258,13 +1266,17 @@ class Dts extends BaseController
         $params     = $this->request->getGet();
         $station_id = $params['station_id'];
 
-        $cache     = new MyCache($this->selfConfig->cachePrefix['statistic_chart']);
-        $key       = 'station_id=' . $station_id;
-        $cacheData = $cache->getCache($key);
-        if (!empty($cacheData)) {
-            $res['http_status'] = 200;
-            $res['data']        = $cacheData;
-            return $res;
+        try {
+            $cache     = new MyCache($this->selfConfig->cachePrefix['statistic_chart']);
+            $key       = 'station_id=' . $station_id;
+            $cacheData = $cache->getCache($key);
+            $msg       = $cache->getTimeout();
+            if (!empty($cacheData)) {
+                $res['http_status'] = 200;
+                $res['data']        = $cacheData;
+                return $res;
+            }
+        } catch (RedisException $e) {
         }
 
         $allowReadDeptId = $this->session->get('allowReadDeptId');
@@ -1308,10 +1320,71 @@ class Dts extends BaseController
             'cause'             => $cause,
         ];
 
-        $cache->setCache($key, $data);
+        if (isset($cache)) {
+            $cache->setCache($key, $data);
+        }
 
         $res['http_status'] = 200;
         $res['data']        = $data;
+        return $res;
+    }
+
+    protected function _reqAttachmentsList()
+    {
+        if (!$this->validate('DtsReqAttachmentsList')) {
+            $res['http_status'] = 400;
+            $res['msg']         = [
+                'error' => '请求数据无效',
+                'info'  => $this->validator->getErrors(),
+            ];
+            return $res;
+        }
+
+        $param = $this->request->getGet();
+
+        $allowReadDeptId = $this->session->get('allowReadDeptId');
+        if (empty($allowReadDeptId)) {
+            $res['http_status'] = 200;
+            $res['data']        = ['total' => 0, 'data' => []];
+            return $res;
+        }
+
+        // 1
+        if ($param['station_id'] === '0') {
+            $query['station_id'] = $allowReadDeptId;
+        } else {
+            if (!in_array($param['station_id'], $allowReadDeptId)) {
+                $res['http_status'] = 200;
+                $res['data']        = ['total' => 0, 'data' => []];
+                return $res;
+            } else {
+                $query['station_id'] = [$param['station_id']];
+            }
+        }
+
+        if ($param['filename'] !== '') {
+            $query['org_name'] = $param['filename'];
+        }
+
+        $query['limit']  = $param['limit'];
+        $query['offset'] = $param['offset'];
+        $fields          = ['id', 'station_id', 'dts_id', 'username', 'org_name', 'created_at'];
+
+        $model  = new DtsAttachmentModel();
+        $result = $model->getDtsAttachmentsByMultiConditions($fields, $query);
+
+        if ($result['total'] === 0) {
+            $res['http_status'] = 200;
+            $res['data']        = $result;
+            return $res;
+        }
+
+        // id => name
+        // $data = $this->_getUserNameAndWorkflowName($result['data']);
+        // $data = $this->_getDeptName($result['data']);
+
+        $res['http_status'] = 200;
+        $res['data']        = ['total' => $result['total'], 'data' => $result['data']];
         return $res;
     }
 
@@ -1964,8 +2037,11 @@ class Dts extends BaseController
 
     protected function _delCacheAfterUpdate(string $station_id = '*')
     {
-        $cache = new MyCache($this->selfConfig->cachePrefix['statistic_chart']);
-        $key   = 'station_id=' . $station_id;
-        $cache->delCache($key);
+        try {
+            $cache = new MyCache($this->selfConfig->cachePrefix['statistic_chart']);
+            $key   = 'station_id=' . $station_id;
+            $cache->delCache($key);
+        } catch (RedisException $e) {
+        }
     }
 }

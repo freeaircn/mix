@@ -400,11 +400,14 @@ export default {
     },
 
     sendSearchReq (searchParams) {
-      const params = Object.assign(searchParams, {
+      var params = Object.assign(searchParams, {
         resource: 'list',
         limit: this.pagination.pageSize,
         offset: this.pagination.current
       })
+      params.title = searchParams.title.trim()
+      params.dts_id = searchParams.dts_id.trim()
+      params.creator = searchParams.creator.trim()
       this.loading = true
       queryDts(params)
         .then(res => {
