@@ -152,7 +152,8 @@ class App extends BaseConfig
      *
      * @var string
      */
-    public $sessionDriver = 'CodeIgniter\Session\Handlers\FileHandler';
+    // public $sessionDriver = 'CodeIgniter\Session\Handlers\FileHandler';
+    public $sessionDriver = 'CodeIgniter\Session\Handlers\RedisHandler';
 
     /**
      * --------------------------------------------------------------------------
@@ -194,7 +195,8 @@ class App extends BaseConfig
      *
      * @var string
      */
-    public $sessionSavePath = WRITEPATH . 'session';
+    // public $sessionSavePath = WRITEPATH . 'session';
+    public $sessionSavePath = 'tcp://localhost:6379';
 
     /**
      * --------------------------------------------------------------------------

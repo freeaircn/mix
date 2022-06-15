@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-22 23:05:06
+ * @LastEditTime: 2022-06-15 21:09:06
  */
 
 namespace App\Controllers;
@@ -187,8 +187,9 @@ class Auth extends BaseController
 
         // 销毁session
         $this->session->destroy();
+        // $this->session->stop();
 
-        return $this->respond([]);
+        // return $this->respond([]);
     }
 
     // 验证码
@@ -229,7 +230,7 @@ class Auth extends BaseController
         $emailAPI = \Config\Services::email();
         $emailAPI->setFrom($emailAPI->SMTPUser);
         $emailAPI->setTo($email);
-        $emailAPI->setSubject('【发自Mix，请勿回复】验证码： ' . $code);
+        $emailAPI->setSubject('【发自Mix】' . $code);
         $emailAPI->setMessage($emailMessage);
         if (!$emailAPI->send(false)) {
             $err = $emailAPI->printDebugger('subject');
@@ -247,7 +248,7 @@ class Auth extends BaseController
             $maskEmail = substr($emailArr[0], 0, 4) . '***@' . $emailArr[1];
         }
 
-        $res['data'] = ['email' => $maskEmail];
+        $res['data'] = ['email' => 'email'];
         return $this->respond($res);
     }
 

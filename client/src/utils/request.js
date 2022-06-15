@@ -40,7 +40,8 @@ const responseHandler = (response) => {
       if (typeof res.msg !== 'undefined') {
         notification.success({
           message: '成功',
-          description: res.msg
+          description: res.msg,
+          duration: 3
         })
       }
       if (typeof res.data !== 'undefined') {
@@ -52,7 +53,8 @@ const responseHandler = (response) => {
       if (typeof res.msg !== 'undefined') {
         notification.warning({
           message: '失败',
-          description: res.msg
+          description: res.msg,
+          duration: 3
         })
       }
       return Promise.reject(res.code)
@@ -61,7 +63,8 @@ const responseHandler = (response) => {
     if (typeof res.msg !== 'undefined') {
       notification.success({
         message: '成功',
-        description: res.msg
+        description: res.msg,
+        duration: 3
       })
     }
     if (typeof res.data !== 'undefined') {
@@ -79,14 +82,16 @@ const errorHandler = (error) => {
     if (error.response.status === 400) {
       notification.error({
         message: '错误',
-        description: error.response.data.messages.error
+        description: error.response.data.messages.error,
+        duration: 3
       })
     }
     //
     if (error.response.status === 401) {
       notification.error({
         message: '错误',
-        description: error.response.data.messages.error
+        description: error.response.data.messages.error,
+        duration: 3
       })
       if (error.response.data.error === '1') {
         if (Cookies.get(ACCESS_TOKEN)) {
@@ -102,14 +107,24 @@ const errorHandler = (error) => {
     if (error.response.status === 404) {
       notification.warning({
         message: '错误',
-        description: error.response.data.messages.error
+        description: error.response.data.messages.error,
+        duration: 3
+      })
+    }
+    //
+    if (error.response.status === 429) {
+      notification.warning({
+        message: '警告',
+        description: error.response.data.messages.error,
+        duration: 3
       })
     }
     //
     if (error.response.status === 500) {
       notification.error({
         message: '错误',
-        description: error.response.data.messages.error
+        description: error.response.data.messages.error,
+        duration: 3
       })
     }
   }

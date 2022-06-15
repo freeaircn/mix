@@ -18,6 +18,7 @@
             <a-input
               size="large"
               type="text"
+              allowClear
               :placeholder="$t('user.login.phone.placeholder')"
               v-decorator="[
                 'phone',
@@ -41,17 +42,22 @@
             </a-input-password>
           </a-form-item>
         </a-tab-pane>
-        <a-tab-pane key="tab2" :tab="$t('user.login.tab-login-mobile')" disabled>
+        <a-tab-pane key="tab2" tab="139邮箱验证登录" >
           <a-form-item>
-            <a-input size="large" type="text" :placeholder="$t('user.login.mobile.placeholder')" v-decorator="['mobile', {rules: [{ required: true, pattern: /^1[34578]\d{9}$/, message: $t('user.login.mobile.placeholder') }], validateTrigger: 'blur'}]">
+            <a-input
+              size="large"
+              type="text"
+              addon-after="@139.com"
+              allowClear
+              :placeholder="$t('user.login.mobile.placeholder')"
+              v-decorator="['mobile', {rules: [{ required: true, pattern: /^1[34578]\d{9}$/, message: $t('user.login.mobile.placeholder') }], validateTrigger: 'blur'}]">
               <a-icon slot="prefix" type="mobile" :style="{ color: 'rgba(0,0,0,.25)' }"/>
             </a-input>
           </a-form-item>
-
           <a-row :gutter="16">
             <a-col class="gutter-row" :span="16">
               <a-form-item>
-                <a-input size="large" type="text" :placeholder="$t('user.login.mobile.verification-code.placeholder')" v-decorator="['captcha', {rules: [{ required: true, message: $t('user.verification-code.required') }], validateTrigger: 'blur'}]">
+                <a-input size="large" type="text" allowClear :placeholder="$t('user.login.mobile.verification-code.placeholder')" v-decorator="['captcha', {rules: [{ required: true, message: $t('user.verification-code.required') }], validateTrigger: 'blur'}]">
                   <a-icon slot="prefix" type="mail" :style="{ color: 'rgba(0,0,0,.25)' }"/>
                 </a-input>
               </a-form-item>
@@ -69,14 +75,16 @@
         </a-tab-pane>
       </a-tabs>
 
-      <a-form-item>
-        <!-- <a-checkbox v-decorator="['rememberMe', { valuePropName: 'checked' }]">{{ $t('user.login.remember-me') }}</a-checkbox> -->
-        <router-link
-          :to="{ name: 'ForgetPassword' }"
-          class="forge-password"
-          style="float: right;"
-        >{{ $t('user.login.forgot-password') }}</router-link>
-      </a-form-item>
+      <!-- <a-form-item>
+        <a-checkbox v-decorator="['rememberMe', { valuePropName: 'checked' }]">{{ $t('user.login.remember-me') }}</a-checkbox>
+        <div v-show="customActiveKey === 'tab1' ">
+          <router-link
+            :to="{ name: 'ForgetPassword' }"
+            class="forge-password"
+            style="float: right;"
+          >{{ $t('user.login.forgot-password') }}</router-link>
+        </div>
+      </a-form-item> -->
 
       <a-form-item style="margin-top:24px">
         <a-button
@@ -226,20 +234,20 @@ export default {
           }, 1000)
 
           const hide = this.$message.loading('验证码发送中..', 0)
-          getSmsCaptcha({ mobile: values.mobile }).then(res => {
-            setTimeout(hide, 2500)
-            this.$notification['success']({
-              message: '提示',
-              description: '验证码获取成功，您的验证码为：' + res.result.captcha,
-              duration: 8
+          getSmsCaptcha({ phone: values.mobile })
+            .then(() => {
+              setTimeout(hide, 2500)
+              this.$notification['success']({
+                message: '提示',
+                description: '已发送验证码至邮箱',
+                duration: 3
+              })
+            }).catch(() => {
+              setTimeout(hide, 1)
+              // clearInterval(interval)
+              // state.time = 60
+              // state.smsSendBtn = false
             })
-          }).catch(err => {
-            setTimeout(hide, 1)
-            clearInterval(interval)
-            state.time = 60
-            state.smsSendBtn = false
-            this.requestFailed(err)
-          })
         }
       })
     },
