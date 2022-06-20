@@ -1,7 +1,7 @@
 # 合入
 
 ---
-***1. 备份***
+### 1. 备份
 ```
 1 备份dev 数据库
 
@@ -10,12 +10,12 @@
 3 下载prod http server文件夹
 ```
 
-**2. dev前端打包***
+### 2. dev前端打包
 ```
 1 npm run build 
 ```
 
-**3. dev后端打包***
+### 3. dev后端打包
 ```
 1 .env 修改DB设置
 
@@ -30,7 +30,7 @@
   \server\writable\session\
 ```
 
-**4. 合入***
+### 4. 合入
 ```
 1 手动复制prod后端文件至dev后端 
   路径：
@@ -54,7 +54,7 @@
 ```
 
 ---
-***5. 其他1***
+### 5. 其他1
 ```
 1 修改前端框架    
   文件 client\src\main.js
@@ -74,7 +74,7 @@
 ```
 
 ---
-***6. 其他2***
+### 6. 其他2
 ```
 1 数据库
   create user ssh_auto@localhost identified by 'Meter@2021';

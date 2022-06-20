@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-07-06 21:44:27
  * @LastEditors: freeair
- * @LastEditTime: 2022-06-01 22:58:47
+ * @LastEditTime: 2022-06-20 23:29:04
  */
 
 namespace Config\MyConfig;
@@ -77,6 +77,11 @@ class Dts extends BaseConfig
     public $dtsDetailsLink = "http://192.168.1.100/dashboard/dts/details/";
 
     public $cachePrefix = [
-        'statistic_chart' => ['prefix' => 'dts_statistic_chart'],
+        'statistic_chart' => ['prefix' => 'dts_statistic_chart_'],
+    ];
+
+    public $cacheStatisticChart = [
+        'prefix' => 'dts_statistic_chart_',
+        'expire' => 86700,
     ];
 }

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-08-19 17:30:49
  * @LastEditors: freeair
- * @LastEditTime: 2021-08-24 10:53:30
+ * @LastEditTime: 2022-06-20 21:52:52
  */
 
 /*
@@ -84,3 +84,8 @@ defined('EXIT_USER_INPUT') || define('EXIT_USER_INPUT', 7); // invalid user inpu
 defined('EXIT_DATABASE') || define('EXIT_DATABASE', 8); // database error
 defined('EXIT__AUTO_MIN') || define('EXIT__AUTO_MIN', 9); // lowest automatically-assigned error code
 defined('EXIT__AUTO_MAX') || define('EXIT__AUTO_MAX', 125); // highest automatically-assigned error code
+
+/**
+ * My Code
+ */
+defined('LOG_HEADER') || define('LOG_HEADER', '{file}:{line} -->'); //

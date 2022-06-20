@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-07-16 23:08:38
  * @LastEditors: freeair
- * @LastEditTime: 2022-06-15 21:02:33
+ * @LastEditTime: 2022-06-20 23:15:37
  */
 
 /**
@@ -27,7 +27,7 @@ use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\Security\Exceptions\SecurityException;
 use Config\Services;
 
-class ApiThrottleFilter implements FilterInterface
+class ApiSmsThrottleFilter implements FilterInterface
 {
     protected $response;
     use ResponseTrait;
@@ -50,10 +50,11 @@ class ApiThrottleFilter implements FilterInterface
     public function before(RequestInterface $request, $arguments = null)
     {
         $throttler = Services::throttler();
+        $config    = config('Config\\MyConfig\\Throttler');
 
-        if ($throttler->check($request->getIPAddress(), 1, MINUTE) === false) {
+        if ($throttler->check('sms_' . $request->getIPAddress(), $config->api_sms_throttle['capacity'], $config->api_sms_throttle['seconds']) === false) {
             $this->response = Services::response();
-            $res['error']   = '请一分钟后再试';
+            $res['error']   = '系统忙，一分钟后再试';
             return $this->fail($res, 429);
         }
 

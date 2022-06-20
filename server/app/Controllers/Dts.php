@@ -4,12 +4,11 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-06-09 13:37:00
+ * @LastEditTime: 2022-06-20 23:34:56
  */
 
 namespace App\Controllers;
 
-use App\Libraries\MyCache;
 use App\Libraries\MyIdMaker;
 use App\Libraries\Workflow\Dts\WfDts;
 use App\Models\Common\DeptModel;
@@ -18,8 +17,8 @@ use App\Models\Common\UserModel;
 use App\Models\Dts\DtsAttachmentModel;
 use App\Models\Dts\DtsModel;
 use CodeIgniter\API\ResponseTrait;
+use CodeIgniter\Exceptions\CriticalError;
 use CodeIgniter\Files\Exceptions\FileException;
-use RedisException;
 
 class Dts extends BaseController
 {
@@ -1266,17 +1265,28 @@ class Dts extends BaseController
         $params     = $this->request->getGet();
         $station_id = $params['station_id'];
 
+        // try {
+        //     $cache     = new MyCache($this->selfConfig->cachePrefix['statistic_chart']);
+        //     $key       = 'station_id=' . $station_id;
+        //     $cacheData = $cache->getCache($key);
+        //     if (!empty($cacheData)) {
+        //         $res['http_status'] = 200;
+        //         $res['data']        = $cacheData;
+        //         return $res;
+        //     }
+        // } catch (RedisException $e) {
+        // }
+
         try {
-            $cache     = new MyCache($this->selfConfig->cachePrefix['statistic_chart']);
-            $key       = 'station_id=' . $station_id;
-            $cacheData = $cache->getCache($key);
-            $msg       = $cache->getTimeout();
+            $cache     = \Config\Services::cache();
+            $key       = $this->selfConfig->cacheStatisticChart['prefix'] . 'station_id=' . $station_id;
+            $cacheData = $cache->get($key);
             if (!empty($cacheData)) {
                 $res['http_status'] = 200;
                 $res['data']        = $cacheData;
                 return $res;
             }
-        } catch (RedisException $e) {
+        } catch (CriticalError $e) {
         }
 
         $allowReadDeptId = $this->session->get('allowReadDeptId');
@@ -1321,7 +1331,7 @@ class Dts extends BaseController
         ];
 
         if (isset($cache)) {
-            $cache->setCache($key, $data);
+            $cache->save($key, $data, $this->selfConfig->cacheStatisticChart['expire']);
         }
 
         $res['http_status'] = 200;
@@ -2037,11 +2047,15 @@ class Dts extends BaseController
 
     protected function _delCacheAfterUpdate(string $station_id = '*')
     {
-        try {
-            $cache = new MyCache($this->selfConfig->cachePrefix['statistic_chart']);
-            $key   = 'station_id=' . $station_id;
-            $cache->delCache($key);
-        } catch (RedisException $e) {
-        }
+        // try {
+        //     $cache = new MyCache($this->selfConfig->cachePrefix['statistic_chart']);
+        //     $key   = 'station_id=' . $station_id;
+        //     $cache->delCache($key);
+        // } catch (RedisException $e) {
+        // }
+
+        $cache = \Config\Services::cache();
+        $key   = $this->selfConfig->cacheStatisticChart['prefix'] . 'station_id=' . $station_id;
+        return $cache->delete($key);
     }
 }

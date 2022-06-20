@@ -4,13 +4,13 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-06-15 19:24:54
+ * @LastEditTime: 2022-06-20 21:36:32
  */
 
 namespace Config;
 
 use App\Filters\ApiAuthFilter;
-use App\Filters\ApiThrottleFilter;
+use App\Filters\ApiSmsThrottleFilter;
 use CodeIgniter\Config\BaseConfig;
 use CodeIgniter\Filters\CSRF;
 use CodeIgniter\Filters\DebugToolbar;
@@ -25,11 +25,11 @@ class Filters extends BaseConfig
      * @var array
      */
     public $aliases = [
-        'csrf'         => CSRF::class,
-        'toolbar'      => DebugToolbar::class,
-        'honeypot'     => Honeypot::class,
-        'api_auth'     => ApiAuthFilter::class,
-        'api_throttle' => ApiThrottleFilter::class,
+        'csrf'             => CSRF::class,
+        'toolbar'          => DebugToolbar::class,
+        'honeypot'         => Honeypot::class,
+        'api_auth'         => ApiAuthFilter::class,
+        'api_sms_throttle' => ApiSmsThrottleFilter::class,
     ];
 
     /**
@@ -71,7 +71,7 @@ class Filters extends BaseConfig
      * @var array
      */
     public $filters = [
-        'api_throttle' => ['before' => ['api/auth/sms']],
-        'api_auth'     => ['before' => ['api/*']],
+        'api_sms_throttle' => ['before' => ['api/auth/sms']],
+        'api_auth'         => ['before' => ['api/*']],
     ];
 }

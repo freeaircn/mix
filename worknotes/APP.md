@@ -94,7 +94,7 @@
       $client = $this->request->getJSON(true);
       默认情况下，这会返回一个 JSON 数据对象。如果你需要返回一个关联数组，请传递 true 作为第一个参数。
     
-    2 响应定义
+    2 响应定义   
       CI 4提供功能：use CodeIgniter\API\ResponseTrait;
       respond($res, http_status_code);
       如果 $res 是一个字符串，它将被当作 HTML 发送回客户端。
@@ -119,6 +119,11 @@
           res['msg'] = 
   
   3 Http状态码
+      400 请求错误
+      401.1 用户没有登录
+      401.3 用户没有权限
+      500 服务端错误
+      
     # 200 表示操作成功，但是不同的方法可以返回更精确的状态码。
       GET: 200 OK
       POST: 201 Created
@@ -250,41 +255,7 @@
     `created_at` datetime DEFAULT NULL COMMENT '日期',
     `updated_at` datetime DEFAULT NULL COMMENT '日期',
     `deleted_at` datetime DEFAULT NULL COMMENT '日期',
-    
-    `id01` int(11) UNSIGNED DEFAULT NULL COMMENT '预留',
-    `id02` int(11) UNSIGNED DEFAULT NULL COMMENT '预留',
-    `id03` int(11) UNSIGNED DEFAULT NULL COMMENT '预留',
-    `id04` int(11) UNSIGNED DEFAULT NULL COMMENT '预留',
-    `id05` int(11) UNSIGNED DEFAULT NULL COMMENT '预留',
-    `id06` int(11) UNSIGNED DEFAULT NULL COMMENT '预留',
-    `id07` int(11) UNSIGNED DEFAULT NULL COMMENT '预留',
-    `id08` int(11) UNSIGNED DEFAULT NULL COMMENT '预留',
-    `id09` int(11) UNSIGNED DEFAULT NULL COMMENT '预留',
-    `id10` int(11) UNSIGNED DEFAULT NULL COMMENT '预留',
-    `id11` int(11) UNSIGNED DEFAULT NULL COMMENT '预留',
-    `id12` int(11) UNSIGNED DEFAULT NULL COMMENT '预留',
-    `id13` int(11) UNSIGNED DEFAULT NULL COMMENT '预留',
-    `id14` int(11) UNSIGNED DEFAULT NULL COMMENT '预留',
-    `id15` int(11) UNSIGNED DEFAULT NULL COMMENT '预留',
-    `id16` int(11) UNSIGNED DEFAULT NULL COMMENT '预留',
-
-    `str01` varchar(63) DEFAULT NULL COMMENT '预留',
-    `str02` varchar(63) DEFAULT NULL COMMENT '预留',
-    `str03` varchar(63) DEFAULT NULL COMMENT '预留',
-    `str04` varchar(63) DEFAULT NULL COMMENT '预留',
-    `str05` varchar(63) DEFAULT NULL COMMENT '预留',
-    `str06` varchar(63) DEFAULT NULL COMMENT '预留',
-    `str07` varchar(63) DEFAULT NULL COMMENT '预留',
-    `str08` varchar(63) DEFAULT NULL COMMENT '预留',
-    `str09` varchar(63) DEFAULT NULL COMMENT '预留',
-    `str10` varchar(63) DEFAULT NULL COMMENT '预留',
-    `str11` varchar(63) DEFAULT NULL COMMENT '预留',
-    `str12` varchar(63) DEFAULT NULL COMMENT '预留',
-    `str13` varchar(63) DEFAULT NULL COMMENT '预留',
-    `str14` varchar(63) DEFAULT NULL COMMENT '预留',
-    `str15` varchar(63) DEFAULT NULL COMMENT '预留',
-    `str16` varchar(63) DEFAULT NULL COMMENT '预留',
-
+  
     `password` varchar(255) NOT NULL,
     `forgotten_password_selector` varchar(255) DEFAULT NULL,
     `forgotten_password_code` varchar(255) DEFAULT NULL,

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-06-15 21:09:06
+ * @LastEditTime: 2022-06-20 23:11:30
  */
 
 namespace App\Controllers;
@@ -56,14 +56,16 @@ class Auth extends BaseController
         $authModel  = new AuthModel();
         $result     = $authModel->isMaxLoginAttemptsExceeded($phone, $ip_address);
         if ($result) {
-            log_message('error', '{file}:{line} --> max login attempts exceeded: ' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4) . ' => ' . $ip_address);
+            $log_text = sprintf('%s max login attempts exceeded %s****%s  => %s', LOG_HEADER, substr($phone, 0, 3), substr($phone, 7, 4), $ip_address);
+            log_message('error', $log_text);
             return $this->fail('连续登录失败，五分钟后再登录');
         }
 
         $user = $this->_getUserByPhone($phone);
         if (empty($user)) {
             $authModel->increaseLoginAttempts($phone, $ip_address);
-            log_message('error', '{file}:{line} --> phone not existed ' . $phone . ' => ' . $ip_address);
+            $log_text = sprintf('%s phone not existed %s => %s', LOG_HEADER, $phone, $ip_address);
+            log_message('error', $log_text);
             return $this->fail('手机号码或密码错误');
         }
 
@@ -72,7 +74,8 @@ class Auth extends BaseController
         $result       = my_verify_password($password, $hashPassword);
         if ($result === false) {
             $authModel->increaseLoginAttempts($phone, $ip_address);
-            log_message('error', '{file}:{line} --> password not correct ' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4) . ' => ' . $ip_address);
+            $log_text = sprintf('%s password not correct %s****%s', LOG_HEADER, substr($phone, 0, 3), substr($phone, 7, 4));
+            log_message('error', $log_text);
             return $this->fail('密码或手机号码错误');
         }
 
@@ -173,7 +176,8 @@ class Auth extends BaseController
 
         $this->session->set($sessionData);
 
-        log_message('notice', '{file}:{line} --> login success ' . '[' . substr(session_id(), 0, 15) . '] ' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4) . ' => ' . $ip_address);
+        $log_text = sprintf('%s login success [%s] %s****%s => %s', LOG_HEADER, substr(session_id(), 0, 15), substr($phone, 0, 3), substr($phone, 7, 4), $ip_address);
+        log_message('notice', $log_text);
 
         $res['data'] = ['token' => md5(time())];
 
@@ -182,8 +186,9 @@ class Auth extends BaseController
 
     public function logout()
     {
-        $phone = $this->session->get('phone');
-        log_message('notice', '{file}:{line} --> logout ' . '[' . substr(session_id(), 0, 15) . '] ' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4));
+        $phone    = $this->session->get('phone');
+        $log_text = sprintf('%s logout [%s] %s****%s', LOG_HEADER, substr(session_id(), 0, 15), substr($phone, 0, 3), substr($phone, 7, 4));
+        log_message('notice', $log_text);
 
         // 销毁session
         $this->session->destroy();
@@ -216,7 +221,8 @@ class Auth extends BaseController
         $smsCodeModel = new SmsCodeModel();
         $code         = $smsCodeModel->newSmsCodeByPhone($phone);
         if (empty($code)) {
-            log_message('error', '{file}:{line} --> new sms code failed' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4));
+            $log_text = sprintf('%s new sms code failed %s****%s', LOG_HEADER, substr($phone, 0, 3), substr($phone, 7, 4));
+            log_message('error', $log_text);
             return $this->failServerError('服务器发送验证码失败，稍候再试');
         }
 
@@ -232,12 +238,13 @@ class Auth extends BaseController
         $emailAPI->setTo($email);
         $emailAPI->setSubject('【发自Mix】' . $code);
         $emailAPI->setMessage($emailMessage);
-        if (!$emailAPI->send(false)) {
-            $err = $emailAPI->printDebugger('subject');
-            log_message('error', '{file}:{line} --> send mail failed ' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4) . '.  ' . $err);
+        // if (!$emailAPI->send(false)) {
+        //     $err      = $emailAPI->printDebugger('subject');
+        //     $log_text = sprintf('%s send mail failed %s****%s, %s', LOG_HEADER, substr($phone, 0, 3), substr($phone, 7, 4), $err);
+        //     log_message('error', $log_text);
 
-            return $this->failServerError('服务器发送验证码失败，稍候再试');
-        }
+        //     return $this->failServerError('服务器发送验证码失败，稍候再试');
+        // }
 
         // 屏蔽个人信息
         $emailArr = explode("@", $email);
