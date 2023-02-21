@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-22 17:42:38
+ * @LastEditTime: 2023-02-21 17:12:43
  */
 
 namespace App\Models\Common;
@@ -17,7 +17,7 @@ class DeptModel extends Model
     protected $table;
 
     protected $primaryKey    = 'id';
-    protected $allowedFields = ['name', 'pid', 'status', 'description', 'dataMask'];
+    protected $allowedFields = ['name', 'alias', 'pid', 'status', 'description', 'dataMask'];
 
     protected $useAutoIncrement = true;
 

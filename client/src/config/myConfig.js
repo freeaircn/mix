@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2019-12-24 09:56:03
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-28 23:30:55
+ * @LastEditTime: 2023-02-21 16:25:39
  */
 
 export default {
@@ -29,5 +29,17 @@ export default {
     'application/vnd.openxmlformats-officedocument.presentationml.presentation',
     'application/zip',
     'application/pdf'
-  ]
+  ],
+  /**
+     * 图纸库配置文件
+     */
+  drawing: {
+    uploadUrl: '/api/drawing/file',
+    maxFileSize: 104857600, // 100 1024 1024,
+    maxFileNumber: 1,
+    allowedFileTypes: [
+      'application/zip',
+      'application/pdf'
+    ]
+  }
 }

@@ -4,32 +4,37 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2023-02-20 10:27:45
+ * @LastEditTime: 2023-02-21 23:01:54
  */
 
 namespace App\Controllers;
 
-use App\Libraries\MyIdMaker;
 use App\Libraries\Workflow\Dts\WfDts;
 use App\Models\Common\DeptModel;
 use App\Models\Common\DeviceModel;
 use App\Models\Common\UserModel;
 // use App\Models\Dts\DtsAttachmentModel;
+//
+use App\Models\Drawing\Basic as DrawingModel;
+use App\Models\Drawing\Category as CategoryModel;
+//
 use App\Models\Dts\Attachment as DtsAttachmentModel;
 use App\Models\Dts\DtsModel;
 use CodeIgniter\API\ResponseTrait;
+//
 use CodeIgniter\Exceptions\CriticalError;
+//
 use CodeIgniter\Files\Exceptions\FileException;
 
-class Dts extends BaseController
+class Drawing extends BaseController
 {
     use ResponseTrait;
 
-    protected $selfConfig;
+    protected $config;
 
     public function __construct()
     {
-        $this->selfConfig = config('Config\\MyConfig\\Dts');
+        $this->config = config('Config\\MyConfig\\Drawing');
     }
 
     public function queryEntry()
@@ -41,23 +46,24 @@ class Dts extends BaseController
         }
 
         switch ($resource) {
-            case 'news':
-                $result = $this->_reqNews();
-                break;
-            case 'search_params':
-                $result = $this->_reqSearchParams();
+            case 'search_options':
+                $result = $this->_reqSearchOptions();
                 break;
             case 'list':
                 $result = $this->_reqList();
                 break;
+            case 'blank_form':
+                $result = $this->_repBlankForm();
+                break;
             case 'details':
                 $result = $this->_reqDetails();
                 break;
+            //
+            case 'news':
+                $result = $this->_reqNews();
+                break;
             case 'pre_edit':
                 $result = $this->_preEdit();
-                break;
-            case 'new_form':
-                $result = $this->_reqNewForm();
                 break;
             case 'device_list':
                 $result = $this->_reqDeviceList();
@@ -100,15 +106,16 @@ class Dts extends BaseController
         return $this->failServerError('服务器内部错误');
     }
 
-    public function uploadAttachment()
+    // 2023-2-21
+    public function uploadFile()
     {
-        if (!$this->validate('DtsUploadAttachment')) {
+        if (!$this->validate('DrawingUploadFile')) {
             $res['info']  = $this->validator->getErrors();
             $res['error'] = '请求数据无效';
             return $this->fail($res);
         }
 
-        $dts_id     = $this->request->getPost('dts_id');
+        $serial_id  = $this->request->getPost('serial_id');
         $station_id = $this->request->getPost('station_id');
         $file       = $this->request->getFile('file');
 
@@ -116,83 +123,53 @@ class Dts extends BaseController
             return $this->failServerError('附件上传失败');
         }
 
-        if (!$file->getSize() > $this->selfConfig->attachmentSize) {
-            return $this->fail($this->selfConfig->attachmentExceedSizeMsg);
+        if (!$file->getSize() > $this->config->maxFileSize) {
+            return $this->fail($this->config->fileExceedSizeMsg);
         }
         if (!$file->getSize() === 0) {
             return $this->fail('上传空文件');
         }
 
         $fileType = $file->getMimeType();
-        if (!in_array($fileType, $this->selfConfig->attachmentFileTypes)) {
-            return $this->fail($this->selfConfig->attachmentInvalidTypeMsg);
+        if (!in_array($fileType, $this->config->allowedFileTypes)) {
+            return $this->fail($this->config->fileInvalidTypeMsg);
         }
 
-        $orgName = $file->getName();
-        $size    = $file->getSize();
-        $newName = $file->getRandomName();
+        $file_org_name = $file->getName();
+        $file_new_name = $file->getRandomName();
+        $size          = $file->getSize();
         // 移动文件
-        $path = WRITEPATH . $this->selfConfig->attachmentPath;
+        $path = WRITEPATH . $this->config->filePath;
         if (!$file->hasMoved()) {
             try {
-                $file->move($path, $newName, true);
+                $file->move($path, $file_new_name, true);
             } catch (FileException $exception) {
-                return $this->failServerError('保存附件出错');
+                return $this->failServerError('保存文件出错');
             }
         }
 
-        if ($dts_id === '0') {
-            $temp = $this->session->get('dtsAttachment');
-            $time = time();
-            $data = [
-                'id'      => $time,
-                'orgName' => $orgName,
-                'newName' => $newName,
-                'size'    => $size,
-            ];
-            if (!$temp) {
-                $this->session->set('dtsAttachment', [$data]);
-            } else {
-                $this->session->push('dtsAttachment', [$data]);
-            }
-
-            $res['id'] = $time;
-            return $this->respond($res);
+        $cache = $this->session->get('drawingFileCache');
+        $time  = time();
+        $data  = [
+            'id'            => $time,
+            'file_org_name' => $file_org_name,
+            'file_new_name' => $file_new_name,
+            'size'          => $size,
+        ];
+        if (!$cache) {
+            $this->session->set('drawingFileCache', [$data]);
+        } else {
+            $this->session->push('drawingFileCache', [$data]);
         }
-        //
-        if ($dts_id !== '0') {
-            $ext        = explode('.', $orgName);
-            $attachment = [
-                'station_id' => $station_id,
-                'dts_id'     => $dts_id,
-                'user_id'    => $this->session->get('id'),
-                'username'   => $this->session->get('username'),
-                'org_name'   => $orgName,
-                'new_name'   => $newName,
-                'size'       => $size,
-                'file_ext'   => end($ext),
-            ];
-            $model = new DtsAttachmentModel();
-            $id    = $model->createDtsAttachmentSingleRecord($attachment);
-            if ($id === false) {
-                // 删除移动后的文件
-                $path = WRITEPATH . $this->selfConfig->attachmentPath;
-                $file = rtrim($path, '\\/ ') . DIRECTORY_SEPARATOR . $newName;
-                if (file_exists($file)) {
-                    unlink($file);
-                }
-                return $this->failServerError('服务器处理发生错误，稍候再试');
-            }
 
-            $res['id'] = $id;
-            return $this->respond($res);
-        }
+        $res['id'] = $time;
+        return $this->respond($res);
 
     }
 
-    public function delAttachment()
+    public function deleteFile()
     {
-        if (!$this->validate('DtsDelAttachment')) {
+        if (!$this->validate('DrawingDeleteFile')) {
             $res['info']  = $this->validator->getErrors();
             $res['error'] = '请求数据无效';
             return $this->fail($res);
@@ -200,58 +177,157 @@ class Dts extends BaseController
 
         $client = $this->request->getJSON(true);
         $id     = $client['id'];
-        $dts_id = $client['dts_id'];
 
-        if ($dts_id === '0') {
-            $temp = $this->session->get('dtsAttachment');
-            if (empty($temp)) {
-                return $this->respond(['res' => 'empty']);
+        // if ($dts_id === '0') {
+        //     $temp = $this->session->get('drawingFileCache');
+        //     if (empty($temp)) {
+        //         return $this->respond(['res' => 'empty']);
+        //     }
+
+        //     $path = WRITEPATH . $this->config->filePath;
+        //     $new  = [];
+        //     foreach ($temp as $v) {
+        //         if ($id == $v['id']) {
+        //             $file = rtrim($path, '\\/ ') . DIRECTORY_SEPARATOR . $v['file_new_name'];
+        //             if (file_exists($file)) {
+        //                 unlink($file);
+        //             }
+        //         } else {
+        //             $new[] = $v;
+        //         }
+        //     }
+        //     $this->session->remove('dtsAttachment');
+        //     if (!empty($new)) {
+        //         $this->session->set('dtsAttachment', $new);
+        //     }
+
+        //     return $this->respond(['res' => 'done']);
+        // }
+
+        // if ($dts_id !== '0') {
+        //     $fields = ['dts_id', 'new_name'];
+
+        //     $model = new DtsAttachmentModel();
+        //     $db    = $model->getDtsAttachmentRecordById($fields, $id);
+        //     if (empty($db)) {
+        //         return $this->respond(['res' => 'done']);
+        //     }
+        //     if ($db['dts_id'] !== $dts_id) {
+        //         return $this->failServerError('请求错误，刷新页面后再试');
+        //     }
+        //     $result = $model->delDtsAttachmentRecordById($id);
+        //     if (!$result) {
+        //         return $this->failServerError('服务器处理发生错误，稍候再试');
+        //     }
+        //     $path = WRITEPATH . $this->config->filePath;
+        //     $file = rtrim($path, '\\/ ') . DIRECTORY_SEPARATOR . $db['new_name'];
+        //     if (file_exists($file)) {
+        //         unlink($file);
+        //     }
+
+        //     return $this->respond(['res' => 'done']);
+        // }
+
+        $temp = $this->session->get('drawingFileCache');
+        if (empty($temp)) {
+            return $this->respond(['res' => 'empty']);
+        }
+
+        $path = WRITEPATH . $this->config->filePath;
+        $new  = [];
+        foreach ($temp as $v) {
+            if ($id == $v['id']) {
+                $file = rtrim($path, '\\/ ') . DIRECTORY_SEPARATOR . $v['file_new_name'];
+                if (file_exists($file)) {
+                    unlink($file);
+                }
+            } else {
+                $new[] = $v;
             }
+        }
+        $this->session->remove('drawingFileCache');
+        if (!empty($new)) {
+            $this->session->set('drawingFileCache', $new);
+        }
 
-            $path = WRITEPATH . $this->selfConfig->attachmentPath;
-            $new  = [];
-            foreach ($temp as $v) {
-                if ($id == $v['id']) {
-                    $file = rtrim($path, '\\/ ') . DIRECTORY_SEPARATOR . $v['newName'];
-                    if (file_exists($file)) {
-                        unlink($file);
+        return $this->respond(['res' => 'done']);
+    }
+
+    public function createOne()
+    {
+        if (!$this->validate('DrawingCreateOne')) {
+            $res['info']  = $this->validator->getErrors();
+            $res['error'] = '请求数据无效';
+            return $this->fail($res);
+        }
+
+        $client = $this->request->getJSON(true);
+
+        $allowWriteDeptId = $this->session->get('allowWriteDeptId');
+        if (!in_array($client['station_id'], $allowWriteDeptId)) {
+            return $this->failUnauthorized('用户没有权限');
+        }
+        //
+        $uid      = $this->session->get('id');
+        $username = $this->session->get('username');
+        $draft    = [
+            'station_id'  => $client['station_id'],
+            'category_id' => $client['category_id'],
+            'dwg_name'    => $client['dwg_name'],
+            'keywords'    => $client['keywords'],
+            'info'        => $client['info'],
+            'user_id'     => $uid,
+            'username'    => $username,
+        ];
+
+        // 注意
+        $draft['deleted'] = 0;
+        // serial_id
+        $query['dwg_num'] = $client['dwg_num'];
+        $fields           = ['serial_id'];
+        $model            = new DrawingModel();
+        $serial_id        = $model->getLastRecordByDocNum($fields, $query) + 1;
+
+        $draft['serial_id'] = $serial_id;
+        $draft['dwg_num']   = $client['dwg_num'] . '-' . sprintf("%03d", $serial_id);
+
+        // 文件
+        $files     = $client['files'];
+        $fileCache = $this->session->get('drawingFileCache');
+        $temp      = [];
+        if (!empty($files) && !empty($fileCache)) {
+            foreach ($files as $f) {
+                foreach ($fileCache as $c) {
+                    if ($f['id'] == $c['id']) {
+                        $temp[] = $c;
                     }
-                } else {
-                    $new[] = $v;
                 }
             }
-            $this->session->remove('dtsAttachment');
-            if (!empty($new)) {
-                $this->session->set('dtsAttachment', $new);
-            }
-
-            return $this->respond(['res' => 'done']);
+        }
+        // 注意
+        if (count($temp) == 1) {
+            $t   = $temp[0];
+            $ext = explode('.', $t['file_org_name']);
+            //
+            $draft['file_org_name'] = $t['file_org_name'];
+            $draft['file_new_name'] = $t['file_new_name'];
+            $draft['file_ext']      = end($ext);
+            $draft['size']          = $t['size'];
         }
 
-        if ($dts_id !== '0') {
-            $fields = ['dts_id', 'new_name'];
-
-            $model = new DtsAttachmentModel();
-            $db    = $model->getDtsAttachmentRecordById($fields, $id);
-            if (empty($db)) {
-                return $this->respond(['res' => 'done']);
-            }
-            if ($db['dts_id'] !== $dts_id) {
-                return $this->failServerError('请求错误，刷新页面后再试');
-            }
-            $result = $model->delDtsAttachmentRecordById($id);
-            if (!$result) {
-                return $this->failServerError('服务器处理发生错误，稍候再试');
-            }
-            $path = WRITEPATH . $this->selfConfig->attachmentPath;
-            $file = rtrim($path, '\\/ ') . DIRECTORY_SEPARATOR . $db['new_name'];
-            if (file_exists($file)) {
-                unlink($file);
-            }
-
-            return $this->respond(['res' => 'done']);
+        if ($this->session->has('drawingFileCache')) {
+            $this->session->remove('drawingFileCache');
         }
+
+        $result = $model->insertOneRecord($draft);
+        if ($result === false) {
+            return $this->failServerError('服务器处理发生错误，稍候再试');
+        }
+
+        $res['msg'] = '已创建';
+        return $this->respond($res);
     }
+    // -- 2023-2-21
 
     public function downloadAttachment()
     {
@@ -287,7 +363,7 @@ class Dts extends BaseController
             return $this->failUnauthorized('用户没有权限');
         }
 
-        $path = WRITEPATH . $this->selfConfig->attachmentPath;
+        $path = WRITEPATH . $this->config->filePath;
         $file = rtrim($path, '\\/ ') . DIRECTORY_SEPARATOR . $db['new_name'];
         if (!file_exists($file)) {
             return $this->failNotFound('附件不存在');
@@ -301,135 +377,6 @@ class Dts extends BaseController
         header('Expires: 0');
         readfile($file);
         exit;
-    }
-
-    public function createOne()
-    {
-        if (!$this->validate('DtsCreateOne')) {
-            $res['info']  = $this->validator->getErrors();
-            $res['error'] = '请求数据无效';
-            return $this->fail($res);
-        }
-
-        $client = $this->request->getJSON(true);
-
-        $allowWriteDeptId = $this->session->get('allowWriteDeptId');
-        if (!in_array($client['station_id'], $allowWriteDeptId)) {
-            return $this->failUnauthorized('用户没有权限');
-        }
-        //
-        $uid   = $this->session->get('id');
-        $draft = [
-            'station_id'  => $client['station_id'],
-            'type'        => $client['type'],
-            'title'       => $client['title'],
-            'level'       => $client['level'],
-            'device'      => $client['device'],
-            'description' => $client['description'],
-            'creator_id'  => $uid,
-        ];
-
-        $wf                = new WfDts();
-        $draft['place_at'] = $wf->getStartPlace('main');
-
-        $draft['status'] = 'publish';
-        // dts_id
-        $maker  = new MyIdMaker();
-        $dts_id = $maker->apply('DTS');
-        if ($dts_id === false) {
-            $res['info']  = 'id maker failed';
-            $res['error'] = '服务器处理发生错误，稍候再试';
-            return $this->fail($res, 500);
-        }
-        $draft['dts_id'] = $dts_id;
-
-        $model  = new DtsModel();
-        $result = $model->createSingleDtsRecord($draft);
-        if ($result === false) {
-            return $this->failServerError('服务器处理发生错误，稍候再试');
-        }
-
-        // 附件
-        $files        = $client['files'];
-        $files_stored = $this->session->get('dtsAttachment');
-        $temp         = [];
-        if (!empty($files) && !empty($files_stored)) {
-            foreach ($files as $c) {
-                foreach ($files_stored as $s) {
-                    if ($c['id'] == $s['id']) {
-                        $temp[] = $s;
-                    }
-                }
-            }
-        }
-        if (!empty($temp)) {
-            $attachments = [];
-            foreach ($temp as $t) {
-                $ext           = explode('.', $t['orgName']);
-                $attachments[] = [
-                    'station_id' => $client['station_id'],
-                    'dts_id'     => $dts_id,
-                    'user_id'    => $this->session->get('id'),
-                    'username'   => $this->session->get('username'),
-                    'org_name'   => $t['orgName'],
-                    'new_name'   => $t['newName'],
-                    'size'       => $t['size'],
-                    'file_ext'   => end($ext),
-                ];
-            }
-            $model  = new DtsAttachmentModel();
-            $result = $model->createDtsAttachmentMultiRecords($attachments);
-            if ($result === false) {
-                // 回退上一步操作
-                $model  = new DtsModel();
-                $result = $model->delDtsRecordByDtsId($dts_id);
-                return $this->failServerError('服务器处理发生错误，稍候再试');
-            }
-        }
-
-        if ($this->session->has('dtsAttachment')) {
-            $this->session->remove('dtsAttachment');
-        }
-
-        // 通知邮件
-        $notice = $client['notice'];
-        $title  = $client['title'];
-        if (!empty($notice)) {
-            $model  = new UserModel();
-            $fields = ['email'];
-            $result = $model->getUserRecordsByIds($fields, $notice);
-            if (!empty($result)) {
-                $emails = [];
-                foreach ($result as $r) {
-                    $emails[] = $r['email'];
-                }
-
-                $subject    = '【发自Mix】新问题单需要处理 DTS-' . $dts_id;
-                $emailParam = [
-                    'link'  => $this->selfConfig->dtsDetailsLink . $dts_id,
-                    'ID'    => 'DTS-' . $dts_id,
-                    'title' => $title,
-                ];
-                $emailMessage = view('dts/notice.php', $emailParam);
-
-                $emailAPI = \Config\Services::email();
-                $emailAPI->setFrom($emailAPI->SMTPUser);
-                $emailAPI->setTo($emails);
-                $emailAPI->setSubject($subject);
-                $emailAPI->setMessage($emailMessage);
-                if (!$emailAPI->send(false)) {
-                    $err = $emailAPI->printDebugger('subject');
-                    log_message('error', '{file}:{line} --> send mail failed ' . substr($phone, 0, 3) . '****' . substr($phone, 7, 4) . '.  ' . $err);
-                    $res['msg'] = '已创建，但通知失败';
-                    return $this->respond($res);
-                }
-            }
-        }
-
-        $this->_delCacheAfterUpdate($client['station_id']);
-
-        $res['msg'] = '已创建';
-        return $this->respond($res);
     }
 
     public function deleteOne()
@@ -467,7 +414,7 @@ class Dts extends BaseController
         $model2 = new DtsAttachmentModel();
         $files  = $model2->getDtsAttachmentRecordsByDtsId($fields, $dts_id);
         if (!empty($files)) {
-            $path = WRITEPATH . $this->selfConfig->attachmentPath;
+            $path = WRITEPATH . $this->config->filePath;
             foreach ($files as $v) {
                 $file = rtrim($path, '\\/ ') . DIRECTORY_SEPARATOR . $v['new_name'];
                 if (file_exists($file)) {
@@ -829,7 +776,7 @@ class Dts extends BaseController
         }
 
         $query['status'] = 'publish';
-        $query['limit']  = $this->selfConfig->newsItemNum;
+        $query['limit']  = $this->config->newsItemNum;
         $query['offset'] = 1;
         $fields          = ['id', 'dts_id', 'station_id', 'type', 'title', 'creator_id', 'place_at', 'updated_at'];
 
@@ -862,70 +809,35 @@ class Dts extends BaseController
         return $res;
     }
 
-    protected function _reqSearchParams()
+    protected function _reqSearchOptions()
     {
         $allowReadDeptId = $this->session->get('allowReadDeptId');
         if (empty($allowReadDeptId)) {
             $res['http_status'] = 200;
-            $res['data']        = ['station' => [], 'workflow' => []];
+            $res['data']        = ['station' => []];
             return $res;
         }
-
-        $typeItems = [
-            ['id' => '0', 'name' => '全部'],
-        ];
-        $types = $this->selfConfig->typesMap;
-        foreach ($types as $key => $t) {
-            $typeItems[] = ['id' => strval($key), 'name' => $t];
-        }
-
-        $levelItems = [
-            ['id' => '0', 'name' => '全部'],
-        ];
-        $levels = $this->selfConfig->levelsMap;
-        foreach ($levels as $key => $t) {
-            $levelItems[] = ['id' => strval($key), 'name' => $t];
-        }
-
-        $causeItems = $this->selfConfig->causes;
-        array_unshift($causeItems, ['id' => '0', 'name' => '全部']);
 
         $model        = new DeptModel();
         $fields       = ['id', 'name'];
         $stationItems = $model->getDeptRecordsByIds($fields, $allowReadDeptId);
-        array_unshift($stationItems, ['id' => '0', 'name' => '全部']);
 
-        $wf            = new WfDts();
-        $workflowItems = $wf->getPlaceMetaOfName();
-
-        $pid         = $this->session->get('allowDefaultDeptId');
-        $model       = new DeviceModel();
-        $fields      = ['id', 'name'];
-        $deviceItems = $model->getDeviceRecordsByPid($fields, $pid);
-        array_unshift($deviceItems, ['id' => '0', 'name' => '全部']);
-
-        $scoreItems = [
-            ['id' => '0', 'name' => '全部'],
-            ['id' => '1', 'name' => '大于0分'],
-            ['id' => '2', 'name' => '小于0分'],
-        ];
+        $model         = new CategoryModel();
+        $fields        = ['id', 'name'];
+        $categoryItems = $model->getAll($fields);
+        array_unshift($categoryItems, ['id' => '0', 'name' => '全部']);
 
         $res['http_status'] = 200;
         $res['data']        = [
-            'typeItems'     => $typeItems,
-            'levelItems'    => $levelItems,
-            'causeItems'    => $causeItems,
             'stationItems'  => $stationItems,
-            'workflowItems' => $workflowItems,
-            'deviceItems'   => $deviceItems,
-            'scoreItems'    => $scoreItems,
+            'categoryItems' => $categoryItems,
         ];
         return $res;
     }
 
     protected function _reqList()
     {
-        if (!$this->validate('DtsReqList')) {
+        if (!$this->validate('DrawingReqList')) {
             $res['http_status'] = 400;
             $res['msg']         = [
                 'error' => '请求数据无效',
@@ -943,136 +855,63 @@ class Dts extends BaseController
             return $res;
         }
 
-        // 1
-        if ($param['station_id'] === '0') {
-            $query['station_id'] = $allowReadDeptId;
-        } else {
-            if (!in_array($param['station_id'], $allowReadDeptId)) {
-                $res['http_status'] = 200;
-                $res['data']        = ['total' => 0, 'data' => []];
-                return $res;
-            } else {
-                $query['station_id'] = [$param['station_id']];
-            }
+        //
+        if (!in_array($param['station_id'], $allowReadDeptId)) {
+            $res['http_status'] = 200;
+            $res['data']        = ['total' => 0, 'data' => []];
+            return $res;
+        }
+        $query['station_id'] = [$param['station_id']];
+
+        if ($param['category_id'] !== '0') {
+            $query['category_id'] = $param['category_id'];
+        }
+        if (isset($param['dwg_name']) && $param['dwg_name'] !== '') {
+            $query['dwg_name'] = $param['dwg_name'];
+        }
+        if (isset($param['dwg_num']) && $param['dwg_num'] !== '') {
+            $query['dwg_num'] = $param['dwg_num'];
+        }
+        if (isset($param['keywords']) && $param['keywords'] !== '') {
+            $query['keywords'] = $param['keywords'];
         }
 
-        if ($param['type'] !== '0') {
-            $query['type'] = $param['type'];
-        }
+        // 注意
+        $query['deleted'] = 0;
+        $query['limit']   = $param['limit'];
+        $query['offset']  = $param['offset'];
+        $fields           = ['id', 'dwg_name', 'dwg_num', 'category_id', 'keywords', 'file_org_name', 'username', 'created_at', 'updated_at'];
 
-        if (isset($param['place_at']) && !empty($param['place_at'])) {
-            $wf       = new WfDts();
-            $workflow = $wf->getPlaceAlias();
-            foreach ($param['place_at'] as $p) {
-                if (!in_array($p, $workflow)) {
-                    $res['http_status'] = 400;
-                    $res['msg']         = [
-                        'error' => '请求数据无效',
-                        'info'  => 'invalid wf place_at',
-                    ];
-                    return $res;
-                }
-            }
-            //
-            $query['place_at'] = $param['place_at'];
-        }
-
-        if ($param['level'] !== '0') {
-            $query['level'] = $param['level'];
-        }
-
-        // 2
-        if (isset($param['dts_id']) && $param['dts_id'] !== '') {
-            if (preg_match('/^[1-9]\d{0,19}$/', $param['dts_id'])) {
-                $query['dts_id'] = $param['dts_id'];
-            }
-        }
-
-        if (isset($param['title']) && $param['title'] !== '') {
-            $query['title'] = $param['title'];
-        }
-
-        if ($param['device'] !== '0') {
-            $query['device'] = '+' . $param['device'] . '+';
-        }
-
-        if (isset($param['creator']) && $param['creator'] !== '') {
-            if (preg_match('/^([\x{4e00}-\x{9fa5}]{1,6})$/u', $param['creator'])) {
-                $model  = new UserModel();
-                $fields = ['id'];
-                $db     = $model->getUserRecordByUsername($fields, $param['creator']);
-
-                if (!empty($db)) {
-                    $query['creator_id'] = $db['id'];
-                } else {
-                    $res['http_status'] = 200;
-                    $res['data']        = ['total' => 0, 'data' => []];
-                    return $res;
-                }
-            } else {
-                $res['http_status'] = 200;
-                $res['data']        = ['total' => 0, 'data' => []];
-                return $res;
-            }
-        }
-
-        // 3
-        if ($param['cause'] !== '0') {
-            $query['cause'] = $param['cause'];
-        }
-        if ($param['score'] !== '0') {
-            $query['score'] = $param['score'];
-        }
-        if (isset($param['created_range'])) {
-            $temp = $param['created_range'];
-            if (count($temp) === 2 && !empty($temp[0]) && !empty($temp[1])) {
-                $query['created_start'] = $temp[0];
-                $query['created_end']   = $temp[1];
-            }
-        }
-        if (isset($param['updated_range'])) {
-            $temp = $param['updated_range'];
-            if (count($temp) === 2 && !empty($temp[0]) && !empty($temp[1])) {
-                $query['updated_start'] = $temp[0];
-                $query['updated_end']   = $temp[1];
-            }
-        }
-        if (isset($param['resolved_range'])) {
-            $temp = $param['resolved_range'];
-            if (count($temp) === 2 && !empty($temp[0]) && !empty($temp[1])) {
-                $query['resolved_start'] = $temp[0];
-                $query['resolved_end']   = $temp[1];
-            }
-        }
-
-        // $res['http_status'] = 200;
-        // $res['data']        = ['total' => 0, 'data' => [], 'query' => $query];
-        // return $res;
-
-        $query['status'] = 'publish';
-        $query['limit']  = $param['limit'];
-        $query['offset'] = $param['offset'];
-        $fields          = ['id', 'dts_id', 'station_id', 'type', 'title', 'level', 'place_at', 'created_at', 'updated_at', 'creator_id'];
-
-        $model  = new DtsModel();
-        $result = $model->getDtsRecordsByMultiConditions($fields, $query);
+        $model  = new DrawingModel();
+        $result = $model->getRecordsByMultiConditions($fields, $query);
 
         if ($result['total'] === 0) {
             $res['http_status'] = 200;
-            $res['data']        = $result;
+            $res['data']        = ['total' => 0, 'data' => []];
             return $res;
         }
 
         // id => name
-        $data = $this->_getUserNameAndWorkflowName($result['data']);
-        $data = $this->_getDeptName($data);
+        $model         = new CategoryModel();
+        $fields        = ['id', 'name'];
+        $categoryItems = $model->getAll($fields);
+
+        $cnt = count($result['data']);
+        for ($i = 0; $i < $cnt; $i++) {
+            $result['data'][$i]['category'] = '';
+            foreach ($categoryItems as $d) {
+                if ($d['id'] === $result['data'][$i]['category_id']) {
+                    $result['data'][$i]['category'] = $d['name'];
+                }
+            }
+        }
 
         $res['http_status'] = 200;
-        $res['data']        = ['total' => $result['total'], 'data' => $data];
+        $res['data']        = ['total' => $result['total'], 'data' => $result['data']];
         return $res;
     }
 
-    protected function _reqNewForm()
+    protected function _repBlankForm()
     {
         $allowWriteDeptId = $this->session->get('allowWriteDeptId');
         if (empty($allowWriteDeptId)) {
@@ -1088,30 +927,18 @@ class Dts extends BaseController
             return $res;
         }
 
-        $deviceList = $this->_getDeviceList($station_id);
-        if (empty($deviceList)) {
-            $res['http_status'] = 404;
-            $res['msg']         = '没有找到请求的数据';
-            return $res;
-        }
+        $model        = new DeptModel();
+        $fields       = ['id', 'name', 'alias'];
+        $stationItems = $model->getDeptRecordsByIds($fields, $allowWriteDeptId);
 
-        $description = $this->selfConfig->progressTemplates['new_form'];
-
-        $model   = new DeptModel();
-        $fields  = ['id', 'name'];
-        $station = $model->getDeptRecordsByIds($fields, $allowWriteDeptId);
-
-        $dept    = '+' . $station_id . '+';
-        $model   = new UserModel();
-        $fields  = ['id', 'username'];
-        $workers = $model->getUserRecordByDept($fields, $dept);
+        $model         = new CategoryModel();
+        $fields        = ['id', 'name', 'alias'];
+        $categoryItems = $model->getAll($fields);
 
         $res['http_status'] = 200;
         $res['data']        = [
-            'description' => $description,
-            'deviceList'  => $deviceList,
-            'station'     => $station,
-            'workers'     => $workers,
+            'stationItems'  => $stationItems,
+            'categoryItems' => $categoryItems,
         ];
         return $res;
     }
@@ -1180,8 +1007,8 @@ class Dts extends BaseController
         $details = $db;
 
         // id -> name
-        $details['type']  = $this->selfConfig->typesMap[$db['type']];
-        $details['level'] = $this->selfConfig->levelsMap[$db['level']];
+        $details['type']  = $this->config->typesMap[$db['type']];
+        $details['level'] = $this->config->levelsMap[$db['level']];
 
         $users_id = [
             'creator'  => $db['creator_id'],
@@ -1202,8 +1029,8 @@ class Dts extends BaseController
         $res['data']        = [
             'details'           => $details,
             'steps'             => $steps,
-            'progressTemplates' => $this->selfConfig->progressTemplates,
-            'causes'            => $this->selfConfig->causes,
+            'progressTemplates' => $this->config->progressTemplates,
+            'causes'            => $this->config->causes,
             'operation'         => $operation,
             'attachments'       => $attachments,
         ];
@@ -1267,7 +1094,7 @@ class Dts extends BaseController
         $station_id = $params['station_id'];
 
         // try {
-        //     $cache     = new MyCache($this->selfConfig->cachePrefix['statistic_chart']);
+        //     $cache     = new MyCache($this->config->cachePrefix['statistic_chart']);
         //     $key       = 'station_id=' . $station_id;
         //     $cacheData = $cache->getCache($key);
         //     if (!empty($cacheData)) {
@@ -1280,7 +1107,7 @@ class Dts extends BaseController
 
         try {
             $cache     = \Config\Services::cache();
-            $key       = $this->selfConfig->cacheStatisticChart['prefix'] . 'station_id=' . $station_id;
+            $key       = $this->config->cacheStatisticChart['prefix'] . 'station_id=' . $station_id;
             $cacheData = $cache->get($key);
             if (!empty($cacheData)) {
                 $res['http_status'] = 200;
@@ -1332,7 +1159,7 @@ class Dts extends BaseController
         ];
 
         if (isset($cache)) {
-            $cache->save($key, $data, $this->selfConfig->cacheStatisticChart['expire']);
+            $cache->save($key, $data, $this->config->cacheStatisticChart['expire']);
         }
 
         $res['http_status'] = 200;
@@ -1724,7 +1551,7 @@ class Dts extends BaseController
     protected function _getTypeStatistic(string $station_id = null)
     {
         $result = [];
-        $types  = $this->selfConfig->typesMap;
+        $types  = $this->config->typesMap;
         foreach ($types as $key => $t) {
             $result[] = ['id' => strval($key), 'type' => $t, 'value' => 0];
         }
@@ -1811,7 +1638,7 @@ class Dts extends BaseController
             ];
         }
 
-        $days = $this->selfConfig->longTermDays;
+        $days = $this->config->longTermDays;
 
         $model       = new DtsModel();
         $data        = $model->getByStationAndCreatedExceedDaysGroupByPlace($station_id, $days);
@@ -1901,7 +1728,7 @@ class Dts extends BaseController
     {
         $result = [];
 
-        $level = $this->selfConfig->levelsMap;
+        $level = $this->config->levelsMap;
         foreach ($level as $key => $l) {
             $result[] = [
                 'id'    => strval($key),
@@ -1949,7 +1776,7 @@ class Dts extends BaseController
     {
         $result = [];
 
-        $level = $this->selfConfig->levelsMap;
+        $level = $this->config->levelsMap;
         foreach ($level as $key => $l) {
             $result[] = [
                 'id'    => strval($key),
@@ -1997,7 +1824,7 @@ class Dts extends BaseController
     {
         $result = [];
 
-        $causes = $this->selfConfig->causes;
+        $causes = $this->config->causes;
         foreach ($causes as $d) {
             $result[] = [
                 'id'    => $d['id'],
@@ -2049,14 +1876,14 @@ class Dts extends BaseController
     protected function _delCacheAfterUpdate(string $station_id = '*')
     {
         // try {
-        //     $cache = new MyCache($this->selfConfig->cachePrefix['statistic_chart']);
+        //     $cache = new MyCache($this->config->cachePrefix['statistic_chart']);
         //     $key   = 'station_id=' . $station_id;
         //     $cache->delCache($key);
         // } catch (RedisException $e) {
         // }
 
         $cache = \Config\Services::cache();
-        $key   = $this->selfConfig->cacheStatisticChart['prefix'] . 'station_id=' . $station_id;
+        $key   = $this->config->cacheStatisticChart['prefix'] . 'station_id=' . $station_id;
         return $cache->delete($key);
     }
 }

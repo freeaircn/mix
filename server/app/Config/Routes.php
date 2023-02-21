@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-07 23:03:04
+ * @LastEditTime: 2023-02-21 19:33:49
  */
 
 namespace Config;
@@ -146,6 +146,11 @@ $routes->group('api', function ($routes) {
     $routes->post('dts', 'Dts::createOne');
     $routes->delete('dts', 'Dts::deleteOne');
     $routes->put('dts', 'Dts::updateEntry');
+    // 2023-2-21
+    $routes->get('drawing', 'Drawing::queryEntry');
+    $routes->post('drawing', 'Drawing::createOne');
+    $routes->post('drawing/file', 'Drawing::uploadFile');
+    $routes->delete('drawing/file', 'Drawing::deleteFile');
     //
     $routes->add('(:any)', '404');
 });
