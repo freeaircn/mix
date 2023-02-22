@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2023-02-21 22:16:46
+ * @LastEditTime: 2023-02-22 20:48:07
  */
 
 namespace App\Models\Drawing;
@@ -121,6 +121,31 @@ class Basic extends Model
         }
 
         return $this->insert($data);
+    }
+
+    public function getRecordById(array $fields = null, $id = 0)
+    {
+        if (empty($id)) {
+            return [];
+        }
+
+        $selectSql = '';
+        if (empty($fields)) {
+            $selectSql = 'id, station_id, category_id, serial_id, dwg_num, dwg_name, keywords, file_org_name, info, user_id, username, created_at, updated_at';
+        } else {
+            foreach ($fields as $name) {
+                $selectSql = $selectSql . $name . ', ';
+            }
+        }
+
+        $builder = $this->select($selectSql);
+        $builder->where('id', $id);
+        $result = $builder->findAll();
+        if (empty($result)) {
+            return [];
+        } else {
+            return $result[0];
+        }
     }
     // -- 2023-2-21
 

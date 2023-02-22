@@ -5,7 +5,11 @@
     </a-card> -->
     <a-card :bordered="false" title="" :body-style="{marginBottom: '8px'}">
       <div class="table-page-search-wrapper">
-        <a-form layout="inline" :label-col="labelCol" :wrapper-col="wrapperCol">
+        <a-form-model
+          layout="inline"
+          ref="form"
+          :model="searchParams"
+          :rules="rules">
           <a-row :gutter="16">
             <a-col :md="3" :sm="24">
               <a-form-model-item label="站点" >
@@ -17,28 +21,28 @@
               </a-form-model-item>
             </a-col>
             <a-col :md="3" :sm="24">
-              <a-form-item label="类别">
+              <a-form-model-item label="类别">
                 <a-select v-model="searchParams.category_id" placeholder="请选择">
                   <a-select-option v-for="d in categoryItems" :key="d.id" :value="d.id">
                     {{ d.name }}
                   </a-select-option>
                 </a-select>
-              </a-form-item>
+              </a-form-model-item>
             </a-col>
             <a-col :md="4" :sm="24">
-              <a-form-item label="图名">
+              <a-form-model-item label="图名" prop="dwg_name">
                 <a-input v-model="searchParams.dwg_name" placeholder=""/>
-              </a-form-item>
+              </a-form-model-item>
             </a-col>
             <a-col :md="4" :sm="24">
-              <a-form-item label="图号">
+              <a-form-model-item label="图号" prop="dwg_num">
                 <a-input v-model="searchParams.dwg_num" placeholder=""/>
-              </a-form-item>
+              </a-form-model-item>
             </a-col>
             <a-col :md="4" :sm="24">
-              <a-form-item label="关键词">
+              <a-form-model-item label="关键词" prop="keywords">
                 <a-input v-model="searchParams.keywords" placeholder=""/>
-              </a-form-item>
+              </a-form-model-item>
             </a-col>
             <a-col :md="4" :sm="24">
               <span>
@@ -48,7 +52,7 @@
               </span>
             </a-col>
           </a-row>
-        </a-form>
+        </a-form-model>
       </div>
 
       <a-table
@@ -60,16 +64,16 @@
         :loading="loading"
         @change="handleTableChange"
       >
-        <!-- <span slot="dts_id" slot-scope="text, record">
+        <span slot="file_org_name" slot-scope="text, record">
           <template>
-            <a @click="handleQueryDetails(record)">{{ text }}</a>
+            <a @click="handleDownloadFile(record)">{{ text }}</a>
           </template>
-        </span> -->
+        </span>
         <span slot="action" slot-scope="text, record">
           <template>
             <a @click="handleQueryDetails(record)">详情</a>
             <a-divider type="vertical" />
-            <a @click="handleEdit(record)">编辑</a>
+            <a @click="handleEdit(record)">修改</a>
             <a-divider type="vertical" />
             <a @click="handleDelete(record)">删除</a>
           </template>
@@ -81,11 +85,11 @@
 </template>
 
 <script>
-// import moment from 'moment'
+import * as pattern from '@/utils/validateRegex'
 import store from '@/store'
 import { mapGetters } from 'vuex'
 import { baseMixin } from '@/store/app-mixin'
-import { apiQuery, apiDelete } from '@/api/mix/drawing'
+import { apiQuery, apiDelete, apiDownloadFile } from '@/api/mix/drawing'
 
 export default {
   name: 'Drawing',
@@ -106,6 +110,18 @@ export default {
         dwg_num: '',
         keywords: ''
       },
+      rules: {
+        dwg_name: [
+          { pattern: pattern.englishChineseNum__.regex, message: pattern.englishChineseNum__.msg, trigger: ['change'] }
+        ],
+        dwg_num: [
+          { pattern: pattern.englishNum__.regex, message: pattern.englishNum__.msg, trigger: ['change'] }
+        ],
+        keywords: [
+          { pattern: pattern.englishChineseNumComma.regex, message: pattern.englishChineseNumComma.msg, trigger: ['change'] }
+        ]
+      },
+      //
       stationItems: [],
       categoryItems: [],
       //
@@ -127,8 +143,9 @@ export default {
           dataIndex: 'keywords'
         },
         {
-          title: '附件名',
-          dataIndex: 'file_org_name'
+          title: '文件',
+          dataIndex: 'file_org_name',
+          scopedSlots: { customRender: 'file_org_name' }
         },
         {
           title: '上传者',
@@ -179,11 +196,11 @@ export default {
     this.sendSearchReq(this.searchParams)
   },
   beforeRouteLeave (to, from, next) {
-    if (to.name === 'DtsDetails' || to.name === 'DtsEdit') {
+    if (to.name === 'DrawingDetails' || to.name === 'DrawingEdit') {
       var temp1 = { pageId: this.pagination.current, params: this.searchParams }
-      store.dispatch('setDtsListSearchParam', temp1)
+      store.dispatch('setDrawingListSearchParam', temp1)
     } else {
-      store.dispatch('setDtsListSearchParam', null)
+      store.dispatch('setDrawingListSearchParam', null)
     }
     next()
   },
@@ -236,8 +253,14 @@ export default {
     },
 
     handleSearch () {
-      this.pagination.current = 1
-      this.sendSearchReq(this.searchParams)
+      this.$refs.form.validate(valid => {
+        if (valid) {
+          this.pagination.current = 1
+          this.sendSearchReq(this.searchParams)
+        } else {
+          return false
+        }
+      })
     },
 
     handleTableChange (pagination) {
@@ -248,17 +271,51 @@ export default {
       this.sendSearchReq(this.searchParams)
     },
 
+    handleDownloadFile (record) {
+      const param = {
+        id: record.id,
+        file_org_name: record.file_org_name
+      }
+      apiDownloadFile(param)
+        .then((res) => {
+          const { data, headers } = res
+
+          const str = headers['content-type']
+          if (str.indexOf('json') !== -1) {
+            this.$message.warning('没有权限')
+          } else {
+            // 下载文件
+            const blob = new Blob([data], { type: headers['content-type'] })
+            const dom = document.createElement('a')
+            const url = window.URL.createObjectURL(blob)
+            dom.href = url
+            const filename = headers['content-disposition'].split(';')[1].split('=')[1]
+            dom.download = decodeURI(filename)
+            dom.style.display = 'none'
+            document.body.appendChild(dom)
+            dom.click()
+            dom.parentNode.removeChild(dom)
+            window.URL.revokeObjectURL(url)
+
+            this.$message.info('文件已下载')
+          }
+        })
+        .catch(() => {
+          this.$message.info('文件下载失败')
+        })
+    },
+
     handleQueryDetails (record) {
       if (record.id) {
-        // const id = record.id
-        // this.$router.push({ path: `/dashboard/dts/details/${id}` })
+        const id = record.id
+        this.$router.push({ path: `/dashboard/drawing/details/${id}` })
       }
     },
 
     handleEdit (record) {
       if (record.id) {
-        // const id = record.id
-        // this.$router.push({ path: `/dashboard/dts/edit/${id}` })
+        const id = record.id
+        this.$router.push({ path: `/dashboard/drawing/edit/${id}` })
       }
     },
 

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2023-02-21 19:33:49
+ * @LastEditTime: 2023-02-22 20:33:33
  */
 
 namespace Config;
@@ -151,6 +151,7 @@ $routes->group('api', function ($routes) {
     $routes->post('drawing', 'Drawing::createOne');
     $routes->post('drawing/file', 'Drawing::uploadFile');
     $routes->delete('drawing/file', 'Drawing::deleteFile');
+    $routes->get('drawing/file', 'Drawing::downloadFile');
     //
     $routes->add('(:any)', '404');
 });

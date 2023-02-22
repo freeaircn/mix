@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2019-12-24 09:56:03
  * @LastEditors: freeair
- * @LastEditTime: 2021-11-01 22:02:35
+ * @LastEditTime: 2023-02-22 19:46:31
  */
 
 // 正则表达式
@@ -55,4 +55,24 @@ export const lowerLetterNumUnderline = {
 export const positiveFloatNumber = {
   regex: /^([1-9]([0-9]){0,}([.]([0-9]){0,}[1-9]+)?)?([0]([.]([0-9]){0,}[1-9]+)?)?$/,
   msg: '请输入数字，例如0，12，12.3，0.123'
+}
+
+export const englishChineseNum__ = {
+  regex: /^([\u4e00-\u9fa5_-a-zA-Z0-9]{0,60})$/u,
+  msg: '请输入中文、英文、数字、横线或下划线，字数少于60个'
+}
+
+export const englishChineseNumComma = {
+  regex: /^([\u4e00-\u9fa5a-zA-Z0-9，,]{0,60})$/u,
+  msg: '请输入中文、英文或数字，关键词之间用逗号分隔，字数少于60个'
+}
+
+export const englishChineseNumPunctuation = {
+  regex: /^([\u4e00-\u9fa5a-zA-Z0-9,.，。]{0,1000})$/u,
+  msg: '请输入中文、英文或数字，不包含特殊符号 @ # $ % & * ? ; " 等'
+}
+
+export const englishNum__ = {
+  regex: /^([-a-zA-Z0-9]{0,30})$/u,
+  msg: '请输入英文、数字或横线，字数少于30个'
 }

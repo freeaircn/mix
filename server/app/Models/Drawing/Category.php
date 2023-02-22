@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2023-02-21 17:51:34
+ * @LastEditTime: 2023-02-22 21:43:02
  */
 
 namespace App\Models\Drawing;
@@ -56,4 +56,31 @@ class Category extends Model
 
         return $res;
     }
+
+    public function getById(array $fields = null, $id = 0)
+    {
+        if (empty($id)) {
+            return [];
+        }
+
+        $selectSql = '';
+        if (empty($fields)) {
+            $selectSql = 'id, pid, name, alias, status, description, updated_at';
+        } else {
+            foreach ($fields as $name) {
+                $selectSql = $selectSql . $name . ', ';
+            }
+        }
+
+        $builder = $this->select($selectSql);
+        $builder->where('id', $id);
+        $res = $builder->findAll();
+
+        if (empty($res)) {
+            return [];
+        } else {
+            return $res[0];
+        }
+    }
+
 }

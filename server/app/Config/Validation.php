@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2023-02-21 21:57:48
+ * @LastEditTime: 2023-02-22 22:08:48
  */
 
 namespace Config;
@@ -266,24 +266,41 @@ class Validation
     public $DrawingReqList = [
         'station_id'  => 'required|regex_match[^\d{0,2}$]',
         'category_id' => 'required|regex_match[^\d{0,2}$]',
-        // 'dwg_name'     => 'regex_match[/^[1-9]\d{0,19}$/]',
-        // 'dwg_num'    => 'regex_match[/^([\x{4e00}-\x{9fa5}]{1,6})$/u]',
+        'dwg_name'    => 'regex_match[/^([\u4e00-\u9fa5_-a-zA-Z0-9]{0,60})$/u]',
+        'dwg_num'     => 'regex_match[/^([-a-zA-Z0-9]{0,30})$/u]',
+        'keywords'    => 'regex_match[/^([\u4e00-\u9fa5a-zA-Z0-9，,]{0,60})$/u]',
         'limit'       => 'required|regex_match[^[1-9]\d{0,2}$]',
         'offset'      => 'required|regex_match[^[1-9]\d{0,9}$]',
     ];
 
     public $DrawingUploadFile = [
-        'station_id' => 'required|regex_match[^[1-9]\d{0,2}$]',
+        'key' => 'required|in_list[unsaved, saved]',
     ];
 
     public $DrawingDeleteFile = [
-        'id' => 'required|is_natural_no_zero',
+        'key' => 'required|in_list[unsaved, saved]',
+        'id'  => 'required|is_natural_no_zero',
     ];
 
     public $DrawingCreateOne = [
         'station_id'  => 'required|regex_match[^[1-9]\d{0,2}$]',
         'category_id' => 'required|regex_match[^[1-9]$]',
-        'dwg_num'     => 'required',
+        'dwg_name'    => 'required|regex_match[/^([\u4e00-\u9fa5_-a-zA-Z0-9]{0,60})$/u]',
+        'dwg_num'     => 'required|regex_match[/^([-a-zA-Z0-9]{0,30})$/u]',
+        'info'        => 'regex_match[/^([\u4e00-\u9fa5a-zA-Z0-9,.，。]{0,1000})$/u]',
+    ];
+
+    public $DrawingDownloadFile = [
+        'id'            => 'required|is_natural_no_zero',
+        'file_org_name' => 'required',
+    ];
+
+    public $DrawingReqDetails = [
+        'id' => 'required|is_natural_no_zero',
+    ];
+
+    public $DrawingReqEdit = [
+        'id' => 'required|is_natural_no_zero',
     ];
 
     /**

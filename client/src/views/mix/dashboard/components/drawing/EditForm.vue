@@ -3,11 +3,11 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2023-02-22 23:07:43
+ * @LastEditTime: 2023-02-22 23:26:29
 -->
 <template>
   <page-header-wrapper :title="false">
-    <a-card title="新建" :bordered="false" :body-style="{marginBottom: '8px'}" >
+    <a-card title="修改" :bordered="false" :body-style="{marginBottom: '8px'}" >
       <a-form-model
         ref="form"
         :model="record"
@@ -16,12 +16,13 @@
         :wrapper-col="wrapperCol"
       >
         <a-form-model-item label="站点" prop="station_id">
-          <a-select v-model="record.station_id" placeholder="请选择" >
+          <a-select v-model="record.station_id" disabled >
             <a-select-option v-for="d in stationItems" :key="d.id" :value="d.id">
               {{ d.name }}
             </a-select-option>
           </a-select>
         </a-form-model-item>
+
         <a-form-model-item label="图名" prop="dwg_name">
           <a-input v-model="record.dwg_name"></a-input>
         </a-form-model-item>
@@ -43,19 +44,22 @@
           <a-upload
             :accept="allowedFileTypes"
             :action="config.uploadUrl"
-            :data="{key: 'unsaved'}"
+            :data="{key: 'saved'}"
             :before-upload="beforeUpload"
-            :showUploadList="{ showDownloadIcon: false, showRemoveIcon: true }"
+            :showUploadList="{ showDownloadIcon: true, showRemoveIcon: true }"
+            :fileList="fileList"
             :remove="handleDeleteFile"
             @change="afterUpload"
+            @download="handleDownloadFile"
           >
             <a-button :disabled="!ready || disableUploadBtn"> <a-icon type="upload" /> 点击上传 </a-button>
           </a-upload>
         </a-form-model-item>
 
         <a-form-model-item :wrapperCol="{ span: 24 }" style="text-align: center">
-          <a-button type="primary" @click="handleSubmit" :disabled="!ready" >提交</a-button>
-          <a-button style="margin-left: 16px" @click="handleCancel">取消</a-button>
+          <a-button type="primary" @click="onSubmit" :disabled="!ready" >确认</a-button>
+          <!-- <router-link slot="extra" to="/dashboard/dts"><a-button>取消</a-button></router-link> -->
+          <a-button style="margin-left: 16px" @click="onCancel">取消</a-button>
         </a-form-model-item>
       </a-form-model>
     </a-card>
@@ -67,10 +71,10 @@ import myConfig from '@/config/myConfig'
 import * as pattern from '@/utils/validateRegex'
 import { mapGetters } from 'vuex'
 //
-import { apiQuery, apiDeleteFile, apiCreate } from '@/api/mix/drawing'
+import { apiQuery, apiUpdate, apiDeleteFile, apiDownloadFile } from '@/api/mix/drawing'
 
 export default {
-  name: 'BlankForm',
+  name: 'EditForm',
   data () {
     return {
       labelCol: {
@@ -84,13 +88,16 @@ export default {
       stationItems: [],
       categoryItems: [],
       //
+      id: '0',
       record: {
+        id: '',
         station_id: '',
         dwg_name: '',
         category_id: '',
         keywords: '',
         info: ''
       },
+      //
       rules: {
         station_id: [{ required: true, message: '请选择', trigger: ['change'] }],
         category_id: [{ required: true, message: '请选择', trigger: ['change'] }],
@@ -113,14 +120,6 @@ export default {
       fileList: []
     }
   },
-  created: function () {
-    this.ready = false
-    this.fileNumber = 0
-    this.config.allowedFileTypes.forEach((item) => {
-      this.allowedFileTypes = this.allowedFileTypes + item + ', '
-    })
-    this.prepareBlankForm()
-  },
   computed: {
     ...mapGetters([
       'userInfo'
@@ -129,23 +128,42 @@ export default {
       return this.fileNumber >= this.config.maxFileNumber
     }
   },
+  created () {
+    this.id = (this.$route.params.id) ? this.$route.params.id : '0'
+  },
+  mounted () {
+    this.handleQueryDetails()
+  },
   methods: {
-    prepareBlankForm () {
-      apiQuery({ resource: 'blank_form' })
+
+    handleQueryDetails () {
+      if (this.id === '0') {
+        return
+      }
+      const params = { resource: 'edit', id: this.id }
+      apiQuery(params)
         .then((data) => {
-            this.stationItems = data.stationItems
-            this.categoryItems = data.categoryItems
-            this.record.station_id = this.userInfo.allowDefaultDeptId
-            //
-            this.ready = true
-          })
-          .catch(() => {
-            this.record.info = ''
-            this.ready = false
-          })
+          Object.assign(this.record, data.record)
+          //
+          this.stationItems = data.stationItems
+          this.categoryItems = data.categoryItems
+          //
+          this.fileList = data.files
+          this.fileNumber = data.files.length
+          //
+          this.ready = true
+        })
+        .catch(() => {
+          this.record.station_id = ''
+          this.record.dwg_name = ''
+          this.record.category_id = ''
+          this.record.keywords = ''
+          this.record.info = ''
+          //
+          this.ready = false
+        })
     },
 
-    // 上传文件
     beforeUpload (file) {
       return new Promise((resolve, reject) => {
         let conflict = false
@@ -217,45 +235,49 @@ export default {
       }
     },
 
-    handleSubmit () {
-      const files = []
-      this.fileList.forEach(element => {
-        if (element.status === 'done') {
-          files.push(element.response)
-        }
-      })
+    handleDownloadFile () {
+      const param = {
+        id: this.record.id,
+        file_org_name: this.record.file_org_name
+      }
+      apiDownloadFile(param)
+        .then((res) => {
+          const { data, headers } = res
+
+          const str = headers['content-type']
+          if (str.indexOf('json') !== -1) {
+            this.$message.warning('没有权限')
+          } else {
+            // 下载文件
+            const blob = new Blob([data], { type: headers['content-type'] })
+            const dom = document.createElement('a')
+            const url = window.URL.createObjectURL(blob)
+            dom.href = url
+            const filename = headers['content-disposition'].split(';')[1].split('=')[1]
+            dom.download = decodeURI(filename)
+            dom.style.display = 'none'
+            document.body.appendChild(dom)
+            dom.click()
+            dom.parentNode.removeChild(dom)
+            window.URL.revokeObjectURL(url)
+
+            this.$message.info('文件已下载')
+          }
+        })
+        .catch(() => {
+          this.$message.info('文件下载失败')
+        })
+    },
+
+    onSubmit () {
       this.$refs.form.validate(valid => {
         if (valid) {
           var data = { ...this.record }
-          data.dwg_name = this.record.dwg_name.trim()
-          data.keywords = this.record.keywords.trim()
-          data.files = files
-          //
-          var part1 = ''
-          var part2 = ''
-          for (var i = 0; i < this.stationItems.length; i++) {
-            if (this.stationItems[i].id === data.station_id) {
-              part1 = this.stationItems[i].alias
-            }
-          }
-          for (i = 0; i < this.categoryItems.length; i++) {
-            if (this.categoryItems[i].id === data.category_id) {
-              part2 = this.categoryItems[i].alias
-            }
-          }
-          if (part1 !== '' && part2 !== '') {
-            data.dwg_num = part1 + '-' + part2
-          } else {
-            return false
-          }
-          //
-          apiCreate(data)
+          apiUpdate(data)
             .then(() => {
-              // this.$router.push({ path: `/dashboard/drawing/list` })
               this.$router.back()
             })
             .catch(() => {
-              // this.ready = false
             })
         } else {
           return false
@@ -263,13 +285,9 @@ export default {
       })
     },
 
-    handleCancel () {
-      if (this.fileList.length > 0) {
-        this.$message.info('请删除上传的文件后，再取消')
-      } else {
-        // this.$router.push({ path: `/dashboard/drawing/list` })
-        this.$router.back()
-      }
+    onCancel () {
+      // this.$router.push({ path: `/dashboard/dts/list` })
+      this.$router.back()
     }
   }
 }

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2023-02-21 23:01:54
+ * @LastEditTime: 2023-02-22 23:25:38
  */
 
 namespace App\Controllers;
@@ -57,6 +57,9 @@ class Drawing extends BaseController
                 break;
             case 'details':
                 $result = $this->_reqDetails();
+                break;
+            case 'edit':
+                $result = $this->_reqEdit();
                 break;
             //
             case 'news':
@@ -115,9 +118,8 @@ class Drawing extends BaseController
             return $this->fail($res);
         }
 
-        $serial_id  = $this->request->getPost('serial_id');
-        $station_id = $this->request->getPost('station_id');
-        $file       = $this->request->getFile('file');
+        $key  = $this->request->getPost('key');
+        $file = $this->request->getFile('file');
 
         if (!$file->isValid()) {
             return $this->failServerError('附件上传失败');
@@ -139,7 +141,12 @@ class Drawing extends BaseController
         $file_new_name = $file->getRandomName();
         $size          = $file->getSize();
         // 移动文件
-        $path = WRITEPATH . $this->config->filePath;
+        if ($key === 'unsaved') {
+            $path = WRITEPATH . $this->config->tempPath;
+        } elseif ($key === 'saved') {
+            $path = WRITEPATH . $this->config->filePath;
+        }
+
         if (!$file->hasMoved()) {
             try {
                 $file->move($path, $file_new_name, true);
@@ -176,6 +183,7 @@ class Drawing extends BaseController
         }
 
         $client = $this->request->getJSON(true);
+        $key    = $client['key'];
         $id     = $client['id'];
 
         // if ($dts_id === '0') {
@@ -233,8 +241,13 @@ class Drawing extends BaseController
             return $this->respond(['res' => 'empty']);
         }
 
-        $path = WRITEPATH . $this->config->filePath;
-        $new  = [];
+        if ($key === 'unsaved') {
+            $path = WRITEPATH . $this->config->tempPath;
+        } elseif ($key === 'saved') {
+            $path = WRITEPATH . $this->config->filePath;
+        }
+
+        $new = [];
         foreach ($temp as $v) {
             if ($id == $v['id']) {
                 $file = rtrim($path, '\\/ ') . DIRECTORY_SEPARATOR . $v['file_new_name'];
@@ -327,57 +340,51 @@ class Drawing extends BaseController
         $res['msg'] = '已创建';
         return $this->respond($res);
     }
-    // -- 2023-2-21
 
-    public function downloadAttachment()
+    public function downloadFile()
     {
-        if (!$this->validate('DtsDownloadAttachment')) {
+        if (!$this->validate('DrawingDownloadFile')) {
             $res['info']  = $this->validator->getErrors();
             $res['error'] = '请求数据无效';
             return $this->fail($res);
         }
 
-        $params = $this->request->getGet();
-        $id     = $params['id'];
-        $dts_id = $params['dts_id'];
+        $params        = $this->request->getGet();
+        $id            = $params['id'];
+        $file_org_name = $params['file_org_name'];
 
-        $fields = ['dts_id', 'org_name', 'new_name', 'size'];
-        $model  = new DtsAttachmentModel();
-        $db     = $model->getDtsAttachmentRecordById($fields, $id);
+        $fields = ['station_id', 'file_org_name', 'file_new_name'];
+        $model  = new DrawingModel($fields, $id);
+        $db     = $model->getRecordById($fields, $id);
+
         if (empty($db)) {
-            return $this->failNotFound('附件不存在');
+            return $this->failNotFound('文件不存在');
+        }
+        if ($db['file_org_name'] !== $file_org_name) {
+            return $this->failNotFound('文件不存在');
         }
 
-        if ($db['dts_id'] !== $dts_id) {
-            return $this->failNotFound('附件不存在');
-        }
-
-        $fields = ['station_id'];
-        $model  = new DtsModel();
-        $db2    = $model->getDtsRecordByDtsId($fields, $dts_id);
-        if (empty($db2)) {
-            return $this->failNotFound('附件不存在');
-        }
         $allowReadDeptId = $this->session->get('allowReadDeptId');
-        if (!in_array($db2['station_id'], $allowReadDeptId)) {
+        if (!in_array($db['station_id'], $allowReadDeptId)) {
             return $this->failUnauthorized('用户没有权限');
         }
 
         $path = WRITEPATH . $this->config->filePath;
-        $file = rtrim($path, '\\/ ') . DIRECTORY_SEPARATOR . $db['new_name'];
+        $file = rtrim($path, '\\/ ') . DIRECTORY_SEPARATOR . $db['file_new_name'];
         if (!file_exists($file)) {
-            return $this->failNotFound('附件不存在');
+            return $this->failNotFound('文件不存在');
         }
 
         $type = filetype($file);
         header("Content-type:" . $type);
-        header("Content-Disposition: attachment; filename=" . urlencode($db['org_name']));
+        header("Content-Disposition: attachment; filename=" . urlencode($db['file_org_name']));
         header("Content-Transfer-Encoding: binary");
         header('Pragma: no-cache');
         header('Expires: 0');
         readfile($file);
         exit;
     }
+    // -- 2023-2-21
 
     public function deleteOne()
     {
@@ -911,6 +918,7 @@ class Drawing extends BaseController
         return $res;
     }
 
+    // 2023-2-22
     protected function _repBlankForm()
     {
         $allowWriteDeptId = $this->session->get('allowWriteDeptId');
@@ -975,9 +983,10 @@ class Drawing extends BaseController
         return $res;
     }
 
+    // 2023-2-22
     protected function _reqDetails()
     {
-        if (!$this->validate('DtsReqDetails')) {
+        if (!$this->validate('DrawingReqDetails')) {
             $res['http_status'] = 400;
             $res['msg']         = [
                 'error' => '请求数据无效',
@@ -987,11 +996,11 @@ class Drawing extends BaseController
         }
 
         $params = $this->request->getGet();
-        $dts_id = $params['dts_id'];
+        $id     = $params['id'];
 
-        $fields = ['dts_id', 'type', 'title', 'level', 'station_id', 'place_at', 'device', 'description', 'progress', 'created_at', 'updated_at', 'creator_id', 'reviewer_id', 'score', 'score_desc', 'scored_by', 'cause', 'cause_analysis'];
-        $model  = new DtsModel();
-        $db     = $model->getDtsRecordByDtsId($fields, $dts_id);
+        $fields = ['id', 'station_id', 'dwg_name', 'category_id', 'dwg_num', 'keywords', 'info', 'file_org_name', 'username', 'created_at', 'updated_at'];
+        $model  = new DrawingModel();
+        $db     = $model->getRecordById($fields, $id);
         if (empty($db)) {
             $res['http_status'] = 404;
             $res['msg']         = '没有找到请求的数据';
@@ -1007,33 +1016,84 @@ class Drawing extends BaseController
         $details = $db;
 
         // id -> name
-        $details['type']  = $this->config->typesMap[$db['type']];
-        $details['level'] = $this->config->levelsMap[$db['level']];
+        $model  = new CategoryModel();
+        $fields = ['name'];
+        $temp   = $model->getById($fields, $db['category_id']);
+        if (empty($temp)) {
+            $details['category'] = '';
+        } else {
+            $details['category'] = $temp['name'];
+        }
 
-        $users_id = [
-            'creator'  => $db['creator_id'],
-            'reviewer' => $db['reviewer_id'],
+        $model  = new DeptModel();
+        $fields = ['name'];
+        $temp   = $model->getDeptRecordById($fields, $db['station_id']);
+        if (empty($temp)) {
+            $details['station'] = '';
+        } else {
+            $details['station'] = $temp['name'];
+        }
+
+        $res['http_status'] = 200;
+        $res['data']        = $details;
+        return $res;
+    }
+
+    // 2023-2-22
+    protected function _reqEdit()
+    {
+        if (!$this->validate('DrawingReqEdit')) {
+            $res['http_status'] = 400;
+            $res['msg']         = [
+                'error' => '请求数据无效',
+                'info'  => $this->validator->getErrors(),
+            ];
+            return $res;
+        }
+
+        $params = $this->request->getGet();
+        $id     = $params['id'];
+
+        $fields = ['id', 'station_id', 'dwg_name', 'category_id', 'dwg_num', 'keywords', 'info', 'file_org_name'];
+        $model  = new DrawingModel();
+        $db     = $model->getRecordById($fields, $id);
+        if (empty($db)) {
+            $res['http_status'] = 404;
+            $res['msg']         = '没有找到请求的数据';
+            return $res;
+        }
+
+        $allowWriteDeptId = $this->session->get('allowWriteDeptId');
+        if (!in_array($db['station_id'], $allowWriteDeptId)) {
+            $res['http_status'] = 401;
+            $res['msg']         = '用户没有权限';
+            return $res;
+        }
+        $record = $db;
+
+        $model        = new DeptModel();
+        $fields       = ['id', 'name', 'alias'];
+        $stationItems = $model->getDeptRecordsByIds($fields, $allowWriteDeptId);
+
+        $model         = new CategoryModel();
+        $fields        = ['id', 'name', 'alias'];
+        $categoryItems = $model->getAll($fields);
+
+        $files[] = [
+            'uid'      => $db['id'],
+            'name'     => $db['file_org_name'],
+            'status'   => 'done',
+            'response' => ['id' => $db['id']],
         ];
-        $users               = $this->_getUserName($users_id);
-        $details['creator']  = $users['creator'];
-        $details['reviewer'] = $users['reviewer'];
-
-        $details['device']  = $this->_getDeviceFullName($db['device']);
-        $details['station'] = $this->_getDeptName2($db['station_id']);
-
-        $steps       = $this->_getStepsBar($details['creator'], $details['reviewer'], $db['created_at'], $db['updated_at'], $db['place_at']);
-        $operation   = $this->_getWorkflowOperation($db['place_at']);
-        $attachments = $this->_getAttachment($dts_id);
 
         $res['http_status'] = 200;
         $res['data']        = [
-            'details'           => $details,
-            'steps'             => $steps,
-            'progressTemplates' => $this->config->progressTemplates,
-            'causes'            => $this->config->causes,
-            'operation'         => $operation,
-            'attachments'       => $attachments,
+            'record'        => $record,
+            'stationItems'  => $stationItems,
+            'categoryItems' => $categoryItems,
+            'files'         => $files,
         ];
+
         return $res;
     }
 

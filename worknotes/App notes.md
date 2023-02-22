@@ -70,9 +70,17 @@ Next：修改数据表[API，Dept，Equipment]合入生产环境[User，GE，Met
   
   5 创建附件保存文件夹，设置读写权限
   
+  6 新增 检索页
+  
+  7 新增 新建页
+  
   app_drawing
   app_drawing_category
   app_dept
+  
+  8 新增上传文件存放的临时文件夹uploads/temp，当表单确认提交成功后，将文件从临时文件夹移动至对应模块的文件夹。
    
-    
+  9 新增 详情页
+
+  
 ```
