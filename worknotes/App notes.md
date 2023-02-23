@@ -78,9 +78,13 @@ Next：修改数据表[API，Dept，Equipment]合入生产环境[User，GE，Met
   app_drawing_category
   app_dept
   
-  8 新增上传文件存放的临时文件夹uploads/temp，当表单确认提交成功后，将文件从临时文件夹移动至对应模块的文件夹。
+  8 新增上传文件存放的临时文件夹uploads/temp，当创建表单确认提交成功后，将文件从临时文件夹移动至对应模块的文件夹。
    
   9 新增 详情页
-
   
+  10 完成修改页功能-重传附件等
+  
+  11 删除整条记录：将deleted字段赋值1，清空file字段，该条记录不删除，为了serial_id 不重复使用。
+  
+  下一步：完成图纸类别定义app_drawing_category。
 ```

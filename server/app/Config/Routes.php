@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2023-02-22 20:33:33
+ * @LastEditTime: 2023-02-23 09:05:36
  */
 
 namespace Config;
@@ -142,13 +142,18 @@ $routes->group('api', function ($routes) {
     $routes->get('dts/attachment', 'Dts::downloadAttachment');
     $routes->post('dts/attachment', 'Dts::uploadAttachment');
     $routes->delete('dts/attachment', 'Dts::delAttachment');
+
     $routes->get('dts', 'Dts::queryEntry');
     $routes->post('dts', 'Dts::createOne');
     $routes->delete('dts', 'Dts::deleteOne');
     $routes->put('dts', 'Dts::updateEntry');
+
     // 2023-2-21
     $routes->get('drawing', 'Drawing::queryEntry');
     $routes->post('drawing', 'Drawing::createOne');
+    $routes->put('drawing', 'Drawing::updateOne');
+    $routes->delete('drawing', 'Drawing::deleteOne');
+
     $routes->post('drawing/file', 'Drawing::uploadFile');
     $routes->delete('drawing/file', 'Drawing::deleteFile');
     $routes->get('drawing/file', 'Drawing::downloadFile');

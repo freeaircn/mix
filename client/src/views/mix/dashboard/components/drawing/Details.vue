@@ -102,6 +102,10 @@ export default {
     },
 
     handleDownloadFile () {
+      if (this.details.file_org_name === '') {
+        this.$message.info('没有可以下载的文件')
+        return true
+      }
       const param = {
         id: this.details.id,
         file_org_name: this.details.file_org_name

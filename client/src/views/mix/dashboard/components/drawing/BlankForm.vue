@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2023-02-22 23:07:43
+ * @LastEditTime: 2023-02-23 14:46:33
 -->
 <template>
   <page-header-wrapper :title="false">
@@ -43,7 +43,7 @@
           <a-upload
             :accept="allowedFileTypes"
             :action="config.uploadUrl"
-            :data="{key: 'unsaved'}"
+            :data="{key: 'create', id: '0'}"
             :before-upload="beforeUpload"
             :showUploadList="{ showDownloadIcon: false, showRemoveIcon: true }"
             :remove="handleDeleteFile"
@@ -183,9 +183,10 @@ export default {
     },
 
     afterUpload (info) {
+      this.fileList = [...info.fileList]
       if (info.file.status === 'error' || info.file.status === 'done') {
         this.fileNumber = this.fileNumber + 1
-        this.fileList = info.fileList
+        // this.fileList = info.fileList
       }
       if (info.file.status === 'done') {
         this.$message.success('文件上传成功')
@@ -205,7 +206,7 @@ export default {
       this.fileList = newFileList
       this.fileNumber = this.fileNumber - 1
       if (file.status === 'done') {
-        return apiDeleteFile({ key: 'unsaved', id: file.response.id })
+        return apiDeleteFile({ key: 'create', id: file.response.id, file_org_name: file.name })
           .then(() => {
             return true
           })

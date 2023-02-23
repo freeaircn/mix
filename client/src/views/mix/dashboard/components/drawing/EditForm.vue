@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2023-02-22 23:26:29
+ * @LastEditTime: 2023-02-23 14:45:48
 -->
 <template>
   <page-header-wrapper :title="false">
@@ -16,7 +16,7 @@
         :wrapper-col="wrapperCol"
       >
         <a-form-model-item label="站点" prop="station_id">
-          <a-select v-model="record.station_id" disabled >
+          <a-select v-model="record.station_id" >
             <a-select-option v-for="d in stationItems" :key="d.id" :value="d.id">
               {{ d.name }}
             </a-select-option>
@@ -44,7 +44,7 @@
           <a-upload
             :accept="allowedFileTypes"
             :action="config.uploadUrl"
-            :data="{key: 'saved'}"
+            :data="{key: 'update', id: record.id}"
             :before-upload="beforeUpload"
             :showUploadList="{ showDownloadIcon: true, showRemoveIcon: true }"
             :fileList="fileList"
@@ -90,7 +90,7 @@ export default {
       //
       id: '0',
       record: {
-        id: '',
+        id: '0',
         station_id: '',
         dwg_name: '',
         category_id: '',
@@ -128,8 +128,14 @@ export default {
       return this.fileNumber >= this.config.maxFileNumber
     }
   },
-  created () {
+  created: function () {
     this.id = (this.$route.params.id) ? this.$route.params.id : '0'
+    //
+    this.ready = false
+    this.fileNumber = 0
+    this.config.allowedFileTypes.forEach((item) => {
+      this.allowedFileTypes = this.allowedFileTypes + item + ', '
+    })
   },
   mounted () {
     this.handleQueryDetails()
@@ -154,6 +160,7 @@ export default {
           this.ready = true
         })
         .catch(() => {
+          this.record.id = '0'
           this.record.station_id = ''
           this.record.dwg_name = ''
           this.record.category_id = ''
@@ -201,12 +208,17 @@ export default {
     },
 
     afterUpload (info) {
+      this.fileList = [...info.fileList]
       if (info.file.status === 'error' || info.file.status === 'done') {
         this.fileNumber = this.fileNumber + 1
-        this.fileList = info.fileList
       }
+      // if (info.file.status === 'error' || info.file.status === 'done') {
+      //   this.fileNumber = this.fileNumber + 1
+      //   this.fileList = info.fileList
+      // }
       if (info.file.status === 'done') {
         this.$message.success('文件上传成功')
+        console.log(info)
       } else if (info.file.status === 'error') {
         if (info.file.response.hasOwnProperty('messages')) {
           this.$message.error(info.file.response.messages.error)
@@ -223,7 +235,7 @@ export default {
       this.fileList = newFileList
       this.fileNumber = this.fileNumber - 1
       if (file.status === 'done') {
-        return apiDeleteFile({ key: 'unsaved', id: file.response.id })
+        return apiDeleteFile({ key: 'update', id: file.response.id, file_org_name: file.name })
           .then(() => {
             return true
           })
@@ -273,11 +285,34 @@ export default {
       this.$refs.form.validate(valid => {
         if (valid) {
           var data = { ...this.record }
+          data.dwg_name = this.record.dwg_name.trim()
+          data.keywords = this.record.keywords.trim()
+          //
+          var part1 = ''
+          var part2 = ''
+          for (var i = 0; i < this.stationItems.length; i++) {
+            if (this.stationItems[i].id === data.station_id) {
+              part1 = this.stationItems[i].alias
+            }
+          }
+          for (i = 0; i < this.categoryItems.length; i++) {
+            if (this.categoryItems[i].id === data.category_id) {
+              part2 = this.categoryItems[i].alias
+            }
+          }
+          if (part1 !== '' && part2 !== '') {
+            data.dwg_num = part1 + '-' + part2
+          } else {
+            return false
+          }
+          //
           apiUpdate(data)
             .then(() => {
+              // this.$router.push({ path: `/dashboard/drawing/list` })
               this.$router.back()
             })
             .catch(() => {
+              // this.ready = false
             })
         } else {
           return false
