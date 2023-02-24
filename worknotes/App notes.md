@@ -43,7 +43,7 @@ Next：修改数据表[API，Dept，Equipment]合入生产环境[User，GE，Met
 1 变更：
   1 取消 v1.0.4 增加的DB：attachment数据表，DTS模块的附件仍由dts_attachment数据表保存
   
-2 记录
+2 新增
   增加图纸资料页面.
   
   操作：查询，上传文件，下载，删除。
@@ -86,5 +86,20 @@ Next：修改数据表[API，Dept，Equipment]合入生产环境[User，GE，Met
   
   11 删除整条记录：将deleted字段赋值1，清空file字段，该条记录不删除，为了serial_id 不重复使用。
   
-  下一步：完成图纸类别定义app_drawing_category。
+  12 完成图纸类别定义app_drawing_category。
+  
+```
+
+### 3. v1.0.6  2023-2-24 开始
+```
+1 变更：
+  无
+  
+2 新增
+  增加 党支部资料 页面.
+  
+  分类：党务公开、支部风采、支部成员、主题教育、学习园地、联系方式
+  
+  完成：图纸库模块增加 预览pdf文件功能。下一步：党支部资料 页面，预览word文件。
+  
 ```

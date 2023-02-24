@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2022-06-09 10:48:55
+ * @LastEditTime: 2023-02-24 20:11:30
 -->
 <template>
   <page-header-wrapper :title="false">
@@ -88,7 +88,7 @@
 </template>
 
 <script>
-import myConfig from '@/config/myConfig'
+import { dts as CONFIG } from '@/config/myConfig'
 import { mapGetters } from 'vuex'
 import { queryDts, delAttachment, createDts } from '@/api/mix/dts'
 import { listToTree, arraySplitToStr } from '@/utils/util'
@@ -129,7 +129,7 @@ export default {
   created: function () {
     this.ready = false
     this.fileNumber = 0
-    myConfig.dtsAttachmentFileTypes.forEach((item) => {
+    CONFIG.allowedFileTypes.forEach((item) => {
       this.acceptFileTypes = this.acceptFileTypes + item + ', '
     })
     this.loadBlankForm()
@@ -139,7 +139,7 @@ export default {
       'userInfo'
     ]),
     disableUploadBtn: function () {
-      return this.fileNumber >= myConfig.dtsAttachmentMaxNumber
+      return this.fileNumber >= CONFIG.maxFileNumber
     }
   },
   methods: {
@@ -191,7 +191,7 @@ export default {
           return reject(false)
         }
 
-        if (myConfig.dtsAttachmentFileTypes.indexOf(file.type) === -1) {
+        if (CONFIG.allowedFileTypes.indexOf(file.type) === -1) {
           this.$message.error('允许文件类型: jpg, png, txt, pdf, doc, docx, xls, xlsx, ppt, pptx, zip')
           // eslint-disable-next-line prefer-promise-reject-errors
           return reject(false)
@@ -203,7 +203,7 @@ export default {
           return reject(false)
         }
 
-        if (file.size > myConfig.dtsAttachmentMaxSize) {
+        if (file.size > CONFIG.maxFileSize) {
           this.$message.error('文件大小超限')
           // eslint-disable-next-line prefer-promise-reject-errors
           return reject(false)

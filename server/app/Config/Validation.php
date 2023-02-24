@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2023-02-23 14:50:03
+ * @LastEditTime: 2023-02-24 19:39:25
  */
 
 namespace Config;
@@ -265,9 +265,9 @@ class Validation
     // Drawing
     public $DrawingReqList = [
         'station_id'  => 'required|regex_match[^\d{0,2}$]',
-        'category_id' => 'required|regex_match[^\d{0,2}$]',
-        'dwg_name'    => 'regex_match[/^([\x{4e00}-\x{9fa5}_-a-zA-Z0-9]{0,60})$/u]',
-        'dwg_num'     => 'regex_match[/^([-a-zA-Z0-9]{0,30})$/u]',
+        'category_id' => 'required|is_natural',
+        'dwg_name'    => 'regex_match[/^([\x{4e00}-\x{9fa5}a-zA-Z0-9_-]{0,60})$/u]',
+        'dwg_num'     => 'regex_match[/^([a-zA-Z0-9-]{0,30})$/u]',
         'keywords'    => 'regex_match[/^([\x{4e00}-\x{9fa5}a-zA-Z0-9，,]{0,60})$/u]',
         'limit'       => 'required|regex_match[^[1-9]\d{0,2}$]',
         'offset'      => 'required|regex_match[^[1-9]\d{0,9}$]',
@@ -286,9 +286,9 @@ class Validation
 
     public $DrawingCreateOne = [
         'station_id'  => 'required|regex_match[^[1-9]\d{0,2}$]',
-        'category_id' => 'required|regex_match[^[1-9]$]',
-        'dwg_name'    => 'required|regex_match[/^([\x{4e00}-\x{9fa5}_-a-zA-Z0-9]{0,60})$/u]',
-        'dwg_num'     => 'required|regex_match[/^([-a-zA-Z0-9]{0,30})$/u]',
+        'category_id' => 'required|is_natural_no_zero',
+        'dwg_name'    => 'required|regex_match[/^([\x{4e00}-\x{9fa5}a-zA-Z0-9_-]{0,60})$/u]',
+        'dwg_num'     => 'required|regex_match[/^([a-zA-Z0-9-]{0,30})$/u]',
         'keywords'    => 'required|regex_match[/^([\x{4e00}-\x{9fa5}a-zA-Z0-9，,]{0,60})$/u]',
         'info'        => 'regex_match[/^([\x{4e00}-\x{9fa5}a-zA-Z0-9,.，。]{0,1000})$/u]',
     ];
@@ -309,9 +309,9 @@ class Validation
     public $DrawingUpdateOne = [
         'id'          => 'required|is_natural_no_zero',
         'station_id'  => 'required|regex_match[^[1-9]\d{0,2}$]',
-        'category_id' => 'required|regex_match[^[1-9]$]',
-        'dwg_name'    => 'required|regex_match[/^([\x{4e00}-\x{9fa5}_-a-zA-Z0-9]{0,60})$/u]',
-        'dwg_num'     => 'required|regex_match[/^([-a-zA-Z0-9]{0,30})$/u]',
+        'category_id' => 'required|is_natural_no_zero',
+        'dwg_name'    => 'required|regex_match[/^([\x{4e00}-\x{9fa5}a-zA-Z0-9_-]{0,60})$/u]',
+        'dwg_num'     => 'required|regex_match[/^([a-zA-Z0-9-]{0,30})$/u]',
         'keywords'    => 'required|regex_match[/^([\x{4e00}-\x{9fa5}a-zA-Z0-9，,]{0,60})$/u]',
         'info'        => 'regex_match[/^([\x{4e00}-\x{9fa5}a-zA-Z0-9,.，。]{0,1000})$/u]',
     ];

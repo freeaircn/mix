@@ -64,9 +64,14 @@
         :loading="loading"
         @change="handleTableChange"
       >
+        <span slot="dwg_name" slot-scope="text, record">
+          <template>
+            <a @click="handleQueryDetails(record)">{{ text }}</a>
+          </template>
+        </span>
         <span slot="file_org_name" slot-scope="text, record">
           <template>
-            <a @click="handleDownloadFile(record)">{{ text }}</a>
+            <a @click="handleQueryDetails(record)">{{ text }}</a>
           </template>
         </span>
         <span slot="action" slot-scope="text, record">
@@ -128,7 +133,8 @@ export default {
       columns: [
         {
           title: '图名',
-          dataIndex: 'dwg_name'
+          dataIndex: 'dwg_name',
+          scopedSlots: { customRender: 'dwg_name' }
         },
         {
           title: '图号',
@@ -148,7 +154,7 @@ export default {
           scopedSlots: { customRender: 'file_org_name' }
         },
         {
-          title: '上传者',
+          title: '编辑人员',
           dataIndex: 'username'
         },
         {

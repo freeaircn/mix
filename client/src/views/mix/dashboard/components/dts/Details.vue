@@ -112,7 +112,7 @@
 </template>
 
 <script>
-import myConfig from '@/config/myConfig'
+import { dts as CONFIG } from '@/config/myConfig'
 import MyForm from './Form'
 import ScoreForm from './ScoreForm'
 import ResolveForm from './ResolveForm'
@@ -200,7 +200,7 @@ export default {
       'userInfo'
     ]),
     disableUploadBtn: function () {
-      return this.fileNumber >= myConfig.dtsAttachmentMaxNumber
+      return this.fileNumber >= CONFIG.maxFileNumber
     },
     showRmvAttachmentIcon: function () {
       return this.operation.showRmvAttachmentIcon
@@ -208,7 +208,7 @@ export default {
   },
   created () {
     this.dts_id = (this.$route.params.id) ? this.$route.params.id : '0'
-    myConfig.dtsAttachmentFileTypes.forEach((item) => {
+    CONFIG.allowedFileTypes.forEach((item) => {
       this.acceptFileTypes = this.acceptFileTypes + item + ', '
     })
   },
@@ -262,7 +262,7 @@ export default {
           return reject(false)
         }
 
-        if (myConfig.dtsAttachmentFileTypes.indexOf(file.type) === -1) {
+        if (CONFIG.allowedFileTypes.indexOf(file.type) === -1) {
           this.$message.error('允许文件类型: jpg, png, txt, pdf, doc, docx, xls, xlsx, ppt, pptx, zip')
           // eslint-disable-next-line prefer-promise-reject-errors
           return reject(false)
@@ -274,7 +274,7 @@ export default {
           return reject(false)
         }
 
-        if (file.size > myConfig.dtsAttachmentMaxSize) {
+        if (file.size > CONFIG.maxFileSize) {
           this.$message.error('附件大小超限')
           // eslint-disable-next-line prefer-promise-reject-errors
           return reject(false)

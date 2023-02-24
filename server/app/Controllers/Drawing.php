@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2023-02-23 15:38:43
+ * @LastEditTime: 2023-02-24 19:46:45
  */
 
 namespace App\Controllers;
@@ -118,9 +118,11 @@ class Drawing extends BaseController
             return $this->fail($this->config->fileInvalidTypeMsg);
         }
 
-        $file_org_name = $file->getName();
-        $file_new_name = $file->getRandomName();
-        $size          = $file->getSize();
+        $file_org_name  = $file->getName();
+        $file_new_name  = $file->getRandomName();
+        $file_ext       = $file->guessExtension();
+        $file_mime_type = $file->getMimeType();
+        $size           = $file->getSize();
 
         // 注意
         if ($key === 'create') {
@@ -136,10 +138,12 @@ class Drawing extends BaseController
             $cache = $this->session->get('drawingFileCache');
             $time  = time();
             $data  = [
-                'id'            => $time,
-                'file_org_name' => $file_org_name,
-                'file_new_name' => $file_new_name,
-                'size'          => $size,
+                'id'             => $time,
+                'file_org_name'  => $file_org_name,
+                'file_new_name'  => $file_new_name,
+                'file_ext'       => $file_ext,
+                'file_mime_type' => $file_mime_type,
+                'size'           => $size,
             ];
             if (!$cache) {
                 $this->session->set('drawingFileCache', [$data]);
@@ -147,7 +151,8 @@ class Drawing extends BaseController
                 $this->session->push('drawingFileCache', [$data]);
             }
 
-            $res['id'] = $time;
+            $res['id']   = $time;
+            $res['id22'] = $file_mime_type;
             return $this->respond($res);
         }
         // 注意
@@ -183,15 +188,15 @@ class Drawing extends BaseController
 
             $uid      = $this->session->get('id');
             $username = $this->session->get('username');
-            $ext      = explode('.', $file_org_name);
             //
             $draft = [
-                'file_org_name' => $file_org_name,
-                'file_new_name' => $file_new_name,
-                'file_ext'      => end($ext),
-                'size'          => $size,
-                'user_id'       => $uid,
-                'username'      => $username,
+                'file_org_name'  => $file_org_name,
+                'file_new_name'  => $file_new_name,
+                'file_ext'       => $file_ext,
+                'file_mime_type' => $file_mime_type,
+                'size'           => $size,
+                'user_id'        => $uid,
+                'username'       => $username,
             ];
 
             $result = $model->updateRecordById($draft, $id);
@@ -203,17 +208,7 @@ class Drawing extends BaseController
                 return $this->failServerError('服务器处理发生错误，稍候再试');
             }
 
-            // $files[] = [
-            //     'uid'      => $id,
-            //     'name'     => $file_org_name,
-            //     'status'   => 'done',
-            //     'response' => ['id' => $id],
-            // ];
-
             $res['msg'] = '完成文件上传';
-            // $res['data'] = [
-            //     'files' => $files,
-            // ];
             return $this->respond($res);
         }
 
@@ -276,12 +271,13 @@ class Drawing extends BaseController
             $uid      = $this->session->get('id');
             $username = $this->session->get('username');
             $draft    = [
-                'file_org_name' => '',
-                'file_new_name' => '',
-                'file_ext'      => '',
-                'size'          => 0,
-                'user_id'       => $uid,
-                'username'      => $username,
+                'file_org_name'  => '',
+                'file_new_name'  => '',
+                'file_ext'       => '',
+                'file_mime_type' => '',
+                'size'           => 0,
+                'user_id'        => $uid,
+                'username'       => $username,
             ];
             $result = $model->updateRecordById($draft, $id);
             if ($result === false) {
@@ -352,13 +348,13 @@ class Drawing extends BaseController
         }
         // 注意
         if (count($temp) == 1) {
-            $t   = $temp[0];
-            $ext = explode('.', $t['file_org_name']);
+            $t = $temp[0];
             //
-            $draft['file_org_name'] = $t['file_org_name'];
-            $draft['file_new_name'] = $t['file_new_name'];
-            $draft['file_ext']      = end($ext);
-            $draft['size']          = $t['size'];
+            $draft['file_org_name']  = $t['file_org_name'];
+            $draft['file_new_name']  = $t['file_new_name'];
+            $draft['file_ext']       = $t['file_ext'];
+            $draft['file_mime_type'] = $t['file_mime_type'];
+            $draft['size']           = $t['size'];
             //
             $tempPath = WRITEPATH . $this->config->tempPath;
             $filePath = WRITEPATH . $this->config->filePath;
@@ -393,7 +389,7 @@ class Drawing extends BaseController
         $id            = $params['id'];
         $file_org_name = $params['file_org_name'];
 
-        $fields = ['station_id', 'file_org_name', 'file_new_name'];
+        $fields = ['station_id', 'file_org_name', 'file_new_name', 'file_mime_type'];
         $model  = new DrawingModel($fields, $id);
         $db     = $model->getRecordById($fields, $id);
 
@@ -415,7 +411,8 @@ class Drawing extends BaseController
             return $this->failNotFound('文件不存在');
         }
 
-        $type = filetype($file);
+        // $type = filetype($file);
+        $type = $db['file_mime_type'];
         header("Content-type:" . $type);
         header("Content-Disposition: attachment; filename=" . urlencode($db['file_org_name']));
         header("Content-Transfer-Encoding: binary");
@@ -511,14 +508,15 @@ class Drawing extends BaseController
         $uid      = $this->session->get('id');
         $username = $this->session->get('username');
         $draft    = [
-            'file_org_name' => '',
-            'file_new_name' => '',
-            'file_ext'      => '',
-            'size'          => 0,
-            'user_id'       => $uid,
-            'username'      => $username,
+            'file_org_name'  => '',
+            'file_new_name'  => '',
+            'file_ext'       => '',
+            'file_mime_type' => '',
+            'size'           => 0,
+            'user_id'        => $uid,
+            'username'       => $username,
             // 注意
-            'deleted'       => 1,
+            'deleted'        => 1,
         ];
 
         $result = $model->updateRecordById($draft, $id);
@@ -692,7 +690,7 @@ class Drawing extends BaseController
         $params = $this->request->getGet();
         $id     = $params['id'];
 
-        $fields = ['id', 'station_id', 'dwg_name', 'category_id', 'dwg_num', 'keywords', 'info', 'file_org_name', 'username', 'created_at', 'updated_at'];
+        $fields = ['id', 'station_id', 'dwg_name', 'category_id', 'dwg_num', 'keywords', 'info', 'file_org_name', 'file_ext', 'username', 'created_at', 'updated_at'];
         $model  = new DrawingModel();
         $db     = $model->getRecordById($fields, $id);
         if (empty($db)) {

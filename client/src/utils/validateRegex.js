@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2019-12-24 09:56:03
  * @LastEditors: freeair
- * @LastEditTime: 2023-02-22 19:46:31
+ * @LastEditTime: 2023-02-24 15:52:50
  */
 
 // 正则表达式
@@ -58,7 +58,7 @@ export const positiveFloatNumber = {
 }
 
 export const englishChineseNum__ = {
-  regex: /^([\u4e00-\u9fa5_-a-zA-Z0-9]{0,60})$/u,
+  regex: /^([\u4e00-\u9fa5a-zA-Z0-9_-]{0,60})$/u,
   msg: '请输入中文、英文、数字、横线或下划线，字数少于60个'
 }
 
@@ -73,6 +73,6 @@ export const englishChineseNumPunctuation = {
 }
 
 export const englishNum__ = {
-  regex: /^([-a-zA-Z0-9]{0,30})$/u,
+  regex: /^([a-zA-Z0-9-]{0,30})$/u,
   msg: '请输入英文、数字或横线，字数少于30个'
 }

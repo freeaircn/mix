@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2023-02-23 15:35:18
+ * @LastEditTime: 2023-02-24 19:50:38
  */
 
 namespace App\Models\Drawing;
@@ -17,7 +17,7 @@ class Basic extends Model
     protected $table;
 
     protected $primaryKey    = 'id';
-    protected $allowedFields = ['station_id', 'category_id', 'serial_id', 'dwg_num', 'dwg_name', 'file_org_name', 'file_new_name', 'file_ext', 'size', 'path', 'keywords', 'info', 'user_id', 'username', 'deleted', 'created_at', 'updated_at'];
+    protected $allowedFields = ['station_id', 'category_id', 'serial_id', 'dwg_num', 'dwg_name', 'file_org_name', 'file_new_name', 'file_ext', 'file_mime_type', 'size', 'path', 'keywords', 'info', 'user_id', 'username', 'deleted', 'created_at', 'updated_at'];
 
     protected $useAutoIncrement = true;
 

@@ -87,7 +87,7 @@
 </template>
 
 <script>
-import myConfig from '@/config/myConfig'
+import { avatarApi } from '@/config/myConfig'
 import { baseMixin } from '@/store/app-mixin'
 import { mapGetters, mapActions } from 'vuex'
 import { apiQueryAccount } from '@/api/mix/account'
@@ -98,7 +98,7 @@ export default {
   mixins: [baseMixin],
   data () {
     return {
-      uploadAction: myConfig.uploadAvatarApi,
+      uploadAction: avatarApi,
       isUploading: false,
       // My code
       labelCol: {

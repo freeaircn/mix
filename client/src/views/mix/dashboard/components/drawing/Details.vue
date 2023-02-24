@@ -37,20 +37,34 @@
 
       <div style="margin-bottom: 8px">
         <a-button type="primary" @click="handleDownloadFile" style="margin-right: 16px">下载文件</a-button>
+        <a-button type="primary" @click="handlePreviewFile" style="margin-right: 16px">预览文件</a-button>
         <a-button type="default" @click="handleExit" style="margin-right: 16px">返回</a-button>
       </div>
     </a-card>
+
+    <a-modal v-model="visible" title="预览" width="70%">
+      <!-- <iframe :src="pdf_url" type="application/x-google-chrome-pdf" width="100%" height="100%" style="border: none;">
+        <p>浏览器不支持</p>
+      </iframe> -->
+      <pdf ref="pdf" :src="pdf_url"></pdf>
+    </a-modal>
 
   </page-header-wrapper>
 </template>
 
 <script>
+import { drawing as CONFIG } from '@/config/myConfig'
 import { mapGetters } from 'vuex'
 import { baseMixin } from '@/store/app-mixin'
 import { apiQuery, apiDownloadFile } from '@/api/mix/drawing'
+//
+import pdf from 'vue-pdf'
 
 export default {
   name: 'Details',
+  components: {
+      pdf
+  },
   mixins: [baseMixin],
   data () {
     return {
@@ -64,11 +78,14 @@ export default {
         dwg_num: '',
         keywords: '',
         file_org_name: '',
+        file_ext: '',
         info: '',
         username: '',
         created_at: '',
         updated_at: ''
-      }
+      },
+      pdf_url: '',
+      visible: false
       // -- 2023-2-22
     }
   },
@@ -137,6 +154,47 @@ export default {
         .catch(() => {
           this.$message.info('文件下载失败')
         })
+    },
+
+    handlePreviewFile () {
+      if (this.details.file_org_name === '') {
+        this.$message.info('没有可预览的文件')
+        return true
+      }
+      var ext = this.details.file_ext
+      if (CONFIG.allowedPreviewFileTypes.includes(ext) === false) {
+        this.$message.info('文件类型不支持')
+        return true
+      }
+      //
+      const id = this.details.id
+      const file = this.details.file_org_name
+      this.$router.push({ path: `/dashboard/drawing/file_preview/${id}/${file}` })
+      //
+      // const param = {
+      //   id: this.details.id,
+      //   file_org_name: this.details.file_org_name
+      // }
+      // apiDownloadFile(param)
+      //   .then((res) => {
+      //     const { data, headers } = res
+
+      //     const str = headers['content-type']
+      //     if (str.indexOf('json') !== -1) {
+      //       this.$message.warning('没有权限')
+      //     } else {
+      //       // 下载文件
+      //       const blob = new Blob([data], { type: headers['content-type'] })
+      //       const url = URL.createObjectURL(blob)
+      //       this.pdf_url = url
+
+      //       this.visible = true
+      //     }
+      //   })
+      //   .catch(() => {
+      //     this.visible = false
+      //     this.$message.info('文件预览失败')
+      //   })
     },
 
     handleExit () {

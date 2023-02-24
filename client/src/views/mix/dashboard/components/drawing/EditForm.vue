@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2023-02-23 14:45:48
+ * @LastEditTime: 2023-02-24 20:29:28
 -->
 <template>
   <page-header-wrapper :title="false">
@@ -67,7 +67,7 @@
 </template>
 
 <script>
-import myConfig from '@/config/myConfig'
+import { drawing as CONFIG } from '@/config/myConfig'
 import * as pattern from '@/utils/validateRegex'
 import { mapGetters } from 'vuex'
 //
@@ -114,10 +114,10 @@ export default {
         ]
       },
       //
-      config: myConfig.drawing,
       allowedFileTypes: '',
       fileNumber: 0,
-      fileList: []
+      fileList: [],
+      config: CONFIG
     }
   },
   computed: {
@@ -125,7 +125,7 @@ export default {
       'userInfo'
     ]),
     disableUploadBtn: function () {
-      return this.fileNumber >= this.config.maxFileNumber
+      return this.fileNumber >= CONFIG.maxFileNumber
     }
   },
   created: function () {
@@ -133,7 +133,7 @@ export default {
     //
     this.ready = false
     this.fileNumber = 0
-    this.config.allowedFileTypes.forEach((item) => {
+    CONFIG.allowedFileTypes.forEach((item) => {
       this.allowedFileTypes = this.allowedFileTypes + item + ', '
     })
   },
@@ -185,7 +185,7 @@ export default {
           return reject(false)
         }
 
-        if (this.config.allowedFileTypes.indexOf(file.type) === -1) {
+        if (CONFIG.allowedFileTypes.indexOf(file.type) === -1) {
           this.$message.error('允许文件类型: pdf, zip')
           // eslint-disable-next-line prefer-promise-reject-errors
           return reject(false)
@@ -197,7 +197,7 @@ export default {
           return reject(false)
         }
 
-        if (file.size > this.config.maxFileSize) {
+        if (file.size > CONFIG.maxFileSize) {
           this.$message.error('文件大小超过 100MB')
           // eslint-disable-next-line prefer-promise-reject-errors
           return reject(false)
