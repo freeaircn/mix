@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-09-06 01:17:02
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-29 15:30:52
+ * @LastEditTime: 2023-02-26 21:45:56
  */
 
 namespace App\Libraries;
@@ -69,4 +69,23 @@ class MyUtils
     //             break;
     //     }
     // }
+
+    public function getAllChild($array, $pid = 0, $level = 0)
+    {
+        if (empty($array)) {
+            return [];
+        }
+
+        static $result = [];
+        //
+        $level++;
+        foreach ($array as $key => $value) {
+            if ($value['pid'] == $pid) {
+                $result[] = $value;
+                unset($array[$key]);
+                $this->getAllChild($array, $value['id']);
+            }
+        }
+        return $result;
+    }
 }

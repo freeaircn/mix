@@ -42,13 +42,6 @@
       </div>
     </a-card>
 
-    <a-modal v-model="visible" title="预览" width="70%">
-      <!-- <iframe :src="pdf_url" type="application/x-google-chrome-pdf" width="100%" height="100%" style="border: none;">
-        <p>浏览器不支持</p>
-      </iframe> -->
-      <pdf ref="pdf" :src="pdf_url"></pdf>
-    </a-modal>
-
   </page-header-wrapper>
 </template>
 
@@ -83,9 +76,7 @@ export default {
         username: '',
         created_at: '',
         updated_at: ''
-      },
-      pdf_url: '',
-      visible: false
+      }
       // -- 2023-2-22
     }
   },
@@ -170,31 +161,6 @@ export default {
       const id = this.details.id
       const file = this.details.file_org_name
       this.$router.push({ path: `/dashboard/drawing/file_preview/${id}/${file}` })
-      //
-      // const param = {
-      //   id: this.details.id,
-      //   file_org_name: this.details.file_org_name
-      // }
-      // apiDownloadFile(param)
-      //   .then((res) => {
-      //     const { data, headers } = res
-
-      //     const str = headers['content-type']
-      //     if (str.indexOf('json') !== -1) {
-      //       this.$message.warning('没有权限')
-      //     } else {
-      //       // 下载文件
-      //       const blob = new Blob([data], { type: headers['content-type'] })
-      //       const url = URL.createObjectURL(blob)
-      //       this.pdf_url = url
-
-      //       this.visible = true
-      //     }
-      //   })
-      //   .catch(() => {
-      //     this.visible = false
-      //     this.$message.info('文件预览失败')
-      //   })
     },
 
     handleExit () {

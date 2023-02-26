@@ -157,6 +157,9 @@ $routes->group('api', function ($routes) {
     $routes->post('drawing/file', 'Drawing::uploadFile');
     $routes->delete('drawing/file', 'Drawing::deleteFile');
     $routes->get('drawing/file', 'Drawing::downloadFile');
+
+    // 2023-2-26
+    $routes->get('party_branch', 'PartyBranch::queryEntry');
     //
     $routes->add('(:any)', '404');
 });

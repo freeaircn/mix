@@ -4,17 +4,17 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2023-02-26 20:03:25
+ * @LastEditTime: 2023-02-26 23:19:10
  */
 
 namespace App\Controllers;
 
 use App\Models\Common\DeptModel;
 use App\Models\Common\UserModel;
-// use App\Models\Dts\DtsAttachmentModel;
 //
 use App\Models\Drawing\Basic as DrawingModel;
 use App\Models\Drawing\Category as CategoryModel;
+use App\Models\PartyBranch\Basic as PartyBranchModel;
 //
 use CodeIgniter\API\ResponseTrait;
 //
@@ -22,7 +22,7 @@ use CodeIgniter\Exceptions\CriticalError;
 //
 use CodeIgniter\Files\Exceptions\FileException;
 
-class Drawing extends BaseController
+class PartyBranch extends BaseController
 {
     use ResponseTrait;
 
@@ -30,7 +30,7 @@ class Drawing extends BaseController
 
     public function __construct()
     {
-        $this->config = config('Config\\MyConfig\\Drawing');
+        $this->config = config('Config\\MyConfig\\DocStore');
     }
 
     public function queryEntry()
@@ -538,24 +538,38 @@ class Drawing extends BaseController
         return $this->respond($res);
     }
 
-    // 2023-2-21
+    // 2023-2-26
     protected function _reqSearchOptions()
     {
-        $allowReadDeptId = $this->session->get('allowReadDeptId');
-        if (empty($allowReadDeptId)) {
+        $defaultStationId = $this->session->get('allowDefaultDeptId');
+        if (empty($defaultStationId)) {
             $res['http_status'] = 401;
             $res['msg']         = '用户没有权限';
             return $res;
         }
 
-        $model        = new DeptModel();
-        $fields       = ['id', 'name'];
-        $stationItems = $model->getDeptRecordsByIds($fields, $allowReadDeptId);
+        $model  = new DeptModel();
+        $fields = ['id', 'name'];
+        // 注意
+        $stationItems = $model->getDeptRecordsByIds($fields, [$defaultStationId]);
+        // 注意 数组下标
+        $CATEGORY          = $this->config->CATEGORY[$defaultStationId];
+        $PARTY_BRANCH_CODE = $this->config->PARTY_BRANCH_CODE;
 
-        $model         = new CategoryModel();
-        $fields        = ['id', 'name'];
-        $categoryItems = $model->getAll($fields);
-        array_unshift($categoryItems, ['id' => '0', 'name' => '全部']);
+        $pid = 0;
+        foreach ($CATEGORY as $v) {
+            if ($v['code'] === $PARTY_BRANCH_CODE) {
+                $pid = $v['id'];
+                break;
+            }
+        }
+
+        $categoryItems = [];
+        if ($pid != 0) {
+            helper('my_array');
+            $categoryItems = my_get_all_children($CATEGORY, $pid);
+        }
+        array_unshift($categoryItems, ['id' => '0', 'name' => '全部', 'code' => '0']);
 
         $res['http_status'] = 200;
         $res['data']        = [
@@ -565,10 +579,10 @@ class Drawing extends BaseController
         return $res;
     }
 
-    // 2023-2-21
+    // 2023-2-26
     protected function _reqList()
     {
-        if (!$this->validate('DrawingReqList')) {
+        if (!$this->validate('PartBranchReqList')) {
             $res['http_status'] = 400;
             $res['msg']         = [
                 'error' => '请求数据无效',
@@ -592,16 +606,14 @@ class Drawing extends BaseController
             $res['data']        = ['total' => 0, 'data' => []];
             return $res;
         }
+        // 注意
         $query['station_id'] = [$param['station_id']];
 
         if ($param['category_id'] !== '0') {
             $query['category_id'] = $param['category_id'];
         }
-        if (isset($param['dwg_name']) && $param['dwg_name'] !== '') {
-            $query['dwg_name'] = $param['dwg_name'];
-        }
-        if (isset($param['dwg_num']) && $param['dwg_num'] !== '') {
-            $query['dwg_num'] = $param['dwg_num'];
+        if (isset($param['title']) && $param['title'] !== '') {
+            $query['title'] = $param['title'];
         }
         if (isset($param['keywords']) && $param['keywords'] !== '') {
             $query['keywords'] = $param['keywords'];
@@ -611,9 +623,9 @@ class Drawing extends BaseController
         $query['deleted'] = 0;
         $query['limit']   = $param['limit'];
         $query['offset']  = $param['offset'];
-        $fields           = ['id', 'dwg_name', 'dwg_num', 'category_id', 'keywords', 'file_org_name', 'username', 'created_at', 'updated_at'];
+        $fields           = ['id', 'title', 'doc_num', 'category_id', 'secret_level', 'retention_period', 'file_org_name', 'paper_place', 'username', 'updated_at'];
 
-        $model  = new DrawingModel();
+        $model  = new PartyBranchModel();
         $result = $model->getRecordsByMultiConditions($fields, $query);
 
         if ($result['total'] === 0) {
@@ -623,18 +635,13 @@ class Drawing extends BaseController
         }
 
         // id => name
-        $model         = new CategoryModel();
-        $fields        = ['id', 'name'];
-        $categoryItems = $model->getAll($fields);
-
-        $cnt = count($result['data']);
+        // 注意：数组下标
+        $categoryItems = $this->config->CATEGORY[$param['station_id']];
+        $cnt           = count($result['data']);
         for ($i = 0; $i < $cnt; $i++) {
-            $result['data'][$i]['category'] = '';
-            foreach ($categoryItems as $d) {
-                if ($d['id'] === $result['data'][$i]['category_id']) {
-                    $result['data'][$i]['category'] = $d['name'];
-                }
-            }
+            $result['data'][$i]['category']         = $this->_getNameMap($categoryItems, $result['data'][$i]['category_id']);
+            $result['data'][$i]['secret_level']     = $this->_getNameMap($this->config->SECRET_LEVEL, $result['data'][$i]['secret_level']);
+            $result['data'][$i]['retention_period'] = $this->_getNameMap($this->config->RETENTION_PERIOD, $result['data'][$i]['retention_period']);
         }
 
         $res['http_status'] = 200;
@@ -791,6 +798,20 @@ class Drawing extends BaseController
         ];
 
         return $res;
+    }
+
+    // 2023-2-26 公共方法
+    protected function _getNameMap(array $map = null, $id = 0, $key = 'id')
+    {
+        $name = '';
+        foreach ($map as $v) {
+            // 注意 ==
+            if ($v[$key] == $id) {
+                $name = $v['name'];
+                break;
+            }
+        }
+        return $name;
     }
 
 }

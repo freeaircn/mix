@@ -50,7 +50,8 @@ import {
   FormModel,
   Tree,
   TreeSelect,
-  Cascader
+  Cascader,
+  Carousel
 } from 'ant-design-vue'
 // import Viser from 'viser-vue'
 
@@ -110,6 +111,7 @@ Vue.use(FormModel)
 Vue.use(Tree)
 Vue.use(TreeSelect)
 Vue.use(Cascader)
+Vue.use(Carousel)
 
 Vue.prototype.$confirm = Modal.confirm
 Vue.prototype.$message = message

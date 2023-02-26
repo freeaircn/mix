@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2023-02-24 19:39:25
+ * @LastEditTime: 2023-02-26 22:22:13
  */
 
 namespace Config;
@@ -318,6 +318,16 @@ class Validation
 
     public $DrawingDeleteOne = [
         'id' => 'required|is_natural_no_zero',
+    ];
+
+    // 2023-2-26
+    public $PartBranchReqList = [
+        'station_id'  => 'required|regex_match[^\d{0,2}$]',
+        'category_id' => 'required|is_natural',
+        'title'       => 'regex_match[/^([\x{4e00}-\x{9fa5}a-zA-Z0-9_-]{0,60})$/u]',
+        'keywords'    => 'regex_match[/^([\x{4e00}-\x{9fa5}a-zA-Z0-9，,]{0,60})$/u]',
+        'limit'       => 'required|regex_match[^[1-9]\d{0,2}$]',
+        'offset'      => 'required|regex_match[^[1-9]\d{0,9}$]',
     ];
 
     /**

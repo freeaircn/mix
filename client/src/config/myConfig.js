@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2019-12-24 09:56:03
  * @LastEditors: freeair
- * @LastEditTime: 2023-02-24 20:14:39
+ * @LastEditTime: 2023-02-26 10:14:14
  */
 
 /**
@@ -14,7 +14,7 @@ export const avatarApi = {
 }
 
 /**
-* 图纸库 配置文件
+* 图纸库
 */
 export const drawing = {
   uploadUrl: '/api/drawing/file',
@@ -30,7 +30,7 @@ export const drawing = {
 }
 
 /**
-* DTS 工作流配置文件
+* DTS 工作流
 */
 export const dts = {
   maxFileSize: 8388608, // 8*1024*1024
@@ -48,4 +48,25 @@ export const dts = {
     'application/zip',
     'application/pdf'
   ]
+}
+
+/**
+* 党支部
+*/
+export const partyBranch = {
+  uploadUrl: '/api/drawing/file',
+  maxFileSize: 104857600, // 100 1024 1024,
+  maxFileNumber: 1,
+  allowedFileTypes: [
+    'application/zip',
+    'application/pdf'
+  ],
+  allowedPreviewFileTypes: [
+    'pdf'
+  ],
+  cardHeaderStyle: {
+    color: '#ec1010',
+    fontSize: '18px',
+    fontWeight: '600'
+  }
 }
