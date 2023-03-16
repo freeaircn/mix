@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2023-02-23 09:05:36
+ * @LastEditTime: 2023-03-16 22:24:46
  */
 
 namespace Config;
@@ -160,6 +160,7 @@ $routes->group('api', function ($routes) {
 
     // 2023-2-26
     $routes->get('party_branch', 'PartyBranch::queryEntry');
+    $routes->post('party_branch', 'PartyBranch::createOne');
     //
     $routes->add('(:any)', '404');
 });

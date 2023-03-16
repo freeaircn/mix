@@ -96,14 +96,14 @@ export default {
         category_id: [{ required: true, message: '请选择', trigger: ['change'] }],
         dwg_name: [
           { required: true, message: '请输入', trigger: ['change'] },
-          { pattern: pattern.englishChineseNum__.regex, message: pattern.englishChineseNum__.msg, trigger: ['change'] }
+          { pattern: pattern.TITLE.regex, message: pattern.TITLE.msg, trigger: ['change'] }
         ],
         keywords: [
           { required: true, message: '请输入', trigger: ['change'] },
-          { pattern: pattern.englishChineseNumComma.regex, message: pattern.englishChineseNumComma.msg, trigger: ['change'] }
+          { pattern: pattern.KEY_WORDS.regex, message: pattern.KEY_WORDS.msg, trigger: ['change'] }
         ],
         info: [
-          { pattern: pattern.englishChineseNumPunctuation.regex, message: pattern.englishChineseNumPunctuation.msg, trigger: ['change'] }
+          { pattern: pattern.TEXT.regex, message: pattern.TEXT.msg, trigger: ['change'] }
         ]
       },
       //

@@ -108,10 +108,10 @@ export default {
       },
       rules: {
         title: [
-          { pattern: pattern.englishChineseNum__.regex, message: pattern.englishChineseNum__.msg, trigger: ['change'] }
+          { pattern: pattern.TITLE.regex, message: pattern.TITLE.msg, trigger: ['change'] }
         ],
         keywords: [
-          { pattern: pattern.englishChineseNumComma.regex, message: pattern.englishChineseNumComma.msg, trigger: ['change'] }
+          { pattern: pattern.KEY_WORDS.regex, message: pattern.KEY_WORDS.msg, trigger: ['change'] }
         ]
       },
       //
@@ -305,19 +305,19 @@ export default {
     handleQueryDetails (record) {
       if (record.id) {
         const id = record.id
-        this.$router.push({ path: `/dashboard/party_branch/details/${id}` })
+        this.$router.push({ path: `/party_branch/details/${id}` })
       }
     },
 
     handleEdit (record) {
       if (record.id) {
         const id = record.id
-        this.$router.push({ path: `/dashboard/party_branch/edit/${id}` })
+        this.$router.push({ path: `/party_branch/edit/${id}` })
       }
     },
 
     handleNew () {
-      this.$router.push({ path: `/dashboard/party_branch/new` })
+      this.$router.push({ path: `/party_branch/new` })
     },
 
     handleDelete (record) {

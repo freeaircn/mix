@@ -117,13 +117,13 @@ export default {
       },
       rules: {
         dwg_name: [
-          { pattern: pattern.englishChineseNum__.regex, message: pattern.englishChineseNum__.msg, trigger: ['change'] }
+          { pattern: pattern.TITLE.regex, message: pattern.TITLE.msg, trigger: ['change'] }
         ],
         dwg_num: [
-          { pattern: pattern.englishNum__.regex, message: pattern.englishNum__.msg, trigger: ['change'] }
+          { pattern: pattern.DOC_NUM.regex, message: pattern.DOC_NUM.msg, trigger: ['change'] }
         ],
         keywords: [
-          { pattern: pattern.englishChineseNumComma.regex, message: pattern.englishChineseNumComma.msg, trigger: ['change'] }
+          { pattern: pattern.KEY_WORDS.regex, message: pattern.KEY_WORDS.msg, trigger: ['change'] }
         ]
       },
       //
@@ -154,7 +154,7 @@ export default {
           scopedSlots: { customRender: 'file_org_name' }
         },
         {
-          title: '编辑人员',
+          title: '最后编辑',
           dataIndex: 'username'
         },
         {

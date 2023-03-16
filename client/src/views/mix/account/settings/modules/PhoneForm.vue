@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-30 20:13:01
  * @LastEditors: freeair
- * @LastEditTime: 2021-11-01 22:05:37
+ * @LastEditTime: 2023-03-17 00:10:58
 -->
 <template>
   <a-modal
@@ -64,7 +64,7 @@ export default {
       rules: {
         phone: [
           { required: true, message: '请输入手机号', trigger: ['blur'] },
-          { pattern: pattern.phone.regex, message: pattern.phone.msg, trigger: ['blur'] }
+          { pattern: pattern.PHONE.regex, message: pattern.PHONE.msg, trigger: ['blur'] }
         ],
         password: [ { required: true, message: '请输入登录密码', trigger: ['blur'] } ]
       }

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2023-02-26 22:22:13
+ * @LastEditTime: 2023-03-17 00:33:35
  */
 
 namespace Config;
@@ -322,12 +322,23 @@ class Validation
 
     // 2023-2-26
     public $PartBranchReqList = [
-        'station_id'  => 'required|regex_match[^\d{0,2}$]',
-        'category_id' => 'required|is_natural',
-        'title'       => 'regex_match[/^([\x{4e00}-\x{9fa5}a-zA-Z0-9_-]{0,60})$/u]',
-        'keywords'    => 'regex_match[/^([\x{4e00}-\x{9fa5}a-zA-Z0-9，,]{0,60})$/u]',
-        'limit'       => 'required|regex_match[^[1-9]\d{0,2}$]',
-        'offset'      => 'required|regex_match[^[1-9]\d{0,9}$]',
+        'station_id'  => 'required|' . VALIDATE_ID,
+        'category_id' => 'required|' . VALIDATE_ID,
+        'title'       => VALIDATE_TITLE,
+        'keywords'    => VALIDATE_KEY_WORDS,
+        'limit'       => 'required|' . VALIDATE_ID,
+        'offset'      => 'required|' . VALIDATE_ID,
+    ];
+
+    public $PartyBranchCreateOne = [
+        'station_id'       => 'required|' . VALIDATE_ID,
+        'category_id'      => 'required|' . VALIDATE_ID,
+        'title'            => 'required|' . VALIDATE_TITLE,
+        'keywords'         => 'required|' . VALIDATE_KEY_WORDS,
+        'secret_level'     => 'required|' . VALIDATE_ID,
+        'retention_period' => 'required|' . VALIDATE_ID,
+        'store_place'      => VALIDATE_TEXT,
+        'summary'          => VALIDATE_TEXT,
     ];
 
     /**

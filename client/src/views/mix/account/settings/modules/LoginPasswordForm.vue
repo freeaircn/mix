@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-30 20:13:01
  * @LastEditors: freeair
- * @LastEditTime: 2021-07-20 23:43:43
+ * @LastEditTime: 2023-03-17 00:10:14
 -->
 <template>
   <a-modal
@@ -69,7 +69,7 @@ export default {
         password: [ { required: true, message: '请输入当前的密码', trigger: ['blur'] } ],
         newPassword: [
           { required: true, message: '请输入新密码', trigger: ['blur'] },
-          { pattern: pattern.password.regex, message: pattern.password.msg, trigger: ['blur'] }
+          { pattern: pattern.PASSWORD.regex, message: pattern.PASSWORD.msg, trigger: ['blur'] }
         ],
         newPassword2: [
             { required: true, message: '请再输入一次新密码', trigger: ['blur'] },

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-08-19 17:30:49
  * @LastEditors: freeair
- * @LastEditTime: 2022-06-20 21:52:52
+ * @LastEditTime: 2023-03-17 00:03:35
  */
 
 /*
@@ -89,3 +89,17 @@ defined('EXIT__AUTO_MAX') || define('EXIT__AUTO_MAX', 125); // highest automatic
  * My Code
  */
 defined('LOG_HEADER') || define('LOG_HEADER', '{file}:{line} -->'); //
+defined('REQUIRED_ZH_EN_NUM_') || define('REQUIRED_ZH_EN_NUM_', 'required|regex_match[/^([\x{4e00}-\x{9fa5}a-zA-Z0-9_-]{0,60})$/u]'); //
+
+defined('VALIDATE_ID') || define('VALIDATE_ID', 'is_natural_no_zero'); //
+defined('VALIDATE_USERNAME') || define('VALIDATE_USERNAME', 'regex_match[/^([\x{4e00}-\x{9fa5}]{1,6})$/u]'); //
+defined('VALIDATE_PHONE') || define('VALIDATE_PHONE', 'regex_match[/^[1][3,4,5,7,8][0-9]{9}$/]'); //
+defined('VALIDATE_EMAIL') || define('VALIDATE_EMAIL', 'regex_match[/^(\w)+(\.\w+)*@(\w)+((\.\w+)+)$/]'); //
+defined('VALIDATE_ID_CARD') || define('VALIDATE_ID_CARD', 'regex_match[/^([1-9]\d{5}(18|19|20|(3\d))\d{2}((0[1-9])|(1[0-2]))(([0-2][1-9])|10|20|30|31)\d{3}[0-9Xx]){0,1}$/]'); //
+defined('VALIDATE_PASSWORD') || define('VALIDATE_PASSWORD', 'regex_match[/^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z\W]{8,32}$/]'); //
+defined('VALIDATE_SMS_CODE') || define('VALIDATE_SMS_CODE', 'regex_match[/^[1-9]\d{4}$/]'); //
+defined('VALIDATE_TITLE') || define('VALIDATE_TITLE', 'regex_match[/^([\x{4e00}-\x{9fa5}a-zA-Z0-9_-]{0,64})$/u]'); //
+defined('VALIDATE_KEY_WORDS') || define('VALIDATE_KEY_WORDS', 'regex_match[/^([\x{4e00}-\x{9fa5}a-zA-Z0-9，,]{0,64})$/u]'); //
+defined('VALIDATE_TEXT') || define('VALIDATE_TEXT', 'regex_match[/^([\x{4e00}-\x{9fa5}a-zA-Z0-9,.?:;，。？：；_-]{0,1000})$/u]'); //
+defined('VALIDATE_DOC_NUM') || define('VALIDATE_DOC_NUM', 'regex_match[/^([a-zA-Z0-9-]{0,64})$/u]'); //
+// defined('VALIDATE_') || define('VALIDATE_', 'regex_match[]'); //

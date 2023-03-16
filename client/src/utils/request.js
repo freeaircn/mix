@@ -178,9 +178,19 @@ const installer = {
   }
 }
 
+const request2 = axios.create({
+  // API 请求的默认前缀
+  baseURL: process.env.VUE_APP_API_BASE_URL,
+  timeout: 6000 // 请求超时时间
+})
+
+request2.interceptors.response.use(responseHandler, errorHandler)
+
 export default request
 
 export {
   installer as VueAxios,
-  request as axios
+  request as axios,
+  request,
+  request2
 }

@@ -123,6 +123,7 @@ export default {
       getEquipmentUnit(params)
         .then(data => {
           listToTree(data, this.treeData, '1')
+          console.log(this.treeData)
         })
         //  网络异常，清空页面数据显示，防止错误的操作
        .catch((err) => {

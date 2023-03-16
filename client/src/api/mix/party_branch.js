@@ -3,9 +3,9 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2023-02-26 19:44:47
+ * @LastEditTime: 2023-03-02 11:23:01
  */
-import request from '@/utils/request'
+import { request, request2 } from '@/utils/request'
 
 const api = {
   base_url: '/party_branch',
@@ -23,6 +23,14 @@ export function apiQuery (params) {
 export function apiCreate (data) {
   return request({
     url: api.base_url,
+    method: 'post',
+    data: data
+  })
+}
+
+export function apiUpload (data) {
+  return request2({
+    url: api.base_url_file,
     method: 'post',
     data: data
   })

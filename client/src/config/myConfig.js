@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2019-12-24 09:56:03
  * @LastEditors: freeair
- * @LastEditTime: 2023-02-26 10:14:14
+ * @LastEditTime: 2023-03-01 00:17:02
  */
 
 /**
@@ -54,12 +54,14 @@ export const dts = {
 * 党支部
 */
 export const partyBranch = {
-  uploadUrl: '/api/drawing/file',
+  uploadUrl: '/api/party_branch/file',
   maxFileSize: 104857600, // 100 1024 1024,
-  maxFileNumber: 1,
+  maxFileNumber: 2,
   allowedFileTypes: [
     'application/zip',
-    'application/pdf'
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
   ],
   allowedPreviewFileTypes: [
     'pdf'

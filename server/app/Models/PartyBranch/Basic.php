@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2023-02-26 22:32:40
+ * @LastEditTime: 2023-03-05 23:13:21
  */
 
 namespace App\Models\PartyBranch;
@@ -17,17 +17,17 @@ class Basic extends Model
     protected $table;
 
     protected $primaryKey    = 'id';
-    protected $allowedFields = ['station_id', 'title', 'category_id', 'serial_id', 'doc_num', 'keywords', 'info', 'file_org_name', 'file_new_name', 'file_ext', 'file_mime_type', 'size', 'secret_level', 'retention_period', 'paper_place', 'path', 'user_id', 'username', 'deleted', 'created_at', 'updated_at'];
+    protected $allowedFields = ['station_id', 'category_id', 'serial_id', 'doc_num', 'title', 'keywords', 'info', 'status', 'secret_level', 'retention_period', 'store_in', 'user_id', 'username', 'deleted', 'created_at', 'updated_at'];
 
     protected $useAutoIncrement = true;
 
     protected $returnType     = 'array';
-    protected $useSoftDeletes = false;
+    protected $useSoftDeletes = true;
 
     protected $useTimestamps = true;
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
-    // protected $deletedField  = 'deleted_at';
+    protected $deletedField  = 'deleted_at';
 
     public function __construct()
     {
@@ -46,7 +46,7 @@ class Basic extends Model
 
         $selectSql = '';
         if (empty($fields)) {
-            $selectSql = 'id, station_id, title, category_id, doc_num, keywords, info, file_org_name, user_id, username, created_at, updated_at';
+            $selectSql = 'id, station_id, category_id, doc_num, title, keywords, info, status, secret_level, retention_period, store_in, user_id, username, created_at, updated_at';
         } else {
             foreach ($fields as $name) {
                 $selectSql = $selectSql . $name . ', ';
@@ -64,7 +64,7 @@ class Basic extends Model
         }
         //
         if (isset($conditions['title'])) {
-            $builder->like('dwg_name', $conditions['dwg_name']);
+            $builder->like('title', $conditions['title']);
         }
         if (isset($conditions['keywords'])) {
             $builder->like('keywords', $conditions['keywords']);

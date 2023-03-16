@@ -117,11 +117,11 @@ export default {
       rules: {
         username: [
           { required: true, message: '请输入中文名字', trigger: ['blur'] },
-          { pattern: pattern.username.regex, message: pattern.username.msg, trigger: ['blur'] }
+          { pattern: pattern.USERNAME.regex, message: pattern.USERNAME.msg, trigger: ['blur'] }
         ],
         sex: [ { required: true, message: '请选择性别', trigger: ['blur'] } ],
         IdCard: [
-          { pattern: pattern.IdCard.regex, message: pattern.IdCard.msg, trigger: ['blur'] }
+          { pattern: pattern.ID_CARD.regex, message: pattern.ID_CARD.msg, trigger: ['blur'] }
         ],
         politic: [ { required: true, message: '请选择政治面貌', trigger: ['blur'] } ],
         department: [ { required: true, message: '请选择部门', trigger: ['blur'] } ],

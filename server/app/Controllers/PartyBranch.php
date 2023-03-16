@@ -4,21 +4,19 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2023-02-26 23:19:10
+ * @LastEditTime: 2023-03-16 21:25:54
  */
 
 namespace App\Controllers;
 
 use App\Models\Common\DeptModel;
-use App\Models\Common\UserModel;
 //
+use App\Models\Doc\Category as CategoryModel;
 use App\Models\Drawing\Basic as DrawingModel;
-use App\Models\Drawing\Category as CategoryModel;
 use App\Models\PartyBranch\Basic as PartyBranchModel;
 //
 use CodeIgniter\API\ResponseTrait;
 //
-use CodeIgniter\Exceptions\CriticalError;
 //
 use CodeIgniter\Files\Exceptions\FileException;
 
@@ -297,7 +295,7 @@ class PartyBranch extends BaseController
     // 2023-2-22
     public function createOne()
     {
-        if (!$this->validate('DrawingCreateOne')) {
+        if (!$this->validate('PartyBranchCreateOne')) {
             $res['info']  = $this->validator->getErrors();
             $res['error'] = '请求数据无效';
             return $this->fail($res);
@@ -649,7 +647,7 @@ class PartyBranch extends BaseController
         return $res;
     }
 
-    // 2023-2-22
+    // 2023-3-2
     protected function _repBlankForm()
     {
         $allowWriteDeptId = $this->session->get('allowWriteDeptId');
@@ -666,18 +664,34 @@ class PartyBranch extends BaseController
             return $res;
         }
 
-        $model        = new DeptModel();
-        $fields       = ['id', 'name', 'alias'];
-        $stationItems = $model->getDeptRecordsByIds($fields, $allowWriteDeptId);
+        $model  = new DeptModel();
+        $fields = ['id', 'name'];
+        //! 注意：用户只能在默认部门，新增记录
+        $stationItems[] = $model->getDeptRecordById($fields, $station_id);
 
-        $model         = new CategoryModel();
-        $fields        = ['id', 'name', 'alias'];
-        $categoryItems = $model->getAll($fields);
+        //
+        $model  = new CategoryModel();
+        $fields = ['id'];
+        $wheres = ['pid' => $station_id, 'alias' => 'PARTY_BRANCH'];
+        $db     = $model->getByWheres($fields, $wheres);
+
+        $categoryItems = [];
+        if (!empty($db)) {
+            $pid        = $db[0]['id'];
+            $categories = $model->getChildrenByPid([], $pid);
+            helper('my_array');
+            $categoryItems = my_arr2tree($categories);
+        }
+        //
+        $secretLevelItems     = $this->config->SECRET_LEVEL;
+        $retentionPeriodItems = $this->config->RETENTION_PERIOD;
 
         $res['http_status'] = 200;
         $res['data']        = [
-            'stationItems'  => $stationItems,
-            'categoryItems' => $categoryItems,
+            'stationItems'         => $stationItems,
+            'categoryItems'        => $categoryItems,
+            'secretLevelItems'     => $secretLevelItems,
+            'retentionPeriodItems' => $retentionPeriodItems,
         ];
         return $res;
     }

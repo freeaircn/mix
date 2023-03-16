@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-30 20:13:01
  * @LastEditors: freeair
- * @LastEditTime: 2021-11-01 22:05:47
+ * @LastEditTime: 2023-03-17 00:11:15
 -->
 <template>
   <a-modal
@@ -86,11 +86,11 @@ export default {
       rules: {
         email: [
           { required: true, message: '请输入邮箱地址', trigger: ['blur'] },
-          { pattern: pattern.email.regex, message: pattern.email.msg, trigger: ['blur'] }
+          { pattern: pattern.EMAIL.regex, message: pattern.EMAIL.msg, trigger: ['blur'] }
         ],
         code: [
           { required: true, message: '请输入验证码', trigger: ['blur'] },
-          { pattern: pattern.smsCode.regex, message: pattern.smsCode.msg, trigger: ['blur'] }
+          { pattern: pattern.SMS_CODE.regex, message: pattern.SMS_CODE.msg, trigger: ['blur'] }
         ],
         password: [ { required: true, message: '请输入登录密码', trigger: ['blur'] } ]
       }
