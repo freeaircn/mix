@@ -4,14 +4,15 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-16 21:25:54
+ * @LastEditTime: 2023-03-19 01:13:54
  */
 
 namespace App\Controllers;
 
 use App\Models\Common\DeptModel;
 //
-use App\Models\Doc\Category as CategoryModel;
+use App\Models\Doc\Category as DocCategoryModel;
+use App\Models\Doc\Files as DocFilesModel;
 use App\Models\Drawing\Basic as DrawingModel;
 use App\Models\PartyBranch\Basic as PartyBranchModel;
 //
@@ -87,18 +88,160 @@ class PartyBranch extends BaseController
         return $this->failServerError('服务器内部错误');
     }
 
-    // 2023-2-21
-    public function uploadFile()
+    // 2023-3-17
+    public function createOne()
     {
-        if (!$this->validate('DrawingUploadFile')) {
+        if (!$this->validate('PartyBranchCreateOne')) {
             $res['info']  = $this->validator->getErrors();
             $res['error'] = '请求数据无效';
             return $this->fail($res);
         }
 
-        $id   = $this->request->getPost('id');
-        $key  = $this->request->getPost('key');
-        $file = $this->request->getFile('file');
+        $client     = $this->request->getPost();
+        $post_files = $this->request->getFiles();
+
+        $allowWriteDeptId = $this->session->get('allowWriteDeptId');
+        if (!in_array($client['station_id'], $allowWriteDeptId)) {
+            return $this->failUnauthorized('用户没有权限');
+        }
+        //
+        $uid    = $this->session->get('id');
+        $record = [
+            'station_id'       => $client['station_id'],
+            'category_id'      => $client['category_id'],
+            'title'            => $client['title'],
+            'keywords'         => $client['keywords'],
+            'summary'          => $client['summary'],
+            'secret_level'     => $client['secret_level'],
+            'retention_period' => $client['retention_period'],
+            'store_place'      => $client['store_place'],
+            'user_id'          => $uid,
+        ];
+
+        // 注意
+        $record['status'] = 'published';
+
+        // serial_id
+        $category_id = (int) $client['category_id'];
+        $model       = new PartyBranchModel();
+        $serial_id   = $model->getLastSerialIdByCategory($category_id) + 1;
+
+        // 类别编码
+        $model2 = new DocCategoryModel();
+        $fields = ['code'];
+        $db     = $model2->getById($fields, (int) $client['category_id']);
+        if (empty($db)) {
+            $code = '0';
+        } else {
+            $code = $db['code'];
+        }
+
+        $record['serial_id'] = $serial_id;
+        $record['doc_num']   = $client['station_id'] . '-' . $code . '-' . $serial_id;
+
+        $associated_id = $model->insertOneRecord($record);
+        if ($associated_id === false) {
+            return $this->failServerError('服务器处理发生错误，稍候再试');
+        }
+
+        // 文件
+        $total = 0;
+        if (!empty($post_files)) {
+            $files = $post_files['files'];
+            $total = count($files);
+        }
+        $num    = 0;
+        $result = false;
+        if ($total > 0) { // 保存文件，数据库记录文件信息
+            $file_records = [];
+            //
+            foreach ($files as $file) {
+                if (!$file->isValid()) {
+                    continue;
+                }
+                if ($file->getSize() > $this->config->maxFileSize) {
+                    continue;
+                }
+                if ($file->getSize() === 0) {
+                    continue;
+                }
+                $file_mime_type = $file->getMimeType();
+                if (!in_array($file_mime_type, $this->config->partyBranch['allowedFileTypes'])) {
+                    continue;
+                }
+                //
+                $file_org_name = $file->getName();
+                $file_new_name = $file->getRandomName();
+                $file_ext      = $file->guessExtension();
+                $size          = $file->getSize();
+                //
+                $path = WRITEPATH . $this->config->partyBranch['filePath'];
+                if (!$file->hasMoved()) {
+                    try {
+                        $file->move($path, $file_new_name, true);
+                    } catch (FileException $exception) {
+                        // return $this->failServerError('保存文件出错');
+                        continue;
+                    }
+                }
+                //
+                $file_records[] = [
+                    'station_id'     => $client['station_id'],
+                    'category_id'    => $client['category_id'],
+                    'associated_id'  => $associated_id,
+                    'user_id'        => $uid,
+                    'file_org_name'  => $file_org_name,
+                    'file_new_name'  => $file_new_name,
+                    'file_mime_type' => $file_mime_type,
+                    'file_ext'       => $file_ext,
+                    'size'           => $size,
+                ];
+                //
+                $num++;
+            }
+            // 写数据库
+            if ($num > 0) {
+                $model3 = new DocFilesModel();
+                $result = $model3->insertMultiRecords($file_records);
+            }
+        }
+        //
+        if ($total > 0) {
+            if ($num > 0 && $result) {
+                if ($num < $total) {
+                    $res['msg'] = '新文档创建记录成功，但添加的文件有部分保存失败';
+                    return $this->respond($res);
+                }
+            } else {
+                $res['msg'] = '新文档创建记录成功，但添加的文件保存失败';
+                return $this->respond($res);
+            }
+        }
+
+        $res['msg'] = '新建完成';
+        return $this->respond($res);
+    }
+
+    // 2023-3-18
+    public function uploadFile()
+    {
+        if (!$this->validate('PartyBranchUploadFile')) {
+            $res['info']  = $this->validator->getErrors();
+            $res['error'] = '请求数据无效';
+            return $this->fail($res);
+        }
+
+        $id    = $this->request->getPost('id');
+        $op    = $this->request->getPost('op');
+        $title = $this->request->getPost('title');
+        $files = $this->request->getFiles('files');
+
+        if (empty($files)) {
+            return $this->failServerError('文件上传失败');
+        }
+
+        $res['files'] = $files;
+        return $this->respond($res);
 
         if (!$file->isValid()) {
             return $this->failServerError('文件上传失败');
@@ -187,7 +330,7 @@ class PartyBranch extends BaseController
             $uid      = $this->session->get('id');
             $username = $this->session->get('username');
             //
-            $draft = [
+            $record = [
                 'file_org_name'  => $file_org_name,
                 'file_new_name'  => $file_new_name,
                 'file_ext'       => $file_ext,
@@ -197,7 +340,7 @@ class PartyBranch extends BaseController
                 'username'       => $username,
             ];
 
-            $result = $model->updateRecordById($draft, $id);
+            $result = $model->updateRecordById($record, $id);
             if ($result === false) {
                 $file = rtrim($path, '\\/ ') . DIRECTORY_SEPARATOR . $file_new_name;
                 if (file_exists($file)) {
@@ -268,7 +411,7 @@ class PartyBranch extends BaseController
             //
             $uid      = $this->session->get('id');
             $username = $this->session->get('username');
-            $draft    = [
+            $record   = [
                 'file_org_name'  => '',
                 'file_new_name'  => '',
                 'file_ext'       => '',
@@ -277,7 +420,7 @@ class PartyBranch extends BaseController
                 'user_id'        => $uid,
                 'username'       => $username,
             ];
-            $result = $model->updateRecordById($draft, $id);
+            $result = $model->updateRecordById($record, $id);
             if ($result === false) {
                 return $this->failServerError('服务器处理发生错误，稍候再试');
             }
@@ -290,88 +433,6 @@ class PartyBranch extends BaseController
 
             return $this->respond(['res' => 'done']);
         }
-    }
-
-    // 2023-2-22
-    public function createOne()
-    {
-        if (!$this->validate('PartyBranchCreateOne')) {
-            $res['info']  = $this->validator->getErrors();
-            $res['error'] = '请求数据无效';
-            return $this->fail($res);
-        }
-
-        $client = $this->request->getJSON(true);
-
-        $allowWriteDeptId = $this->session->get('allowWriteDeptId');
-        if (!in_array($client['station_id'], $allowWriteDeptId)) {
-            return $this->failUnauthorized('用户没有权限');
-        }
-        //
-        $uid      = $this->session->get('id');
-        $username = $this->session->get('username');
-        $draft    = [
-            'station_id'  => $client['station_id'],
-            'category_id' => $client['category_id'],
-            'dwg_name'    => $client['dwg_name'],
-            'keywords'    => $client['keywords'],
-            'info'        => $client['info'],
-            'user_id'     => $uid,
-            'username'    => $username,
-        ];
-
-        // 注意
-        $draft['deleted'] = 0;
-        // serial_id
-        $query['dwg_num'] = $client['dwg_num'];
-        $fields           = ['serial_id'];
-        $model            = new DrawingModel();
-        $serial_id        = $model->getLastRecordByDocNum($fields, $query) + 1;
-
-        $draft['serial_id'] = $serial_id;
-        $draft['dwg_num']   = $client['dwg_num'] . '-' . sprintf("%03d", $serial_id);
-
-        // 文件
-        $files     = $client['files'];
-        $fileCache = $this->session->get('drawingFileCache');
-        $temp      = [];
-        if (!empty($files) && !empty($fileCache)) {
-            foreach ($files as $f) {
-                foreach ($fileCache as $c) {
-                    if ($f['id'] == $c['id']) {
-                        $temp[] = $c;
-                    }
-                }
-            }
-        }
-        // 注意
-        if (count($temp) == 1) {
-            $t = $temp[0];
-            //
-            $draft['file_org_name']  = $t['file_org_name'];
-            $draft['file_new_name']  = $t['file_new_name'];
-            $draft['file_ext']       = $t['file_ext'];
-            $draft['file_mime_type'] = $t['file_mime_type'];
-            $draft['size']           = $t['size'];
-            //
-            $tempPath = WRITEPATH . $this->config->tempPath;
-            $filePath = WRITEPATH . $this->config->filePath;
-            $old      = rtrim($tempPath, '\\/ ') . DIRECTORY_SEPARATOR . $t['file_new_name'];
-            $new      = rtrim($filePath, '\\/ ') . DIRECTORY_SEPARATOR . $t['file_new_name'];
-            rename($old, $new);
-        }
-
-        if ($this->session->has('drawingFileCache')) {
-            $this->session->remove('drawingFileCache');
-        }
-
-        $result = $model->insertOneRecord($draft);
-        if ($result === false) {
-            return $this->failServerError('服务器处理发生错误，稍候再试');
-        }
-
-        $res['msg'] = '创建完成';
-        return $this->respond($res);
     }
 
     // 2023-2-22
@@ -447,7 +508,7 @@ class PartyBranch extends BaseController
         //
         $uid      = $this->session->get('id');
         $username = $this->session->get('username');
-        $draft    = [
+        $record   = [
             'station_id'  => $client['station_id'],
             'category_id' => $client['category_id'],
             'dwg_name'    => $client['dwg_name'],
@@ -458,18 +519,18 @@ class PartyBranch extends BaseController
         ];
 
         // 注意
-        // $draft['deleted'] = 0;
+        // $record['deleted'] = 0;
         // serial_id
         // 当站点和类别被修改，重新计算serial_id
         if ($client['station_id'] != $old['station_id'] || $client['category_id'] != $old['category_id']) {
-            $query['dwg_num']   = $client['dwg_num'];
-            $fields             = ['serial_id'];
-            $serial_id          = $model->getLastRecordByDocNum($fields, $query) + 1;
-            $draft['serial_id'] = $serial_id;
-            $draft['dwg_num']   = $client['dwg_num'] . '-' . sprintf("%03d", $serial_id);
+            $query['dwg_num']    = $client['dwg_num'];
+            $fields              = ['serial_id'];
+            $serial_id           = $model->getLastRecordByDocNum($fields, $query) + 1;
+            $record['serial_id'] = $serial_id;
+            $record['dwg_num']   = $client['dwg_num'] . '-' . sprintf("%03d", $serial_id);
         }
 
-        $result = $model->updateRecordById($draft, $id);
+        $result = $model->updateRecordById($record, $id);
         if ($result === false) {
             return $this->failServerError('服务器处理发生错误，稍候再试');
         }
@@ -505,7 +566,7 @@ class PartyBranch extends BaseController
         // 注意
         $uid      = $this->session->get('id');
         $username = $this->session->get('username');
-        $draft    = [
+        $record   = [
             'file_org_name'  => '',
             'file_new_name'  => '',
             'file_ext'       => '',
@@ -517,7 +578,7 @@ class PartyBranch extends BaseController
             'deleted'        => 1,
         ];
 
-        $result = $model->updateRecordById($draft, $id);
+        $result = $model->updateRecordById($record, $id);
         if (!$result) {
             return $this->failServerError('服务器处理发生错误，稍候再试');
         }
@@ -670,7 +731,7 @@ class PartyBranch extends BaseController
         $stationItems[] = $model->getDeptRecordById($fields, $station_id);
 
         //
-        $model  = new CategoryModel();
+        $model  = new DocCategoryModel();
         $fields = ['id'];
         $wheres = ['pid' => $station_id, 'alias' => 'PARTY_BRANCH'];
         $db     = $model->getByWheres($fields, $wheres);
@@ -729,7 +790,7 @@ class PartyBranch extends BaseController
         $details = $db;
 
         // id -> name
-        $model  = new CategoryModel();
+        $model  = new DocCategoryModel();
         $fields = ['name'];
         $temp   = $model->getById($fields, $db['category_id']);
         if (empty($temp)) {
@@ -788,7 +849,7 @@ class PartyBranch extends BaseController
         $fields       = ['id', 'name', 'alias'];
         $stationItems = $model->getDeptRecordsByIds($fields, $allowWriteDeptId);
 
-        $model         = new CategoryModel();
+        $model         = new DocCategoryModel();
         $fields        = ['id', 'name', 'alias'];
         $categoryItems = $model->getAll($fields);
 

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-05 23:13:21
+ * @LastEditTime: 2023-03-17 23:25:30
  */
 
 namespace App\Models\PartyBranch;
@@ -17,7 +17,7 @@ class Basic extends Model
     protected $table;
 
     protected $primaryKey    = 'id';
-    protected $allowedFields = ['station_id', 'category_id', 'serial_id', 'doc_num', 'title', 'keywords', 'info', 'status', 'secret_level', 'retention_period', 'store_in', 'user_id', 'username', 'deleted', 'created_at', 'updated_at'];
+    protected $allowedFields = ['station_id', 'category_id', 'serial_id', 'doc_num', 'title', 'keywords', 'summary', 'status', 'secret_level', 'retention_period', 'store_place', 'user_id', 'created_at', 'updated_at', 'deleted_at'];
 
     protected $useAutoIncrement = true;
 
@@ -83,24 +83,15 @@ class Basic extends Model
         }
     }
 
-    // 2023-2-22
-    public function getLastRecordByDocNum(array $fields = null, array $conditions = null)
+    // 2023-3-17
+    public function getLastSerialIdByCategory(int $category_id = null)
     {
-        if (empty($conditions)) {
+        if (empty($category_id)) {
             return '0';
         }
 
-        $selectSql = '';
-        if (empty($fields)) {
-            $selectSql = 'serial_id';
-        } else {
-            foreach ($fields as $name) {
-                $selectSql = $selectSql . $name . ', ';
-            }
-        }
-
-        $builder = $this->select($selectSql);
-        $builder->like('dwg_num', $conditions['dwg_num']);
+        $builder = $this->select('serial_id');
+        $builder->where('category_id', $category_id);
         $builder->orderBy('serial_id', 'DESC');
 
         $result = $builder->findAll(1);
@@ -112,7 +103,7 @@ class Basic extends Model
         }
     }
 
-    // 2023-2-22
+    // 2023-3-17
     public function insertOneRecord(array $data = null)
     {
         if (empty($data)) {

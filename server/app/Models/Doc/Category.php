@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-05 16:01:18
+ * @LastEditTime: 2023-03-17 23:29:47
  */
 
 namespace App\Models\Doc;
@@ -17,7 +17,7 @@ class Category extends Model
     protected $table;
 
     protected $primaryKey    = 'id';
-    protected $allowedFields = ['name', 'pid', 'code'];
+    protected $allowedFields = ['name', 'alias', 'pid', 'code'];
 
     protected $useAutoIncrement = true;
 

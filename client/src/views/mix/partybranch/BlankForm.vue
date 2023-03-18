@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-17 00:34:33
+ * @LastEditTime: 2023-03-18 23:08:24
 -->
 <template>
   <page-header-wrapper :title="false">
@@ -89,7 +89,7 @@ import * as pattern from '@/utils/validateRegex'
 import { mapGetters } from 'vuex'
 //
 import { partyBranch as CONFIG } from '@/config/myConfig'
-import { apiQuery, apiCreate, apiUpload } from '@/api/mix/party_branch'
+import { apiQuery, apiCreate } from '@/api/mix/party_branch'
 
 export default {
   name: 'BlankForm',
@@ -166,7 +166,7 @@ export default {
             this.ready = true
           })
           .catch(() => {
-            this.record.info = ''
+            this.record.summary = ''
             this.ready = false
           })
     },
@@ -215,37 +215,59 @@ export default {
       this.fileList = newFileList
     },
 
-    handleSubmit2 () {
-      const { fileList } = this
-      var formData = new FormData()
-      fileList.forEach(file => {
-        formData.append('files[]', file)
-      })
-      formData.append('my_id', 1)
-      formData.append('my_key', 'create')
-      apiUpload(formData)
-        .then(() => {
-          // this.$router.push({ path: `/dashboard/drawing/list` })
-          this.$router.back()
-        })
-        .catch(() => {
-          // this.ready = false
-        })
-    },
+    // handleSubmit2 () {
+    //   const { fileList } = this
+    //   var formData = new FormData()
+    //   fileList.forEach(file => {
+    //     formData.append('files[]', file)
+    //   })
+    //   formData.append('my_id', 1)
+    //   formData.append('my_key', 'create')
+    //   apiUpload(formData)
+    //     .then(() => {
+    //       this.$router.back()
+    //     })
+    //     .catch(() => {
+    //     })
+    // },
 
     handleSubmit () {
       this.$refs.form.validate(valid => {
         if (valid) {
-          var data = { ...this.record }
-          data.title = data.title.trim()
-          data.keywords = data.keywords.trim()
-          data.category_id = this.record.category.pop()
+          var record = { ...this.record }
+          record.title = record.title.trim()
+          record.keywords = record.keywords.trim()
+          record.category_id = record.category.pop()
           //
-          console.log('data', data)
-          apiCreate(data)
+          var formData = new FormData()
+          Object.keys(record).forEach((key) => {
+            formData.append(key, record[key])
+          })
+          //
+          const { fileList } = this
+          if (fileList.length > 0) {
+            fileList.forEach(file => {
+              formData.append('files[]', file)
+            })
+          }
+          apiCreate(formData)
             .then(() => {
-              // this.$router.push({ path: `/dashboard/drawing/list` })
               this.$router.back()
+
+              // console.log('response: ', response)
+              // if (fileList.length === 0) {
+              //   this.$router.back()
+              // } else {
+              //   console.log('fileList: ', fileList)
+              //   var formData = new FormData()
+              //   fileList.forEach(file => {
+              //     formData.append('files[]', file)
+              //   })
+              //   formData.append('id', response.id)
+              //   formData.append('op', 'create')
+              //   formData.append('title', record.title)
+              //   return apiUpload(formData)
+              // }
             })
             .catch(() => {
               // this.ready = false

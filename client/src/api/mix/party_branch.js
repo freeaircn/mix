@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-06-19 12:28:13
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-02 11:23:01
+ * @LastEditTime: 2023-03-18 23:10:12
  */
 import { request, request2 } from '@/utils/request'
 
@@ -21,7 +21,7 @@ export function apiQuery (params) {
 }
 
 export function apiCreate (data) {
-  return request({
+  return request2({
     url: api.base_url,
     method: 'post',
     data: data

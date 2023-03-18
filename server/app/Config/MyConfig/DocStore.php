@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-07-06 21:44:27
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-16 21:23:02
+ * @LastEditTime: 2023-03-19 00:50:42
  */
 
 namespace Config\MyConfig;
@@ -13,7 +13,6 @@ use CodeIgniter\Config\BaseConfig;
 
 class DocStore extends BaseConfig
 {
-    public $filePath           = 'uploads/drawing';
     public $tempPath           = 'uploads/temp';
     public $maxFileSize        = 104857600; // 100*1024*1024
     public $fileExceedSizeMsg  = '附件大小超过 100MB'; // 100*1024*1024
@@ -25,11 +24,12 @@ class DocStore extends BaseConfig
     // 2023-2-26
     public $SECRET_LEVEL;
     public $RETENTION_PERIOD;
+    //
+    public $partyBranch;
 
     public function __construct()
     {
         parent::__construct();
-
         //
         $this->SECRET_LEVEL = [
             ['id' => 10, 'name' => '公开', 'code' => 10],
@@ -44,6 +44,14 @@ class DocStore extends BaseConfig
             ['id' => 10, 'name' => '10年', 'code' => 10],
             ['id' => 30, 'name' => '30年', 'code' => 30],
             ['id' => 99, 'name' => '永久', 'code' => 99],
+        ];
+        //
+        $this->partyBranch = [
+            'filePath'           => 'uploads/party_branch',
+            'allowedFileTypes'   => [
+                'application/zip',
+                'application/pdf',
+            ],
         ];
     }
 }
