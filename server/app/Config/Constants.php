@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-08-19 17:30:49
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-17 22:50:23
+ * @LastEditTime: 2023-03-19 23:00:48
  */
 
 /*
@@ -90,6 +90,7 @@ defined('EXIT__AUTO_MAX') || define('EXIT__AUTO_MAX', 125); // highest automatic
  */
 defined('LOG_HEADER') || define('LOG_HEADER', '{file}:{line} -->'); //
 //
+defined('VALIDATE_NATURAL_NUMBER') || define('VALIDATE_NATURAL_NUMBER', 'is_natural'); //
 defined('VALIDATE_ID') || define('VALIDATE_ID', 'is_natural_no_zero'); //
 defined('VALIDATE_USERNAME') || define('VALIDATE_USERNAME', 'regex_match[/^([\x{4e00}-\x{9fa5}]{1,6})$/u]'); //
 defined('VALIDATE_PHONE') || define('VALIDATE_PHONE', 'regex_match[/^[1][3,4,5,7,8][0-9]{9}$/]'); //

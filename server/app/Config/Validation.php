@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-19 00:13:37
+ * @LastEditTime: 2023-03-19 23:00:59
  */
 
 namespace Config;
@@ -321,15 +321,6 @@ class Validation
     ];
 
     // 2023-2-26
-    public $PartBranchReqList = [
-        'station_id'  => 'required|' . VALIDATE_ID,
-        'category_id' => 'required|' . VALIDATE_ID,
-        'title'       => VALIDATE_TITLE,
-        'keywords'    => VALIDATE_KEY_WORDS,
-        'limit'       => 'required|' . VALIDATE_ID,
-        'offset'      => 'required|' . VALIDATE_ID,
-    ];
-
     public $PartyBranchCreateOne = [
         'station_id'       => 'required|' . VALIDATE_ID,
         'category_id'      => 'required|' . VALIDATE_ID,
@@ -339,6 +330,15 @@ class Validation
         'retention_period' => 'required|' . VALIDATE_ID,
         'store_place'      => VALIDATE_TEXT,
         'summary'          => VALIDATE_TEXT,
+    ];
+
+    public $PartBranchReqList = [
+        'station_id'  => 'required|' . VALIDATE_ID,
+        'category_id' => 'required|' . VALIDATE_NATURAL_NUMBER,
+        'title'       => VALIDATE_TITLE,
+        'keywords'    => VALIDATE_KEY_WORDS,
+        'limit'       => 'required|' . VALIDATE_ID,
+        'offset'      => 'required|' . VALIDATE_ID,
     ];
 
     public $PartyBranchUploadFile = [

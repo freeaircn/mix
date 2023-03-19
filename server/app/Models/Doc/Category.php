@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-17 23:29:47
+ * @LastEditTime: 2023-03-20 00:26:13
  */
 
 namespace App\Models\Doc;
@@ -38,11 +38,11 @@ class Category extends Model
     }
 
     /**
-     * 输入pid，输出子节点，不包括指定pid的父节点
+     * 输入pid，输出子节点，默认不包括指定pid的父节点
      * @param int $pid
      * @return array
      */
-    public function getChildrenByPid(array $fields = null, $pid = 0)
+    public function getChildrenByPid(array $fields = null, $pid = 0, $include_parent = false)
     {
         $selectSql = '';
         if (empty($fields)) {
@@ -70,6 +70,15 @@ class Category extends Model
                 $condition[] = (string) $v['id'];
             }
         } while (!empty($condition));
+
+        if ($include_parent) {
+            $builder2 = $this->select($selectSql);
+            $builder2->where('id', $pid);
+            $db2 = $builder->findAll();
+            if (!empty($db2)) {
+                array_unshift($result, $db2[0]);
+            }
+        }
 
         return $result;
     }

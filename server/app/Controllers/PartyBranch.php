@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-19 01:13:54
+ * @LastEditTime: 2023-03-20 00:36:59
  */
 
 namespace App\Controllers;
@@ -597,11 +597,18 @@ class PartyBranch extends BaseController
         return $this->respond($res);
     }
 
-    // 2023-2-26
-    protected function _reqSearchOptions()
+    // 2023-3-2
+    protected function _repBlankForm()
     {
-        $defaultStationId = $this->session->get('allowDefaultDeptId');
-        if (empty($defaultStationId)) {
+        $allowWriteDeptId = $this->session->get('allowWriteDeptId');
+        if (empty($allowWriteDeptId)) {
+            $res['http_status'] = 401;
+            $res['msg']         = '用户没有权限';
+            return $res;
+        }
+
+        $station_id = $this->session->get('allowDefaultDeptId');
+        if (!in_array($station_id, $allowWriteDeptId)) {
             $res['http_status'] = 401;
             $res['msg']         = '用户没有权限';
             return $res;
@@ -609,26 +616,66 @@ class PartyBranch extends BaseController
 
         $model  = new DeptModel();
         $fields = ['id', 'name'];
-        // 注意
-        $stationItems = $model->getDeptRecordsByIds($fields, [$defaultStationId]);
-        // 注意 数组下标
-        $CATEGORY          = $this->config->CATEGORY[$defaultStationId];
-        $PARTY_BRANCH_CODE = $this->config->PARTY_BRANCH_CODE;
+        //! 注意：只允许新增用户所属部门的数据
+        $stationItems[] = $model->getDeptRecordById($fields, $station_id);
 
-        $pid = 0;
-        foreach ($CATEGORY as $v) {
-            if ($v['code'] === $PARTY_BRANCH_CODE) {
-                $pid = $v['id'];
-                break;
-            }
-        }
+        //
+        $model  = new DocCategoryModel();
+        $fields = ['id'];
+        $wheres = ['pid' => $station_id, 'alias' => 'PARTY_BRANCH'];
+        $db     = $model->getByWheres($fields, $wheres);
 
         $categoryItems = [];
-        if ($pid != 0) {
+        if (!empty($db)) {
+            $pid        = $db[0]['id'];
+            $categories = $model->getChildrenByPid([], $pid);
             helper('my_array');
-            $categoryItems = my_get_all_children($CATEGORY, $pid);
+            $categoryItems = my_arr2tree($categories);
         }
-        array_unshift($categoryItems, ['id' => '0', 'name' => '全部', 'code' => '0']);
+        //
+        $secretLevelItems     = $this->config->SECRET_LEVEL;
+        $retentionPeriodItems = $this->config->RETENTION_PERIOD;
+
+        $res['http_status'] = 200;
+        $res['data']        = [
+            'stationItems'         => $stationItems,
+            'categoryItems'        => $categoryItems,
+            'secretLevelItems'     => $secretLevelItems,
+            'retentionPeriodItems' => $retentionPeriodItems,
+        ];
+        return $res;
+    }
+
+    // 2023-3-19
+    protected function _reqSearchOptions()
+    {
+        // 注意：只允许查看用户所属部门的数据
+        $defaultStationId = $this->session->get('allowDefaultDeptId');
+        if (empty($defaultStationId)) {
+            $res['http_status'] = 401;
+            $res['msg']         = '用户没有权限';
+            return $res;
+        }
+
+        $model        = new DeptModel();
+        $fields       = ['id', 'name'];
+        $stationItems = $model->getDeptRecordsByIds($fields, [$defaultStationId]);
+        //
+        $station_id = $defaultStationId;
+        $model      = new DocCategoryModel();
+        $fields     = ['id', 'pid', 'name'];
+        $wheres     = ['pid' => $station_id, 'alias' => 'PARTY_BRANCH'];
+        $db         = $model->getByWheres($fields, $wheres);
+
+        $categoryItems = [];
+        if (!empty($db)) {
+            $pid        = $db[0]['id'];
+            $categories = $model->getChildrenByPid(['id', 'pid', 'name'], $pid);
+            helper('my_array');
+            // $db[0]['children'] = my_arr2tree($categories);
+            // $categoryItems     = [$db[0]];
+            $categoryItems = my_arr2tree($categories);
+        }
 
         $res['http_status'] = 200;
         $res['data']        = [
@@ -638,7 +685,7 @@ class PartyBranch extends BaseController
         return $res;
     }
 
-    // 2023-2-26
+    // 2023-3-19
     protected function _reqList()
     {
         if (!$this->validate('PartBranchReqList')) {
@@ -668,8 +715,29 @@ class PartyBranch extends BaseController
         // 注意
         $query['station_id'] = [$param['station_id']];
 
-        if ($param['category_id'] !== '0') {
-            $query['category_id'] = $param['category_id'];
+        $model      = new DocCategoryModel();
+        $categories = [];
+        $fields     = ['id', 'name'];
+        $wheres     = ['pid' => $param['station_id'], 'alias' => 'PARTY_BRANCH'];
+        $root       = $model->getByWheres($fields, $wheres);
+        if (!empty($root)) {
+            $pid        = $root[0]['id'];
+            $categories = $model->getChildrenByPid(['id', 'name'], $pid, true);
+        }
+        if ($param['category_id'] === '0') {
+            if (empty($categories)) {
+                $res['http_status'] = 200;
+                $res['data']        = ['total' => 0, 'data' => []];
+                return $res;
+            }
+            foreach ($categories as $value) {
+                $query['category_id'][] = $value['id'];
+            }
+        } else {
+            $temp = $model->getChildrenByPid(['id'], $param['category_id'], true);
+            foreach ($temp as $value) {
+                $query['category_id'][] = $value['id'];
+            }
         }
         if (isset($param['title']) && $param['title'] !== '') {
             $query['title'] = $param['title'];
@@ -678,82 +746,32 @@ class PartyBranch extends BaseController
             $query['keywords'] = $param['keywords'];
         }
 
-        // 注意
-        $query['deleted'] = 0;
-        $query['limit']   = $param['limit'];
-        $query['offset']  = $param['offset'];
-        $fields           = ['id', 'title', 'doc_num', 'category_id', 'secret_level', 'retention_period', 'file_org_name', 'paper_place', 'username', 'updated_at'];
+        $query['limit']  = $param['limit'];
+        $query['offset'] = $param['offset'];
+        $fields          = ['id', 'title', 'doc_num', 'category_id', 'secret_level', 'retention_period', 'store_place', 'updated_at'];
 
-        $model  = new PartyBranchModel();
-        $result = $model->getRecordsByMultiConditions($fields, $query);
+        $model2 = new PartyBranchModel();
+        $result = $model2->getRecordsByMultiConditions($fields, $query);
 
         if ($result['total'] === 0) {
             $res['http_status'] = 200;
             $res['data']        = ['total' => 0, 'data' => []];
             return $res;
         }
-
-        // id => name
-        // 注意：数组下标
-        $categoryItems = $this->config->CATEGORY[$param['station_id']];
-        $cnt           = count($result['data']);
+        //
+        $cnt = count($result['data']);
         for ($i = 0; $i < $cnt; $i++) {
-            $result['data'][$i]['category']         = $this->_getNameMap($categoryItems, $result['data'][$i]['category_id']);
+            foreach ($categories as $value) {
+                if ($result['data'][$i]['category_id'] === $value['id']) {
+                    $result['data'][$i]['category'] = $value['name'];
+                }
+            }
             $result['data'][$i]['secret_level']     = $this->_getNameMap($this->config->SECRET_LEVEL, $result['data'][$i]['secret_level']);
             $result['data'][$i]['retention_period'] = $this->_getNameMap($this->config->RETENTION_PERIOD, $result['data'][$i]['retention_period']);
         }
 
         $res['http_status'] = 200;
         $res['data']        = ['total' => $result['total'], 'data' => $result['data']];
-        return $res;
-    }
-
-    // 2023-3-2
-    protected function _repBlankForm()
-    {
-        $allowWriteDeptId = $this->session->get('allowWriteDeptId');
-        if (empty($allowWriteDeptId)) {
-            $res['http_status'] = 401;
-            $res['msg']         = '用户没有权限';
-            return $res;
-        }
-
-        $station_id = $this->session->get('allowDefaultDeptId');
-        if (!in_array($station_id, $allowWriteDeptId)) {
-            $res['http_status'] = 401;
-            $res['msg']         = '用户没有权限';
-            return $res;
-        }
-
-        $model  = new DeptModel();
-        $fields = ['id', 'name'];
-        //! 注意：用户只能在默认部门，新增记录
-        $stationItems[] = $model->getDeptRecordById($fields, $station_id);
-
-        //
-        $model  = new DocCategoryModel();
-        $fields = ['id'];
-        $wheres = ['pid' => $station_id, 'alias' => 'PARTY_BRANCH'];
-        $db     = $model->getByWheres($fields, $wheres);
-
-        $categoryItems = [];
-        if (!empty($db)) {
-            $pid        = $db[0]['id'];
-            $categories = $model->getChildrenByPid([], $pid);
-            helper('my_array');
-            $categoryItems = my_arr2tree($categories);
-        }
-        //
-        $secretLevelItems     = $this->config->SECRET_LEVEL;
-        $retentionPeriodItems = $this->config->RETENTION_PERIOD;
-
-        $res['http_status'] = 200;
-        $res['data']        = [
-            'stationItems'         => $stationItems,
-            'categoryItems'        => $categoryItems,
-            'secretLevelItems'     => $secretLevelItems,
-            'retentionPeriodItems' => $retentionPeriodItems,
-        ];
         return $res;
     }
 

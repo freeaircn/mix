@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-18 23:08:24
+ * @LastEditTime: 2023-03-19 23:42:59
 -->
 <template>
   <page-header-wrapper :title="false">
@@ -32,6 +32,7 @@
             :allowClear="true"
             expand-trigger="hover"
             change-on-select
+            :displayRender="cascaderDisplayRender"
             :fieldNames="{ label: 'name', value: 'id', children: 'children' }"
             placeholder="请选择"
           />
@@ -215,22 +216,6 @@ export default {
       this.fileList = newFileList
     },
 
-    // handleSubmit2 () {
-    //   const { fileList } = this
-    //   var formData = new FormData()
-    //   fileList.forEach(file => {
-    //     formData.append('files[]', file)
-    //   })
-    //   formData.append('my_id', 1)
-    //   formData.append('my_key', 'create')
-    //   apiUpload(formData)
-    //     .then(() => {
-    //       this.$router.back()
-    //     })
-    //     .catch(() => {
-    //     })
-    // },
-
     handleSubmit () {
       this.$refs.form.validate(valid => {
         if (valid) {
@@ -253,21 +238,6 @@ export default {
           apiCreate(formData)
             .then(() => {
               this.$router.back()
-
-              // console.log('response: ', response)
-              // if (fileList.length === 0) {
-              //   this.$router.back()
-              // } else {
-              //   console.log('fileList: ', fileList)
-              //   var formData = new FormData()
-              //   fileList.forEach(file => {
-              //     formData.append('files[]', file)
-              //   })
-              //   formData.append('id', response.id)
-              //   formData.append('op', 'create')
-              //   formData.append('title', record.title)
-              //   return apiUpload(formData)
-              // }
             })
             .catch(() => {
               // this.ready = false
@@ -280,6 +250,10 @@ export default {
 
     handleCancel () {
       this.$router.back()
+    },
+
+    cascaderDisplayRender ({ labels, selectedOptions }) {
+      return labels[labels.length - 1]
     }
   }
 }

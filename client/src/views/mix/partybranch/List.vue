@@ -19,21 +19,26 @@
             </a-col>
             <a-col :md="3" :sm="24">
               <a-form-model-item label="类别">
-                <a-select v-model="searchParams.category_id" placeholder="请选择">
-                  <a-select-option v-for="d in categoryItems" :key="d.id" :value="d.id">
-                    {{ d.name }}
-                  </a-select-option>
-                </a-select>
+                <a-cascader
+                  :options="categoryItems"
+                  v-model="searchParams.category"
+                  :allowClear="true"
+                  expand-trigger="hover"
+                  change-on-select
+                  :displayRender="cascaderDisplayRender"
+                  :fieldNames="{ label: 'name', value: 'id', children: 'children' }"
+                  placeholder="请选择"
+                />
               </a-form-model-item>
             </a-col>
             <a-col :md="4" :sm="24">
               <a-form-model-item label="标题" prop="title">
-                <a-input v-model="searchParams.title" placeholder=""/>
+                <a-input v-model="searchParams.title" :allowClear="true" placeholder=""/>
               </a-form-model-item>
             </a-col>
             <a-col :md="4" :sm="24">
               <a-form-model-item label="关键词" prop="keywords">
-                <a-input v-model="searchParams.keywords" placeholder=""/>
+                <a-input v-model="searchParams.keywords" :allowClear="true" placeholder=""/>
               </a-form-model-item>
             </a-col>
             <a-col :md="4" :sm="24">
@@ -103,6 +108,7 @@ export default {
       searchParams: {
         station_id: '0',
         category_id: '0',
+        category: [],
         title: '',
         keywords: ''
       },
@@ -125,7 +131,7 @@ export default {
           scopedSlots: { customRender: 'title_' }
         },
         {
-          title: '编号',
+          title: '文件号',
           dataIndex: 'doc_num'
         },
         {
@@ -141,18 +147,13 @@ export default {
           dataIndex: 'retention_period'
         },
         {
-          title: '文件',
-          dataIndex: 'file_org_name',
-          scopedSlots: { customRender: 'file_org_name' }
+          title: '存放放点',
+          dataIndex: 'store_place'
         },
-        {
-          title: '纸质存放点',
-          dataIndex: 'paper_place'
-        },
-        {
-          title: '最后编辑',
-          dataIndex: 'username'
-        },
+        // {
+        //   title: '最后编辑',
+        //   dataIndex: 'username'
+        // },
         {
           title: '更新日期',
           dataIndex: 'updated_at'
@@ -219,18 +220,25 @@ export default {
     resetSearchParams () {
       this.searchParams.station_id = this.userInfo.allowDefaultDeptId
       this.searchParams.category_id = '0'
+      this.searchParams.category = []
       this.searchParams.title = ''
       this.searchParams.keywords = ''
     },
 
     sendSearchReq (params) {
-      var data = Object.assign(params, {
-        resource: 'list',
-        limit: this.pagination.pageSize,
-        offset: this.pagination.current
-      })
+      var data = { ...params }
       data.title = params.title.trim()
       data.keywords = params.keywords.trim()
+      //
+      if (params.category.length === 0) {
+        data.category_id = '0'
+      } else {
+        data.category_id = params.category[params.category.length - 1]
+      }
+      data.resource = 'list'
+      data.limit = this.pagination.pageSize
+      data.offset = this.pagination.current
+      //
       this.loading = true
       apiQuery(data)
         .then(res => {
@@ -336,8 +344,16 @@ export default {
           }
         })
       }
-    }
+    },
 
+    cascaderDisplayRender ({ labels, selectedOptions }) {
+      // if (labels.length > 0) {
+      //   return labels[labels.length - 1]
+      // } else {
+      //   return ''
+      // }
+      return labels[labels.length - 1]
+    }
   }
 }
 </script>

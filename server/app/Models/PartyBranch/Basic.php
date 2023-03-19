@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-17 23:25:30
+ * @LastEditTime: 2023-03-20 00:04:42
  */
 
 namespace App\Models\PartyBranch;
@@ -46,7 +46,7 @@ class Basic extends Model
 
         $selectSql = '';
         if (empty($fields)) {
-            $selectSql = 'id, station_id, category_id, doc_num, title, keywords, info, status, secret_level, retention_period, store_in, user_id, username, created_at, updated_at';
+            $selectSql = 'id, station_id, category_id, doc_num, title, keywords, secret_level, retention_period, store_place, user_id, created_at, updated_at';
         } else {
             foreach ($fields as $name) {
                 $selectSql = $selectSql . $name . ', ';
@@ -56,13 +56,8 @@ class Basic extends Model
         $builder = $this->select($selectSql);
         $builder->whereIn('station_id', $conditions['station_id']);
         if (isset($conditions['category_id'])) {
-            $builder->where('category_id', $conditions['category_id']);
+            $builder->whereIn('category_id', $conditions['category_id']);
         }
-        // 注意
-        if (isset($conditions['deleted'])) {
-            $builder->where('deleted', $conditions['deleted']);
-        }
-        //
         if (isset($conditions['title'])) {
             $builder->like('title', $conditions['title']);
         }
