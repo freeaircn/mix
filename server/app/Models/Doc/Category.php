@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-20 00:26:13
+ * @LastEditTime: 2023-03-21 23:50:51
  */
 
 namespace App\Models\Doc;
@@ -123,6 +123,8 @@ class Category extends Model
                 $selectSql = $selectSql . $name . ', ';
             }
         }
+        $selectSql = trim($selectSql, ', ');
+
         $builder = $this->select($selectSql);
         // 注意
         $builder->where('pid', '1');
@@ -147,6 +149,7 @@ class Category extends Model
                 $selectSql = $selectSql . $name . ', ';
             }
         }
+        $selectSql = trim($selectSql, ', ');
 
         $builder = $this->select($selectSql);
         $builder->where('id', $id);

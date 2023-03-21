@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-20 00:04:42
+ * @LastEditTime: 2023-03-21 23:13:52
  */
 
 namespace App\Models\PartyBranch;
@@ -17,7 +17,7 @@ class Basic extends Model
     protected $table;
 
     protected $primaryKey    = 'id';
-    protected $allowedFields = ['station_id', 'category_id', 'serial_id', 'doc_num', 'title', 'keywords', 'summary', 'status', 'secret_level', 'retention_period', 'store_place', 'user_id', 'created_at', 'updated_at', 'deleted_at'];
+    protected $allowedFields = ['uuid', 'station_id', 'category_id', 'serial_id', 'doc_num', 'title', 'keywords', 'summary', 'status', 'secret_level', 'retention_period', 'store_place', 'user_id', 'created_at', 'updated_at', 'deleted_at'];
 
     protected $useAutoIncrement = true;
 
@@ -46,7 +46,7 @@ class Basic extends Model
 
         $selectSql = '';
         if (empty($fields)) {
-            $selectSql = 'id, station_id, category_id, doc_num, title, keywords, secret_level, retention_period, store_place, user_id, created_at, updated_at';
+            $selectSql = 'id, uuid, station_id, category_id, doc_num, title, keywords, summary, secret_level, retention_period, store_place, user_id, created_at, updated_at';
         } else {
             foreach ($fields as $name) {
                 $selectSql = $selectSql . $name . ', ';
@@ -108,16 +108,16 @@ class Basic extends Model
         return $this->insert($data);
     }
 
-    // 2023-2-22
-    public function getRecordById(array $fields = null, $id = 0)
+    // 2023-3-21
+    public function getRecordByUuid(array $fields = null, $uuid = 0)
     {
-        if (empty($id)) {
+        if (empty($uuid)) {
             return [];
         }
 
         $selectSql = '';
         if (empty($fields)) {
-            $selectSql = 'id, station_id, category_id, serial_id, dwg_num, dwg_name, keywords, file_org_name, info, user_id, username, created_at, updated_at';
+            $selectSql = 'id, uuid, station_id, category_id, serial_id, title, doc_num, keywords, summary, secret_level, retention_period, store_place, user_id, status, created_at, updated_at';
         } else {
             foreach ($fields as $name) {
                 $selectSql = $selectSql . $name . ', ';
@@ -125,7 +125,7 @@ class Basic extends Model
         }
 
         $builder = $this->select($selectSql);
-        $builder->where('id', $id);
+        $builder->where('uuid', $uuid);
         $result = $builder->findAll();
         if (empty($result)) {
             return [];

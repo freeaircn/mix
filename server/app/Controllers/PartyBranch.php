@@ -4,12 +4,14 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-20 00:36:59
+ * @LastEditTime: 2023-03-22 00:02:09
  */
 
 namespace App\Controllers;
 
+use App\Libraries\MyIdMaker;
 use App\Models\Common\DeptModel;
+use App\Models\Common\UserModel;
 //
 use App\Models\Doc\Category as DocCategoryModel;
 use App\Models\Doc\Files as DocFilesModel;
@@ -44,11 +46,11 @@ class PartyBranch extends BaseController
             case 'search_options':
                 $result = $this->_reqSearchOptions();
                 break;
-            case 'list':
-                $result = $this->_reqList();
-                break;
             case 'blank_form':
                 $result = $this->_repBlankForm();
+                break;
+            case 'list':
+                $result = $this->_reqList();
                 break;
             case 'details':
                 $result = $this->_reqDetails();
@@ -105,7 +107,14 @@ class PartyBranch extends BaseController
             return $this->failUnauthorized('用户没有权限');
         }
         //
-        $uid    = $this->session->get('id');
+        $uid     = $this->session->get('id');
+        $IdMaker = new MyIdMaker();
+        $uuid    = $IdMaker->apply('PARTY_BRANCH');
+        if ($uuid === false) {
+            $res['info']  = 'uuid error';
+            $res['error'] = '服务器处理发生错误，稍候再试';
+            return $this->fail($res, 500);
+        }
         $record = [
             'station_id'       => $client['station_id'],
             'category_id'      => $client['category_id'],
@@ -116,6 +125,7 @@ class PartyBranch extends BaseController
             'retention_period' => $client['retention_period'],
             'store_place'      => $client['store_place'],
             'user_id'          => $uid,
+            'uuid'             => $uuid,
         ];
 
         // 注意
@@ -139,8 +149,8 @@ class PartyBranch extends BaseController
         $record['serial_id'] = $serial_id;
         $record['doc_num']   = $client['station_id'] . '-' . $code . '-' . $serial_id;
 
-        $associated_id = $model->insertOneRecord($record);
-        if ($associated_id === false) {
+        $result = $model->insertOneRecord($record);
+        if ($result === false) {
             return $this->failServerError('服务器处理发生错误，稍候再试');
         }
 
@@ -188,7 +198,7 @@ class PartyBranch extends BaseController
                 $file_records[] = [
                     'station_id'     => $client['station_id'],
                     'category_id'    => $client['category_id'],
-                    'associated_id'  => $associated_id,
+                    'associated_id'  => $uuid,
                     'user_id'        => $uid,
                     'file_org_name'  => $file_org_name,
                     'file_new_name'  => $file_new_name,
@@ -748,7 +758,7 @@ class PartyBranch extends BaseController
 
         $query['limit']  = $param['limit'];
         $query['offset'] = $param['offset'];
-        $fields          = ['id', 'title', 'doc_num', 'category_id', 'secret_level', 'retention_period', 'store_place', 'updated_at'];
+        $fields          = ['id', 'uuid', 'title', 'doc_num', 'category_id', 'secret_level', 'retention_period', 'store_place', 'updated_at'];
 
         $model2 = new PartyBranchModel();
         $result = $model2->getRecordsByMultiConditions($fields, $query);
@@ -775,10 +785,10 @@ class PartyBranch extends BaseController
         return $res;
     }
 
-    // 2023-2-22
+    // 2023-3-21
     protected function _reqDetails()
     {
-        if (!$this->validate('DrawingReqDetails')) {
+        if (!$this->validate('PartBranchDetails')) {
             $res['http_status'] = 400;
             $res['msg']         = [
                 'error' => '请求数据无效',
@@ -788,11 +798,11 @@ class PartyBranch extends BaseController
         }
 
         $params = $this->request->getGet();
-        $id     = $params['id'];
+        $uuid   = $params['uuid'];
 
-        $fields = ['id', 'station_id', 'dwg_name', 'category_id', 'dwg_num', 'keywords', 'info', 'file_org_name', 'file_ext', 'username', 'created_at', 'updated_at'];
-        $model  = new DrawingModel();
-        $db     = $model->getRecordById($fields, $id);
+        $fields = ['id', 'uuid', 'station_id', 'title', 'category_id', 'doc_num', 'keywords', 'summary', 'status', 'secret_level', 'retention_period', 'store_place', 'user_id', 'created_at', 'updated_at'];
+        $model  = new PartyBranchModel();
+        $db     = $model->getRecordByUuid($fields, $uuid);
         if (empty($db)) {
             $res['http_status'] = 404;
             $res['msg']         = '没有找到请求的数据';
@@ -805,29 +815,58 @@ class PartyBranch extends BaseController
             $res['msg']         = '用户没有权限';
             return $res;
         }
-        $details = $db;
+        $details = [
+            'id'               => $db['id'],
+            'uuid'             => $db['uuid'],
+            'station'          => '',
+            'title'            => $db['title'],
+            'category'         => '',
+            'doc_num'          => $db['doc_num'],
+            'keywords'         => $db['keywords'],
+            'summary'          => $db['summary'],
+            'secret_level'     => '',
+            'retention_period' => '',
+            'store_place'      => $db['store_place'],
+            'username'         => '',
+            'created_at'       => $db['created_at'],
+            'updated_at'       => $db['updated_at'],
+        ];
 
-        // id -> name
-        $model  = new DocCategoryModel();
-        $fields = ['name'];
-        $temp   = $model->getById($fields, $db['category_id']);
-        if (empty($temp)) {
-            $details['category'] = '';
-        } else {
-            $details['category'] = $temp['name'];
-        }
-
+        // 显示名
         $model  = new DeptModel();
         $fields = ['name'];
-        $temp   = $model->getDeptRecordById($fields, $db['station_id']);
-        if (empty($temp)) {
-            $details['station'] = '';
-        } else {
-            $details['station'] = $temp['name'];
+        $name   = $model->getDeptRecordById($fields, $db['station_id']);
+        if (!empty($name)) {
+            $details['station'] = $name['name'];
         }
 
+        $model  = new DocCategoryModel();
+        $fields = ['name'];
+        $name   = $model->getById($fields, $db['category_id']);
+        if (!empty($name)) {
+            $details['category'] = $name['name'];
+        }
+
+        $model    = new UserModel();
+        $fields   = ['username'];
+        $username = $model->getUserRecordById($fields, $db['user_id']);
+        if (!empty($username)) {
+            $details['username'] = $username['username'];
+        }
+
+        $details['secret_level']     = $this->_getNameMap($this->config->SECRET_LEVEL, $db['secret_level']);
+        $details['retention_period'] = $this->_getNameMap($this->config->RETENTION_PERIOD, $db['retention_period']);
+
+        // 查找文档附件
+        $model  = new DocFilesModel();
+        $fields = ['id', 'file_org_name'];
+        $files  = $model->getByAssociatedID($fields, $uuid);
+
         $res['http_status'] = 200;
-        $res['data']        = $details;
+        $res['data']        = [
+            'details' => $details,
+            'files'   => $files,
+        ];
         return $res;
     }
 

@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-07-06 21:44:27
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-19 00:50:42
+ * @LastEditTime: 2023-03-21 22:03:22
  */
 
 namespace Config\MyConfig;
@@ -20,6 +20,11 @@ class DocStore extends BaseConfig
     public $allowedFileTypes   = [
         'application/zip',
         'application/pdf',
+    ];
+    public $STATUS = [
+        'published',
+        'draft',
+        'deleted',
     ];
     // 2023-2-26
     public $SECRET_LEVEL;
@@ -47,8 +52,8 @@ class DocStore extends BaseConfig
         ];
         //
         $this->partyBranch = [
-            'filePath'           => 'uploads/party_branch',
-            'allowedFileTypes'   => [
+            'filePath'         => 'uploads/party_branch',
+            'allowedFileTypes' => [
                 'application/zip',
                 'application/pdf',
             ],

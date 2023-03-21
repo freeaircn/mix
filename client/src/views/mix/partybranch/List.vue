@@ -66,11 +66,6 @@
             <a @click="handleQueryDetails(record)">{{ text }}</a>
           </template>
         </span>
-        <span slot="file_org_name" slot-scope="text, record">
-          <template>
-            <a @click="handleQueryDetails(record)">{{ text }}</a>
-          </template>
-        </span>
         <span slot="action" slot-scope="text, record">
           <template>
             <a @click="handleQueryDetails(record)">详情</a>
@@ -91,7 +86,8 @@ import * as pattern from '@/utils/validateRegex'
 // import store from '@/store'
 import { mapGetters } from 'vuex'
 import { baseMixin } from '@/store/app-mixin'
-import { apiQuery, apiDelete, apiDownloadFile } from '@/api/mix/party_branch'
+// import { apiQuery, apiDelete, apiDownloadFile } from '@/api/mix/party_branch'
+import { apiQuery, apiDelete } from '@/api/mix/party_branch'
 
 export default {
   name: 'List',
@@ -150,10 +146,6 @@ export default {
           title: '存放放点',
           dataIndex: 'store_place'
         },
-        // {
-        //   title: '最后编辑',
-        //   dataIndex: 'username'
-        // },
         {
           title: '更新日期',
           dataIndex: 'updated_at'
@@ -276,51 +268,51 @@ export default {
       this.sendSearchReq(this.searchParams)
     },
 
-    handleDownloadFile (record) {
-      const param = {
-        id: record.id,
-        file_org_name: record.file_org_name
-      }
-      apiDownloadFile(param)
-        .then((res) => {
-          const { data, headers } = res
+    // handleDownloadFile (record) {
+    //   const param = {
+    //     id: record.id,
+    //     file_org_name: record.file_org_name
+    //   }
+    //   apiDownloadFile(param)
+    //     .then((res) => {
+    //       const { data, headers } = res
 
-          const str = headers['content-type']
-          if (str.indexOf('json') !== -1) {
-            this.$message.warning('没有权限')
-          } else {
-            // 下载文件
-            const blob = new Blob([data], { type: headers['content-type'] })
-            const dom = document.createElement('a')
-            const url = window.URL.createObjectURL(blob)
-            dom.href = url
-            const filename = headers['content-disposition'].split(';')[1].split('=')[1]
-            dom.download = decodeURI(filename)
-            dom.style.display = 'none'
-            document.body.appendChild(dom)
-            dom.click()
-            dom.parentNode.removeChild(dom)
-            window.URL.revokeObjectURL(url)
+    //       const str = headers['content-type']
+    //       if (str.indexOf('json') !== -1) {
+    //         this.$message.warning('没有权限')
+    //       } else {
+    //         // 下载文件
+    //         const blob = new Blob([data], { type: headers['content-type'] })
+    //         const dom = document.createElement('a')
+    //         const url = window.URL.createObjectURL(blob)
+    //         dom.href = url
+    //         const filename = headers['content-disposition'].split(';')[1].split('=')[1]
+    //         dom.download = decodeURI(filename)
+    //         dom.style.display = 'none'
+    //         document.body.appendChild(dom)
+    //         dom.click()
+    //         dom.parentNode.removeChild(dom)
+    //         window.URL.revokeObjectURL(url)
 
-            this.$message.info('文件已下载')
-          }
-        })
-        .catch(() => {
-          this.$message.info('文件下载失败')
-        })
-    },
+    //         this.$message.info('文件已下载')
+    //       }
+    //     })
+    //     .catch(() => {
+    //       this.$message.info('文件下载失败')
+    //     })
+    // },
 
     handleQueryDetails (record) {
-      if (record.id) {
-        const id = record.id
-        this.$router.push({ path: `/party_branch/details/${id}` })
+      if (record.uuid) {
+        const uuid = record.uuid
+        this.$router.push({ path: `/party_branch/details/${uuid}` })
       }
     },
 
     handleEdit (record) {
-      if (record.id) {
-        const id = record.id
-        this.$router.push({ path: `/party_branch/edit/${id}` })
+      if (record.uuid) {
+        const uuid = record.uuid
+        this.$router.push({ path: `/party_branch/edit/${uuid}` })
       }
     },
 

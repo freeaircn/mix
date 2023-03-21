@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-19 23:00:59
+ * @LastEditTime: 2023-03-21 23:03:08
  */
 
 namespace Config;
@@ -339,6 +339,10 @@ class Validation
         'keywords'    => VALIDATE_KEY_WORDS,
         'limit'       => 'required|' . VALIDATE_ID,
         'offset'      => 'required|' . VALIDATE_ID,
+    ];
+
+    public $PartBranchDetails = [
+        'uuid' => 'required|' . VALIDATE_ID,
     ];
 
     public $PartyBranchUploadFile = [

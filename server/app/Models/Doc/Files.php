@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-19 00:18:20
+ * @LastEditTime: 2023-03-21 23:51:24
  */
 
 namespace App\Models\Doc;
@@ -44,6 +44,33 @@ class Files extends Model
         }
 
         return $this->insertBatch($records);
+    }
+
+    public function getByAssociatedID(array $fields = null, $associated_id = null)
+    {
+        if (empty($associated_id)) {
+            return [];
+        }
+
+        $selectSql = '';
+        if (empty($fields)) {
+            $selectSql = 'id, station_id, category_id, associated_id, user_id, file_org_name, file_new_name, file_ext, file_mime_type, size, path, created_at, deleted_at';
+        } else {
+            foreach ($fields as $name) {
+                $selectSql = $selectSql . $name . ', ';
+            }
+        }
+        $selectSql = trim($selectSql, ', ');
+
+        $builder = $this->select($selectSql);
+        $builder->where('associated_id', $associated_id);
+        $res = $builder->findAll();
+
+        if (empty($res)) {
+            return [];
+        } else {
+            return $res;
+        }
     }
 
 }
