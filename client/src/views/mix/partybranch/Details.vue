@@ -1,8 +1,11 @@
 <template>
   <page-header-wrapper :title="false">
     <a-card :bordered="false" :loading="loading" :body-style="{marginBottom: '8px'}">
-      <a-descriptions title="" :column="{ xxl: 4, xl: 3, lg: 3, md: 3, sm: 2, xs: 1 }">
+      <!-- <a-descriptions title="" :column="{ xxl: 4, xl: 3, lg: 3, md: 3, sm: 2, xs: 1 }">
         <a-descriptions-item label="站点">{{ details.station }}</a-descriptions-item>
+      </a-descriptions> -->
+      <a-descriptions title="" :column="{ xxl: 4, xl: 3, lg: 3, md: 3, sm: 2, xs: 1 }">
+        <a-descriptions-item label="类别">{{ details.category }}</a-descriptions-item>
       </a-descriptions>
       <a-descriptions title="" :column="{ xxl: 4, xl: 3, lg: 3, md: 3, sm: 2, xs: 1 }">
         <a-descriptions-item label="文档标题">{{ details.title }}</a-descriptions-item>
@@ -12,9 +15,6 @@
       </a-descriptions>
       <a-descriptions title="" :column="{ xxl: 4, xl: 3, lg: 3, md: 3, sm: 2, xs: 1 }">
         <a-descriptions-item label="密级">{{ details.secret_level }}</a-descriptions-item>
-      </a-descriptions>
-      <a-descriptions title="" :column="{ xxl: 4, xl: 3, lg: 3, md: 3, sm: 2, xs: 1 }">
-        <a-descriptions-item label="类别">{{ details.category }}</a-descriptions-item>
       </a-descriptions>
       <a-descriptions title="" :column="{ xxl: 4, xl: 3, lg: 3, md: 3, sm: 2, xs: 1 }">
         <a-descriptions-item label="关键词">{{ details.keywords }}</a-descriptions-item>

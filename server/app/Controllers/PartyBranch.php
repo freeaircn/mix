@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-22 00:02:09
+ * @LastEditTime: 2023-03-27 01:11:22
  */
 
 namespace App\Controllers;
@@ -818,7 +818,7 @@ class PartyBranch extends BaseController
         $details = [
             'id'               => $db['id'],
             'uuid'             => $db['uuid'],
-            'station'          => '',
+            // 'station'          => '',
             'title'            => $db['title'],
             'category'         => '',
             'doc_num'          => $db['doc_num'],
@@ -833,19 +833,27 @@ class PartyBranch extends BaseController
         ];
 
         // 显示名
-        $model  = new DeptModel();
-        $fields = ['name'];
-        $name   = $model->getDeptRecordById($fields, $db['station_id']);
-        if (!empty($name)) {
-            $details['station'] = $name['name'];
-        }
+        // $model  = new DeptModel();
+        // $fields = ['name'];
+        // $name   = $model->getDeptRecordById($fields, $db['station_id']);
+        // if (!empty($name)) {
+        //     $details['station'] = $name['name'];
+        // }
 
-        $model  = new DocCategoryModel();
-        $fields = ['name'];
-        $name   = $model->getById($fields, $db['category_id']);
-        if (!empty($name)) {
-            $details['category'] = $name['name'];
+        $model      = new DocCategoryModel();
+        $fields     = ['id', 'pid', 'name'];
+        $categories = $model->getAllParents($fields, $db['category_id']);
+        $label      = '';
+        if (!empty($categories)) {
+            $length = count($categories);
+            for ($i = 0; $i < $length; $i++) {
+                $label = $label . $categories[$length - $i - 1]['name'] . ' / ';
+            }
+            $label = trim($label, ' / ');
         }
+        $details['category'] = $label;
+
+        $children = $model->getAllChildren($fields, '2', false);
 
         $model    = new UserModel();
         $fields   = ['username'];
@@ -864,8 +872,10 @@ class PartyBranch extends BaseController
 
         $res['http_status'] = 200;
         $res['data']        = [
-            'details' => $details,
-            'files'   => $files,
+            'details'    => $details,
+            'files'      => $files,
+            'categories' => $categories,
+            'children'   => $children,
         ];
         return $res;
     }
