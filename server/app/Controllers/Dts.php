@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2023-02-20 10:27:45
+ * @LastEditTime: 2023-03-28 22:37:03
  */
 
 namespace App\Controllers;
@@ -335,7 +335,7 @@ class Dts extends BaseController
         $draft['status'] = 'publish';
         // dts_id
         $maker  = new MyIdMaker();
-        $dts_id = $maker->apply('DTS');
+        $dts_id = $maker->apply('UUID');
         if ($dts_id === false) {
             $res['info']  = 'id maker failed';
             $res['error'] = '服务器处理发生错误，稍候再试';

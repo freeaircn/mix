@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2023-02-26 08:58:37
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-21 23:56:01
+ * @LastEditTime: 2023-03-28 21:57:29
 -->
 <template>
   <div class="wrapper">
@@ -72,15 +72,15 @@ export default {
   },
   methods: {
     handlePreviewFile (record) {
-      console.log(record)
+      this.$emit('preview', record)
     },
 
     handleDownloadFile (record) {
-      console.log(record)
+      this.$emit('download', record)
     },
 
     handleDeleteFile (record) {
-      console.log(record)
+      this.$emit('delete', record)
     }
   }
 }

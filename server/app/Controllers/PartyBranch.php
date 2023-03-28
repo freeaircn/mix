@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-27 01:11:22
+ * @LastEditTime: 2023-03-28 22:36:16
  */
 
 namespace App\Controllers;
@@ -109,7 +109,7 @@ class PartyBranch extends BaseController
         //
         $uid     = $this->session->get('id');
         $IdMaker = new MyIdMaker();
-        $uuid    = $IdMaker->apply('PARTY_BRANCH');
+        $uuid    = $IdMaker->apply('UUID');
         if ($uuid === false) {
             $res['info']  = 'uuid error';
             $res['error'] = '服务器处理发生错误，稍候再试';
@@ -445,10 +445,10 @@ class PartyBranch extends BaseController
         }
     }
 
-    // 2023-2-22
+    // 2023-3-28
     public function downloadFile()
     {
-        if (!$this->validate('DrawingDownloadFile')) {
+        if (!$this->validate('PartyBranchDownloadFile')) {
             $res['info']  = $this->validator->getErrors();
             $res['error'] = '请求数据无效';
             return $this->fail($res);
@@ -458,9 +458,9 @@ class PartyBranch extends BaseController
         $id            = $params['id'];
         $file_org_name = $params['file_org_name'];
 
+        $model  = new DocFilesModel();
         $fields = ['station_id', 'file_org_name', 'file_new_name', 'file_mime_type'];
-        $model  = new DrawingModel($fields, $id);
-        $db     = $model->getRecordById($fields, $id);
+        $db     = $model->getByID($fields, $id);
 
         if (empty($db)) {
             return $this->failNotFound('文件不存在');
@@ -474,7 +474,7 @@ class PartyBranch extends BaseController
             return $this->failUnauthorized('用户没有权限');
         }
 
-        $path = WRITEPATH . $this->config->filePath;
+        $path = WRITEPATH . $this->config->partyBranch['filePath'];
         $file = rtrim($path, '\\/ ') . DIRECTORY_SEPARATOR . $db['file_new_name'];
         if (!file_exists($file)) {
             return $this->failNotFound('文件不存在');
@@ -638,7 +638,7 @@ class PartyBranch extends BaseController
         $categoryItems = [];
         if (!empty($db)) {
             $pid        = $db[0]['id'];
-            $categories = $model->getChildrenByPid([], $pid);
+            $categories = $model->getAllChildren(['id', 'pid', 'name'], $pid);
             helper('my_array');
             $categoryItems = my_arr2tree($categories);
         }
@@ -680,7 +680,7 @@ class PartyBranch extends BaseController
         $categoryItems = [];
         if (!empty($db)) {
             $pid        = $db[0]['id'];
-            $categories = $model->getChildrenByPid(['id', 'pid', 'name'], $pid);
+            $categories = $model->getAllChildren(['id', 'pid', 'name'], $pid);
             helper('my_array');
             // $db[0]['children'] = my_arr2tree($categories);
             // $categoryItems     = [$db[0]];
@@ -732,7 +732,7 @@ class PartyBranch extends BaseController
         $root       = $model->getByWheres($fields, $wheres);
         if (!empty($root)) {
             $pid        = $root[0]['id'];
-            $categories = $model->getChildrenByPid(['id', 'name'], $pid, true);
+            $categories = $model->getAllChildren(['id', 'name'], $pid, true);
         }
         if ($param['category_id'] === '0') {
             if (empty($categories)) {
@@ -744,7 +744,7 @@ class PartyBranch extends BaseController
                 $query['category_id'][] = $value['id'];
             }
         } else {
-            $temp = $model->getChildrenByPid(['id'], $param['category_id'], true);
+            $temp = $model->getAllChildren(['id'], $param['category_id'], true);
             foreach ($temp as $value) {
                 $query['category_id'][] = $value['id'];
             }
@@ -853,8 +853,6 @@ class PartyBranch extends BaseController
         }
         $details['category'] = $label;
 
-        $children = $model->getAllChildren($fields, '2', false);
-
         $model    = new UserModel();
         $fields   = ['username'];
         $username = $model->getUserRecordById($fields, $db['user_id']);
@@ -867,15 +865,13 @@ class PartyBranch extends BaseController
 
         // 查找文档附件
         $model  = new DocFilesModel();
-        $fields = ['id', 'file_org_name'];
+        $fields = ['id', 'file_org_name', 'file_ext'];
         $files  = $model->getByAssociatedID($fields, $uuid);
 
         $res['http_status'] = 200;
         $res['data']        = [
-            'details'    => $details,
-            'files'      => $files,
-            'categories' => $categories,
-            'children'   => $children,
+            'details' => $details,
+            'files'   => $files,
         ];
         return $res;
     }

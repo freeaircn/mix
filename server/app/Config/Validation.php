@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-21 23:03:08
+ * @LastEditTime: 2023-03-28 22:26:11
  */
 
 namespace Config;
@@ -349,6 +349,11 @@ class Validation
         'id'    => 'required|' . VALIDATE_ID,
         'op'    => 'required',
         'title' => 'required|' . VALIDATE_TITLE,
+    ];
+
+    public $PartyBranchDownloadFile = [
+        'id'            => 'required|' . VALIDATE_ID,
+        'file_org_name' => 'required',
     ];
 
     /**

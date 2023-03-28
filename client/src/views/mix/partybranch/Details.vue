@@ -46,7 +46,7 @@
         <a-row :gutter="16">
           <a-col :md="12" :sm="24">
             <div style="width: 100%; margin-bottom: 8px">
-              <files-table :listData="fileList"></files-table>
+              <files-table :listData="fileList" @preview="handlePreviewFile" @download="handleDownloadFile" @delete="handleDeleteFile"></files-table>
             </div>
           </a-col>
         </a-row>
@@ -63,7 +63,7 @@
 </template>
 
 <script>
-import { drawing as CONFIG } from '@/config/myConfig'
+import { partyBranch as CONFIG } from '@/config/myConfig'
 import { mapGetters } from 'vuex'
 import { baseMixin } from '@/store/app-mixin'
 import { apiQuery, apiDownloadFile } from '@/api/mix/party_branch'
@@ -131,16 +131,75 @@ export default {
         })
     },
 
-    handleDownloadFile () {
-      if (this.details.file_org_name === '') {
+    // handleDownloadFile () {
+    //   if (this.details.file_org_name === '') {
+    //     this.$message.info('没有可以下载的文件')
+    //     return true
+    //   }
+    //   const param = {
+    //     id: this.details.id,
+    //     file_org_name: this.details.file_org_name
+    //   }
+    //   apiDownloadFile(param)
+    //     .then((res) => {
+    //       const { data, headers } = res
+
+    //       const str = headers['content-type']
+    //       if (str.indexOf('json') !== -1) {
+    //         this.$message.warning('没有权限')
+    //       } else {
+    //         // 下载文件
+    //         const blob = new Blob([data], { type: headers['content-type'] })
+    //         const dom = document.createElement('a')
+    //         const url = window.URL.createObjectURL(blob)
+    //         dom.href = url
+    //         const filename = headers['content-disposition'].split(';')[1].split('=')[1]
+    //         dom.download = decodeURI(filename)
+    //         dom.style.display = 'none'
+    //         document.body.appendChild(dom)
+    //         dom.click()
+    //         dom.parentNode.removeChild(dom)
+    //         window.URL.revokeObjectURL(url)
+
+    //         this.$message.info('文件已下载')
+    //       }
+    //     })
+    //     .catch(() => {
+    //       this.$message.info('文件下载失败')
+    //     })
+    // },
+
+    handleExit () {
+      this.$router.back()
+    },
+
+    handlePreviewFile (record) {
+      console.log('handlePreviewFile: ', record)
+      if (record.file_org_name === '') {
+        this.$message.info('没有可预览的文件')
+        return true
+      }
+      if (CONFIG.allowedPreviewFileTypes.includes(record.file_ext) === false) {
+        this.$message.info('不支持预览文件类型：' + record.file_ext)
+        return true
+      }
+      //
+      const id = record.id
+      const file = record.file_org_name
+      this.$router.push({ path: `/party_branch/file_preview/${id}/${file}` })
+    },
+
+    handleDownloadFile (record) {
+      console.log('handleDownloadFile: ', record)
+      if (record.file_org_name === '') {
         this.$message.info('没有可以下载的文件')
         return true
       }
-      const param = {
-        id: this.details.id,
-        file_org_name: this.details.file_org_name
+      const params = {
+        id: record.id,
+        file_org_name: record.file_org_name
       }
-      apiDownloadFile(param)
+      apiDownloadFile(params)
         .then((res) => {
           const { data, headers } = res
 
@@ -169,24 +228,9 @@ export default {
         })
     },
 
-    handlePreviewFile () {
-      if (this.details.file_org_name === '') {
-        this.$message.info('没有可预览的文件')
-        return true
-      }
-      var ext = this.details.file_ext
-      if (CONFIG.allowedPreviewFileTypes.includes(ext) === false) {
-        this.$message.info('文件类型不支持')
-        return true
-      }
-      //
-      const id = this.details.id
-      const file = this.details.file_org_name
-      this.$router.push({ path: `/dashboard/drawing/file_preview/${id}/${file}` })
-    },
-
-    handleExit () {
-      this.$router.back()
+    handleDeleteFile (record) {
+      console.log('handleDeleteFile: ', record)
+      this.$emit('delete', record)
     }
   }
 }

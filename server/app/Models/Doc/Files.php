@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-21 23:51:24
+ * @LastEditTime: 2023-03-28 22:28:37
  */
 
 namespace App\Models\Doc;
@@ -70,6 +70,33 @@ class Files extends Model
             return [];
         } else {
             return $res;
+        }
+    }
+
+    public function getByID(array $fields = null, $id = null)
+    {
+        if (empty($id)) {
+            return [];
+        }
+
+        $selectSql = '';
+        if (empty($fields)) {
+            $selectSql = 'id, station_id, category_id, associated_id, user_id, file_org_name, file_new_name, file_ext, file_mime_type, size, path, created_at, deleted_at';
+        } else {
+            foreach ($fields as $name) {
+                $selectSql = $selectSql . $name . ', ';
+            }
+        }
+        $selectSql = trim($selectSql, ', ');
+
+        $builder = $this->select($selectSql);
+        $builder->where('id', $id);
+        $res = $builder->findAll();
+
+        if (empty($res)) {
+            return [];
+        } else {
+            return $res[0];
         }
     }
 
