@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-28 22:26:11
+ * @LastEditTime: 2023-03-30 22:48:25
  */
 
 namespace Config;
@@ -345,15 +345,18 @@ class Validation
         'uuid' => 'required|' . VALIDATE_ID,
     ];
 
-    public $PartyBranchUploadFile = [
-        'id'    => 'required|' . VALIDATE_ID,
-        'op'    => 'required',
-        'title' => 'required|' . VALIDATE_TITLE,
-    ];
-
     public $PartyBranchDownloadFile = [
         'id'            => 'required|' . VALIDATE_ID,
         'file_org_name' => 'required',
+    ];
+
+    public $PartyBranchDeleteFile = [
+        'id'            => 'required|' . VALIDATE_ID,
+        'file_org_name' => 'required',
+    ];
+
+    public $PartyBranchUploadFile = [
+        'associated_id' => 'required|' . VALIDATE_ID,
     ];
 
     /**

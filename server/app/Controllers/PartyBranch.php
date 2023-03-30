@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-28 22:36:16
+ * @LastEditTime: 2023-03-30 23:57:05
  */
 
 namespace App\Controllers;
@@ -181,6 +181,7 @@ class PartyBranch extends BaseController
                 }
                 //
                 $file_org_name = $file->getName();
+                $file_org_name = str_replace(" ", "", $file_org_name);
                 $file_new_name = $file->getRandomName();
                 $file_ext      = $file->guessExtension();
                 $size          = $file->getSize();
@@ -232,217 +233,42 @@ class PartyBranch extends BaseController
         return $this->respond($res);
     }
 
-    // 2023-3-18
-    public function uploadFile()
-    {
-        if (!$this->validate('PartyBranchUploadFile')) {
-            $res['info']  = $this->validator->getErrors();
-            $res['error'] = '请求数据无效';
-            return $this->fail($res);
-        }
-
-        $id    = $this->request->getPost('id');
-        $op    = $this->request->getPost('op');
-        $title = $this->request->getPost('title');
-        $files = $this->request->getFiles('files');
-
-        if (empty($files)) {
-            return $this->failServerError('文件上传失败');
-        }
-
-        $res['files'] = $files;
-        return $this->respond($res);
-
-        if (!$file->isValid()) {
-            return $this->failServerError('文件上传失败');
-        }
-
-        if (!$file->getSize() > $this->config->maxFileSize) {
-            return $this->fail($this->config->fileExceedSizeMsg);
-        }
-        if (!$file->getSize() === 0) {
-            return $this->fail('上传空文件');
-        }
-
-        $fileType = $file->getMimeType();
-        if (!in_array($fileType, $this->config->allowedFileTypes)) {
-            return $this->fail($this->config->fileInvalidTypeMsg);
-        }
-
-        $file_org_name  = $file->getName();
-        $file_new_name  = $file->getRandomName();
-        $file_ext       = $file->guessExtension();
-        $file_mime_type = $file->getMimeType();
-        $size           = $file->getSize();
-
-        // 注意
-        if ($key === 'create') {
-            $path = WRITEPATH . $this->config->tempPath;
-            if (!$file->hasMoved()) {
-                try {
-                    $file->move($path, $file_new_name, true);
-                } catch (FileException $exception) {
-                    return $this->failServerError('保存文件出错');
-                }
-            }
-            //
-            $cache = $this->session->get('drawingFileCache');
-            $time  = time();
-            $data  = [
-                'id'             => $time,
-                'file_org_name'  => $file_org_name,
-                'file_new_name'  => $file_new_name,
-                'file_ext'       => $file_ext,
-                'file_mime_type' => $file_mime_type,
-                'size'           => $size,
-            ];
-            if (!$cache) {
-                $this->session->set('drawingFileCache', [$data]);
-            } else {
-                $this->session->push('drawingFileCache', [$data]);
-            }
-
-            $res['id']   = $time;
-            $res['id22'] = $file_mime_type;
-            return $this->respond($res);
-        }
-        // 注意
-        if ($key === 'update') {
-            // 与数据库的记录比较
-            $model  = new DrawingModel();
-            $fields = ['station_id', 'file_new_name'];
-            $old    = $model->getRecordById($fields, $id);
-            if (empty($old)) {
-                $res['error'] = '请求对象不存在';
-                return $this->fail($res);
-            }
-
-            // 用户是否能修改
-            $allowWriteDeptId = $this->session->get('allowWriteDeptId');
-            if (!in_array($old['station_id'], $allowWriteDeptId)) {
-                return $this->failUnauthorized('用户没有权限');
-            }
-
-            if (!empty($old['file_new_name'])) {
-                $res['error'] = '上传文件冲突，请刷新后尝试';
-                return $this->fail($res);
-            }
-
-            $path = WRITEPATH . $this->config->filePath;
-            if (!$file->hasMoved()) {
-                try {
-                    $file->move($path, $file_new_name, true);
-                } catch (FileException $exception) {
-                    return $this->failServerError('保存文件出错');
-                }
-            }
-
-            $uid      = $this->session->get('id');
-            $username = $this->session->get('username');
-            //
-            $record = [
-                'file_org_name'  => $file_org_name,
-                'file_new_name'  => $file_new_name,
-                'file_ext'       => $file_ext,
-                'file_mime_type' => $file_mime_type,
-                'size'           => $size,
-                'user_id'        => $uid,
-                'username'       => $username,
-            ];
-
-            $result = $model->updateRecordById($record, $id);
-            if ($result === false) {
-                $file = rtrim($path, '\\/ ') . DIRECTORY_SEPARATOR . $file_new_name;
-                if (file_exists($file)) {
-                    unlink($file);
-                }
-                return $this->failServerError('服务器处理发生错误，稍候再试');
-            }
-
-            $res['msg'] = '完成文件上传';
-            return $this->respond($res);
-        }
-
-    }
-
-    // 2023-2-21
+    // 2023-3-30
     public function deleteFile()
     {
-        if (!$this->validate('DrawingDeleteFile')) {
+        if (!$this->validate('PartyBranchDeleteFile')) {
             $res['info']  = $this->validator->getErrors();
             $res['error'] = '请求数据无效';
             return $this->fail($res);
         }
 
-        $client = $this->request->getJSON(true);
-        $key    = $client['key'];
-        $id     = $client['id'];
+        $client        = $this->request->getJSON(true);
+        $id            = $client['id'];
+        $file_org_name = $client['file_org_name'];
 
-        // 新建
-        if ($key === 'create') {
-            $temp = $this->session->get('drawingFileCache');
-            if (empty($temp)) {
-                return $this->respond(['res' => 'empty']);
-            }
-
-            $path = WRITEPATH . $this->config->tempPath;
-            $new  = [];
-            foreach ($temp as $v) {
-                if ($id == $v['id']) {
-                    $file = rtrim($path, '\\/ ') . DIRECTORY_SEPARATOR . $v['file_new_name'];
-                    if (file_exists($file)) {
-                        unlink($file);
-                    }
-                } else {
-                    $new[] = $v;
-                }
-            }
-            $this->session->remove('drawingFileCache');
-            if (!empty($new)) {
-                $this->session->set('drawingFileCache', $new);
-            }
-
-            return $this->respond(['res' => 'done']);
+        $fields = ['file_org_name', 'file_new_name'];
+        $model  = new DocFilesModel();
+        $db     = $model->getByID($fields, $id);
+        if (empty($db)) {
+            return $this->failNotFound('文件已不存在');
+        }
+        if ($db['file_org_name'] !== $file_org_name) {
+            return $this->failNotFound('找不到文件');
         }
 
-        // 修改
-        if ($key === 'update') {
-            $file_org_name = $client['file_org_name'];
-            //
-            $fields = ['file_org_name', 'file_new_name'];
-            $model  = new DrawingModel();
-            $db     = $model->getRecordById($fields, $id);
-            if (empty($db)) {
-                return $this->respond(['res' => 'done']);
-            }
-            if ($db['file_org_name'] !== $file_org_name) {
-                return $this->failServerError('请求错误，刷新页面后再试');
-            }
-            //
-            $uid      = $this->session->get('id');
-            $username = $this->session->get('username');
-            $record   = [
-                'file_org_name'  => '',
-                'file_new_name'  => '',
-                'file_ext'       => '',
-                'file_mime_type' => '',
-                'size'           => 0,
-                'user_id'        => $uid,
-                'username'       => $username,
-            ];
-            $result = $model->updateRecordById($record, $id);
-            if ($result === false) {
-                return $this->failServerError('服务器处理发生错误，稍候再试');
-            }
-
-            $path = WRITEPATH . $this->config->filePath;
-            $file = rtrim($path, '\\/ ') . DIRECTORY_SEPARATOR . $db['file_new_name'];
-            if (file_exists($file)) {
-                unlink($file);
-            }
-
-            return $this->respond(['res' => 'done']);
+        $result = $model->delByID($id);
+        if ($result === false) {
+            return $this->failServerError('服务器处理发生错误，稍候再试');
         }
+
+        $path = WRITEPATH . $this->config->partyBranch['filePath'];
+        $file = rtrim($path, '\\/ ') . DIRECTORY_SEPARATOR . $db['file_new_name'];
+        if (file_exists($file)) {
+            unlink($file);
+        }
+
+        $res['msg'] = '文件删除成功';
+        return $this->respond($res);
     }
 
     // 2023-3-28
@@ -489,6 +315,92 @@ class PartyBranch extends BaseController
         header('Expires: 0');
         readfile($file);
         exit;
+    }
+
+    // 2023-3-30
+    public function uploadFile()
+    {
+        if (!$this->validate('PartyBranchUploadFile')) {
+            $res['info']  = $this->validator->getErrors();
+            $res['error'] = '请求数据无效';
+            return $this->fail($res);
+        }
+
+        $associated_id = $this->request->getPost('associated_id');
+        $file          = $this->request->getFile('file');
+
+        $model  = new PartyBranchModel();
+        $fields = ['station_id', 'category_id'];
+        $db     = $model->getRecordByUuid($fields, $associated_id);
+        if (empty($db)) {
+            return $this->failNotFound('无文档记录，不允许上传文件');
+        }
+
+        $allowWriteDeptId = $this->session->get('allowWriteDeptId');
+        if (!in_array($db['station_id'], $allowWriteDeptId)) {
+            return $this->failUnauthorized('用户没有权限');
+        }
+
+        if (empty($file)) {
+            return $this->failServerError('文件上传失败');
+        }
+
+        if (!$file->isValid()) {
+            return $this->failServerError('文件上传失败');
+        }
+
+        if (!$file->getSize() > $this->config->maxFileSize) {
+            return $this->fail($this->config->fileExceedSizeMsg);
+        }
+        if (!$file->getSize() === 0) {
+            return $this->fail('上传空文件');
+        }
+
+        $fileType = $file->getMimeType();
+        if (!in_array($fileType, $this->config->allowedFileTypes)) {
+            return $this->fail($this->config->fileInvalidTypeMsg);
+        }
+
+        $file_org_name  = $file->getName();
+        $file_org_name  = str_replace(" ", "", $file_org_name);
+        $file_new_name  = $file->getRandomName();
+        $file_ext       = $file->guessExtension();
+        $file_mime_type = $file->getMimeType();
+        $size           = $file->getSize();
+
+        $path = WRITEPATH . $this->config->partyBranch['filePath'];
+        if (!$file->hasMoved()) {
+            try {
+                $file->move($path, $file_new_name, true);
+            } catch (FileException $exception) {
+                return $this->failServerError('保存文件出错');
+            }
+        }
+        //
+        $uid         = $this->session->get('id');
+        $file_record = [
+            'station_id'     => $db['station_id'],
+            'category_id'    => $db['category_id'],
+            'associated_id'  => $associated_id,
+            'user_id'        => $uid,
+            //
+            'file_org_name'  => $file_org_name,
+            'file_new_name'  => $file_new_name,
+            'file_mime_type' => $file_mime_type,
+            'file_ext'       => $file_ext,
+            'size'           => $size,
+        ];
+
+        $model3 = new DocFilesModel();
+        $id     = $model3->insertOneRecord($file_record);
+
+        $res['msg']  = '添加文档成功';
+        $res['file'] = [
+            'id'            => $id,
+            'file_org_name' => $file_org_name,
+            'file_ext'      => $file_ext,
+        ];
+        return $this->respond($res);
     }
 
     // 2023-2-23

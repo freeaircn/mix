@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-28 22:28:37
+ * @LastEditTime: 2023-03-30 23:23:14
  */
 
 namespace App\Models\Doc;
@@ -35,6 +35,15 @@ class Files extends Model
         $this->DBGroup = $config->dbName;
         $this->table   = $config->dbPrefix . 'doc_files';
         parent::__construct();
+    }
+
+    public function insertOneRecord(array $data = null)
+    {
+        if (empty($data)) {
+            return false;
+        }
+
+        return $this->insert($data);
     }
 
     public function insertMultiRecords(array $records = null)
@@ -97,6 +106,25 @@ class Files extends Model
             return [];
         } else {
             return $res[0];
+        }
+    }
+
+    public function delByID(string $id = null)
+    {
+        if (empty($id)) {
+            return false;
+        }
+
+        if (!is_numeric($id)) {
+            return false;
+        }
+
+        $result = $this->where('id', $id)->delete();
+
+        if ($result === false) {
+            return false;
+        } else {
+            return true;
         }
     }
 

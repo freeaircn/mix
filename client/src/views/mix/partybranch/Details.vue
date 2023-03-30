@@ -53,9 +53,19 @@
       </div>
 
       <div style="margin-bottom: 8px">
-        <!-- <a-button type="primary" @click="handleDownloadFile" style="margin-right: 16px">下载文件</a-button>
-        <a-button type="primary" @click="handlePreviewFile" style="margin-right: 16px">预览文件</a-button> -->
-        <a-button type="default" @click="handleExit" style="margin-right: 16px">返回</a-button>
+        <span>
+          <a-upload
+            :accept="allowedFileTypes"
+            :action="config.uploadUrl"
+            :data="{associated_id: details.uuid}"
+            :before-upload="beforeUpload"
+            :showUploadList="false"
+            @change="afterUpload"
+          >
+            <a-button type="primary" :disabled="fileList.length >= config.maxFileNumber" style="margin-right: 16px"> 添加文档 </a-button>
+          </a-upload>
+          <a-button type="default" @click="handleExit" style="margin-right: 16px">返回</a-button>
+        </span>
       </div>
     </a-card>
 
@@ -66,7 +76,7 @@
 import { partyBranch as CONFIG } from '@/config/myConfig'
 import { mapGetters } from 'vuex'
 import { baseMixin } from '@/store/app-mixin'
-import { apiQuery, apiDownloadFile } from '@/api/mix/party_branch'
+import { apiQuery, apiDownloadFile, apiDeleteFile } from '@/api/mix/party_branch'
 import FilesTable from '@/views/mix/partybranch/components/FilesTable'
 //
 import pdf from 'vue-pdf'
@@ -98,6 +108,8 @@ export default {
         created_at: '',
         updated_at: ''
       },
+      config: CONFIG,
+      allowedFileTypes: '',
       fileList: []
     }
   },
@@ -108,6 +120,9 @@ export default {
   },
   created () {
     this.uuid = (this.$route.params.uuid) ? this.$route.params.uuid : '0'
+    CONFIG.allowedFileTypes.forEach((item) => {
+      this.allowedFileTypes = this.allowedFileTypes + item + ', '
+    })
   },
   mounted () {
     this.handleQueryDetails(this.uuid)
@@ -131,50 +146,11 @@ export default {
         })
     },
 
-    // handleDownloadFile () {
-    //   if (this.details.file_org_name === '') {
-    //     this.$message.info('没有可以下载的文件')
-    //     return true
-    //   }
-    //   const param = {
-    //     id: this.details.id,
-    //     file_org_name: this.details.file_org_name
-    //   }
-    //   apiDownloadFile(param)
-    //     .then((res) => {
-    //       const { data, headers } = res
-
-    //       const str = headers['content-type']
-    //       if (str.indexOf('json') !== -1) {
-    //         this.$message.warning('没有权限')
-    //       } else {
-    //         // 下载文件
-    //         const blob = new Blob([data], { type: headers['content-type'] })
-    //         const dom = document.createElement('a')
-    //         const url = window.URL.createObjectURL(blob)
-    //         dom.href = url
-    //         const filename = headers['content-disposition'].split(';')[1].split('=')[1]
-    //         dom.download = decodeURI(filename)
-    //         dom.style.display = 'none'
-    //         document.body.appendChild(dom)
-    //         dom.click()
-    //         dom.parentNode.removeChild(dom)
-    //         window.URL.revokeObjectURL(url)
-
-    //         this.$message.info('文件已下载')
-    //       }
-    //     })
-    //     .catch(() => {
-    //       this.$message.info('文件下载失败')
-    //     })
-    // },
-
     handleExit () {
       this.$router.back()
     },
 
     handlePreviewFile (record) {
-      console.log('handlePreviewFile: ', record)
       if (record.file_org_name === '') {
         this.$message.info('没有可预览的文件')
         return true
@@ -190,7 +166,6 @@ export default {
     },
 
     handleDownloadFile (record) {
-      console.log('handleDownloadFile: ', record)
       if (record.file_org_name === '') {
         this.$message.info('没有可以下载的文件')
         return true
@@ -220,7 +195,7 @@ export default {
             dom.parentNode.removeChild(dom)
             window.URL.revokeObjectURL(url)
 
-            this.$message.info('文件已下载')
+            this.$message.info('文件下载完成')
           }
         })
         .catch(() => {
@@ -229,8 +204,84 @@ export default {
     },
 
     handleDeleteFile (record) {
-      console.log('handleDeleteFile: ', record)
-      this.$emit('delete', record)
+      if (record.file_org_name === '') {
+        this.$message.info('没有可以删除的文件')
+        return true
+      }
+      if (record.id) {
+        this.$confirm({
+          title: '确定删除吗?',
+          content: record.file_org_name,
+          onOk: () => {
+            const params = {
+            id: record.id,
+            file_org_name: record.file_org_name
+          }
+          apiDeleteFile(params)
+            .then(() => {
+              const index = this.fileList.indexOf(record)
+              const newFileList = this.fileList.slice()
+              newFileList.splice(index, 1)
+              this.fileList = newFileList
+            })
+            .catch(() => {
+            })
+          }
+        })
+      }
+    },
+
+    beforeUpload (file) {
+      return new Promise((resolve, reject) => {
+        let conflict = false
+        this.fileList.forEach(f => {
+          if (file.name === f.file_org_name) {
+            conflict = true
+          }
+        })
+        if (conflict) {
+          this.$message.error('与保存的文档名相同')
+          const error = false
+          return Promise.reject(error)
+        }
+
+        if (CONFIG.allowedFileTypes.indexOf(file.type) === -1) {
+          this.$message.error('允许文件类型: pdf, zip')
+          const error = false
+          return Promise.reject(error)
+        }
+
+        if (file.size === 0) {
+          this.$message.error('空文件')
+          const error = false
+          return Promise.reject(error)
+        }
+
+        if (file.size > CONFIG.maxFileSize) {
+          this.$message.error('文件大小超过 100MB')
+          const error = false
+          return Promise.reject(error)
+        }
+
+        return resolve(true)
+      })
+    },
+
+    afterUpload (info) {
+      if (info.file.status === 'done') {
+        if (info.file.response.hasOwnProperty('msg')) {
+          this.$message.success(info.file.response.msg)
+        } else {
+          this.$message.success('文件上传成功')
+        }
+        this.fileList.push(info.file.response.file)
+      } else if (info.file.status === 'error') {
+        if (info.file.response.hasOwnProperty('messages')) {
+          this.$message.error(info.file.response.messages.error)
+        } else {
+          this.$message.error('文件上传失败')
+        }
+      }
     }
   }
 }

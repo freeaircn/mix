@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2023-02-26 08:58:37
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-28 21:57:29
+ * @LastEditTime: 2023-03-30 22:50:06
 -->
 <template>
   <div class="wrapper">
@@ -38,7 +38,7 @@
 
 <script>
 export default {
-  name: 'FilesTable',
+  name: 'PartyBranchFilesTable',
   props: {
     listData: {
       type: Array,
