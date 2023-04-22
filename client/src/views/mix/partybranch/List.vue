@@ -83,10 +83,8 @@
 
 <script>
 import * as pattern from '@/utils/validateRegex'
-// import store from '@/store'
 import { mapGetters } from 'vuex'
 import { baseMixin } from '@/store/app-mixin'
-// import { apiQuery, apiDelete, apiDownloadFile } from '@/api/mix/party_branch'
 import { apiQuery, apiDelete } from '@/api/mix/party_branch'
 
 export default {
@@ -187,15 +185,6 @@ export default {
     // }
     this.sendSearchReq(this.searchParams)
   },
-  // beforeRouteLeave (to, from, next) {
-  //   if (to.name === 'DrawingDetails' || to.name === 'DrawingEdit') {
-  //     var temp1 = { pageId: this.pagination.current, params: this.searchParams }
-  //     store.dispatch('setDrawingListSearchParam', temp1)
-  //   } else {
-  //     store.dispatch('setDrawingListSearchParam', null)
-  //   }
-  //   next()
-  // },
   methods: {
     // 查询
     prepareSearchOptions () {
@@ -268,40 +257,6 @@ export default {
       this.sendSearchReq(this.searchParams)
     },
 
-    // handleDownloadFile (record) {
-    //   const param = {
-    //     id: record.id,
-    //     file_org_name: record.file_org_name
-    //   }
-    //   apiDownloadFile(param)
-    //     .then((res) => {
-    //       const { data, headers } = res
-
-    //       const str = headers['content-type']
-    //       if (str.indexOf('json') !== -1) {
-    //         this.$message.warning('没有权限')
-    //       } else {
-    //         // 下载文件
-    //         const blob = new Blob([data], { type: headers['content-type'] })
-    //         const dom = document.createElement('a')
-    //         const url = window.URL.createObjectURL(blob)
-    //         dom.href = url
-    //         const filename = headers['content-disposition'].split(';')[1].split('=')[1]
-    //         dom.download = decodeURI(filename)
-    //         dom.style.display = 'none'
-    //         document.body.appendChild(dom)
-    //         dom.click()
-    //         dom.parentNode.removeChild(dom)
-    //         window.URL.revokeObjectURL(url)
-
-    //         this.$message.info('文件已下载')
-    //       }
-    //     })
-    //     .catch(() => {
-    //       this.$message.info('文件下载失败')
-    //     })
-    // },
-
     handleQueryDetails (record) {
       if (record.uuid) {
         const uuid = record.uuid
@@ -324,9 +279,9 @@ export default {
       if (record.id) {
         this.$confirm({
           title: '确定删除吗?',
-          content: record.dwg_name,
+          content: record.title,
           onOk: () => {
-            const param = { id: record.id }
+            const param = { id: record.id, uuid: record.uuid, title: record.title }
             apiDelete(param)
               .then(() => {
                 this.handleSearch()

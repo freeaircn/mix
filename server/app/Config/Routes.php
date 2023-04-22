@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-30 22:20:01
+ * @LastEditTime: 2023-04-22 15:38:49
  */
 
 namespace Config;
@@ -160,6 +160,8 @@ $routes->group('api', function ($routes) {
     // 2023-2-26
     $routes->get('party_branch', 'PartyBranch::queryEntry');
     $routes->post('party_branch', 'PartyBranch::createOne');
+    $routes->put('party_branch', 'PartyBranch::updateOne');
+    $routes->delete('party_branch', 'PartyBranch::deleteOne');
     //
     $routes->get('party_branch/file', 'PartyBranch::downloadFile');
     $routes->delete('party_branch/file', 'PartyBranch::deleteFile');

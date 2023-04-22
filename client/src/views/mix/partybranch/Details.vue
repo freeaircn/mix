@@ -20,12 +20,12 @@
         <a-descriptions-item label="关键词">{{ details.keywords }}</a-descriptions-item>
       </a-descriptions>
       <a-descriptions title="" :column="{ xxl: 4, xl: 3, lg: 3, md: 3, sm: 2, xs: 1 }">
-        <a-descriptions-item label="创建时间">{{ details.created_at }}</a-descriptions-item>
-        <a-descriptions-item label="更新时间">{{ details.updated_at }}</a-descriptions-item>
-      </a-descriptions>
-      <a-descriptions title="" :column="{ xxl: 4, xl: 3, lg: 3, md: 3, sm: 2, xs: 1 }">
         <a-descriptions-item label="保管期限">{{ details.retention_period }}</a-descriptions-item>
         <a-descriptions-item label="存放地点">{{ details.store_place }}</a-descriptions-item>
+      </a-descriptions>
+      <a-descriptions title="" :column="{ xxl: 4, xl: 3, lg: 3, md: 3, sm: 2, xs: 1 }">
+        <a-descriptions-item label="创建时间">{{ details.created_at }}</a-descriptions-item>
+        <a-descriptions-item label="更新时间">{{ details.updated_at }}</a-descriptions-item>
       </a-descriptions>
       <a-descriptions title="" :column="{ xxl: 4, xl: 3, lg: 3, md: 3, sm: 2, xs: 1 }">
         <a-descriptions-item label="最后编辑">{{ details.username }}</a-descriptions-item>
@@ -46,7 +46,13 @@
         <a-row :gutter="16">
           <a-col :md="12" :sm="24">
             <div style="width: 100%; margin-bottom: 8px">
-              <files-table :listData="fileList" @preview="handlePreviewFile" @download="handleDownloadFile" @delete="handleDeleteFile"></files-table>
+              <files-table
+                :listData="fileList"
+                :showPreview="true"
+                :showDownload="true"
+                @preview="handlePreviewFile"
+                @download="handleDownloadFile"
+              ></files-table>
             </div>
           </a-col>
         </a-row>
@@ -54,17 +60,7 @@
 
       <div style="margin-bottom: 8px">
         <span>
-          <a-upload
-            :accept="allowedFileTypes"
-            :action="config.uploadUrl"
-            :data="{associated_id: details.uuid}"
-            :before-upload="beforeUpload"
-            :showUploadList="false"
-            @change="afterUpload"
-          >
-            <a-button type="primary" :disabled="fileList.length >= config.maxFileNumber" style="margin-right: 16px"> 添加文档 </a-button>
-          </a-upload>
-          <a-button type="default" @click="handleExit" style="margin-right: 16px">返回</a-button>
+          <a-button type="primary" @click="handleExit" style="margin-right: 16px">返回</a-button>
         </span>
       </div>
     </a-card>
@@ -76,7 +72,7 @@
 import { partyBranch as CONFIG } from '@/config/myConfig'
 import { mapGetters } from 'vuex'
 import { baseMixin } from '@/store/app-mixin'
-import { apiQuery, apiDownloadFile, apiDeleteFile } from '@/api/mix/party_branch'
+import { apiQuery, apiDownloadFile } from '@/api/mix/party_branch'
 import FilesTable from '@/views/mix/partybranch/components/FilesTable'
 //
 import pdf from 'vue-pdf'
@@ -201,87 +197,6 @@ export default {
         .catch(() => {
           this.$message.info('文件下载失败')
         })
-    },
-
-    handleDeleteFile (record) {
-      if (record.file_org_name === '') {
-        this.$message.info('没有可以删除的文件')
-        return true
-      }
-      if (record.id) {
-        this.$confirm({
-          title: '确定删除吗?',
-          content: record.file_org_name,
-          onOk: () => {
-            const params = {
-            id: record.id,
-            file_org_name: record.file_org_name
-          }
-          apiDeleteFile(params)
-            .then(() => {
-              const index = this.fileList.indexOf(record)
-              const newFileList = this.fileList.slice()
-              newFileList.splice(index, 1)
-              this.fileList = newFileList
-            })
-            .catch(() => {
-            })
-          }
-        })
-      }
-    },
-
-    beforeUpload (file) {
-      return new Promise((resolve, reject) => {
-        let conflict = false
-        this.fileList.forEach(f => {
-          if (file.name === f.file_org_name) {
-            conflict = true
-          }
-        })
-        if (conflict) {
-          this.$message.error('与保存的文档名相同')
-          const error = false
-          return Promise.reject(error)
-        }
-
-        if (CONFIG.allowedFileTypes.indexOf(file.type) === -1) {
-          this.$message.error('允许文件类型: pdf, zip')
-          const error = false
-          return Promise.reject(error)
-        }
-
-        if (file.size === 0) {
-          this.$message.error('空文件')
-          const error = false
-          return Promise.reject(error)
-        }
-
-        if (file.size > CONFIG.maxFileSize) {
-          this.$message.error('文件大小超过 100MB')
-          const error = false
-          return Promise.reject(error)
-        }
-
-        return resolve(true)
-      })
-    },
-
-    afterUpload (info) {
-      if (info.file.status === 'done') {
-        if (info.file.response.hasOwnProperty('msg')) {
-          this.$message.success(info.file.response.msg)
-        } else {
-          this.$message.success('文件上传成功')
-        }
-        this.fileList.push(info.file.response.file)
-      } else if (info.file.status === 'error') {
-        if (info.file.response.hasOwnProperty('messages')) {
-          this.$message.error(info.file.response.messages.error)
-        } else {
-          this.$message.error('文件上传失败')
-        }
-      }
     }
   }
 }

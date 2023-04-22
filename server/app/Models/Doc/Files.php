@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-30 23:23:14
+ * @LastEditTime: 2023-04-22 16:05:22
  */
 
 namespace App\Models\Doc;
@@ -120,6 +120,25 @@ class Files extends Model
         }
 
         $result = $this->where('id', $id)->delete();
+
+        if ($result === false) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    public function deleteByAssociatedID(string $associated_id = null)
+    {
+        if (empty($associated_id)) {
+            return false;
+        }
+
+        if (!is_numeric($associated_id)) {
+            return false;
+        }
+
+        $result = $this->where('associated_id', $associated_id)->delete();
 
         if ($result === false) {
             return false;

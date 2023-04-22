@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-30 22:48:25
+ * @LastEditTime: 2023-04-22 15:49:34
  */
 
 namespace Config;
@@ -357,6 +357,28 @@ class Validation
 
     public $PartyBranchUploadFile = [
         'associated_id' => 'required|' . VALIDATE_ID,
+    ];
+
+    public $PartBranchEdit = [
+        'uuid' => 'required|' . VALIDATE_ID,
+    ];
+
+    public $PartyBranchUpdateOne = [
+        'uuid'             => 'required|' . VALIDATE_ID,
+        'station_id'       => 'required|' . VALIDATE_ID,
+        'category_id'      => 'required|' . VALIDATE_ID,
+        'title'            => 'required|' . VALIDATE_TITLE,
+        'keywords'         => 'required|' . VALIDATE_KEY_WORDS,
+        'secret_level'     => 'required|' . VALIDATE_ID,
+        'retention_period' => 'required|' . VALIDATE_ID,
+        'store_place'      => VALIDATE_TEXT,
+        'summary'          => VALIDATE_TEXT,
+    ];
+
+    public $PartyBranchDeleteOne = [
+        'id'    => 'required|' . VALIDATE_ID,
+        'uuid'  => 'required|' . VALIDATE_ID,
+        'title' => 'required|' . VALIDATE_TITLE,
     ];
 
     /**

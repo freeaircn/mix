@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2021-07-05 21:44:53
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-19 23:42:59
+ * @LastEditTime: 2023-04-21 10:26:51
 -->
 <template>
   <page-header-wrapper :title="false">
@@ -206,6 +206,8 @@ export default {
 
       // 注意
       this.fileList = [...this.fileList, file]
+      //
+      console.log('file_list: ', this.fileList)
       return false
     },
 

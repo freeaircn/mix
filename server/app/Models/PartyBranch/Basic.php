@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-27 20:47:50
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-21 23:13:52
+ * @LastEditTime: 2023-04-22 15:45:10
  */
 
 namespace App\Models\PartyBranch;
@@ -79,7 +79,7 @@ class Basic extends Model
     }
 
     // 2023-3-17
-    public function getLastSerialIdByCategory(int $category_id = null)
+    public function getLastSerialIdByCategory(int $category_id = null, $with_deleted = true)
     {
         if (empty($category_id)) {
             return '0';
@@ -89,7 +89,11 @@ class Basic extends Model
         $builder->where('category_id', $category_id);
         $builder->orderBy('serial_id', 'DESC');
 
-        $result = $builder->findAll(1);
+        if ($with_deleted) {
+            $result = $builder->withDeleted()->findAll(1);
+        } else {
+            $result = $builder->findAll(1);
+        }
 
         if (empty($result)) {
             return '0';
@@ -109,6 +113,31 @@ class Basic extends Model
     }
 
     // 2023-3-21
+    public function getRecordById(array $fields = null, $id = 0)
+    {
+        if (empty($id)) {
+            return [];
+        }
+
+        $selectSql = '';
+        if (empty($fields)) {
+            $selectSql = 'id, uuid, station_id, category_id, serial_id, title, doc_num, keywords, summary, secret_level, retention_period, store_place, user_id, status, created_at, updated_at';
+        } else {
+            foreach ($fields as $name) {
+                $selectSql = $selectSql . $name . ', ';
+            }
+        }
+
+        $builder = $this->select($selectSql);
+        $builder->where('id', $id);
+        $result = $builder->findAll();
+        if (empty($result)) {
+            return [];
+        } else {
+            return $result[0];
+        }
+    }
+
     public function getRecordByUuid(array $fields = null, $uuid = 0)
     {
         if (empty($uuid)) {
@@ -146,6 +175,19 @@ class Basic extends Model
         }
 
         return $this->where('id', $id)->set($data)->update();
+    }
+
+    public function updateRecordByUuid(array $data = null, string $uuid = null)
+    {
+        if (empty($uuid) || empty($data)) {
+            return false;
+        }
+
+        if (!is_numeric($uuid)) {
+            return false;
+        }
+
+        return $this->where('uuid', $uuid)->set($data)->update();
     }
 
     // 2023-2-23

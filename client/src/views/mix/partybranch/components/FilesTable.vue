@@ -3,7 +3,7 @@
  * @Author: freeair
  * @Date: 2023-02-26 08:58:37
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-30 22:50:06
+ * @LastEditTime: 2023-04-21 11:33:44
 -->
 <template>
   <div class="wrapper">
@@ -25,11 +25,11 @@
         </span> -->
       <span slot="action" slot-scope="text, record">
         <template>
-          <a @click="handlePreviewFile(record)">预览</a>
-          <a-divider type="vertical" />
-          <a @click="handleDownloadFile(record)">下载</a>
-          <a-divider type="vertical" />
-          <a @click="handleDeleteFile(record)">删除</a>
+          <a v-if="showPreview" @click="handlePreviewFile(record)">预览</a>
+          <a-divider v-if="showPreview" type="vertical" />
+          <a v-if="showDownload" @click="handleDownloadFile(record)">下载</a>
+          <a-divider v-if="showDownload" type="vertical" />
+          <a v-if="showDelete" @click="handleDeleteFile(record)">删除</a>
         </template>
       </span>
     </a-table>
@@ -43,6 +43,18 @@ export default {
     listData: {
       type: Array,
       default: null
+    },
+    showPreview: {
+      type: Boolean,
+      default: false
+    },
+    showDownload: {
+      type: Boolean,
+      default: false
+    },
+    showDelete: {
+      type: Boolean,
+      default: false
     }
   },
   data () {
