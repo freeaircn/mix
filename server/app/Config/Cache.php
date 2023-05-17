@@ -19,11 +19,9 @@ class Cache extends BaseConfig
      *
      * The name of the preferred handler that should be used. If for some reason
      * it is not available, the $backupHandler will be used in its place.
-     *
-     * @var string
      */
-    // public $handler = 'file';
-    public $handler = 'redis';
+    // public string $handler = 'file';
+    public string $handler = 'redis';
 
     /**
      * --------------------------------------------------------------------------
@@ -33,11 +31,9 @@ class Cache extends BaseConfig
      * The name of the handler that will be used in case the first one is
      * unreachable. Often, 'file' is used here since the filesystem is
      * always available, though that's not always practical for the app.
-     *
-     * @var string
      */
-    // public $backupHandler = 'dummy';
-    public $backupHandler = 'file';
+    // public string $backupHandler = 'dummy';
+    public string $backupHandler = 'file';
 
     /**
      * --------------------------------------------------------------------------
@@ -47,11 +43,9 @@ class Cache extends BaseConfig
      * The path to where cache files should be stored, if using a file-based
      * system.
      *
-     * @var string
-     *
      * @deprecated Use the driver-specific variant under $file
      */
-    public $storePath = WRITEPATH . 'cache/';
+    public string $storePath = WRITEPATH . 'cache/';
 
     /**
      * --------------------------------------------------------------------------
@@ -68,7 +62,7 @@ class Cache extends BaseConfig
      *    array('q') = Enabled, but only take into account the specified list
      *                 of query parameters.
      *
-     * @var boolean|string[]
+     * @var bool|string[]
      */
     public $cacheQueryString = false;
 
@@ -79,10 +73,8 @@ class Cache extends BaseConfig
      *
      * This string is added to all cache item names to help avoid collisions
      * if you run multiple applications with the same cache engine.
-     *
-     * @var string
      */
-    public $prefix = 'my_';
+    public string $prefix = 'my:';
 
     /**
      * --------------------------------------------------------------------------
@@ -94,10 +86,20 @@ class Cache extends BaseConfig
      * WARNING: This is not used by framework handlers where 60 seconds is
      * hard-coded, but may be useful to projects and modules. This will replace
      * the hard-coded value in a future release.
-     *
-     * @var integer
      */
-    public $ttl = 60;
+    public int $ttl = 60;
+
+    /**
+     * --------------------------------------------------------------------------
+     * Reserved Characters
+     * --------------------------------------------------------------------------
+     *
+     * A string of reserved characters that will not be allowed in keys or tags.
+     * Strings that violate this restriction will cause handlers to throw.
+     * Default: {}()/\@:
+     * Note: The default set is required for PSR-6 compliance.
+     */
+    public string $reservedCharacters = '{}()/\@';
 
     /**
      * --------------------------------------------------------------------------
@@ -106,9 +108,9 @@ class Cache extends BaseConfig
      * Your file storage preferences can be specified below, if you are using
      * the File driver.
      *
-     * @var array<string, string|int|null>
+     * @var array<string, int|string|null>
      */
-    public $file = [
+    public array $file = [
         'storePath' => WRITEPATH . 'cache/',
         'mode'      => 0640,
     ];
@@ -122,9 +124,9 @@ class Cache extends BaseConfig
      *
      * @see https://codeigniter.com/user_guide/libraries/caching.html#memcached
      *
-     * @var array<string, string|int|boolean>
+     * @var array<string, bool|int|string>
      */
-    public $memcached = [
+    public array $memcached = [
         'host'   => '127.0.0.1',
         'port'   => 11211,
         'weight' => 1,
@@ -138,14 +140,14 @@ class Cache extends BaseConfig
      * Your Redis server can be specified below, if you are using
      * the Redis or Predis drivers.
      *
-     * @var array<string, string|int|null>
+     * @var array<string, int|string|null>
      */
-    public $redis = [
+    public array $redis = [
         'host'     => '127.0.0.1',
         'password' => null,
         'port'     => 6379,
         'timeout'  => 2,
-        'database' => 1,
+        'database' => 2,
     ];
 
     /**
@@ -158,7 +160,7 @@ class Cache extends BaseConfig
      *
      * @var array<string, string>
      */
-    public $validHandlers = [
+    public array $validHandlers = [
         'dummy'     => DummyHandler::class,
         'file'      => FileHandler::class,
         'memcached' => MemcachedHandler::class,

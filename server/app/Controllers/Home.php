@@ -4,16 +4,16 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-10-23 20:47:38
+ * @LastEditTime: 2023-05-16 20:23:42
  */
 
 namespace App\Controllers;
 
-use CodeIgniter\API\ResponseTrait;
+// use CodeIgniter\API\ResponseTrait;
 
 class Home extends BaseController
 {
-    use ResponseTrait;
+    // use ResponseTrait;
 
     public function index()
     {

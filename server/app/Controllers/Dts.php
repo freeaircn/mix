@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-28 22:37:03
+ * @LastEditTime: 2023-05-17 11:05:37
  */
 
 namespace App\Controllers;
@@ -1280,7 +1280,7 @@ class Dts extends BaseController
 
         try {
             $cache     = \Config\Services::cache();
-            $key       = $this->selfConfig->cacheStatisticChart['prefix'] . 'station_id=' . $station_id;
+            $key       = $this->selfConfig->cacheStatisticChart['prefix'] . 'station_id:' . $station_id;
             $cacheData = $cache->get($key);
             if (!empty($cacheData)) {
                 $res['http_status'] = 200;
@@ -2056,7 +2056,7 @@ class Dts extends BaseController
         // }
 
         $cache = \Config\Services::cache();
-        $key   = $this->selfConfig->cacheStatisticChart['prefix'] . 'station_id=' . $station_id;
+        $key   = $this->selfConfig->cacheStatisticChart['prefix'] . 'station_id:' . $station_id;
         return $cache->delete($key);
     }
 }

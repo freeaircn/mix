@@ -3,14 +3,14 @@
  * @Author: freeair
  * @Date: 2019-12-24 09:56:03
  * @LastEditors: freeair
- * @LastEditTime: 2023-03-01 00:17:02
+ * @LastEditTime: 2023-05-17 16:28:25
  */
 
 /**
 * 头像
 */
 export const avatarApi = {
-  uploadAvatarApi: process.env.VUE_APP_API_BASE_URL + '/account/avatar'
+  upload: process.env.VUE_APP_API_BASE_URL + '/account/avatar'
 }
 
 /**

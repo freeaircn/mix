@@ -68,6 +68,12 @@ const vueConfig = {
     config.resolve.alias
       .set('@$', resolve('src'))
 
+    config.module.rule('vue').use('vue-loader').loader('vue-loader')
+      .tap(options => {
+        options.prettify = false
+        return options
+      })
+
     const svgRule = config.module.rule('svg')
     svgRule.uses.clear()
     svgRule

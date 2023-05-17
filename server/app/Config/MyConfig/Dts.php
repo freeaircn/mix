@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-07-06 21:44:27
  * @LastEditors: freeair
- * @LastEditTime: 2022-06-20 23:29:04
+ * @LastEditTime: 2023-05-17 11:00:27
  */
 
 namespace Config\MyConfig;
@@ -81,7 +81,7 @@ class Dts extends BaseConfig
     ];
 
     public $cacheStatisticChart = [
-        'prefix' => 'dts_statistic_chart_',
+        'prefix' => 'dts:statistic_chart:',
         'expire' => 86700,
     ];
 }

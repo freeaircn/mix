@@ -98,7 +98,7 @@ export default {
   mixins: [baseMixin],
   data () {
     return {
-      uploadAction: avatarApi,
+      uploadAction: avatarApi.upload,
       isUploading: false,
       // My code
       labelCol: {

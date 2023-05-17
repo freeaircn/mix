@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2021-06-27 15:44:05
+ * @LastEditTime: 2023-05-16 20:32:28
  */
 
 namespace App\Controllers;
@@ -15,7 +15,6 @@ use CodeIgniter\HTTP\IncomingRequest;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Psr\Log\LoggerInterface;
-use \Config\Services;
 
 /**
  * Class BaseController
@@ -27,13 +26,12 @@ use \Config\Services;
  *
  * For security be sure to declare any new methods as protected or private.
  */
-
-class BaseController extends Controller
+abstract class BaseController extends Controller
 {
     /**
      * Instance of the main Request object.
      *
-     * @var IncomingRequest|CLIRequest
+     * @var CLIRequest|IncomingRequest
      */
     protected $request;
 
@@ -46,6 +44,10 @@ class BaseController extends Controller
      */
     protected $helpers = [];
 
+    /**
+     * Be sure to declare properties for any property fetch you initialized.
+     * The creation of dynamic property is deprecated in PHP 8.2.
+     */
     protected $session;
 
     /**
