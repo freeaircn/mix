@@ -4,15 +4,15 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a000f51bcee72962bb1481e85fa97854",
+    "content-hash": "5dc91086194f9c3e15457b9d3b95f381",
     "packages": [
         {
             "name": "codeigniter4/framework",
-            "version": "v4.3.4",
+            "version": "v4.3.5",
             "dist": {
                 "type": "zip",
-                "url": "https://mirrors.cloud.tencent.com/repository/composer/codeigniter4/framework/v4.3.4/codeigniter4-framework-v4.3.4.zip",
-                "reference": "5d3d4b202ad271d4e5d8480949c3d8e572cf7712",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/codeigniter4/framework/v4.3.5/codeigniter4-framework-v4.3.5.zip",
+                "reference": "b41bca4ff6efd9baffdb7a1bba33f946fb8580d9",
                 "shasum": ""
             },
             "require": {
@@ -67,7 +67,7 @@
             ],
             "description": "The CodeIgniter framework v4",
             "homepage": "https://codeigniter.com",
-            "time": "2023-04-27T12:36:37+00:00"
+            "time": "2023-05-21T13:41:12+00:00"
         },
         {
             "name": "ezyang/htmlpurifier",
