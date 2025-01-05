@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-09-06 01:17:02
  * @LastEditors: freeair
- * @LastEditTime: 2022-04-27 19:33:11
+ * @LastEditTime: 2023-10-22 19:27:10
  */
 
 namespace App\Libraries;
@@ -30,8 +30,10 @@ class MyIdMaker
         $this->redisHost    = '127.0.0.1';
         $this->redisPort    = 6379;
         $this->redisTimeOut = 2;
-        $this->dataCenter   = 1;
-        $this->workerId     = 1;
+        //
+        $this->dataCenter       = 1;
+        $this->workerId         = 1;
+        $this->defaultStartTime = '2011-01-01 00:00:00';
     }
 
     /**
@@ -55,6 +57,7 @@ class MyIdMaker
 
         $seqResolver->setCachePrefix($cacheKey);
         $snowflake = new Snowflake($this->dataCenter, $this->workerId);
+        $snowflake->setStartTimeStamp(strtotime($this->defaultStartTime) * 1000);
         $snowflake->setSequenceResolver($seqResolver);
 
         return $snowflake->id();
@@ -63,6 +66,7 @@ class MyIdMaker
     public function parse(int $Uid = 0)
     {
         $snowflake = new Snowflake($this->dataCenter, $this->workerId);
+        $snowflake->setStartTimeStamp(strtotime($this->defaultStartTime) * 1000);
         return $snowflake->parseId($Uid, true);
     }
 }

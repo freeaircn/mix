@@ -4,7 +4,7 @@
  * @Author: freeair
  * @Date: 2021-06-25 11:16:41
  * @LastEditors: freeair
- * @LastEditTime: 2022-05-11 09:54:24
+ * @LastEditTime: 2023-10-22 19:55:21
  */
 
 namespace App\Controllers;
@@ -532,11 +532,51 @@ class Admin extends BaseController
     // 岗位
     public function getJob()
     {
-        $model  = new JobModel();
-        $result = $model->getJobAllRecords();
+        $client = $this->request->getGet();
+        if (isset($client['type']) && $client['type'] === 'create') {
+            $data_at = $client['date_at'];
+            $time_at = $client['time_at'];
+            $index   = intval($client['index']);
 
-        $res['data'] = ['data' => $result];
-        return $this->respond($res);
+            $startTime = strtotime('2011-01-01 00:00:00') * 1000;
+            $timestamp = strtotime($data_at . ' ' . $time_at) * 1000;
+            $delta     = (int) ($timestamp - $startTime);
+            $uuid      = (string) (($delta << 22) | (1 << 17) | (1 << 12) | $index);
+
+            $res['data'] = [
+                'uuid' => $uuid,
+            ];
+            return $this->respond($res);
+        } elseif (isset($client['type']) && $client['type'] === 'parse') {
+            $uuid = $client['uuid'];
+            $id   = decbin($uuid);
+            // $data = [
+            //     'timestamp'  => bindec(substr($id, 0, -22)),
+            //     'sequence'   => bindec(substr($id, -12)),
+            //     'workerid'   => bindec(substr($id, -17, 5)),
+            //     'datacenter' => bindec(substr($id, -22, 5)),
+            // ];
+
+            $startTime = strtotime('2011-01-01 00:00:00') * 1000;
+            $timestamp = ($startTime + bindec(substr($id, 0, -22))) / 1000;
+
+            $date_at = date('Y-m-d', $timestamp);
+            $time_at = date('H:i:s', $timestamp);
+            $index   = bindec(substr($id, -12));
+
+            $res['data'] = [
+                'date_at' => $date_at,
+                'time_at' => $time_at,
+                'index'   => $index,
+            ];
+            return $this->respond($res);
+        } else {
+            $model  = new JobModel();
+            $result = $model->getJobAllRecords();
+
+            $res['data'] = ['data' => $result];
+            return $this->respond($res);
+        }
     }
 
     public function newJob()
@@ -750,12 +790,12 @@ class Admin extends BaseController
 
         // 写入user数据表
         $model = new UserModel();
-        $uid   = $model->createSingleUser($user);
+        $uid   = $model->createSingleUserRecord($user);
 
         // 写入role数据表
         if (is_numeric($uid)) {
             $model2 = new UserRoleModel();
-            $result = $model2->createSingleUserRecord($uid, $role);
+            $result = $model2->createUserRoleRecordsByUid($role, $uid);
         } else {
             // 头像 db表，回退
             $avatarModel->deleteAvatarById($avatarId);

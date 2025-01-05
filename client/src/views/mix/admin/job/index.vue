@@ -27,6 +27,38 @@
             </a-col>
           </a-row>
         </a-form>
+        <a-form layout="inline">
+          <a-row :gutter="48">
+            <a-col :md="5" :sm="24">
+              <a-form-model-item label="日期" prop="date_at">
+                <a-date-picker v-model="tempUUID.date_at" valueFormat="YYYY-MM-DD" style="width: 100%;" />
+              </a-form-model-item>
+            </a-col>
+            <a-col :md="5" :sm="24">
+              <a-form-model-item label="时间" prop="time_at" >
+                <a-time-picker v-model="tempUUID.time_at" format="HH:mm:ss" valueFormat="HH:mm:ss" style="width: 100%;" />
+              </a-form-model-item>
+            </a-col>
+            <a-col :md="5" :sm="24">
+              <a-form-item label="序号">
+                <a-input v-model="tempUUID.index" placeholder=""/>
+              </a-form-item>
+            </a-col>
+
+            <a-col :md="5" :sm="24">
+              <a-form-item label="UUID">
+                <a-input v-model="tempUUID.uuid" placeholder=""/>
+              </a-form-item>
+            </a-col>
+
+            <a-col :md="4" :sm="24">
+              <span class="table-page-search-submitButtons" >
+                <a-button type="primary" @click="createTempUUID()">生成UUID</a-button>
+                <a-button style="margin-left: 8px" type="primary" @click="parseTempUUID()">解析UUID</a-button>
+              </span>
+            </a-col>
+          </a-row>
+        </a-form>
       </div>
 
       <div class="table-operator">
@@ -126,7 +158,13 @@ export default {
       pagination: {},
       loading: false,
       visibleForm: false,
-      tempRecord: {}
+      tempRecord: {},
+      tempUUID: {
+        date_at: '',
+        time_at: '',
+        index: '',
+        uuid: ''
+      }
     }
   },
   filters: {
@@ -221,6 +259,38 @@ export default {
             })
         }
       })
+    },
+
+    createTempUUID () {
+      const requestParameters = Object.assign({ type: 'create' }, this.tempUUID)
+      getJobTbl(requestParameters)
+        .then(res => {
+          console.log(res.uuid)
+          this.tempUUID.uuid = res.uuid
+        })
+        //  网络异常，清空页面数据显示，防止错误的操作
+       .catch((err) => {
+         if (err.response) {
+           this.listData.splice(0, this.listData.length)
+         }
+       })
+    },
+
+    parseTempUUID () {
+      const requestParameters = Object.assign({ type: 'parse' }, this.tempUUID)
+      getJobTbl(requestParameters)
+        .then(res => {
+          console.log(res)
+          this.tempUUID.date_at = res.date_at
+          this.tempUUID.time_at = res.time_at
+          this.tempUUID.index = res.index
+        })
+        //  网络异常，清空页面数据显示，防止错误的操作
+       .catch((err) => {
+         if (err.response) {
+           this.listData.splice(0, this.listData.length)
+         }
+       })
     }
   }
 }
